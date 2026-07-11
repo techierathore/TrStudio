@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <!--
+    This RCL is shared by the Blazor Web head (src/TrStudio, Blazor Server) AND the MAUI Blazor
+    Hybrid desktop head (src/TrStudio.Desktop, Win/Mac — ADR-012). It therefore references only the
+    cross-host Blazor component surface (Microsoft.AspNetCore.Components.Web), NOT the ASP.NET Core
+    shared framework: the Blazor-Server-only auth pieces (ProtectedSessionStorage AuthSession +
+    CircuitHandler bridge) live in the web host under src/TrStudio/Auth/, and the Hybrid head supplies
+    its own SecureStorage-backed IAuthSession. Only the pure contracts (IAuthSession, AuthSessionState)
+    stay here. A FrameworkReference to Microsoft.AspNetCore.App would not resolve for the MAUI TFMs.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="[10.0.3]" />
+    <!-- IHostEnvironment for the dev-session seam gate; cross-platform (Web + MAUI Hybrid). -->
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="[10.0.0]" />
+    <PackageReference Include="TrBlazeUI.Components" Version="[1.0.7]" />
+    <PackageReference Include="TrBlazeUI.Icons.Lucide" Version="[1.0.7]" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TrStudio.Models\TrStudio.Models.csproj" />
+  </ItemGroup>
+
+</Project>

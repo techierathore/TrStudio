@@ -1,0 +1,119 @@
+@page "/dev/session"
+@layout TrStudioUI.Layout.EmptyLayout
+@using Microsoft.Extensions.Hosting
+@inject NavigationManager Navigation
+@inject IHostEnvironment HostEnvironment
+@inject IHttpClientFactory HttpClientFactory
+@inject IAuthSession AuthSession
+
+@*
+    DEV-ONLY session seam. A live AppManager is required to obtain a real session token; this page
+    lets a developer (or a headless smoke) paste a dev-signed JWT straight into IAuthSession so the
+    per-user API plumbing can be exercised end-to-end without AppManager. Gated to the Development
+    environment — it renders nothing in Staging/Production. The token lives only in the form field
+    and the encrypted session store; it is never logged nor placed in a URL (NFR-05).
+*@
+
+<PageTitle>TrStudio — Dev session</PageTitle>
+
+@if (!HostEnvironment.IsDevelopment())
+{
+    <Card Class="auth-card">
+        <div class="auth-brand-name">Not available</div>
+        <div class="auth-note">The dev session seam is disabled outside the Development environment.</div>
+    </Card>
+}
+else
+{
+    <Card Class="auth-card" data-testid="dev-session-card">
+        <div class="auth-brand">
+            <div class="auth-brand-logo shell-logo brand-gradient">TR</div>
+            <div>
+                <h1 class="auth-brand-name">Dev session seam</h1>
+                <div class="auth-brand-tag">Paste a dev-signed JWT to establish a session</div>
+            </div>
+        </div>
+
+        <div class="auth-field">
+            <Label For="devtoken">Bearer token (JWT)</Label>
+            <Textarea Id="devtoken" @bind-Value="objToken" Placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…" data-testid="dev-token" />
+        </div>
+
+        <Button Class="auth-submit" OnClick="EstablishAsync" Disabled="@string.IsNullOrWhiteSpace(objToken)" data-testid="dev-establish">
+            <LucideIcon Name="log-in" Size="14" />
+            <span>Establish session</span>
+        </Button>
+    </Card>
+}
+
+@code {
+    private string objToken = string.Empty;
+
+    /// <summary>
+    /// Stores the pasted token as the current session, then resolves the AUTHORITATIVE role and
+    /// landing path from <c>GET /api/v1/auth/me</c> (which reads the dev token's role claim). This
+    /// makes the in-app role-based surface + the /admin/* client gate reflect the real role of the
+    /// pasted token — so a smoke can exercise Creator, Operator and Owner via this one seam — instead
+    /// of a hard-coded Creator role. Falls back to a creator session if <c>/me</c> is unreachable.
+    /// </summary>
+    private async Task EstablishAsync()
+    {
+        if (string.IsNullOrWhiteSpace(objToken))
+        {
+            return;
+        }
+
+        var vToken = objToken.Trim();
+
+        // Persist the token first so the AuthTokenHandler stamps it on the /me call below.
+        await AuthSession.SetAsync(new LoginResponse
+        {
+            Token = vToken,
+            RefreshToken = string.Empty,
+            UserId = "(dev)",
+            Role = UserRole.Creator,
+            DefaultLandingPath = "/projects"
+        });
+
+        var vRole = UserRole.Creator;
+        var vUserId = "(dev)";
+        var vLanding = "/projects";
+
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vResponse = await vClient.GetAsync(ApiRoutes.Auth + "/me");
+            if (vResponse.IsSuccessStatusCode)
+            {
+                var vProfile = await vResponse.Content.ReadFromJsonAsync<UserProfileResponse>();
+                if (vProfile is not null)
+                {
+                    vRole = vProfile.Role;
+                    vUserId = string.IsNullOrWhiteSpace(vProfile.UserId) ? vUserId : vProfile.UserId;
+                    vLanding = string.IsNullOrWhiteSpace(vProfile.DefaultLandingPath)
+                        ? RoleLanding(vRole)
+                        : vProfile.DefaultLandingPath;
+
+                    await AuthSession.SetAsync(new LoginResponse
+                    {
+                        Token = vToken,
+                        RefreshToken = string.Empty,
+                        UserId = vUserId,
+                        Role = vRole,
+                        DefaultLandingPath = vLanding
+                    });
+                }
+            }
+        }
+        catch
+        {
+            // /me unreachable — keep the creator fallback session established above.
+        }
+
+        Navigation.NavigateTo(vLanding, forceLoad: true);
+    }
+
+    /// <summary>Role-appropriate landing when the profile carries no explicit landing path.</summary>
+    private static string RoleLanding(UserRole aRole) =>
+        aRole == UserRole.Operator ? "/admin/ops" : "/avatar";
+}

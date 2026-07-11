@@ -1,0 +1,194 @@
+@page "/login"
+@layout TrStudioUI.Layout.EmptyLayout
+@inject NavigationManager Navigation
+@inject IHttpClientFactory HttpClientFactory
+@inject IAuthSession AuthSession
+
+@*
+    Sign-in screen (REQ-UI-001) — centered brand card on the bare EmptyLayout.
+    Validates email/password client-side (submit stays disabled until valid), posts to
+    the AppManager-backed /api/v1/auth/login, surfaces auth failures in a Danger Alert
+    and routes to the setup-gate-aware role landing on success (BRD-84).
+*@
+
+<PageTitle>TrStudio — Sign in</PageTitle>
+
+<Card Class="auth-card" data-testid="login-card">
+    <div class="auth-brand">
+        <div class="auth-brand-logo shell-logo brand-gradient">TR</div>
+        <div>
+            <h1 class="auth-brand-name">Welcome back to TrStudio</h1>
+            <div class="auth-brand-tag">Avatar-led AI image &amp; video studio</div>
+        </div>
+    </div>
+
+    @if (objError is not null)
+    {
+        <div data-testid="login-error">
+            <Alert Variant="AlertVariant.Danger" AccentBorder="true" Class="mb-4">
+                <LucideIcon Name="alert-circle" Size="16" />
+                <AlertTitle>Sign-in failed</AlertTitle>
+                <AlertDescription>@objError</AlertDescription>
+            </Alert>
+        </div>
+    }
+
+    <div class="auth-field">
+        <Field IsInvalid="@(objSubmitted && !IsEmailValid)">
+            <FieldLabel>
+                <Label For="email">Email</Label>
+            </FieldLabel>
+            <FieldContent>
+                <Input Id="email" Type="InputType.Email" @bind-Value="objEmail"
+                       Placeholder="you@studio.com" AriaInvalid="@(objSubmitted && !IsEmailValid)" />
+                @if (objSubmitted && !IsEmailValid)
+                {
+                    <FieldError>Enter a valid email address.</FieldError>
+                }
+            </FieldContent>
+        </Field>
+    </div>
+
+    <div class="auth-field">
+        <div class="auth-fieldrow">
+            <Label For="pwd">Password</Label>
+            <a class="auth-link" href="/forgot-password">Forgot password?</a>
+        </div>
+        <Field IsInvalid="@(objSubmitted && !IsPasswordValid)">
+            <FieldContent>
+                <Input Id="pwd" Type="InputType.Password" @bind-Value="objPassword" Placeholder="••••••••" />
+                @if (objSubmitted && !IsPasswordValid)
+                {
+                    <FieldError>Password is required.</FieldError>
+                }
+            </FieldContent>
+        </Field>
+    </div>
+
+    <Button Class="auth-submit" Type="ButtonType.Submit" OnClick="HandleSignInAsync"
+            Disabled="@(objBusy || !IsFormValid)" data-testid="signin-btn">
+        @if (objBusy)
+        {
+            <Spinner Size="SpinnerSize.Small" Class="mr-2" />
+            <span>Signing in…</span>
+        }
+        else
+        {
+            <LucideIcon Name="log-in" Size="14" />
+            <span>Sign in</span>
+        }
+    </Button>
+
+    <div class="auth-divline">AppManager</div>
+    <div class="auth-note">
+        Your identity and license are managed by AppManager. TrStudio never stores your password —
+        only your AppManager userId.
+    </div>
+
+    <div class="auth-switch">New to TrStudio? <a href="/register">Create an account</a></div>
+</Card>
+
+@code {
+    private string objEmail = string.Empty;
+    private string objPassword = string.Empty;
+    private bool objSubmitted;
+    private bool objBusy;
+    private string? objError;
+
+    /// <summary>Whether the email field holds a syntactically valid address.</summary>
+    private bool IsEmailValid =>
+        !string.IsNullOrWhiteSpace(objEmail)
+        && objEmail.Contains('@', StringComparison.Ordinal)
+        && objEmail.IndexOf('.', objEmail.IndexOf('@', StringComparison.Ordinal)) > 0;
+
+    /// <summary>Whether a password has been entered.</summary>
+    private bool IsPasswordValid => !string.IsNullOrWhiteSpace(objPassword);
+
+    /// <summary>Whether the whole form is valid and submittable.</summary>
+    private bool IsFormValid => IsEmailValid && IsPasswordValid;
+
+    /// <summary>Validates, posts the login and routes to the role landing on success.</summary>
+    private async Task HandleSignInAsync()
+    {
+        objSubmitted = true;
+        objError = null;
+        if (!IsFormValid)
+        {
+            return;
+        }
+
+        objBusy = true;
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vRequest = new LoginRequest { Email = objEmail, Password = objPassword };
+            var vResponse = await vClient.PostAsJsonAsync(ApiRoutes.Auth + "/login", vRequest);
+
+            if (vResponse.IsSuccessStatusCode)
+            {
+                var vSession = await vResponse.Content.ReadFromJsonAsync<LoginResponse>();
+                if (vSession is not null)
+                {
+                    // Persist the session BEFORE navigating so the next circuit's API calls carry it.
+                    await AuthSession.SetAsync(vSession);
+                }
+
+                Navigation.NavigateTo(ResolveLanding(vSession));
+                return;
+            }
+
+            objError = await ReadErrorAsync(vResponse);
+        }
+        catch (Exception vException)
+        {
+            objError = $"Could not reach the sign-in service. {vException.Message}";
+        }
+        finally
+        {
+            objBusy = false;
+        }
+    }
+
+    /// <summary>Resolves the post-login landing path from the session (setup-gate aware).</summary>
+    private static string ResolveLanding(LoginResponse? aSession)
+    {
+        if (aSession is null)
+        {
+            return "/avatar";
+        }
+
+        if (!string.IsNullOrWhiteSpace(aSession.DefaultLandingPath))
+        {
+            return aSession.DefaultLandingPath;
+        }
+
+        return aSession.Role == UserRole.Operator ? "/admin/ops" : "/avatar";
+    }
+
+    /// <summary>Extracts a human-readable message from an API ProblemDetails response.</summary>
+    private static async Task<string> ReadErrorAsync(HttpResponseMessage aResponse)
+    {
+        try
+        {
+            var vProblem = await aResponse.Content.ReadFromJsonAsync<ProblemLike>();
+            if (!string.IsNullOrWhiteSpace(vProblem?.Detail))
+            {
+                return vProblem.Detail!;
+            }
+        }
+        catch
+        {
+            // Non-JSON body — fall through to a generic message.
+        }
+
+        return aResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized
+            ? "Invalid email or password."
+            : "Sign-in failed. Please try again.";
+    }
+
+    private sealed class ProblemLike
+    {
+        public string? Title { get; set; }
+        public string? Detail { get; set; }
+    }
+}

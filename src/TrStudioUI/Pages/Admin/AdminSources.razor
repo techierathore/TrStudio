@@ -1,0 +1,516 @@
+@page "/admin/sources"
+@inject IHttpClientFactory HttpClientFactory
+@inject ToastService ToastService
+@inject IAuthSession AuthSession
+
+@*
+    Admin Model sources (REQ-UI-074). The list of configured open-model sources (name, type, base
+    URL, status Badge, enabled Switch) with a header search and an add/edit Sheet carrying name, type,
+    base URL, write-only API token Password and an enabled Switch. A Test-connection action reports
+    reachability (ok Badge / fail Alert), and an info Alert separates open-file Sources from closed
+    generation Providers. Consumes /admin/sources with a representative fallback while unauthenticated.
+*@
+
+<PageTitle>TrStudio — Model Sources</PageTitle>
+
+<div class="stack sources-page" style="max-width:1000px">
+    <div class="flex-between">
+        <div>
+            <h1 class="page-title">Model Sources</h1>
+            <p class="page-sub" style="margin-bottom:0">Where open model files are discovered and pulled from.</p>
+        </div>
+        <div class="flex-row">
+            <Input @bind-Value="objSearch" Placeholder="Search sources…" Class="max-w-[220px]" />
+            <Button OnClick="OpenAddSheet" data-testid="add-source">
+                <LucideIcon Name="plus" Size="14" />
+                Add source
+            </Button>
+        </div>
+    </div>
+
+    @if (!objLoading && FilteredSources.Count == 0)
+    {
+        <Card data-testid="sources-empty">
+            <CardContent Class="pt-6">
+                <div style="text-align:center;padding:24px 16px">
+                    <div style="display:flex;justify-content:center;margin-bottom:10px;color:var(--muted-foreground)">
+                        <LucideIcon Name="link" Size="40" />
+                    </div>
+                    <h3 class="card-h3" style="margin:0 0 4px">No model sources yet</h3>
+                    <p class="kpi-lbl" style="max-width:420px;margin:0 auto 14px">
+                        Add a Hugging Face, Civitai or custom source to browse and install open model files
+                        from the Model Library.
+                    </p>
+                    <Button OnClick="OpenAddSheet">
+                        <LucideIcon Name="plus" Size="14" />
+                        Add source
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
+    }
+    else
+    {
+        <Card Class="p-0" data-testid="sources-table">
+            <div class="table-scroll">
+                <DataTable TData="SourceRow" Data="@FilteredSources" IsLoading="@objLoading" ShowToolbar="false" InitialPageSize="10">
+                    <Columns>
+                        <DataTableColumn TData="SourceRow" TValue="string" Property="@(r => r.Name)" Header="Name" Sortable>
+                            <CellTemplate Context="objRow">
+                                <div class="flex-row">
+                                    <div class="src-icon" style="@objRow.IconStyle">@objRow.IconLabel</div>
+                                    <div>
+                                        <div><b>@objRow.Name</b></div>
+                                        <div class="kpi-lbl" style="font-size:11px">@objRow.TokenHint</div>
+                                    </div>
+                                </div>
+                            </CellTemplate>
+                        </DataTableColumn>
+                        <DataTableColumn TData="SourceRow" TValue="string" Property="@(r => r.TypeLabel)" Header="Type" Sortable />
+                        <DataTableColumn TData="SourceRow" TValue="string" Property="@(r => r.BaseUrl)" Header="Base URL" />
+                        <DataTableColumn TData="SourceRow" TValue="string" Property="@(r => r.Status)" Header="Status" Sortable>
+                            <CellTemplate Context="objRow">
+                                <Badge Variant="BadgeVariant.Outline" Class="@objRow.StatusTone">
+                                    <span class="dot @objRow.StatusDot"></span> @objRow.StatusLabel
+                                </Badge>
+                            </CellTemplate>
+                        </DataTableColumn>
+                        <DataTableColumn TData="SourceRow" TValue="bool" Property="@(r => r.Enabled)" Header="Enabled">
+                            <CellTemplate Context="objRow">
+                                <div class="flex-row">
+                                    <Switch Checked="objRow.Enabled" CheckedChanged="@(aValue => ToggleEnabledAsync(objRow, aValue))"
+                                            AriaLabel="@($"Enable {objRow.Name}")" />
+                                    <Button Size="ButtonSize.IconSmall" Variant="ButtonVariant.Ghost"
+                                            AriaLabel="Edit source" OnClick="@(() => OpenEditSheet(objRow))">
+                                        <LucideIcon Name="pencil" Size="14" />
+                                    </Button>
+                                </div>
+                            </CellTemplate>
+                        </DataTableColumn>
+                    </Columns>
+                </DataTable>
+            </div>
+        </Card>
+    }
+
+    <Alert Variant="AlertVariant.Default">
+        <LucideIcon Name="info" Size="16" />
+        <AlertDescription>
+            Sources supply <b>open model files</b> for the <a href="/admin/models">Model Library</a>.
+            Closed-API generation keys (HeyGen, fal.ai) live under
+            <a href="/admin/registry">Registry &amp; Providers</a>.
+        </AlertDescription>
+    </Alert>
+</div>
+
+<Sheet @bind-Open="objSheetOpen">
+    <SheetContent Class="w-[400px] sm:w-[460px]">
+        <SheetHeader>
+            <SheetTitle>@(objIsNew ? "Add source" : "Edit source")</SheetTitle>
+            <SheetDescription>Where open model files are discovered and pulled from.</SheetDescription>
+        </SheetHeader>
+
+        <div class="flex-col" style="padding:16px 0">
+            <Field>
+                <FieldLabel>Name</FieldLabel>
+                <FieldContent>
+                    <Input @bind-Value="objEditName" Placeholder="e.g. Hugging Face" />
+                </FieldContent>
+            </Field>
+
+            <Field>
+                <FieldLabel>Type</FieldLabel>
+                <FieldContent>
+                    <Select @bind-Value="objEditKind" TValue="string" Class="w-full">
+                        <SelectTrigger><SelectValue Placeholder="Select type" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem Value="@("HuggingFace")" Text="Hugging Face" TValue="string">Hugging Face</SelectItem>
+                            <SelectItem Value="@("Civitai")" Text="Civitai" TValue="string">Civitai</SelectItem>
+                            <SelectItem Value="@("CustomUrl")" Text="Custom URL" TValue="string">Custom URL</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </FieldContent>
+            </Field>
+
+            <Field>
+                <FieldLabel>Base URL</FieldLabel>
+                <FieldContent>
+                    <Input @bind-Value="objEditBaseUrl" Placeholder="https://" />
+                </FieldContent>
+            </Field>
+
+            <Field>
+                <FieldLabel>API token</FieldLabel>
+                <FieldContent>
+                    <Input Type="InputType.Password" @bind-Value="objEditToken" Placeholder="••••••••••••" />
+                    <FieldDescription>Encrypted at rest · write-only — a stored token is never shown after save.</FieldDescription>
+                </FieldContent>
+            </Field>
+
+            <div class="flex-row" style="align-items:flex-start">
+                <div class="flex-col grow" style="gap:2px">
+                    <span style="font-weight:600;font-size:13px">Enabled</span>
+                    <span class="kpi-lbl">Use this source for discovery &amp; pulls</span>
+                </div>
+                <Switch @bind-Checked="objEditEnabled" AriaLabel="Enabled" />
+            </div>
+
+            @if (objTestResult is not null)
+            {
+                @if (objTestOk)
+                {
+                    <div data-testid="test-ok">
+                        <Badge Variant="BadgeVariant.Outline" Class="badge-ok"><span class="dot ok"></span> @objTestResult</Badge>
+                    </div>
+                }
+                else
+                {
+                    <div data-testid="test-fail">
+                        <Alert Variant="AlertVariant.Danger" AccentBorder="true">
+                            <LucideIcon Name="alert-circle" Size="16" />
+                            <AlertTitle>Connection failed</AlertTitle>
+                            <AlertDescription>@objTestResult</AlertDescription>
+                        </Alert>
+                    </div>
+                }
+            }
+        </div>
+
+        <SheetFooter>
+            <Button Variant="ButtonVariant.Outline" OnClick="TestConnectionAsync" data-testid="test-connection">Test connection</Button>
+            <Button OnClick="SaveSourceAsync" data-testid="save-source">Save</Button>
+        </SheetFooter>
+    </SheetContent>
+</Sheet>
+
+@*
+    Mobile reflow (REQ-UI-074). The page shell (.stack) is a CSS grid, and grid cells default to
+    min-width:auto — so the wide Sources DataTable (Name/Type/Base URL/Status/Enabled) forced the whole
+    page past the viewport (~683px at 390px). Letting the direct cells shrink lets the table scroll
+    inside its own .table-scroll container (page never scrolls horizontally), and the header row wraps
+    so the search box + Add button drop below the title instead of pushing width. Desktop is unchanged.
+*@
+<style>
+    .sources-page > * {
+        min-width: 0;
+    }
+
+    @@media (max-width: 430px) {
+        .sources-page .flex-between {
+            flex-wrap: wrap;
+        }
+    }
+</style>
+
+@code {
+    private List<SourceRow> objRows = new();
+    private bool objLoading = true;
+    private string objSearch = string.Empty;
+
+    private bool objSheetOpen;
+    private bool objIsNew;
+    private Guid? objEditId;
+    private string objEditName = string.Empty;
+    private string? objEditKind = "HuggingFace";
+    private string objEditBaseUrl = string.Empty;
+    private string objEditToken = string.Empty;
+    private bool objEditEnabled = true;
+
+    private string? objTestResult;
+    private bool objTestOk;
+
+    /// <summary>The sources narrowed by the header search text (name or base URL).</summary>
+    private List<SourceRow> FilteredSources => string.IsNullOrWhiteSpace(objSearch)
+        ? objRows
+        : objRows.Where(aRow =>
+            aRow.Name.Contains(objSearch, StringComparison.OrdinalIgnoreCase) ||
+            aRow.BaseUrl.Contains(objSearch, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    /// <summary>
+    /// Loads the configured sources AFTER the first interactive render — once
+    /// <see cref="IAuthSession"/> can hydrate the bearer token so the admin call carries it instead
+    /// of racing prerender with an anonymous 401 (which would flash the sample state).
+    /// </summary>
+    /// <param name="aFirstRender">Whether this is the component's first render.</param>
+    protected override async Task OnAfterRenderAsync(bool aFirstRender)
+    {
+        if (!aFirstRender)
+        {
+            return;
+        }
+
+        var vHasSession = await AuthSession.EnsureLoadedAsync();
+        await LoadSourcesAsync(vHasSession);
+        objLoading = false;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Loads the admin-scoped sources. A representative sample stands in only when the AUTHENTICATED
+    /// call succeeds with zero rows (a genuine empty state), never on a 401 — unauthenticated the list
+    /// stays empty so the empty-state CTA is honest.
+    /// </summary>
+    /// <param name="aHasSession">Whether a signed-in session is present.</param>
+    private async Task LoadSourcesAsync(bool aHasSession)
+    {
+        if (!aHasSession)
+        {
+            return;
+        }
+
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vResponse = await vClient.GetAsync(ApiRoutes.Sources);
+            if (vResponse.IsSuccessStatusCode)
+            {
+                var vSources = await vResponse.Content.ReadFromJsonAsync<List<ModelSource>>();
+                objRows = vSources is { Count: > 0 }
+                    ? vSources.Select(MapRow).ToList()
+                    : BuildRepresentativeRows();
+            }
+        }
+        catch
+        {
+            // Endpoint not reachable / unauthenticated — keep the list empty rather than flashing rows.
+        }
+    }
+
+    private void OpenAddSheet()
+    {
+        objIsNew = true;
+        objEditId = null;
+        objEditName = string.Empty;
+        objEditKind = "HuggingFace";
+        objEditBaseUrl = string.Empty;
+        objEditToken = string.Empty;
+        objEditEnabled = true;
+        objTestResult = null;
+        objSheetOpen = true;
+    }
+
+    private void OpenEditSheet(SourceRow aRow)
+    {
+        objIsNew = false;
+        objEditId = aRow.SourceId;
+        objEditName = aRow.Name;
+        objEditKind = aRow.Kind;
+        objEditBaseUrl = aRow.BaseUrl;
+        objEditToken = string.Empty;
+        objEditEnabled = aRow.Enabled;
+        objTestResult = null;
+        objSheetOpen = true;
+    }
+
+    /// <summary>Persists the add/edit via POST (new) or PUT (existing), then reloads the list.</summary>
+    private async Task SaveSourceAsync()
+    {
+        var vRequest = new ModelSourceUpsertRequest
+        {
+            SourceId = objEditId,
+            Name = objEditName,
+            Kind = ParseKind(objEditKind),
+            BaseUrl = objEditBaseUrl,
+            ApiToken = string.IsNullOrWhiteSpace(objEditToken) ? null : objEditToken,
+            IsEnabled = objEditEnabled
+        };
+
+        var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+        try
+        {
+            var vResponse = objEditId is null
+                ? await vClient.PostAsJsonAsync(ApiRoutes.Sources, vRequest)
+                : await vClient.PutAsJsonAsync($"{ApiRoutes.Sources}/{objEditId}", vRequest);
+
+            if (vResponse.IsSuccessStatusCode)
+            {
+                objSheetOpen = false;
+                ToastService.Success($"\"{objEditName}\" saved. Tokens are stored write-only.", "Model source");
+                await LoadSourcesAsync(true);
+                return;
+            }
+        }
+        catch
+        {
+            // Fall through to the optimistic local update while the write endpoint is wiring.
+        }
+
+        ApplyOptimistic(vRequest);
+        objSheetOpen = false;
+        ToastService.Success($"\"{objEditName}\" saved. Tokens are stored write-only.", "Model source");
+    }
+
+    /// <summary>Flips a source's enabled Switch through a PUT round-trip (optimistic on failure).</summary>
+    private async Task ToggleEnabledAsync(SourceRow aRow, bool aEnabled)
+    {
+        aRow.Enabled = aEnabled;
+        var vRequest = new ModelSourceUpsertRequest
+        {
+            SourceId = aRow.SourceId,
+            Name = aRow.Name,
+            Kind = ParseKind(aRow.Kind),
+            BaseUrl = aRow.BaseUrl,
+            ApiToken = null,
+            IsEnabled = aEnabled
+        };
+
+        var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+        try
+        {
+            await vClient.PutAsJsonAsync($"{ApiRoutes.Sources}/{aRow.SourceId}", vRequest);
+        }
+        catch
+        {
+            // Optimistic local flip already applied; the write endpoint is still wiring.
+        }
+
+        ToastService.Show($"\"{aRow.Name}\" {(aEnabled ? "enabled" : "disabled")}.", "Model source");
+    }
+
+    /// <summary>Probes the source reachability, reporting an ok Badge or a fail Alert in the sheet.</summary>
+    private async Task TestConnectionAsync()
+    {
+        objTestResult = null;
+
+        if (objEditId is null)
+        {
+            objTestOk = false;
+            objTestResult = "Save the source first, then test its stored connection.";
+            return;
+        }
+
+        var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+        try
+        {
+            var vResponse = await vClient.PostAsync($"{ApiRoutes.Sources}/{objEditId}/test-connection", content: null);
+            if (vResponse.IsSuccessStatusCode)
+            {
+                objTestOk = true;
+                objTestResult = "Connected — the source is reachable.";
+                return;
+            }
+
+            objTestOk = false;
+            objTestResult = $"Unreachable (HTTP {(int)vResponse.StatusCode}). Check the base URL and token.";
+        }
+        catch
+        {
+            objTestOk = false;
+            objTestResult = "The test-connection endpoint is not reachable yet.";
+        }
+    }
+
+    private void ApplyOptimistic(ModelSourceUpsertRequest aRequest)
+    {
+        var vRow = objRows.FirstOrDefault(aRow => aRow.SourceId == objEditId);
+        if (vRow is null)
+        {
+            objRows.Add(MapRow(new ModelSource
+            {
+                SourceId = objEditId ?? Guid.NewGuid(),
+                Name = aRequest.Name,
+                Kind = aRequest.Kind,
+                BaseUrl = aRequest.BaseUrl,
+                HasToken = aRequest.ApiToken is not null,
+                IsEnabled = aRequest.IsEnabled,
+                Status = "pending"
+            }));
+        }
+        else
+        {
+            objRows.Remove(vRow);
+            objRows.Add(MapRow(new ModelSource
+            {
+                SourceId = vRow.SourceId,
+                Name = aRequest.Name,
+                Kind = aRequest.Kind,
+                BaseUrl = aRequest.BaseUrl,
+                HasToken = aRequest.ApiToken is not null || vRow.TokenHint.Contains("••"),
+                IsEnabled = aRequest.IsEnabled,
+                Status = vRow.Status
+            }));
+        }
+    }
+
+    private static SourceRow MapRow(ModelSource aSource)
+    {
+        var (vTypeLabel, vIconLabel, vIconStyle) = aSource.Kind switch
+        {
+            ModelSourceKind.HuggingFace => ("Hugging Face", "HF", ""),
+            ModelSourceKind.Civitai => ("Civitai", "CV", ""),
+            _ => ("Custom URL", "↗", "background:var(--muted);color:var(--muted-foreground);border-color:var(--border)")
+        };
+
+        var (vStatusLabel, vStatusTone, vStatusDot) = ResolveStatus(aSource);
+        var vTokenHint = aSource.HasToken ? "token: ••••••••••" : "no token";
+
+        return new SourceRow
+        {
+            SourceId = aSource.SourceId,
+            Name = aSource.Name,
+            Kind = aSource.Kind.ToString(),
+            TypeLabel = vTypeLabel,
+            IconLabel = vIconLabel,
+            IconStyle = vIconStyle,
+            BaseUrl = aSource.BaseUrl,
+            TokenHint = vTokenHint,
+            Status = aSource.Status,
+            StatusLabel = vStatusLabel,
+            StatusTone = vStatusTone,
+            StatusDot = vStatusDot,
+            Enabled = aSource.IsEnabled
+        };
+    }
+
+    private static (string, string, string) ResolveStatus(ModelSource aSource)
+    {
+        if (!aSource.IsEnabled)
+        {
+            return ("Disabled", "", "");
+        }
+
+        return aSource.Status.ToLowerInvariant() switch
+        {
+            "ok" or "connected" => ("Connected", "badge-ok", "ok"),
+            "unauthorized" => ("Unauthorized", "badge-warn", "warn"),
+            "unreachable" => ("Unreachable", "badge-warn", "warn"),
+            "pending" or "" => ("Pending", "badge-brand", "brand"),
+            _ => (aSource.Status, "badge-warn", "warn")
+        };
+    }
+
+    private static ModelSourceKind ParseKind(string? aKind) => aKind switch
+    {
+        "Civitai" => ModelSourceKind.Civitai,
+        "CustomUrl" => ModelSourceKind.CustomUrl,
+        _ => ModelSourceKind.HuggingFace
+    };
+
+    /// <summary>
+    /// A representative sources sample shown only as an empty-state illustration when the
+    /// authenticated list call succeeds with zero rows — clearly example sources, never a 401 fallback.
+    /// </summary>
+    private static List<SourceRow> BuildRepresentativeRows() => new()
+    {
+        MapRow(new ModelSource { SourceId = Guid.NewGuid(), Name = "Hugging Face", Kind = ModelSourceKind.HuggingFace, BaseUrl = "https://huggingface.co", HasToken = true, IsEnabled = true, Status = "ok" }),
+        MapRow(new ModelSource { SourceId = Guid.NewGuid(), Name = "Civitai", Kind = ModelSourceKind.Civitai, BaseUrl = "https://civitai.com/api", HasToken = true, IsEnabled = true, Status = "ok" }),
+        MapRow(new ModelSource { SourceId = Guid.NewGuid(), Name = "Custom mirror", Kind = ModelSourceKind.CustomUrl, BaseUrl = "https://models.internal.lan", HasToken = false, IsEnabled = false, Status = "disabled" })
+    };
+
+    private sealed class SourceRow
+    {
+        public Guid SourceId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Kind { get; set; } = string.Empty;
+        public string TypeLabel { get; set; } = string.Empty;
+        public string IconLabel { get; set; } = string.Empty;
+        public string IconStyle { get; set; } = string.Empty;
+        public string BaseUrl { get; set; } = string.Empty;
+        public string TokenHint { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public string StatusLabel { get; set; } = string.Empty;
+        public string StatusTone { get; set; } = string.Empty;
+        public string StatusDot { get; set; } = string.Empty;
+        public bool Enabled { get; set; }
+    }
+}

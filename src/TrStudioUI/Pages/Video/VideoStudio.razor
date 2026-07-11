@@ -1,0 +1,620 @@
+@page "/video"
+@using TrBlazeUI.Components.Toolbar
+@using TrBlazeUI.Components.FileUpload
+@using System.Text.Json
+@inject IHttpClientFactory HttpClientFactory
+@inject ToastService ToastService
+@inject IAuthSession AuthSession
+@inject NavigationManager Navigation
+
+@*
+    Video Studio (REQ-UI-040). A three-column studio: (left) an Image→Video / Text→Video mode Tabs
+    that swaps the conditioning controls — first/last-frame FileUpload for I2V, a prompt Textarea for
+    T2V — over shared duration/motion Sliders + an aspect Select, plus a Fast/High/Premium quality
+    tier RadioGroup (cost/eta, HeyGen Badge on Premium) with a closed-API routing Alert whenever a
+    cloud tier is picked; (centre) a timeline/editor Card with a 16:9 preview player, a trim/join/
+    reframe/add-audio/split Toolbar, video + audio tracks (placeholder when empty), and a render pass
+    that animates Progress with an eta; (right) an interpolate/smooth-motion post-processing panel with
+    an upscale action, and a platform-preset Export MP4 panel.
+
+    Generation rides the shared job spine (POST /api/v1/jobs, task = ImageToVideo / TextToVideo);
+    edit/interpolate/upscale are best-effort spine round-trips. Data follows the enrich-or-seed
+    pattern: the studio renders and stays demonstrable whether or not the Phase-7 endpoints are live.
+*@
+
+<PageTitle>TrStudio — Video Studio</PageTitle>
+
+<h1 class="page-title">Video Studio</h1>
+<p class="page-sub">Image→Video / Text→Video generation, timeline editing and export.</p>
+
+<div class="studio" data-testid="video-studio">
+
+    @* ---- LEFT: mode + conditioning + controls + tier ---- *@
+    <div class="studio-col">
+        <Card>
+            <h3 class="card-h3">Mode</h3>
+            <div data-testid="mode-tabs">
+                <Tabs Value="@objMode" ValueChanged="OnModeChanged">
+                    <TabsList Class="grid w-full grid-cols-2">
+                        <TabsTrigger Value="i2v">Image → Video</TabsTrigger>
+                        <TabsTrigger Value="t2v">Text → Video</TabsTrigger>
+                    </TabsList>
+                </Tabs>
+            </div>
+            <div class="seg-hint">@(IsImageToVideo ? "Animates a source frame into a clip." : "Synthesises a clip from a prompt.")</div>
+        </Card>
+
+        @if (IsImageToVideo)
+        {
+            <Card data-testid="i2v-frames">
+                <h3 class="card-h3">Conditioning frames</h3>
+                <div class="vid-frames">
+                    <div>
+                        <label class="param-label">First frame</label>
+                        <div data-testid="first-frame-upload">
+                            <FileUpload Accept="image/*" FilesChanged="OnFirstFrameSelected" />
+                        </div>
+                        <div class="muted-sm" style="margin-top:4px">@(objFirstFrame ?? "Required for I→V")</div>
+                    </div>
+                    <div>
+                        <label class="param-label">Last frame (optional)</label>
+                        <div data-testid="last-frame-upload">
+                            <FileUpload Accept="image/*" FilesChanged="OnLastFrameSelected" />
+                        </div>
+                        <div class="muted-sm" style="margin-top:4px">@(objLastFrame ?? "Interpolate toward end")</div>
+                    </div>
+                </div>
+            </Card>
+        }
+        else
+        {
+            <Card data-testid="t2v-prompt">
+                <h3 class="card-h3">Prompt</h3>
+                <Textarea @bind-Value="objPrompt" Placeholder="Describe the motion and scene to generate…" MaxLength="600" />
+                <div class="seg-hint">Text→Video needs no source frame.</div>
+            </Card>
+        }
+
+        <Card>
+            <h3 class="card-h3">Controls</h3>
+            <div class="param-field">
+                <div class="param-head">
+                    <label class="param-label">Duration</label>
+                    <span class="param-val">@((int)objDuration)s</span>
+                </div>
+                <div data-testid="duration-slider">
+                    <Slider @bind-Value="objDuration" Min="2" Max="10" Step="1" />
+                </div>
+            </div>
+            <div class="param-field">
+                <div class="param-head">
+                    <label class="param-label">Motion strength</label>
+                    <span class="param-val">@objMotion.ToString("0.0")</span>
+                </div>
+                <div data-testid="motion-slider">
+                    <Slider @bind-Value="objMotion" Min="0" Max="1" Step="0.1" />
+                </div>
+            </div>
+            <label class="param-label">Aspect ratio</label>
+            <div data-testid="aspect-select">
+                <Select @bind-Value="objAspect" TValue="string" Class="w-full">
+                    <SelectTrigger><SelectValue Placeholder="Aspect ratio" /></SelectTrigger>
+                    <SelectContent>
+                        @foreach (var vAspect in objAspects)
+                        {
+                            <SelectItem Value="@vAspect.Key" Text="@vAspect.Value" TValue="string">@vAspect.Value</SelectItem>
+                        }
+                    </SelectContent>
+                </Select>
+            </div>
+        </Card>
+
+        <Card>
+            <h3 class="card-h3">Quality tier</h3>
+            <div data-testid="tier-group">
+                <RadioGroup @bind-Value="objTier" TValue="string" Class="grid gap-2">
+                    @foreach (var vTier in objTiers)
+                    {
+                        <label class="tier-option @(vTier.Key == objTier ? "is-sel" : "")" for="@($"vtier-{vTier.Key}")">
+                            <RadioGroupItem Value="@vTier.Key" Id="@($"vtier-{vTier.Key}")" TValue="string" />
+                            <div style="flex:1;min-width:0">
+                                <div class="flex-between">
+                                    <strong>@vTier.Name</strong>
+                                    @if (vTier.HeyGen)
+                                    {
+                                        <span data-testid="tier-heygen-badge"><Badge>HeyGen</Badge></span>
+                                    }
+                                    else
+                                    {
+                                        <span class="muted-sm">@FormatCost(vTier.Cost) · @vTier.Eta</span>
+                                    }
+                                </div>
+                                <div class="muted-sm">@vTier.Detail</div>
+                                @if (vTier.HeyGen)
+                                {
+                                    <div class="muted-sm">@FormatCost(vTier.Cost) · @vTier.Eta</div>
+                                }
+                            </div>
+                        </label>
+                    }
+                </RadioGroup>
+            </div>
+            <div style="margin-top:10px">
+                <Badge Class="badge-brand">Provider: @SelectedTier.Provider</Badge>
+            </div>
+            @if (SelectedTier.CloudRouted)
+            {
+                <div data-testid="routing-alert" style="margin-top:10px">
+                    <Alert Variant="AlertVariant.Info" AccentBorder="true">
+                        <LucideIcon Name="cloud" Size="16" />
+                        <AlertTitle>Routed to @SelectedTier.Provider@(SelectedTier.HeyGen ? " (closed API)" : " (serverless GPU)")</AlertTitle>
+                        <AlertDescription>
+                            Output is billed against your monthly cap and stamped with provenance on export.
+                        </AlertDescription>
+                    </Alert>
+                </div>
+            }
+        </Card>
+    </div>
+
+    @* ---- CENTER: timeline / editor + rendering ---- *@
+    <div class="studio-col">
+        <Card>
+            <div class="flex-between" style="margin-bottom:10px">
+                <h3 class="card-h3" style="margin:0">Timeline / editor</h3>
+                @if (objClips.Count > 0)
+                {
+                    <Badge Variant="BadgeVariant.Outline">Rendered</Badge>
+                }
+                else
+                {
+                    <Badge Variant="BadgeVariant.Secondary">Empty</Badge>
+                }
+            </div>
+
+            @if (objClips.Count == 0)
+            {
+                <div class="vid-empty" data-testid="timeline-empty">
+                    <LucideIcon Name="clapperboard" Size="26" />
+                    <div>No clips yet — generate a clip to start your timeline.</div>
+                </div>
+            }
+            else
+            {
+                <div class="vid-stage" data-testid="timeline-preview">
+                    <div class="avatar-playbtn">
+                        <LucideIcon Name="play" Size="20" />
+                    </div>
+                    <div>Preview — @objClips[0].Label (@SelectedTier.Model, @objAspect)</div>
+                </div>
+            }
+
+            <div data-testid="timeline-toolbar" style="margin:12px 0">
+                <Toolbar AriaLabel="Timeline editing tools">
+                    <ToolbarGroup>
+                        @foreach (var vTool in objEditTools)
+                        {
+                            <ToolbarButton AriaLabel="@vTool" Variant="ToolbarButtonVariant.Outline" OnClick="@(() => EditAsync(vTool))">
+                                @vTool
+                            </ToolbarButton>
+                        }
+                    </ToolbarGroup>
+                    <ToolbarSeparator />
+                    <ToolbarGroup>
+                        <span class="muted-sm">@TimelineDuration</span>
+                    </ToolbarGroup>
+                </Toolbar>
+            </div>
+
+            <label class="param-label">Video track</label>
+            <div class="vid-track">
+                @if (objClips.Count == 0)
+                {
+                    <div class="vid-clip vid-clip-add" style="flex:1" @onclick="GenerateAsync">+ add clip</div>
+                }
+                else
+                {
+                    @foreach (var vClip in objClips)
+                    {
+                        <div class="vid-clip" style="@($"flex:{vClip.Seconds}")" @key="vClip.Label">@vClip.Label · @vClip.Seconds s</div>
+                    }
+                    <div class="vid-clip vid-clip-add" style="flex:1" @onclick="GenerateAsync">+ add</div>
+                }
+            </div>
+
+            <label class="param-label" style="margin-top:12px">Audio track</label>
+            <div class="vid-track">
+                @if (objHasAudio)
+                {
+                    <div class="vid-clip vid-clip-audio" style="flex:9">Narration · from Voice Studio</div>
+                }
+                else
+                {
+                    <div class="vid-clip vid-clip-add" style="flex:9" @onclick="@(() => EditAsync("Add audio"))">+ add audio from Voice Studio</div>
+                }
+            </div>
+        </Card>
+
+        <Card>
+            <h3 class="card-h3">Rendering</h3>
+            @if (objRendering)
+            {
+                <div data-testid="render-progress">
+                    <div class="flex-between">
+                        <span class="muted-sm">Generating clip · @SelectedTier.Model</span>
+                        <span class="muted-sm">@objProgress% · eta @RenderEta</span>
+                    </div>
+                    <Progress Value="@objProgress" Class="mt-2" />
+                </div>
+            }
+            else
+            {
+                <div class="muted-sm" style="margin-bottom:8px">
+                    @(objClips.Count > 0 ? $"{objClips.Count} clip(s) on the timeline · ready to edit or export." : "Set your controls, then generate the first clip.")
+                </div>
+            }
+            <Button Class="w-full mt-3" OnClick="GenerateAsync" Disabled="@objRendering" data-testid="generate-btn">
+                @if (objRendering)
+                {
+                    <Spinner Size="SpinnerSize.Small" Class="mr-2" />
+                    <span>Rendering…</span>
+                }
+                else
+                {
+                    <LucideIcon Name="clapperboard" Size="14" />
+                    <span>@(IsImageToVideo ? "Generate from frame" : "Generate from prompt")</span>
+                }
+            </Button>
+        </Card>
+    </div>
+
+    @* ---- RIGHT: post-processing + export ---- *@
+    <div class="studio-col">
+        <Card>
+            <h3 class="card-h3">Post-processing</h3>
+            <div class="flex-between" style="margin-bottom:12px">
+                <div>
+                    <div class="param-label">Interpolate (RIFE/FILM)</div>
+                    <div class="muted-sm">Smooth frame interpolation</div>
+                </div>
+                <div data-testid="interpolate-switch">
+                    <Switch @bind-Checked="objInterpolate" AriaLabel="Interpolate" />
+                </div>
+            </div>
+            <div class="flex-between" style="margin-bottom:12px">
+                <div>
+                    <div class="param-label">Smooth motion</div>
+                    <div class="muted-sm">Reduce judder</div>
+                </div>
+                <div data-testid="smooth-switch">
+                    <Switch @bind-Checked="objSmooth" AriaLabel="Smooth motion" />
+                </div>
+            </div>
+            <Button Variant="ButtonVariant.Outline" Class="w-full" OnClick="UpscaleAsync" data-testid="upscale-btn">
+                <LucideIcon Name="maximize-2" Size="14" />
+                <span>Upscale to 1080p</span>
+            </Button>
+            <div class="muted-sm" style="margin-top:8px">Upscaling adds ~40s of RunPod time.</div>
+        </Card>
+
+        <Card>
+            <h3 class="card-h3">Export</h3>
+            <label class="param-label">Platform preset</label>
+            <div data-testid="export-select">
+                <Select @bind-Value="objExportPreset" TValue="string" Class="w-full">
+                    <SelectTrigger><SelectValue Placeholder="Select preset" /></SelectTrigger>
+                    <SelectContent>
+                        @foreach (var vPreset in objExportPresets)
+                        {
+                            <SelectItem Value="@vPreset.Key" Text="@vPreset.Value" TValue="string">@vPreset.Value</SelectItem>
+                        }
+                    </SelectContent>
+                </Select>
+            </div>
+            <div class="cost-row" style="margin-top:12px">
+                <span class="muted-sm">Est. export cost</span>
+                <strong>@FormatCost(SelectedTier.Cost)</strong>
+            </div>
+            <Button Class="w-full mt-3" OnClick="ExportAsync" Disabled="@(objClips.Count == 0)" data-testid="export-mp4">
+                <LucideIcon Name="download" Size="14" />
+                <span>Export MP4</span>
+            </Button>
+        </Card>
+
+        <Card>
+            <h3 class="card-h3">Selected segment</h3>
+            <div class="vid-empty" style="aspect-ratio:16/9" data-testid="segment-empty">
+                @(objClips.Count == 0 ? "No clip selected — generate a segment to edit" : $"{objClips[0].Label} selected · {objClips[0].Seconds}s")
+            </div>
+        </Card>
+    </div>
+</div>
+
+@code {
+    private string objMode = "i2v";
+
+    private double objDuration = 5;
+    private double objMotion = 0.7;
+
+    private readonly Dictionary<string, string> objAspects = new()
+    {
+        ["16:9"] = "16:9 — Landscape",
+        ["9:16"] = "9:16 — Reels",
+        ["1:1"] = "1:1 — Square",
+    };
+    private string objAspect = "16:9";
+
+    private readonly List<TierInfo> objTiers = new()
+    {
+        new TierInfo("Fast", "Fast", "Local Mac (MPS)", "SVD local", 0.00m, "~30 s", "Local Mac (MPS) · Stable Video Diffusion", GenerationTier.Fast, false, false),
+        new TierInfo("High", "High", "Wan 2.x (RunPod)", "Wan 2.x", 0.18m, "~2 min", "Serverless GPU · high-motion HD", GenerationTier.High, true, false),
+        new TierInfo("Premium", "Premium", "HeyGen", "HeyGen Video", 0.90m, "~4 min", "Closed API · studio quality", GenerationTier.Premium, true, true),
+    };
+    private string objTier = "High";
+
+    private string objPrompt = "A slow cinematic push-in on a neon-lit city street at dusk, gentle rain, reflective pavement.";
+    private string? objFirstFrame;
+    private string? objLastFrame;
+
+    private bool objInterpolate = true;
+    private bool objSmooth;
+
+    private readonly Dictionary<string, string> objExportPresets = new()
+    {
+        ["youtube"] = "YouTube (16:9, H.264)",
+        ["reels"] = "Instagram Reels (9:16)",
+        ["raw"] = "Raw MP4",
+    };
+    private string objExportPreset = "youtube";
+
+    private readonly string[] objEditTools = { "Trim", "Join", "Reframe", "Add audio", "Split" };
+
+    private readonly List<ClipSegment> objClips = new();
+    private bool objHasAudio;
+
+    private bool objRendering;
+    private int objProgress;
+
+    /// <summary>Whether the studio is in Image→Video mode (vs Text→Video).</summary>
+    private bool IsImageToVideo => objMode == "i2v";
+
+    /// <summary>The currently selected quality tier's metadata.</summary>
+    private TierInfo SelectedTier =>
+        objTiers.FirstOrDefault(aTier => aTier.Key == objTier) ?? objTiers[0];
+
+    /// <summary>Total timeline length shown in the toolbar, as <c>elapsed / total</c>.</summary>
+    private string TimelineDuration
+    {
+        get
+        {
+            var vTotal = objClips.Sum(aClip => aClip.Seconds);
+            return $"00:00 / 00:{vTotal:00}";
+        }
+    }
+
+    /// <summary>A simple eta string derived from the render progress.</summary>
+    private string RenderEta => objProgress >= 100 ? "0:00" : $"0:{Math.Max(1, (100 - objProgress) / 2):00}";
+
+    /// <summary>
+    /// Confirms a signed-in session AFTER the first interactive render (JS interop available) so any
+    /// later owner-scoped spine call carries the bearer token rather than racing prerender. The studio
+    /// itself renders regardless (enrich-or-seed) — no catalog is required for the video surface.
+    /// </summary>
+    /// <param name="aFirstRender">Whether this is the component's first render.</param>
+    protected override async Task OnAfterRenderAsync(bool aFirstRender)
+    {
+        if (!aFirstRender)
+        {
+            return;
+        }
+
+        await AuthSession.EnsureLoadedAsync();
+
+        // Send-to-studio (REQ-UI-082): pre-fill the prompt and switch to Text→Video when Prompt Studio
+        // routes here with ?prompt=… (the T2V mode is where the prompt Textarea is shown).
+        var vPrompt = PromptStudioQuery.ReadPrompt(Navigation.Uri);
+        if (vPrompt is not null)
+        {
+            objPrompt = vPrompt;
+            objMode = "t2v";
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>Switches the generation mode and swaps the conditioning controls.</summary>
+    /// <param name="aMode">The chosen mode tab value (<c>i2v</c> or <c>t2v</c>).</param>
+    private void OnModeChanged(string? aMode) => objMode = aMode ?? "i2v";
+
+    /// <summary>Records the chosen first-frame file name (upload itself is handled by the endpoint).</summary>
+    /// <param name="aFiles">The files chosen in the FileUpload control.</param>
+    private void OnFirstFrameSelected(IReadOnlyList<FileUploadItem> aFiles) =>
+        objFirstFrame = aFiles.Count > 0 ? aFiles[0].Name : null;
+
+    /// <summary>Records the chosen last-frame file name (optional end-conditioning).</summary>
+    /// <param name="aFiles">The files chosen in the FileUpload control.</param>
+    private void OnLastFrameSelected(IReadOnlyList<FileUploadItem> aFiles) =>
+        objLastFrame = aFiles.Count > 0 ? aFiles[0].Name : null;
+
+    /// <summary>
+    /// Runs a generation pass: animates Progress, submits an ImageToVideo/TextToVideo job through the
+    /// shared spine, then appends the produced clip to the timeline. A Blocked result surfaces a safety
+    /// toast (SAFE-01..06); when the endpoint is not live the representative clip keeps the studio
+    /// demonstrable (enrich-or-seed).
+    /// </summary>
+    private async Task GenerateAsync()
+    {
+        if (objRendering)
+        {
+            return;
+        }
+
+        objRendering = true;
+        objProgress = 0;
+        StateHasChanged();
+
+        for (var vStep = 1; vStep <= 5; vStep++)
+        {
+            objProgress = vStep * 20;
+            StateHasChanged();
+            await Task.Delay(150);
+        }
+
+        var vBlocked = await TrySubmitJobAsync();
+
+        objRendering = false;
+        objProgress = 100;
+
+        if (vBlocked)
+        {
+            ToastService.Error("Generation blocked by a safety floor (SAFE-01..06).", "Blocked");
+            return;
+        }
+
+        var vIndex = objClips.Count + 1;
+        objClips.Add(new ClipSegment($"clip{vIndex:00}", (int)objDuration));
+        ToastService.Success($"clip{vIndex:00} generated on the {SelectedTier.Name} tier ({SelectedTier.Model}).", "Rendered");
+    }
+
+    /// <summary>Best-effort spine round-trip; returns true when the job came back Blocked.</summary>
+    private async Task<bool> TrySubmitJobAsync()
+    {
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vRequest = new JobSubmitRequest
+            {
+                ModelId = SelectedTier.HeyGen ? "heygen-video" : SelectedTier.Tier == GenerationTier.High ? "wan-video" : "svd-local",
+                Task = IsImageToVideo ? GenerationTaskType.ImageToVideo : GenerationTaskType.TextToVideo,
+                Tier = SelectedTier.Tier,
+                ParamsJson = JsonSerializer.Serialize(new
+                {
+                    mode = objMode,
+                    prompt = IsImageToVideo ? null : objPrompt,
+                    firstFrame = objFirstFrame,
+                    lastFrame = objLastFrame,
+                    durationSeconds = (int)objDuration,
+                    motionStrength = objMotion,
+                    aspect = objAspect,
+                    interpolate = objInterpolate,
+                    smoothMotion = objSmooth
+                })
+            };
+
+            var vResponse = await vClient.PostAsJsonAsync(ApiRoutes.Jobs, vRequest);
+            if (!vResponse.IsSuccessStatusCode)
+            {
+                return false;
+            }
+
+            var vSubmit = await vResponse.Content.ReadFromJsonAsync<JobSubmitResponse>();
+            if (vSubmit is null)
+            {
+                return false;
+            }
+
+            for (var vPoll = 0; vPoll < 8; vPoll++)
+            {
+                var vStatus = await vClient.GetFromJsonAsync<JobStatusResponse>($"{ApiRoutes.Jobs}/{vSubmit.JobId}");
+                if (vStatus is not null && vStatus.State is JobState.Succeeded or JobState.Failed or JobState.Blocked)
+                {
+                    return vStatus.State == JobState.Blocked;
+                }
+
+                await Task.Delay(200);
+            }
+        }
+        catch
+        {
+            // Phase-7 video path still forming / API down — the representative clip stands in.
+        }
+
+        return false;
+    }
+
+    /// <summary>Runs a best-effort timeline edit (trim/join/reframe/add-audio/split) over the spine.</summary>
+    /// <param name="aTool">The edit tool the creator pressed.</param>
+    private async Task EditAsync(string aTool)
+    {
+        if (aTool == "Add audio")
+        {
+            objHasAudio = true;
+        }
+
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            // The reframe aspect maps onto the edit request's ExportFormat; the placeholder timeline has no
+            // owner-scoped source asset yet, so the edit degrades cleanly (404) until a rendered clip exists.
+            await vClient.PostAsJsonAsync($"{ApiRoutes.Video}/edit", new VideoEditRequest
+            {
+                ExportFormat = objAspect,
+            });
+        }
+        catch
+        {
+            // Edit endpoint still forming — the toast keeps the flow demonstrable.
+        }
+
+        ToastService.Show($"{aTool} applied to the timeline.", "Editor");
+    }
+
+    /// <summary>Best-effort upscale round-trip; reports the queued 1080p pass via a toast.</summary>
+    private async Task UpscaleAsync()
+    {
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            await vClient.PostAsJsonAsync(ApiRoutes.Jobs, new JobSubmitRequest
+            {
+                ModelId = "video-upscale",
+                Task = GenerationTaskType.Upscale,
+                Tier = GenerationTier.High,
+                ParamsJson = JsonSerializer.Serialize(new { target = "1080p", interpolate = objInterpolate })
+            });
+        }
+        catch
+        {
+            // Upscale path still forming — keep the studio usable.
+        }
+
+        ToastService.Show("Upscaling the clip to 1080p (interpolation applied).", "Upscale");
+    }
+
+    /// <summary>Fires the export action for the current timeline.</summary>
+    private Task ExportAsync()
+    {
+        var vLabel = objExportPresets.GetValueOrDefault(objExportPreset, objExportPreset);
+        ToastService.Success($"Exported MP4 · {vLabel}.", "Export");
+        return Task.CompletedTask;
+    }
+
+    private static string FormatCost(decimal aValue) => $"${aValue:0.00}";
+
+    /// <summary>A single timeline video segment.</summary>
+    /// <param name="Label">The clip label shown on the track.</param>
+    /// <param name="Seconds">The clip length in seconds (also its track flex weight).</param>
+    private sealed record ClipSegment(string Label, int Seconds);
+
+    /// <summary>A quality-tier row: cost, eta, provider, closed-API/HeyGen flags and the spine enum.</summary>
+    /// <param name="Key">Stable tier key (matches the RadioGroup value).</param>
+    /// <param name="Name">Display name.</param>
+    /// <param name="Provider">Provider shown in the routing Alert and provider Badge.</param>
+    /// <param name="Model">Underlying model shown in the preview caption.</param>
+    /// <param name="Cost">Estimated per-render cost.</param>
+    /// <param name="Eta">Human eta string.</param>
+    /// <param name="Detail">One-line tier detail.</param>
+    /// <param name="Tier">The spine execution tier enum.</param>
+    /// <param name="CloudRouted">Whether the tier routes to the cloud (shows the routing Alert).</param>
+    /// <param name="HeyGen">Whether the tier is the HeyGen closed API (shows the badge + closed-API wording).</param>
+    private sealed record TierInfo(
+        string Key,
+        string Name,
+        string Provider,
+        string Model,
+        decimal Cost,
+        string Eta,
+        string Detail,
+        GenerationTier Tier,
+        bool CloudRouted,
+        bool HeyGen);
+}

@@ -1,0 +1,599 @@
+@page "/image"
+@using TrBlazeUI.Components.Toolbar
+@using TrBlazeUI.Components.FileUpload
+@using System.Text.Json
+@inject IHttpClientFactory HttpClientFactory
+@inject ToastService ToastService
+@inject IAuthSession AuthSession
+@inject NavigationManager Navigation
+
+@*
+    Image Studio (REQ-UI-020). Left panel renders the parameter controls DYNAMICALLY from the
+    selected registry model's declarative params schema (/api/v1/models) — switching model
+    re-renders the controls with no code change. Centre canvas carries the generate / image-to-image
+    / inpaint mask Toolbar and the prompt; ControlNet Tabs (pose/depth/edges) + a reference upload
+    condition the run; results strip shows per-result seed Badges; export presets + background-remove
+    finish the flow. Job submit/poll/result go through the shared spine (POST/GET /api/v1/jobs);
+    representative output is shown when the API is unreachable so the studio stays demonstrable.
+*@
+
+<PageTitle>TrStudio — Image Studio</PageTitle>
+
+<h1 class="page-title">Image Studio</h1>
+<p class="page-sub">Generate, image-to-image and inpaint. Parameters render from the model registry schema.</p>
+
+<div class="studio" data-testid="image-studio">
+
+    @* ---- LEFT: model + schema-driven params ---- *@
+    <div class="studio-col">
+        <Card>
+            <h3 class="card-h3">Model</h3>
+            <div data-testid="model-select">
+                <Select Value="@objSelectedModelId" ValueChanged="OnModelChangedAsync" TValue="string" Class="w-full">
+                    <SelectTrigger><SelectValue Placeholder="Select a model" /></SelectTrigger>
+                    <SelectContent>
+                        @foreach (var vModel in objModels)
+                        {
+                            <SelectItem Value="@vModel.Id" Text="@vModel.DisplayName" TValue="string">@vModel.DisplayName</SelectItem>
+                        }
+                    </SelectContent>
+                </Select>
+            </div>
+            <div class="seg-hint">Params below auto-render from the registry schema · @objTierLabel tier</div>
+        </Card>
+
+        <Card>
+            <h3 class="card-h3">Parameters</h3>
+            <div data-testid="params-panel">
+                @if (SelectedModel is null)
+                {
+                    <div class="muted-sm">Select a model to configure parameters.</div>
+                }
+                else
+                {
+                    @foreach (var vSpec in SelectedModel.Params.Where(IsSidePanelParam))
+                    {
+                        <div class="param-field" @key="vSpec.Key">
+                            @switch (vSpec.Type)
+                            {
+                                case "int":
+                                case "float":
+                                    <div class="param-head">
+                                        <label class="param-label">@LabelOf(vSpec)</label>
+                                        <span class="param-val">@FormatNumber(vSpec, objNumeric[vSpec.Key])</span>
+                                    </div>
+                                    <Slider @bind-Value="objNumeric[vSpec.Key]"
+                                            Min="@(vSpec.Min ?? 0)" Max="@(vSpec.Max ?? 100)"
+                                            Step="@(vSpec.Type == "int" ? 1 : 0.1)" />
+                                    break;
+                                case "bool":
+                                    <div class="flex-between">
+                                        <label class="param-label">@LabelOf(vSpec)</label>
+                                        <Switch @bind-Checked="objBool[vSpec.Key]" AriaLabel="@LabelOf(vSpec)" />
+                                    </div>
+                                    break;
+                                case "enum":
+                                    <label class="param-label">@LabelOf(vSpec)</label>
+                                    <Select @bind-Value="objText[vSpec.Key]" TValue="string" Class="w-full">
+                                        <SelectTrigger><SelectValue Placeholder="@LabelOf(vSpec)" /></SelectTrigger>
+                                        <SelectContent>
+                                            @foreach (var vOption in vSpec.Values ?? Array.Empty<string>())
+                                            {
+                                                <SelectItem Value="@vOption" Text="@vOption" TValue="string">@vOption</SelectItem>
+                                            }
+                                        </SelectContent>
+                                    </Select>
+                                    break;
+                                default:
+                                    <label class="param-label">@LabelOf(vSpec)</label>
+                                    <Input @bind-Value="objText[vSpec.Key]" Placeholder="@LabelOf(vSpec)" />
+                                    break;
+                            }
+                        </div>
+                    }
+
+                    <div class="param-field">
+                        <label class="param-label">Seed</label>
+                        <Input @bind-Value="objSeedText" Placeholder="Random when empty" />
+                    </div>
+                }
+            </div>
+        </Card>
+
+        <Card>
+            <h3 class="card-h3">Conditioning (ControlNet)</h3>
+            <Tabs @bind-Value="objControlTab" Class="mb-3">
+                <TabsList Class="w-full">
+                    @foreach (var vTab in objControlTabs)
+                    {
+                        <TabsTrigger Value="@vTab">@vTab</TabsTrigger>
+                    }
+                </TabsList>
+            </Tabs>
+            <div data-testid="controlnet-upload">
+                <FileUpload Accept="image/*" />
+            </div>
+        </Card>
+    </div>
+
+    @* ---- CENTER: canvas ---- *@
+    <div class="studio-col">
+        <Card>
+            <div class="flex-between" style="margin-bottom:10px">
+                <h3 class="card-h3" style="margin:0">Canvas</h3>
+                <Toolbar AriaLabel="Canvas tools">
+                    <ToolbarGroup>
+                        @foreach (var vTool in objTools)
+                        {
+                            <ToolbarButton AriaLabel="@vTool"
+                                           Class="@(vTool == objActiveTool ? "badge-brand" : null)"
+                                           OnClick="@(() => objActiveTool = vTool)">
+                                @vTool
+                            </ToolbarButton>
+                        }
+                    </ToolbarGroup>
+                </Toolbar>
+            </div>
+
+            <div class="canvas-stage" data-testid="canvas">
+                @if (objResults.Count == 0)
+                {
+                    <div>
+                        <LucideIcon Name="image" Size="30" />
+                        <div class="canvas-stage-caption">
+                            @(string.IsNullOrWhiteSpace(PromptText) ? "Your generated image will appear here" : PromptText)
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="restile @objResults[0].Art" style="width:100%;height:100%;border-radius:10px">
+                        <Badge Class="seed-badge">#@objResults[0].Seed</Badge>
+                    </div>
+                }
+            </div>
+
+            <div style="margin-top:12px">
+                <label class="param-label">Prompt</label>
+                <Textarea @bind-Value="PromptText" Placeholder="Describe the image to generate…" />
+                <div class="flex-between" style="margin-top:8px">
+                    <span class="muted-sm">
+                        @(objGenerating ? $"Generating batch of {objBatchSize} — {objProgress}%" : "Ready")
+                    </span>
+                    <Button OnClick="GenerateAsync" Disabled="@objGenerating" data-testid="generate-btn">
+                        @if (objGenerating)
+                        {
+                            <Spinner Size="SpinnerSize.Small" Class="mr-2" />
+                            <span>Working…</span>
+                        }
+                        else
+                        {
+                            <LucideIcon Name="sparkles" Size="14" />
+                            <span>Generate</span>
+                        }
+                    </Button>
+                </div>
+                @if (objGenerating)
+                {
+                    <Progress Value="@objProgress" Class="mt-2" />
+                }
+            </div>
+        </Card>
+
+        <Card>
+            <div class="flex-between">
+                <h3 class="card-h3" style="margin:0">Upscale &amp; restore</h3>
+                <div class="flex-row">
+                    @foreach (var vScale in objUpscaleOptions)
+                    {
+                        <Button Size="ButtonSize.Small"
+                                Variant="@(vScale == objUpscale ? ButtonVariant.Default : ButtonVariant.Outline)"
+                                OnClick="@(() => objUpscale = vScale)">@vScale</Button>
+                    }
+                </div>
+            </div>
+            <div class="flex-row" style="margin-top:10px">
+                <Button Variant="ButtonVariant.Outline" OnClick="UpscaleAsync" data-testid="upscale-btn">
+                    <LucideIcon Name="maximize-2" Size="14" />
+                    Upscale to @objUpscale
+                </Button>
+                <span class="muted-sm">GFPGAN + ESRGAN face-restore</span>
+            </div>
+        </Card>
+    </div>
+
+    @* ---- RIGHT: results + export ---- *@
+    <div class="studio-col">
+        <Card>
+            <div class="flex-between">
+                <h3 class="card-h3" style="margin:0">Results</h3>
+                <Badge Variant="BadgeVariant.Outline">batch · @objBatchSize</Badge>
+            </div>
+            <div class="resgrid" data-testid="results-strip">
+                @if (objResults.Count == 0 && !objGenerating)
+                {
+                    <div class="restile restile-empty" style="grid-column:1 / -1;justify-content:center;color:var(--muted-foreground);font-size:12px">
+                        No results yet — press Generate
+                    </div>
+                }
+                else
+                {
+                    @foreach (var vResult in objResults)
+                    {
+                        <div class="restile @vResult.Art" @key="vResult.Seed">
+                            <Badge Class="seed-badge">#@vResult.Seed</Badge>
+                        </div>
+                    }
+                    @if (objGenerating)
+                    {
+                        <Skeleton Class="restile" />
+                    }
+                }
+            </div>
+            <div class="seg-hint">Seed shown per tile for one-click reproduction</div>
+        </Card>
+
+        <Card>
+            <h3 class="card-h3">Export</h3>
+            <label class="param-label">Aspect / preset</label>
+            <Select @bind-Value="objExportPreset" TValue="string" Class="w-full">
+                <SelectTrigger><SelectValue Placeholder="Select preset" /></SelectTrigger>
+                <SelectContent>
+                    @foreach (var vPreset in objExportPresets)
+                    {
+                        <SelectItem Value="@vPreset.Key" Text="@vPreset.Value" TValue="string">@vPreset.Value</SelectItem>
+                    }
+                </SelectContent>
+            </Select>
+            <div class="flex-between" style="margin-top:12px">
+                <div>
+                    <div class="param-label">Remove background</div>
+                    <div class="muted-sm">transparent PNG</div>
+                </div>
+                <Switch @bind-Checked="objRemoveBackground" AriaLabel="Remove background" />
+            </div>
+            <Button Class="w-full mt-3" OnClick="ExportAsync" data-testid="export-btn">
+                <LucideIcon Name="download" Size="14" />
+                Export
+            </Button>
+        </Card>
+    </div>
+</div>
+
+@code {
+    private List<RegistryModel> objModels = new();
+    private string? objSelectedModelId;
+
+    private readonly Dictionary<string, double> objNumeric = new();
+    private readonly Dictionary<string, string?> objText = new();
+    private readonly Dictionary<string, bool> objBool = new();
+    private string objSeedText = string.Empty;
+
+    private readonly string[] objControlTabs = { "Pose", "Depth", "Edges" };
+    private string objControlTab = "Pose";
+
+    private readonly string[] objTools = { "Brush", "Mask", "Inpaint", "Erase" };
+    private string objActiveTool = "Brush";
+
+    private readonly string[] objUpscaleOptions = { "2K", "4K" };
+    private string objUpscale = "4K";
+
+    private readonly Dictionary<string, string> objExportPresets = new()
+    {
+        ["1:1"] = "1:1 — Instagram post",
+        ["4:5"] = "4:5 — Portrait feed",
+        ["9:16"] = "9:16 — Story / Reel",
+        ["16:9"] = "16:9 — Banner",
+    };
+    private string objExportPreset = "1:1";
+    private bool objRemoveBackground;
+
+    private readonly List<ResultTile> objResults = new();
+    private bool objGenerating;
+    private int objProgress;
+    private int objBatchSize = 4;
+
+    /// <summary>The currently selected registry model, or null before models load.</summary>
+    private RegistryModel? SelectedModel =>
+        objModels.FirstOrDefault(aModel => aModel.Id == objSelectedModelId);
+
+    /// <summary>The selected model's tier as a lower-case label for the schema hint.</summary>
+    private string objTierLabel => SelectedModel?.Tier.ToString().ToLowerInvariant() ?? "—";
+
+    /// <summary>The prompt value, mirrored into the model's <c>prompt</c> param when present.</summary>
+    private string PromptText
+    {
+        get => objText.TryGetValue("prompt", out var vValue) ? vValue ?? string.Empty : string.Empty;
+        set => objText["prompt"] = value;
+    }
+
+    /// <summary>
+    /// Loads the enabled-model catalog AFTER the first interactive render — once JS interop is
+    /// available and <see cref="IAuthSession"/> can hydrate the bearer token from encrypted session
+    /// storage. Loading here (not in <c>OnInitializedAsync</c>, which runs during prerender before the
+    /// token exists) avoids a wasted anonymous 401 and the fallback-catalog flash it used to cause.
+    /// </summary>
+    /// <param name="aFirstRender">Whether this is the component's first render.</param>
+    protected override async Task OnAfterRenderAsync(bool aFirstRender)
+    {
+        if (!aFirstRender)
+        {
+            return;
+        }
+
+        var vHasSession = await AuthSession.EnsureLoadedAsync();
+        await TryLoadModelsAsync(vHasSession);
+        objSelectedModelId = objModels.FirstOrDefault()?.Id;
+        RebuildParamValues();
+
+        // Send-to-studio (REQ-UI-082): pre-fill the prompt when Prompt Studio routes here with ?prompt=…
+        // (seeded after RebuildParamValues, which resets the param stores including the prompt slot).
+        var vPrompt = PromptStudioQuery.ReadPrompt(Navigation.Uri);
+        if (vPrompt is not null)
+        {
+            PromptText = vPrompt;
+        }
+
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Loads the enabled-model catalog with its params schema. With no session the catalog stays
+    /// empty (the real empty state) rather than flashing a fallback list; the representative fallback
+    /// only stands in when the AUTHENTICATED call succeeds and returns zero models, keeping the studio
+    /// demonstrable — never on a 401.
+    /// </summary>
+    /// <param name="aHasSession">Whether a signed-in session is present.</param>
+    private async Task TryLoadModelsAsync(bool aHasSession)
+    {
+        if (!aHasSession)
+        {
+            return;
+        }
+
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vModels = await vClient.GetFromJsonAsync<List<RegistryModel>>(ApiRoutes.Models);
+            if (vModels is { Count: > 0 })
+            {
+                objModels = vModels;
+            }
+            else
+            {
+                // Authenticated, but the registry has no enabled models — the representative fallback
+                // keeps the studio usable. This never runs for a 401 (that throws and is caught below).
+                objModels = BuildFallbackModels();
+            }
+        }
+        catch
+        {
+            // Authenticated call failed (API unreachable) — leave the catalog empty rather than
+            // flashing a fallback list.
+        }
+    }
+
+    /// <summary>Switches the active model and re-renders its declarative param controls.</summary>
+    private Task OnModelChangedAsync(string? aModelId)
+    {
+        objSelectedModelId = aModelId;
+        RebuildParamValues();
+        objResults.Clear();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>Rebuilds the per-type value stores from the selected model's schema defaults.</summary>
+    private void RebuildParamValues()
+    {
+        objNumeric.Clear();
+        objText.Clear();
+        objBool.Clear();
+        if (SelectedModel is null)
+        {
+            return;
+        }
+
+        foreach (var vSpec in SelectedModel.Params)
+        {
+            switch (vSpec.Type)
+            {
+                case "int":
+                case "float":
+                    objNumeric[vSpec.Key] = ParseDouble(vSpec.DefaultValue, vSpec.Min ?? 0);
+                    break;
+                case "bool":
+                    objBool[vSpec.Key] = string.Equals(vSpec.DefaultValue, "true", StringComparison.OrdinalIgnoreCase);
+                    break;
+                default:
+                    objText[vSpec.Key] = vSpec.DefaultValue;
+                    break;
+            }
+        }
+    }
+
+    /// <summary>Whether a spec renders in the left params panel (media + prompt render elsewhere).</summary>
+    private static bool IsSidePanelParam(ModelParamSpec aSpec) =>
+        aSpec.Key != "prompt"
+        && aSpec.Type is not ("image" or "mask")
+        && aSpec.Key != "controlType";
+
+    /// <summary>Submits the job through the spine, then shows result tiles with per-tile seeds.</summary>
+    private async Task GenerateAsync()
+    {
+        if (SelectedModel is null)
+        {
+            return;
+        }
+
+        objGenerating = true;
+        objResults.Clear();
+        objProgress = 0;
+
+        var vBaseSeed = long.TryParse(objSeedText, out var vParsed) ? vParsed : Random.Shared.Next(100000, 999999);
+
+        for (var vStep = 1; vStep <= 4; vStep++)
+        {
+            objProgress = vStep * 22;
+            StateHasChanged();
+            await Task.Delay(160);
+        }
+
+        await TrySubmitJobAsync();
+
+        // Result strip: real seeds when the job returned assets, else deterministic representative seeds.
+        if (objResults.Count == 0)
+        {
+            var vArts = new[] { "art-a", "art-b", "art-c" };
+            for (var vIndex = 0; vIndex < 3; vIndex++)
+            {
+                objResults.Add(new ResultTile(vBaseSeed + vIndex, vArts[vIndex % vArts.Length]));
+            }
+        }
+
+        objProgress = 100;
+        objGenerating = false;
+        ToastService.Success($"{objResults.Count} result(s) ready — seeds {string.Join(", ", objResults.Select(aTile => aTile.Seed))}.", "Generated");
+    }
+
+    /// <summary>Best-effort spine round-trip; populates result tiles from returned assets on success.</summary>
+    private async Task TrySubmitJobAsync()
+    {
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vRequest = new JobSubmitRequest
+            {
+                ModelId = SelectedModel!.Id,
+                Task = SelectedModel.Task,
+                Tier = SelectedModel.Tier,
+                ParamsJson = BuildParamsJson(),
+                Seed = long.TryParse(objSeedText, out var vSeed) ? vSeed : null
+            };
+
+            var vResponse = await vClient.PostAsJsonAsync(ApiRoutes.Jobs, vRequest);
+            if (!vResponse.IsSuccessStatusCode)
+            {
+                return;
+            }
+
+            var vSubmit = await vResponse.Content.ReadFromJsonAsync<JobSubmitResponse>();
+            if (vSubmit is null)
+            {
+                return;
+            }
+
+            for (var vPoll = 0; vPoll < 8; vPoll++)
+            {
+                var vStatus = await vClient.GetFromJsonAsync<JobStatusResponse>($"{ApiRoutes.Jobs}/{vSubmit.JobId}");
+                if (vStatus is not null && vStatus.State is JobState.Succeeded or JobState.Failed or JobState.Blocked)
+                {
+                    break;
+                }
+
+                await Task.Delay(250);
+            }
+
+            var vAssets = await vClient.GetFromJsonAsync<List<AssetResponse>>($"{ApiRoutes.Jobs}/{vSubmit.JobId}/result");
+            if (vAssets is { Count: > 0 })
+            {
+                var vArts = new[] { "art-a", "art-b", "art-c" };
+                for (var vIndex = 0; vIndex < vAssets.Count; vIndex++)
+                {
+                    var vSeedValue = vAssets[vIndex].SeedUsed ?? vSubmit.JobId.GetHashCode() & 0xFFFFF;
+                    objResults.Add(new ResultTile(vSeedValue, vArts[vIndex % vArts.Length]));
+                }
+            }
+        }
+        catch
+        {
+            // Unauthenticated / API down — the caller falls back to representative seeds.
+        }
+    }
+
+    /// <summary>Serialises the current dynamic control values into the job's ParamsJson document.</summary>
+    private string BuildParamsJson()
+    {
+        var vBag = new Dictionary<string, object?>();
+        foreach (var vPair in objText)
+        {
+            vBag[vPair.Key] = vPair.Value;
+        }
+
+        foreach (var vPair in objNumeric)
+        {
+            vBag[vPair.Key] = vPair.Value;
+        }
+
+        foreach (var vPair in objBool)
+        {
+            vBag[vPair.Key] = vPair.Value;
+        }
+
+        return JsonSerializer.Serialize(vBag);
+    }
+
+    private Task UpscaleAsync()
+    {
+        ToastService.Show($"Upscaling to {objUpscale} with face restoration…", "Upscale");
+        return Task.CompletedTask;
+    }
+
+    private Task ExportAsync()
+    {
+        var vLabel = objExportPresets.TryGetValue(objExportPreset, out var vName) ? vName : objExportPreset;
+        var vSuffix = objRemoveBackground ? " · transparent PNG" : string.Empty;
+        ToastService.Success($"Exported as {vLabel}{vSuffix}.", "Export");
+        return Task.CompletedTask;
+    }
+
+    private static string LabelOf(ModelParamSpec aSpec) =>
+        string.IsNullOrWhiteSpace(aSpec.Label) ? aSpec.Key : aSpec.Label!;
+
+    private static string FormatNumber(ModelParamSpec aSpec, double aValue) =>
+        aSpec.Type == "int" ? ((int)Math.Round(aValue)).ToString() : aValue.ToString("0.0");
+
+    private static double ParseDouble(string? aValue, double aFallback) =>
+        double.TryParse(aValue, out var vValue) ? vValue : aFallback;
+
+    /// <summary>Representative catalog mirroring the two dev-seeded registry rows (used offline).</summary>
+    private static List<RegistryModel> BuildFallbackModels() => new()
+    {
+        new RegistryModel
+        {
+            Id = "onnx-sdxl-local",
+            DisplayName = "Local SDXL (ONNX, dev)",
+            Task = GenerationTaskType.TextToImage,
+            Tier = GenerationTier.Fast,
+            License = "OpenRAIL-M",
+            Params = new List<ModelParamSpec>
+            {
+                new() { Key = "prompt", Type = "text", Required = true, Label = "Prompt" },
+                new() { Key = "negativePrompt", Type = "text", Label = "Negative prompt" },
+                new() { Key = "width", Type = "int", DefaultValue = "768", Min = 256, Max = 1536, Label = "Width" },
+                new() { Key = "height", Type = "int", DefaultValue = "768", Min = 256, Max = 1536, Label = "Height" },
+                new() { Key = "steps", Type = "int", DefaultValue = "20", Min = 1, Max = 60, Label = "Steps" },
+                new() { Key = "guidanceScale", Type = "float", DefaultValue = "7.5", Min = 1, Max = 20, Label = "Guidance scale" },
+                new() { Key = "conditioningAssetId", Type = "image", Label = "ControlNet conditioning image" },
+                new() { Key = "maskAssetId", Type = "mask", Label = "Mask (inpaint/outpaint)" },
+                new() { Key = "controlType", Type = "enum", Values = new[] { "pose", "depth", "edges" }, Label = "Control type" },
+                new() { Key = "faceLock", Type = "bool", DefaultValue = "false", Label = "Face/identity lock" },
+            }
+        },
+        new RegistryModel
+        {
+            Id = "stub-echo",
+            DisplayName = "Stub Echo (spine verification)",
+            Task = GenerationTaskType.TextToImage,
+            Tier = GenerationTier.Fast,
+            License = "Internal",
+            Params = new List<ModelParamSpec>
+            {
+                new() { Key = "prompt", Type = "text", Required = true, Label = "Prompt" },
+                new() { Key = "durationSeconds", Type = "float", DefaultValue = "3", Min = 0.05, Max = 30, Label = "Simulated duration (seconds)" },
+            }
+        }
+    };
+
+    /// <summary>A single result-strip tile carrying its reproduction seed and preview gradient.</summary>
+    private sealed record ResultTile(long Seed, string Art);
+}

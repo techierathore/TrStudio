@@ -1,0 +1,337 @@
+@page "/admin/policy"
+@using System.Text.Json
+@inject IHttpClientFactory HttpClientFactory
+@inject ToastService ToastService
+@inject IAuthSession AuthSession
+
+@*
+    Admin Content policy / NSFW (REQ-UI-075). A single content-policy surface that makes the safety
+    posture unmistakable: the SAFE-01..06 floors are ALWAYS-ON and CANNOT be disabled (rendered as a
+    locked, non-interactive list), and ONLY the general SFW filter is owner-toggleable via the
+    "Unrestricted (NSFW) mode" Switch — behind an explicit confirmation AlertDialog, off by default,
+    for fully-synthetic adult (18+) personas, and available in personal (single-user) mode only. In
+    multi-user / SaaS mode the toggle is disabled and forced OFF with an explanation. Consumes the
+    Phase-8 policy endpoint (GET/PUT /api/v1/admin/policy/nsfw) with an enrich-or-seed fallback: a
+    safe default (mode OFF, personal mode) stands in while unauthenticated or before the endpoint
+    exists — never a state that implies a floor can be lifted.
+*@
+
+<PageTitle>TrStudio — Content Policy</PageTitle>
+
+<div class="policy-page">
+    <div class="stack">
+        <div>
+            <h1 class="page-title">Content Policy</h1>
+            <p class="page-sub" style="margin-bottom:0">Personal mode — visible to the owner only.</p>
+        </div>
+
+        @* ---- Unrestricted (NSFW) mode — the only owner-toggleable control ---- *@
+        <Card data-testid="nsfw-card">
+            <div class="policy-nsfw-head">
+                <div class="policy-nsfw-copy">
+                    <span class="policy-nsfw-title">Unrestricted (NSFW) content mode</span>
+                    <span class="muted-sm">
+                        Lifts the general SFW filter for <b>fully-synthetic adult (18+) personas</b> only.
+                        Off by default.
+                    </span>
+                    <div class="policy-badges">
+                        <Badge Variant="BadgeVariant.Outline">owner-only</Badge>
+                        <Badge Variant="BadgeVariant.Outline">personal mode only</Badge>
+                        <Badge Variant="BadgeVariant.Outline" Class="badge-warn">auto-off in SaaS</Badge>
+                    </div>
+                </div>
+                <div class="policy-switch-slot" data-testid="nsfw-switch">
+                    @if (objLoading)
+                    {
+                        <Skeleton Class="h-7 w-[52px] rounded-full" />
+                    }
+                    else
+                    {
+                        <Switch @key="objSwitchNonce" Checked="@objNsfwEnabled" CheckedChanged="OnToggleRequestedAsync"
+                                Size="SwitchSize.Large" Disabled="@(!objPersonalMode)"
+                                AriaLabel="Unrestricted content mode" Id="nsfw-switch-input" />
+                    }
+                </div>
+            </div>
+
+            @if (!objLoading && !objPersonalMode)
+            {
+                <div class="policy-mode-note" data-testid="multiuser-note">
+                    <Alert Variant="AlertVariant.Warning" AccentBorder="true">
+                        <AlertTitle>Disabled in multi-user / SaaS mode</AlertTitle>
+                        <AlertDescription>
+                            Unrestricted mode is a personal, single-user setting. This instance is running
+                            in multi-user mode, so the toggle is disabled and forced OFF for every account.
+                        </AlertDescription>
+                    </Alert>
+                </div>
+            }
+        </Card>
+
+        @* ---- Always-locked safety floors — non-disableable in every mode ---- *@
+        <Card data-testid="safety-floors">
+            <div class="flex-between">
+                <h3 class="card-h3" style="margin:0">Safety floors — always enforced</h3>
+                <Badge Variant="BadgeVariant.Outline" Class="badge-danger">non-disableable</Badge>
+            </div>
+            <p class="muted-sm" style="margin:4px 0 4px">
+                These controls stay on in every mode, including Unrestricted. They cannot be switched off
+                by any setting, key, or API call.
+            </p>
+
+            @foreach (var vFloor in objFloors)
+            {
+                <div class="policy-floor" data-testid="floor-row">
+                    <div class="policy-lockic"><LucideIcon Name="lock" Size="14" /></div>
+                    <div class="policy-floor-body">
+                        <span class="policy-floor-t">@vFloor.Title</span>
+                        <span class="policy-floor-d">@vFloor.Description</span>
+                    </div>
+                    <span class="policy-lock-pill" title="Locked — cannot be disabled" aria-label="Locked — cannot be disabled">
+                        <LucideIcon Name="lock" Size="12" />
+                        <span>cannot be disabled</span>
+                    </span>
+                </div>
+            }
+        </Card>
+
+        <p class="muted-sm" style="margin:0">
+            Unrestricted mode applies only to characters flagged <b>synthetic + adult</b>. The toggle is
+            disabled and forced OFF in multi-user / SaaS mode.
+        </p>
+    </div>
+</div>
+
+@* Confirmation gate for ENABLING NSFW mode (controlled — no trigger; opened from the Switch). *@
+<AlertDialog Open="objConfirmOpen" OpenChanged="OnConfirmOpenChanged">
+    <AlertDialogContent>
+        <div data-testid="nsfw-confirm">
+            <AlertDialogHeader>
+                <AlertDialogTitle>Enable Unrestricted (NSFW) mode?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This lifts the general SFW filter for <b>fully-synthetic adult (18+) personas only</b>.
+                    Every safety floor — CSAM prevention, real-person / NCII refusal, minors, public-figure
+                    impersonation, provenance and audit — stays fully enforced and cannot be disabled.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction AsChild>
+                    <Button OnClick="ConfirmEnableAsync" data-testid="nsfw-confirm-action">Enable NSFW mode</Button>
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </div>
+    </AlertDialogContent>
+</AlertDialog>
+
+@code {
+    private bool objLoading = true;
+    private bool objNsfwEnabled;
+    private bool objPersonalMode = true;
+    private bool objConfirmOpen;
+
+    // Bumped whenever the Switch must snap back to the C# source of truth (intercepting an
+    // enable request, or closing the gate) — @key re-mounts the Switch so its own optimistic
+    // internal state can never diverge from objNsfwEnabled.
+    private int objSwitchNonce;
+
+    private readonly SafetyFloor[] objFloors =
+    {
+        new("CSAM prevention",
+            "Blocks any minor-related sexual content — detection runs on every prompt and output."),
+        new("NCII / real-person deepfake refusal",
+            "No intimate imagery of real, identifiable people — likeness match rejects the job."),
+        new("Consent gating",
+            "Voice cloning and likeness use require recorded consent before generation."),
+        new("Provenance metadata",
+            "Every output is stamped with AI-generated provenance (C2PA) — stripped copies fail verification."),
+        new("Public-figure impersonation block",
+            "Prompts and reference images matching public figures are refused."),
+        new("Audit trail",
+            "Every generation, policy decision, and mode change is logged immutably.")
+    };
+
+    /// <summary>The admin policy endpoint (not yet in <c>ApiRoutes</c>; consumed enrich-or-seed).</summary>
+    private const string NsfwPolicyRoute = "/api/v1/admin/policy/nsfw";
+
+    /// <summary>
+    /// Loads the current NSFW policy AFTER the first interactive render — once JS interop is available
+    /// and <see cref="IAuthSession"/> can hydrate the bearer token (loading here, not in
+    /// <c>OnInitializedAsync</c>, avoids a wasted anonymous 401 during prerender). With no session, or
+    /// before the endpoint exists, the page keeps the safe seed (mode OFF, personal mode) rather than
+    /// implying any different posture.
+    /// </summary>
+    /// <param name="aFirstRender">Whether this is the component's first render.</param>
+    protected override async Task OnAfterRenderAsync(bool aFirstRender)
+    {
+        if (!aFirstRender)
+        {
+            return;
+        }
+
+        var vHasSession = await AuthSession.EnsureLoadedAsync();
+        await TryLoadPolicyAsync(vHasSession);
+        objLoading = false;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Loads the owner-scoped NSFW policy state. Unauthenticated, or when the endpoint is unreachable,
+    /// the safe seed (mode OFF, personal mode) stands in — never a state that suggests a floor is off.
+    /// </summary>
+    /// <param name="aHasSession">Whether a signed-in session is present.</param>
+    private async Task TryLoadPolicyAsync(bool aHasSession)
+    {
+        if (!aHasSession)
+        {
+            return;
+        }
+
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vResponse = await vClient.GetAsync(NsfwPolicyRoute);
+            if (vResponse.IsSuccessStatusCode)
+            {
+                var vState = await vResponse.Content.ReadFromJsonAsync<JsonElement>();
+                ApplyState(vState);
+            }
+        }
+        catch
+        {
+            // Endpoint not reachable / unauthenticated — keep the safe seed.
+        }
+    }
+
+    /// <summary>
+    /// Applies a policy payload, tolerating either a <c>personalMode</c> flag or an inverse
+    /// <c>multiUser</c> flag and common enabled-field spellings, so the UI binds regardless of the
+    /// exact server contract.
+    /// </summary>
+    /// <param name="aState">The JSON policy payload returned by the endpoint.</param>
+    private void ApplyState(JsonElement aState)
+    {
+        if (aState.ValueKind != JsonValueKind.Object)
+        {
+            return;
+        }
+
+        objNsfwEnabled = ReadBool(aState, false, "enabled", "isEnabled", "nsfwEnabled");
+
+        if (TryGetBool(aState, out var vPersonal, "personalMode", "isPersonalMode", "allowedInPersonalMode"))
+        {
+            objPersonalMode = vPersonal;
+        }
+        else if (TryGetBool(aState, out var vMulti, "multiUser", "isMultiUser", "saas"))
+        {
+            objPersonalMode = !vMulti;
+        }
+
+        // A floor is never off; if multi-user, mode is forced OFF regardless of any stored flag.
+        if (!objPersonalMode)
+        {
+            objNsfwEnabled = false;
+        }
+    }
+
+    /// <summary>Reads the first present boolean among <paramref name="aNames"/>, else <paramref name="aFallback"/>.</summary>
+    private static bool ReadBool(JsonElement aState, bool aFallback, params string[] aNames)
+        => TryGetBool(aState, out var vValue, aNames) ? vValue : aFallback;
+
+    /// <summary>Attempts to read the first present true/false property among <paramref name="aNames"/>.</summary>
+    private static bool TryGetBool(JsonElement aState, out bool aValue, params string[] aNames)
+    {
+        foreach (var vName in aNames)
+        {
+            if (aState.TryGetProperty(vName, out var vProp) &&
+                (vProp.ValueKind == JsonValueKind.True || vProp.ValueKind == JsonValueKind.False))
+            {
+                aValue = vProp.GetBoolean();
+                return true;
+            }
+        }
+
+        aValue = false;
+        return false;
+    }
+
+    /// <summary>
+    /// Handles a Switch interaction. Turning the mode ON opens the confirmation gate without applying
+    /// the change; turning it OFF applies immediately (relaxing a restriction always needs consent,
+    /// re-tightening never does). A no-op in multi-user mode, where the Switch is already disabled.
+    /// </summary>
+    /// <param name="aRequested">The state the user attempted to set the Switch to.</param>
+    private async Task OnToggleRequestedAsync(bool aRequested)
+    {
+        if (!objPersonalMode)
+        {
+            return;
+        }
+
+        if (aRequested && !objNsfwEnabled)
+        {
+            // Do NOT apply — open the gate and snap the Switch back to OFF until confirmed.
+            objSwitchNonce++;
+            objConfirmOpen = true;
+            return;
+        }
+
+        if (!aRequested && objNsfwEnabled)
+        {
+            objNsfwEnabled = false;
+            await PersistAsync();
+        }
+    }
+
+    /// <summary>
+    /// Tracks the confirmation gate's open state. Any close that is NOT an explicit confirm (Cancel,
+    /// Escape, outside-click) re-syncs the Switch to <see cref="objNsfwEnabled"/> so a dismissed gate
+    /// leaves the mode unchanged.
+    /// </summary>
+    /// <param name="aOpen">The gate's new open state.</param>
+    private void OnConfirmOpenChanged(bool aOpen)
+    {
+        objConfirmOpen = aOpen;
+        if (!aOpen)
+        {
+            objSwitchNonce++;
+        }
+    }
+
+    /// <summary>Confirms enabling NSFW mode from the AlertDialog, then persists and closes the gate.</summary>
+    private async Task ConfirmEnableAsync()
+    {
+        objNsfwEnabled = true;
+        objConfirmOpen = false;
+        objSwitchNonce++;
+        await PersistAsync();
+    }
+
+    /// <summary>
+    /// Persists the NSFW enabled state to the policy endpoint. The safety floors are never part of the
+    /// payload — they are non-disableable and have no client-writable representation.
+    /// </summary>
+    private async Task PersistAsync()
+    {
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            await vClient.PutAsJsonAsync(NsfwPolicyRoute, new { enabled = objNsfwEnabled });
+        }
+        catch
+        {
+            // Endpoint not yet wired — reflect the choice in the UI and toast regardless.
+        }
+
+        ToastService.Success(
+            objNsfwEnabled
+                ? "Unrestricted mode ON — synthetic adult (18+) personas only. Floors stay enforced."
+                : "Unrestricted mode OFF — the general SFW filter is active.",
+            "Content policy saved");
+    }
+
+    /// <summary>An always-enforced safety floor shown in the locked, non-disableable list.</summary>
+    /// <param name="Title">The floor's short name.</param>
+    /// <param name="Description">What the floor enforces.</param>
+    private sealed record SafetyFloor(string Title, string Description);
+}

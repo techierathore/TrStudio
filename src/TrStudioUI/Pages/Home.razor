@@ -1,0 +1,78 @@
+@page "/"
+@implements IDisposable
+@inject AppShellNavigation Shell
+
+@*
+    Shared landing stub (REQ-UI-005 / REQ-UI-080): renders inside the app shell and routes into
+    the active surface's nav destinations (chosen by the signed-in user's role). Feature clusters
+    own the destination pages.
+*@
+
+<PageTitle>@Shell.Current.AppName</PageTitle>
+
+<h1 class="page-title">Welcome to @Shell.Current.AppName</h1>
+<p class="page-sub">Pick a destination from the sidebar, or jump straight in below.</p>
+
+@if (objPrimaryItem is not null)
+{
+    <Button Href="@objPrimaryItem.Href">
+        <LucideIcon Name="@objPrimaryItem.Icon" Size="16" />
+        Open @objPrimaryItem.Label
+    </Button>
+}
+
+<div class="home-grid">
+    @foreach (var vGroup in Shell.Current.Groups)
+    {
+        <Card>
+            <CardHeader>
+                <CardTitle>@vGroup.Label</CardTitle>
+                <CardDescription>@vGroup.Items.Count area@(vGroup.Items.Count == 1 ? "" : "s")</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div class="flex flex-col gap-2">
+                    @foreach (var vItem in vGroup.Items)
+                    {
+                        <Button Href="@vItem.Href" Variant="ButtonVariant.Ghost" Class="justify-start">
+                            <LucideIcon Name="@vItem.Icon" Size="16" />
+                            <span>@vItem.Label</span>
+                        </Button>
+                    }
+                </div>
+            </CardContent>
+        </Card>
+    }
+</div>
+
+@code {
+    private AppNavItem? objPrimaryItem;
+
+    /// <inheritdoc />
+    protected override void OnInitialized()
+    {
+        Shell.Changed += HandleShellChanged;
+        objPrimaryItem = Shell.Current.Groups.FirstOrDefault()?.Items.FirstOrDefault();
+    }
+
+    /// <summary>Resolves the role/surface once the circuit is interactive, then refreshes the tiles.</summary>
+    protected override async Task OnAfterRenderAsync(bool aFirstRender)
+    {
+        if (aFirstRender)
+        {
+            await Shell.InitializeAsync();
+        }
+    }
+
+    /// <summary>Re-renders the landing tiles when the resolved role or active surface changes.</summary>
+    private void HandleShellChanged()
+    {
+        objPrimaryItem = Shell.Current.Groups.FirstOrDefault()?.Items.FirstOrDefault();
+        InvokeAsync(StateHasChanged);
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Shell.Changed -= HandleShellChanged;
+    }
+}

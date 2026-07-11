@@ -1,0 +1,144 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject AppShellNavigation Shell
+@inject NavigationManager Navigation
+@inject IAuthSession AuthSession
+
+@*
+    Shared app shell (REQ-UI-005 / REQ-UI-080) for the one unified TrStudio app:
+    collapsible sidebar (SidebarProvider/Sidebar/SidebarInset) + topbar with SidebarTrigger,
+    breadcrumb, theme toggle and user chip. The active surface (creator vs management) is chosen
+    by the signed-in user's role via AppShellNavigation; a Creator reaching an /admin/* route is
+    bounced in-app to <AccessDenied /> instead of the page (REQ-FN-072). Auth screens use EmptyLayout.
+*@
+
+<SidebarProvider DefaultOpen="true" HeightClass="h-screen">
+    <AppSidebar />
+    <SidebarInset>
+        <header class="shell-topbar">
+            <SidebarTrigger />
+            <Breadcrumb>
+                <BreadcrumbList>
+                    <BreadcrumbItem>
+                        <BreadcrumbLink Href="/">@Shell.Current.AppName</BreadcrumbLink>
+                    </BreadcrumbItem>
+                    @if (objActiveItem is not null)
+                    {
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                            <BreadcrumbPage>@objActiveItem.Label</BreadcrumbPage>
+                        </BreadcrumbItem>
+                    }
+                </BreadcrumbList>
+            </Breadcrumb>
+            <div class="shell-topbar-spacer"></div>
+            <ThemeToggle />
+            @* Identity chip doubles as the sign-out control: clears the session and returns to /login. *@
+            <button type="button" class="shell-userchip brand-gradient" data-testid="user-chip"
+                    title="@(objSignedIn ? "Sign out" : "Signed-in user")" @onclick="SignOutAsync">
+                @objUserInitial
+            </button>
+        </header>
+        <main class="shell-content">
+            @if (objAccessDenied)
+            {
+                <AccessDenied />
+            }
+            else
+            {
+                @Body
+            }
+        </main>
+    </SidebarInset>
+</SidebarProvider>
+
+<ToastProvider Position="ToastPosition.BottomRight" />
+<PortalHost />
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">X</span>
+</div>
+
+@code {
+    private AppNavItem? objActiveItem;
+    private string objUserInitial = "TR";
+    private bool objSignedIn;
+    private bool objAccessDenied;
+
+    /// <inheritdoc />
+    protected override void OnInitialized()
+    {
+        UpdateActiveItem();
+        Shell.Changed += HandleShellChanged;
+        Navigation.LocationChanged += HandleLocationChanged;
+    }
+
+    /// <summary>
+    /// Resolves the signed-in user's role once the circuit is interactive (JS interop available),
+    /// so the shell surface + the /admin/* client gate reflect the real role. The user chip initial
+    /// is set from the same session read.
+    /// </summary>
+    protected override async Task OnAfterRenderAsync(bool aFirstRender)
+    {
+        if (!aFirstRender)
+        {
+            return;
+        }
+
+        await Shell.InitializeAsync(Navigation.ToBaseRelativePath(Navigation.Uri));
+
+        var vState = await AuthSession.GetAsync();
+        if (vState is not null && !string.IsNullOrEmpty(vState.UserId))
+        {
+            objSignedIn = true;
+            var vTrimmed = vState.UserId.Trim();
+            objUserInitial = char.ToUpperInvariant(vTrimmed[0]).ToString();
+        }
+
+        EvaluateGuard();
+        StateHasChanged();
+    }
+
+    /// <summary>Clears the session and returns to the sign-in screen.</summary>
+    private async Task SignOutAsync()
+    {
+        await AuthSession.ClearAsync();
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+
+    /// <summary>Re-renders the shell when the resolved role or active surface changes.</summary>
+    private void HandleShellChanged()
+    {
+        EvaluateGuard();
+        InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>Recomputes the breadcrumb leaf and the route guard when the route changes.</summary>
+    private void HandleLocationChanged(object? aSender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs aArgs)
+    {
+        UpdateActiveItem();
+        EvaluateGuard();
+        InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>Resolves the active nav item for the breadcrumb from the current route.</summary>
+    private void UpdateActiveItem()
+    {
+        objActiveItem = NavRouteMatcher.FindActive(Shell.Current, Navigation.ToBaseRelativePath(Navigation.Uri));
+    }
+
+    /// <summary>Denies rendering of a management route for a role that lacks management access (REQ-FN-072).</summary>
+    private void EvaluateGuard()
+    {
+        objAccessDenied = !Shell.IsRouteAllowed(Navigation.ToBaseRelativePath(Navigation.Uri));
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Shell.Changed -= HandleShellChanged;
+        Navigation.LocationChanged -= HandleLocationChanged;
+    }
+}

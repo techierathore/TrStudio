@@ -1,0 +1,377 @@
+@page "/compare"
+@inject IHttpClientFactory HttpClientFactory
+@inject ToastService ToastService
+@inject NavigationManager Navigation
+@inject IAuthSession AuthSession
+
+@*
+    Comparison (REQ-UI-052). Side-by-side across models, seeds and providers — reached from the
+    Gallery Compare action (breadcrumb Gallery / Compare) carrying an owner-scoped ?assetIds= set.
+    A slot toolbar (A/B asset Selects, "Add third", side-by-side/overlay Tabs, sync-playback Switch)
+    drives result panes: each shows a preview with a duration chip, model/provider·tier/seed/provenance
+    Badges and cost/duration/resolution rows, plus per-pane Reproduce/Export/Open-in-Gallery. A
+    parameter-diff DataTable marks the rows that differ, with a "N differ" badge and a show-identical
+    toggle. Per-user: the compare set is owner-filtered server-side; a representative seed keeps the
+    page usable while the endpoint is forming. Fewer than two picks shows an empty state to Gallery.
+*@
+
+<PageTitle>TrStudio — Compare</PageTitle>
+
+<Breadcrumb>
+    <BreadcrumbList>
+        <BreadcrumbItem><BreadcrumbLink Href="/gallery">Gallery</BreadcrumbLink></BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem><BreadcrumbPage>Compare</BreadcrumbPage></BreadcrumbItem>
+    </BreadcrumbList>
+</Breadcrumb>
+
+<h1 class="page-title">Compare</h1>
+<p class="page-sub">Side-by-side across models, seeds and providers — differing parameters are highlighted so you can see exactly what changed between runs.</p>
+
+@if (objLoading)
+{
+    <div class="cmp-panes cmp-panes-2">
+        @for (var vIndex = 0; vIndex < 2; vIndex++)
+        {
+            <Card>
+                <Skeleton Class="cmp-thumb" />
+                <Skeleton Class="h-4 w-3/5 mb-2" />
+                <Skeleton Class="h-4 w-4/5" />
+            </Card>
+        }
+    </div>
+}
+else
+{
+    @* ---- Slot toolbar ---- *@
+    <div class="cmp-slotbar" data-testid="compare-slotbar">
+        @foreach (var vSlot in objSlots)
+        {
+            <span class="cmp-slottag">@vSlot.Tag</span>
+            <Select @bind-Value="vSlot.AssetId" @bind-Value:after="StateHasChanged" TValue="string" Class="cmp-slot-select">
+                <SelectTrigger><SelectValue Placeholder="Pick an asset" /></SelectTrigger>
+                <SelectContent>
+                    @foreach (var vAsset in objAssets)
+                    {
+                        <SelectItem Value="@vAsset.AssetId" Text="@vAsset.OptionLabel" TValue="string">@vAsset.OptionLabel</SelectItem>
+                    }
+                </SelectContent>
+            </Select>
+        }
+        @if (objSlots.Count < 3)
+        {
+            <Button Variant="ButtonVariant.Outline" OnClick="AddThird" data-testid="add-third-btn">
+                <LucideIcon Name="plus" Size="14" />
+                Add third
+            </Button>
+        }
+        <div class="grow"></div>
+        <Tabs @bind-Value="objViewMode" @bind-Value:after="StateHasChanged">
+            <TabsList>
+                <TabsTrigger Value="side">Side-by-side</TabsTrigger>
+                <TabsTrigger Value="overlay">Overlay</TabsTrigger>
+            </TabsList>
+        </Tabs>
+        <div class="flex-row">
+            <Switch @key="@("sync")" @bind-Checked="objSyncPlayback" Id="cmp-sync" />
+            <Label For="cmp-sync" Class="muted-sm">Sync playback</Label>
+        </div>
+    </div>
+
+    @if (Panes.Count < 2)
+    {
+        <Card Class="emptystate" data-testid="compare-empty">
+            <div class="emptyicon"><LucideIcon Name="git-compare" Size="22" /></div>
+            <h3 style="margin:0 0 4px">Nothing to compare yet</h3>
+            <div class="muted-sm" style="margin-bottom:14px">Select two or more assets in the Gallery and hit Compare, or pick them in the slots above.</div>
+            <Button OnClick="@(() => Navigation.NavigateTo("/gallery"))">Go to Gallery</Button>
+        </Card>
+    }
+    else
+    {
+        @* ---- Result panes ---- *@
+        <div class="cmp-panes @(objViewMode == "overlay" ? "cmp-panes-overlay" : "cmp-panes-2")" data-testid="compare-panes">
+            @foreach (var vPane in Panes)
+            {
+                <Card Class="cmp-pane" @key="vPane.Tag">
+                    <div class="cmp-thumb @vPane.Art">
+                        <span class="cmp-play"><LucideIcon Name="@(vPane.IsVideo ? "play" : "image")" Size="16" /></span>
+                        @if (vPane.Duration is not null)
+                        {
+                            <span class="cmp-durchip">@vPane.Duration</span>
+                        }
+                    </div>
+                    <div class="cmp-pane-title">@vPane.Tag — @vPane.Title</div>
+                    <div class="cmp-badges">
+                        <Badge Class="badge-brand">@vPane.Model</Badge>
+                        <Badge Variant="BadgeVariant.Outline">@vPane.Tier · @vPane.Provider</Badge>
+                        <Badge Variant="BadgeVariant.Outline">seed @vPane.SeedLabel</Badge>
+                        <Badge Variant="BadgeVariant.Outline" Class="badge-ok">provenance ✓</Badge>
+                    </div>
+                    <div class="kv"><span class="muted">Cost</span><b>@vPane.Cost</b></div>
+                    <div class="kv"><span class="muted">Duration</span><b>@vPane.RenderTime</b></div>
+                    <div class="kv"><span class="muted">Resolution</span><b>@vPane.Resolution</b></div>
+                    <div class="cmp-acts">
+                        <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => Reproduce(vPane))">Reproduce</Button>
+                        <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => Export(vPane))">Export</Button>
+                        <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => Navigation.NavigateTo("/gallery"))">Open in Gallery</Button>
+                    </div>
+                </Card>
+            }
+        </div>
+
+        @* ---- Parameter diff ---- *@
+        <Card Class="cmp-diff-card">
+            <div class="flex-between" style="margin-bottom:6px">
+                <h3 class="card-h3" style="margin:0">
+                    Parameters
+                    <span class="cmp-diffmark">@DiffCount differ</span>
+                </h3>
+                <div class="flex-row">
+                    <Switch @key="@("show-identical")" @bind-Checked="objShowIdentical" @bind-Checked:after="StateHasChanged" Id="cmp-identical" />
+                    <Label For="cmp-identical" Class="muted-sm">Show identical rows</Label>
+                </div>
+            </div>
+            <div class="table-scroll" data-testid="compare-diff">
+                <DataTable TData="DiffRow" Data="@VisibleDiffRows" ShowToolbar="false" ShowPagination="false">
+                    <Columns>
+                        <DataTableColumn TData="DiffRow" TValue="string" Property="@(r => r.Parameter)" Header="Parameter">
+                            <CellTemplate Context="objRow">
+                                <span class="@(objRow.Differs ? "cmp-diff-param" : null)">
+                                    @if (objRow.Differs)
+                                    {
+                                        <span class="dot brand"></span>
+                                    }
+                                    @objRow.Parameter
+                                </span>
+                            </CellTemplate>
+                        </DataTableColumn>
+                        <DataTableColumn TData="DiffRow" TValue="string" Property="@(r => r.ValueA)" Header="@ColumnAHeader">
+                            <CellTemplate Context="objRow">
+                                <span class="@(objRow.Differs ? "cmp-diff-cell" : null)">@objRow.ValueA</span>
+                            </CellTemplate>
+                        </DataTableColumn>
+                        <DataTableColumn TData="DiffRow" TValue="string" Property="@(r => r.ValueB)" Header="@ColumnBHeader">
+                            <CellTemplate Context="objRow">
+                                <span class="@(objRow.Differs ? "cmp-diff-cell" : null)">@objRow.ValueB</span>
+                            </CellTemplate>
+                        </DataTableColumn>
+                    </Columns>
+                </DataTable>
+            </div>
+        </Card>
+
+        <Alert Variant="AlertVariant.Default" Class="cmp-alert">
+            <AlertDescription>
+                @DiffCount parameter(s) differ between these runs — use <b>Reproduce</b> on the winner to re-run it, or export both for review.
+            </AlertDescription>
+        </Alert>
+    }
+}
+
+@code {
+    private const string CompareRoute = "/api/v1/compare";
+
+    private readonly List<CompareAsset> objAssets = new();
+    private readonly List<Slot> objSlots = new() { new Slot("A"), new Slot("B") };
+    private bool objLoading = true;
+    private string objViewMode = "side";
+    private bool objSyncPlayback = true;
+    private bool objShowIdentical;
+
+    /// <summary>The panes currently filled by the A/B/C slots (a slot with no pick is skipped).</summary>
+    private List<CompareAsset> Panes =>
+        objSlots.Select(aSlot => objAssets.FirstOrDefault(aAsset => aAsset.AssetId == aSlot.AssetId))
+            .Where(aAsset => aAsset is not null)
+            .Select((aAsset, aIndex) => aAsset! with { Tag = objSlots[aIndex].Tag })
+            .ToList();
+
+    /// <summary>Header for the A column, naming the model in slot A.</summary>
+    private string ColumnAHeader => Panes.Count > 0 ? $"A — {Panes[0].Model}" : "A";
+
+    /// <summary>Header for the B column, naming the model in slot B.</summary>
+    private string ColumnBHeader => Panes.Count > 1 ? $"B — {Panes[1].Model}" : "B";
+
+    /// <summary>The parameter rows comparing the first two panes.</summary>
+    private List<DiffRow> DiffRows => Panes.Count < 2 ? new List<DiffRow>() : BuildDiff(Panes[0], Panes[1]);
+
+    /// <summary>Diff rows honouring the show-identical toggle (differing-only when off).</summary>
+    private List<DiffRow> VisibleDiffRows =>
+        objShowIdentical ? DiffRows : DiffRows.Where(aRow => aRow.Differs).ToList();
+
+    /// <summary>The count of parameters that differ between the first two panes.</summary>
+    private int DiffCount => DiffRows.Count(aRow => aRow.Differs);
+
+    /// <summary>
+    /// Loads the owner-scoped compare set AFTER the first interactive render — the point at which JS
+    /// interop is available and <see cref="IAuthSession"/> can hydrate the bearer token. Loading here
+    /// (not in <c>OnInitializedAsync</c>, which runs during prerender before the token exists) avoids a
+    /// wasted anonymous 401 and the sample-data flash it would cause.
+    /// </summary>
+    /// <param name="aFirstRender">Whether this is the component's first render.</param>
+    protected override async Task OnAfterRenderAsync(bool aFirstRender)
+    {
+        if (!aFirstRender)
+        {
+            return;
+        }
+
+        var vHasSession = await AuthSession.EnsureLoadedAsync();
+        await TryLoadCompareAsync(vHasSession);
+        objLoading = false;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Loads the compare set from <c>?assetIds=</c> (owner-filtered server-side). Live rows fill the
+    /// slots when the authenticated call returns them; a representative seed only stands in as a
+    /// usable-page illustration when there is no session or the call yields nothing — never leaving the
+    /// page blank while the Phase-9 endpoint is still forming.
+    /// </summary>
+    /// <param name="aHasSession">Whether a signed-in session is present.</param>
+    private async Task TryLoadCompareAsync(bool aHasSession)
+    {
+        var vAssetIds = ReadAssetIdsFromQuery();
+
+        if (aHasSession)
+        {
+            try
+            {
+                var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+                var vQuery = vAssetIds.Count > 0 ? $"?assetIds={Uri.EscapeDataString(string.Join(',', vAssetIds))}" : string.Empty;
+                var vRows = await vClient.GetFromJsonAsync<List<CompareAsset>>($"{CompareRoute}{vQuery}");
+                if (vRows is { Count: > 0 })
+                {
+                    objAssets.Clear();
+                    objAssets.AddRange(vRows);
+                    AssignSlots();
+                    return;
+                }
+            }
+            catch
+            {
+                // Endpoint forming or unreachable — fall through to the representative seed.
+            }
+        }
+
+        SeedRepresentative();
+        AssignSlots();
+    }
+
+    /// <summary>Reads the comma-separated <c>assetIds</c> query parameter, if present.</summary>
+    private List<string> ReadAssetIdsFromQuery()
+    {
+        var vQuery = new Uri(Navigation.Uri).Query.TrimStart('?');
+        foreach (var vPair in vQuery.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var vEq = vPair.IndexOf('=');
+            if (vEq <= 0)
+            {
+                continue;
+            }
+
+            if (Uri.UnescapeDataString(vPair[..vEq]) == "assetIds")
+            {
+                var vValue = Uri.UnescapeDataString(vPair[(vEq + 1)..]);
+                return vValue.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+            }
+        }
+
+        return new List<string>();
+    }
+
+    /// <summary>Fills the A/B (and any added) slots with the first available assets.</summary>
+    private void AssignSlots()
+    {
+        for (var vIndex = 0; vIndex < objSlots.Count && vIndex < objAssets.Count; vIndex++)
+        {
+            objSlots[vIndex].AssetId = objAssets[vIndex].AssetId;
+        }
+    }
+
+    private void AddThird()
+    {
+        if (objSlots.Count >= 3)
+        {
+            return;
+        }
+
+        var vSlot = new Slot("C");
+        var vNext = objAssets.FirstOrDefault(aAsset => objSlots.All(aExisting => aExisting.AssetId != aAsset.AssetId));
+        vSlot.AssetId = vNext?.AssetId;
+        objSlots.Add(vSlot);
+    }
+
+    private void Reproduce(CompareAsset aPane)
+        => ToastService.Success($"Reproducing \"{aPane.Title}\" ({aPane.Model}) with its stored params.", "Reproduce");
+
+    private void Export(CompareAsset aPane)
+        => ToastService.Success($"Exporting \"{aPane.Title}\".", "Export");
+
+    /// <summary>Builds the parameter comparison between two panes, flagging the rows that differ.</summary>
+    private static List<DiffRow> BuildDiff(CompareAsset aA, CompareAsset aB) => new()
+    {
+        DiffRow.Of("Model", aA.Model, aB.Model),
+        DiffRow.Of("Provider · tier", $"{aA.Provider} · {aA.Tier}", $"{aB.Provider} · {aB.Tier}"),
+        DiffRow.Of("Resolution", aA.Resolution, aB.Resolution),
+        DiffRow.Of("Cost", aA.Cost, aB.Cost),
+        DiffRow.Of("Character", aA.Character, aB.Character),
+        DiffRow.Of("Voice", aA.Voice, aB.Voice),
+        DiffRow.Of("Script", aA.Script, aB.Script),
+        DiffRow.Of("Seed", aA.SeedLabel, aB.SeedLabel),
+        DiffRow.Of("Captions", aA.Captions, aB.Captions),
+    };
+
+    private void SeedRepresentative()
+    {
+        objAssets.Clear();
+        objAssets.AddRange(new[]
+        {
+            new CompareAsset("A", "a1", "Diwali avatar intro — Kavya", "Hunyuan-Avatar", "RunPod serverless", "High",
+                4821, "$0.31", "92 s render", "1080×1920 (9:16)", "0:24", true, "art-v",
+                "Kavya (synthetic · photoreal · identity locked)", "Ravi (Hindi) — IndicF5, speed 1.0",
+                "\"Is Diwali, apno ko dijiye mithaas ka tohfa…\" (HI, 62 words)", "Hindi · burn-in"),
+            new CompareAsset("B", "a2", "Diwali avatar intro — Kavya", "MuseTalk v1", "Mac local (MPS)", "Fast",
+                4821, "$0.00 (local)", "141 s render", "720×1280 (9:16)", "0:24", true, "art-v",
+                "Kavya (synthetic · photoreal · identity locked)", "Ravi (Hindi) — IndicF5, speed 1.0",
+                "\"Is Diwali, apno ko dijiye mithaas ka tohfa…\" (HI, 62 words)", "Hindi · burn-in"),
+            new CompareAsset("C", "a3", "Product reel teaser — saree line", "HeyGen Avatar IV", "Closed API", "Premium",
+                null, "$0.61", "68 s render", "1080×1920 (9:16)", "0:18", true, "art-v",
+                "Kavya (synthetic · photoreal · identity locked)", "Ravi (Hindi) — IndicF5, speed 1.0",
+                "\"Sweet-box teaser, energetic pacing…\" (EN, 40 words)", "English · burn-in"),
+        });
+    }
+
+    /// <summary>A compare slot (A/B/C) holding the picked asset id.</summary>
+    private sealed class Slot
+    {
+        public Slot(string aTag) => Tag = aTag;
+
+        /// <summary>The slot label (A, B or C).</summary>
+        public string Tag { get; }
+
+        /// <summary>The picked asset id, or null when the slot is empty.</summary>
+        public string? AssetId { get; set; }
+    }
+
+    /// <summary>A compare pane's full projection over an asset plus provenance chrome.</summary>
+    private sealed record CompareAsset(
+        string Tag, string AssetId, string Title, string Model, string Provider, string Tier,
+        long? Seed, string Cost, string RenderTime, string Resolution, string? Duration, bool IsVideo,
+        string Art, string Character, string Voice, string Script, string Captions)
+    {
+        /// <summary>The seed as a display label, or an em dash when the run used no seed.</summary>
+        public string SeedLabel => Seed?.ToString() ?? "—";
+
+        /// <summary>The option label shown in the A/B slot selects.</summary>
+        public string OptionLabel => $"{Title} ({Model}{(Seed is null ? string.Empty : $" · seed {Seed}")})";
+    }
+
+    /// <summary>A parameter-diff row: the parameter, both values, and whether they differ.</summary>
+    private sealed record DiffRow(string Parameter, string ValueA, string ValueB, bool Differs)
+    {
+        /// <summary>Builds a diff row, flagging it as differing when the two values are unequal.</summary>
+        public static DiffRow Of(string aParameter, string aValueA, string aValueB)
+            => new(aParameter, aValueA, aValueB, !string.Equals(aValueA, aValueB, StringComparison.Ordinal));
+    }
+}

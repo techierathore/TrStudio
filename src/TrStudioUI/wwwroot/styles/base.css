@@ -1,0 +1,2162 @@
+/* TrStudio shared base styles (REQ-UI-005) — loaded AFTER trblazeui.css in BOTH apps.
+   Brand-gradient utility, brand Button/nav overrides and app-shell chrome that the
+   prebuilt trblazeui.css does not ship. Tokens live in styles/theme.css (same RCL). */
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  /* The document never scrolls horizontally — wide content (e.g. the registry
+     DataTable) scrolls inside its own .table-scroll container instead. */
+  overflow-x: hidden;
+}
+
+body {
+  background: var(--wash), var(--background);
+  color: var(--foreground);
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Brand gradient utility (Branding guide: one utility class, never inline styles) ---- */
+.brand-gradient {
+  background-image: linear-gradient(135deg, var(--brand), var(--brand-2));
+  color: #fff;
+}
+
+/* ---- Base solid Button IS the brand gradient (no monochrome solids) ----
+   TrBlazeUI's default Button variant renders `bg-primary text-primary-foreground`
+   on a <button>/<a>; layering the gradient image keeps hover/disabled utilities
+   working while every unadorned solid Button reads as violet -> fuchsia. Badges
+   (span) and state-variant classes (data-[state=checked]:bg-primary) are untouched. */
+button.bg-primary,
+a.bg-primary {
+  background-image: linear-gradient(135deg, var(--brand), var(--brand-2));
+  box-shadow: var(--glow);
+  color: #fff;
+}
+
+button.bg-primary:hover,
+a.bg-primary:hover {
+  opacity: 0.92;
+}
+
+/* Disabled primaries keep the gradient at reduced opacity (never a grey slab) —
+   trblazeui's disabled:opacity-50 already provides the reduced opacity. */
+
+/* ---- Active sidebar nav pill: full gradient, white ink (Branding guide) ----
+   Attribute-presence selector on purpose: TrBlazeUI 1.0.7 SidebarMenuButton renders
+   data-active="" (empty) for IsActive=true, so [data-active="true"] never matches
+   (its own data-[active=true]: utilities are dead for the same reason). */
+.peer\/menu-button[data-active],
+.peer\/menu-button[data-active]:hover,
+.peer\/menu-button[data-active]:focus-visible {
+  background-image: linear-gradient(135deg, var(--brand), var(--brand-2));
+  color: #fff;
+  font-weight: 600;
+}
+
+.peer\/menu-button[data-active] svg {
+  color: #fff;
+}
+
+/* ---- App shell chrome (MainLayout / EmptyLayout) ---- */
+.shell-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+  padding: 0 18px;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.shell-topbar-spacer {
+  flex: 1;
+}
+
+/* The SidebarInset content column (the flex-1 element that holds the topbar + .shell-content)
+   defaults to min-width:auto, so a page with a hard-min-content child (a wide DataTable, a
+   non-wrapping card/tab strip) inflates the WHOLE layout past the viewport at mobile widths
+   instead of letting that child scroll internally. Allowing the column to shrink is the
+   systemic mobile-reflow fix (REQ-UI-011/053/060/074); desktop is unaffected (it never needs
+   to shrink below content). */
+:has(> .shell-content) {
+  min-width: 0;
+}
+
+.shell-content {
+  flex: 1;
+  overflow: auto;
+  padding: 24px;
+  min-width: 0;
+}
+
+.shell-logo {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  flex: none;
+}
+
+.shell-userchip {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 650;
+  flex: none;
+}
+
+/* ---- Bare (auth) layout ---- */
+.auth-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(900px 480px at 50% -10%, var(--brand-soft), transparent 65%),
+    radial-gradient(700px 420px at 100% 100%, var(--brand-soft), transparent 70%),
+    var(--background);
+}
+
+.auth-theme-toggle {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 60;
+}
+
+/* FocusOnNavigate focuses the page h1 — keep it for a11y, hide the ring. */
+h1:focus {
+  outline: none;
+}
+
+/* ---- Shared typography helpers (Branding guide scale) ---- */
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 3px;
+  letter-spacing: -0.3px;
+}
+
+.page-sub {
+  color: var(--muted-foreground);
+  margin: 0 0 18px;
+}
+
+/* ---- Landing grid (Home) ---- */
+.home-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  margin-top: 14px;
+}
+
+/* ---- Blazor error UI (shell-owned; hosts render it via the shared layouts) ---- */
+#blazor-error-ui {
+  color-scheme: light only;
+  background: lightyellow;
+  color: #111;
+  bottom: 0;
+  box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
+  display: none;
+  left: 0;
+  padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+  position: fixed;
+  width: 100%;
+  z-index: 1000;
+}
+
+#blazor-error-ui .dismiss {
+  cursor: pointer;
+  position: absolute;
+  right: 0.75rem;
+  top: 0.5rem;
+}
+
+/* ---- Badge tone helpers (TrBlazeUI Badge ships no success/warning variant) ----
+   Apply on <Badge Variant="BadgeVariant.Outline" Class="badge-ok"> etc. base.css loads
+   after trblazeui.css, so these single-class rules win over the outline defaults. */
+.badge-ok {
+  background: color-mix(in oklch, var(--alert-success) 16%, transparent);
+  color: var(--alert-success);
+  border-color: color-mix(in oklch, var(--alert-success) 42%, transparent);
+}
+
+.badge-warn {
+  background: color-mix(in oklch, var(--alert-warning) 16%, transparent);
+  color: var(--alert-warning);
+  border-color: color-mix(in oklch, var(--alert-warning) 42%, transparent);
+}
+
+.badge-brand {
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  border-color: var(--brand-bd);
+}
+
+/* ---- Small layout helpers (host CSS — not Tailwind) ---- */
+.flex-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.grow {
+  flex: 1;
+}
+
+.stack {
+  display: grid;
+  gap: 14px;
+}
+
+/* ---- Auth screens: login / register / forgot-password (REQ-UI-001/002/003) ---- */
+.auth-card {
+  width: 100%;
+  max-width: 392px;
+}
+
+.auth-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 22px;
+  text-align: center;
+}
+
+.auth-brand-logo {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  font-size: 18px;
+}
+
+.auth-brand-name {
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.2px;
+  margin: 0;
+}
+
+.auth-brand-tag {
+  color: var(--muted-foreground);
+  font-size: 12.5px;
+}
+
+.auth-field {
+  margin-bottom: 14px;
+}
+
+.auth-fieldrow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.auth-link {
+  font-size: 12px;
+  color: var(--brand-ink);
+  text-decoration: none;
+  font-weight: 550;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+.auth-hint {
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+  margin-top: 4px;
+}
+
+.auth-submit {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.auth-divline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted-foreground);
+  font-size: 11.5px;
+  margin: 16px 0 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.auth-divline::before,
+.auth-divline::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.auth-note {
+  text-align: center;
+  color: var(--muted-foreground);
+  font-size: 12.5px;
+  margin-top: 14px;
+  line-height: 1.5;
+}
+
+.auth-switch {
+  text-align: center;
+  font-size: 13px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.auth-switch a {
+  color: var(--brand-ink);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.auth-switch a:hover {
+  text-decoration: underline;
+}
+
+/* ---- Setup-required gate (REQ-UI-004, BRD-85) ---- */
+.gate-card {
+  width: 100%;
+  max-width: 460px;
+  text-align: center;
+}
+
+.gate-logo {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  font-size: 18px;
+  margin: 0 auto 16px;
+}
+
+.gate-illus {
+  height: 132px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  color: #fff;
+}
+
+.gate-ghost {
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f59e0b, #f43f5e);
+}
+
+.gate-headline {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  margin: 0 0 6px;
+}
+
+.gate-copy {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0 0 18px;
+}
+
+.gate-btns {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.gate-steps {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+  text-align: left;
+}
+
+.gate-cap {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--muted-foreground);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.gate-step {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 5px 0;
+  color: var(--muted-foreground);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.gate-step-n {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10.5px;
+  font-weight: 650;
+  flex: none;
+  margin-top: 1px;
+}
+
+/* ---- Admin: Hardware & guided setup (REQ-UI-070) ---- */
+.kpi-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.kpi-big {
+  font-size: 23px;
+  font-weight: 680;
+  margin: 7px 0 2px;
+  letter-spacing: -0.4px;
+}
+
+.kpi-lbl {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
+.setup-step {
+  display: flex;
+  gap: 12px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+}
+
+.setup-step:last-child {
+  border-bottom: none;
+  padding-bottom: 4px;
+}
+
+.setup-stepdot {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  border: 1px solid var(--border);
+}
+
+.setup-stepdot.done {
+  background: color-mix(in oklch, var(--alert-success) 18%, transparent);
+  color: var(--alert-success);
+  border-color: color-mix(in oklch, var(--alert-success) 40%, transparent);
+}
+
+.setup-stepdot.run {
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  border-color: var(--brand-bd);
+}
+
+.setup-step-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.setup-step-title {
+  font-weight: 600;
+  font-size: 13.5px;
+}
+
+/* ---- Admin: Registry & providers (REQ-UI-071) ---- */
+.registry-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 14px;
+  align-items: start;
+}
+
+/* Grid children must be allowed to shrink below content width so wide tables
+   scroll inside their own container instead of pushing the page body wide. */
+.registry-layout > *,
+.kpi-grid > * {
+  min-width: 0;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  /* min-width:0 lets the scroll box shrink below the table's intrinsic width when it sits
+     inside a flex/grid Card (default min-width:auto would otherwise let the wide table inflate
+     the whole page instead of scrolling internally — REQ-UI-060/074 mobile-reflow fix). */
+  min-width: 0;
+}
+
+.params-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 56px 1fr 24px;
+  gap: 6px;
+  align-items: center;
+}
+
+.params-grid .hd {
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.params-del {
+  color: var(--muted-foreground);
+  cursor: pointer;
+  text-align: center;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.params-del:hover {
+  color: var(--destructive);
+}
+
+.field-err {
+  color: var(--destructive);
+  font-size: 11.5px;
+  margin-top: 6px;
+}
+
+@media (max-width: 980px) {
+  .registry-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gate-btns {
+    flex-direction: column;
+  }
+}
+
+/* ================================================================
+   Creator studio pages (REQ-UI-020 / REQ-UI-050 / REQ-UI-051).
+   Host CSS (not Tailwind) — appended; existing classes untouched.
+   ================================================================ */
+
+/* ---- Shared small helpers ---- */
+.muted-sm {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+.card-h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 625;
+}
+
+.seg-hint {
+  color: var(--muted-foreground);
+  font-size: 11.5px;
+  margin-top: 6px;
+}
+
+/* ---- Image Studio (REQ-UI-020) ---- */
+.studio {
+  display: grid;
+  grid-template-columns: 300px 1fr 300px;
+  gap: 14px;
+  align-items: start;
+}
+
+.studio > * {
+  min-width: 0;
+}
+
+.studio-col {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.param-field {
+  margin-bottom: 12px;
+}
+
+.param-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.param-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.param-val {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+.canvas-stage {
+  aspect-ratio: 1;
+  border-radius: 10px;
+  background: linear-gradient(160deg, #16162a, #4c1d95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c4b5fd;
+  text-align: center;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.canvas-stage-caption {
+  margin-top: 6px;
+  font-size: 13px;
+  opacity: 0.9;
+  max-width: 240px;
+}
+
+.resgrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.restile {
+  aspect-ratio: 1;
+  border-radius: 9px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+
+.restile-empty {
+  border: 1px dashed var(--border);
+  background: var(--muted);
+}
+
+.art-a { background: linear-gradient(135deg, #7c3aed, #d946ef); color: #fff; }
+.art-b { background: linear-gradient(135deg, #f59e0b, #f43f5e); color: #fff; }
+.art-c { background: linear-gradient(135deg, #06b6d4, #10b981); color: #fff; }
+.art-v { background: linear-gradient(160deg, #16162a, #4c1d95); color: #c4b5fd; }
+
+.seed-badge {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  border: none;
+}
+
+.drop-zone {
+  height: 92px;
+  border: 1px dashed var(--border);
+  background: var(--muted);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  text-align: center;
+  padding: 8px;
+}
+
+/* ---- Gallery (REQ-UI-050) ---- */
+.filterbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.filterbar-search {
+  width: 250px;
+  max-width: 100%;
+}
+
+.chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.exportbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: var(--card);
+  border: 1px solid var(--brand-bd);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+
+.assets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 14px;
+}
+
+.asset {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.asset-thumb {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-size: 13px;
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.asset-meta {
+  padding: 10px 11px 11px;
+}
+
+.asset-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  margin-bottom: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.asset-acts {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.selbox {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.selbox-on {
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+.typechip {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.3px;
+  background: var(--card);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+}
+
+.emptystate {
+  margin-top: 18px;
+  text-align: center;
+  padding: 34px 16px;
+}
+
+.emptyicon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+}
+
+/* ---- Projects (REQ-UI-051) ---- */
+.projlayout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.projlayout > * {
+  min-width: 0;
+}
+
+.projlist {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.projcard {
+  cursor: pointer;
+  display: flex;
+  gap: 11px;
+  align-items: center;
+  padding: 13px 14px;
+}
+
+.projcard:hover {
+  background: var(--muted);
+}
+
+.projcard-sel {
+  border-color: var(--brand-bd);
+  background: var(--brand-soft);
+}
+
+.projicon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+}
+
+.projcard-name {
+  font-weight: 600;
+  font-size: 13.5px;
+  margin-bottom: 2px;
+}
+
+.projcard-meta {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
+.hintcard {
+  border-style: dashed;
+  text-align: center;
+  color: var(--muted-foreground);
+  padding: 20px 14px;
+  box-shadow: none;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.detailhead {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.detailgrid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.detailgrid > * {
+  min-width: 0;
+}
+
+.miniart {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 650;
+  flex: none;
+}
+
+.assetcell {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.kv {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 0;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+
+.kv:last-of-type {
+  border-bottom: none;
+}
+
+.kv b {
+  font-weight: 600;
+  text-align: right;
+  max-width: 60%;
+}
+
+.kv .muted {
+  color: var(--muted-foreground);
+}
+
+.promptbox {
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 11px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 1100px) {
+  .studio {
+    grid-template-columns: 1fr;
+  }
+
+  .detailgrid,
+  .projlayout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ================================================================
+   Admin Phase-3 pages (REQ-UI-073 ops / REQ-UI-074 sources /
+   REQ-UI-076 model library). Host CSS (not Tailwind) — appended;
+   existing classes untouched.
+   ================================================================ */
+
+/* ---- Shared inline status dot ---- */
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--muted-foreground);
+  display: inline-block;
+  flex: none;
+}
+
+.dot.ok {
+  background: var(--alert-success);
+}
+
+.dot.warn {
+  background: var(--alert-warning);
+}
+
+.dot.danger {
+  background: var(--destructive);
+}
+
+.dot.brand {
+  background: var(--brand-ink);
+}
+
+/* ---- Admin: RunPod & ops (REQ-UI-073) ---- */
+.ops-grid-3 {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.ops-grid-2 {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.ops-grid-3 > *,
+.ops-grid-2 > * {
+  min-width: 0;
+}
+
+.kv-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: 13px;
+}
+
+.kv-row .kv-lbl {
+  color: var(--muted-foreground);
+  flex: 1;
+}
+
+@media (max-width: 860px) {
+  .ops-grid-3,
+  .ops-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- Admin: Model sources (REQ-UI-074) ---- */
+.src-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+  flex: none;
+  border: 1px solid var(--brand-bd);
+}
+
+/* ---- Admin: Model library (REQ-UI-076) ---- */
+.models-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 14px;
+  align-items: start;
+}
+
+.models-layout > * {
+  min-width: 0;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.q-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.q-item:last-child {
+  border-bottom: none;
+  padding-bottom: 2px;
+}
+
+@media (max-width: 980px) {
+  .models-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ================================================================
+   Voice Studio (REQ-UI-030). Host CSS (not Tailwind) — appended;
+   existing classes untouched. Two-column composer/player layout
+   over the shared .studio-col / .card-h3 / .param-* helpers.
+   ================================================================ */
+.voice-studio {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.voice-studio > * {
+  min-width: 0;
+}
+
+.voice-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.voice-picked {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+
+.voice-av {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 650;
+  flex: none;
+}
+
+.voice-av-a { background: linear-gradient(135deg, #7c3aed, #d946ef); }
+.voice-av-b { background: linear-gradient(135deg, #f59e0b, #f43f5e); }
+.voice-av-c { background: linear-gradient(135deg, #06b6d4, #10b981); }
+.voice-av-x {
+  background: linear-gradient(135deg, var(--muted), var(--border));
+  color: var(--muted-foreground);
+}
+
+.voice-wave {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 56px;
+  margin: 6px 0 12px;
+}
+
+.voice-wave > span {
+  flex: 1;
+  min-height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+.voice-wave > span.is-played {
+  background: linear-gradient(180deg, var(--brand), var(--brand-2));
+}
+
+.voice-wave.is-idle {
+  opacity: 0.5;
+}
+
+.voice-consent-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 2px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+@media (max-width: 1100px) {
+  .voice-studio {
+    grid-template-columns: 1fr;
+  }
+
+  .voice-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ================================================================
+   Admin Content policy / NSFW (REQ-UI-075). Host CSS (not Tailwind)
+   — appended; existing classes untouched. A narrow single-column
+   surface: the owner-only NSFW toggle over an always-locked,
+   non-disableable safety-floor list.
+   ================================================================ */
+.policy-page {
+  max-width: 760px;
+}
+
+/* Soft danger badge tone (TrBlazeUI Badge ships no danger outline variant) —
+   matches the existing .badge-ok / .badge-warn tone helpers. */
+.badge-danger {
+  background: color-mix(in oklch, var(--destructive) 14%, transparent);
+  color: var(--destructive);
+  border-color: color-mix(in oklch, var(--destructive) 42%, transparent);
+}
+
+.policy-nsfw-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.policy-nsfw-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.policy-nsfw-title {
+  font-weight: 650;
+  font-size: 14.5px;
+}
+
+.policy-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.policy-switch-slot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+}
+
+.policy-mode-note {
+  margin-top: 14px;
+}
+
+.policy-floor {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.policy-floor:last-of-type {
+  border-bottom: none;
+  padding-bottom: 2px;
+}
+
+.policy-lockic {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.policy-floor-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.policy-floor-t {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.policy-floor-d {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+.policy-lock-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 550;
+  color: var(--muted-foreground);
+  background: var(--muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .policy-lock-pill span {
+    display: none;
+  }
+}
+
+/* ================================================================
+   Compare (REQ-UI-052). Host CSS (not Tailwind) — appended;
+   existing classes untouched. Slot toolbar + result panes +
+   parameter-diff highlighting.
+   ================================================================ */
+.cmp-slotbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 14px 0 16px;
+}
+
+.cmp-slot-select {
+  min-width: 220px;
+  max-width: 100%;
+}
+
+.cmp-slottag {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  flex: none;
+  border: 1px solid var(--brand-bd);
+}
+
+.cmp-panes {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.cmp-panes-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cmp-panes-overlay {
+  grid-template-columns: 1fr;
+}
+
+.cmp-panes-overlay .cmp-pane {
+  opacity: 0.96;
+}
+
+.cmp-panes > * {
+  min-width: 0;
+}
+
+.cmp-thumb {
+  aspect-ratio: 16 / 10;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 12px;
+  color: #c4b5fd;
+}
+
+.cmp-play {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--foreground);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow);
+}
+
+.cmp-durchip {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  border-radius: 6px;
+  padding: 1px 7px;
+  font-size: 10.5px;
+  font-weight: 600;
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.cmp-pane-title {
+  font-size: 13.5px;
+  font-weight: 625;
+  margin-bottom: 6px;
+}
+
+.cmp-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.cmp-acts {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.cmp-diff-card {
+  margin-bottom: 16px;
+}
+
+.cmp-diffmark {
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.4px;
+  color: var(--brand-ink);
+  background: var(--brand-soft);
+  border: 1px solid var(--brand-bd);
+  border-radius: 999px;
+  padding: 1px 8px;
+  margin-left: 6px;
+}
+
+.cmp-diff-param {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 650;
+  color: var(--brand-ink);
+}
+
+.cmp-diff-cell {
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  border-radius: 6px;
+  padding: 1px 7px;
+}
+
+.cmp-alert {
+  margin-bottom: 8px;
+}
+
+/* ================================================================
+   Library (REQ-UI-053). Host CSS (not Tailwind) — appended;
+   existing classes untouched. Toolbar + preset card grid.
+   ================================================================ */
+.lib-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.lib-search {
+  width: 270px;
+  max-width: 100%;
+}
+
+.lib-presets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.lib-preset {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.lib-preset-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lib-preset-t {
+  font-size: 13.5px;
+  font-weight: 625;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lib-typetag {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border-radius: 6px;
+  padding: 2px 8px;
+  flex: none;
+}
+
+.lib-typetag-prompt {
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  border: 1px solid var(--brand-bd);
+}
+
+.lib-typetag-script {
+  background: color-mix(in oklch, var(--alert-success) 16%, transparent);
+  color: var(--alert-success);
+  border: 1px solid color-mix(in oklch, var(--alert-success) 42%, transparent);
+}
+
+.lib-typetag-style {
+  background: color-mix(in oklch, var(--alert-warning) 16%, transparent);
+  color: var(--alert-warning);
+  border: 1px solid color-mix(in oklch, var(--alert-warning) 42%, transparent);
+}
+
+.lib-typetag-voice {
+  background: var(--muted);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+}
+
+.lib-snippet {
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  background: var(--muted);
+  border-radius: 8px;
+  padding: 9px 11px;
+  font-style: italic;
+}
+
+.lib-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.lib-preset-acts {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 2px;
+}
+
+.lib-usecount {
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+  margin-left: auto;
+}
+
+.lib-wave {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 24px;
+  flex: none;
+}
+
+.lib-wave i {
+  width: 3px;
+  border-radius: 2px;
+  background: var(--brand);
+  display: block;
+}
+
+.lib-form-field {
+  margin-bottom: 14px;
+}
+
+/* ================================================================
+   Account & spend (REQ-UI-060). Host CSS (not Tailwind) — appended;
+   existing classes untouched. Profile/license grid, spend KPIs,
+   Progress-indicator state tints.
+   ================================================================ */
+.acct-top {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+  align-items: start;
+}
+
+.acct-top > * {
+  min-width: 0;
+}
+
+.acct-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.acct-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  font-weight: 650;
+  flex: none;
+}
+
+.acct-cta {
+  width: 100%;
+  justify-content: center;
+}
+
+.acct-alert {
+  margin-bottom: 14px;
+}
+
+.acct-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.acct-kpis > * {
+  min-width: 0;
+}
+
+.acct-kpi-big {
+  font-size: 24px;
+  font-weight: 680;
+  letter-spacing: -0.3px;
+}
+
+.acct-kpi-warn {
+  border-color: color-mix(in oklch, var(--alert-warning) 42%, transparent);
+}
+
+.acct-kpi-danger {
+  border-color: color-mix(in oklch, var(--destructive) 42%, transparent);
+}
+
+/* Progress-indicator state tints. base.css loads after trblazeui.css, so these
+   single-class rules win over the indicator's default bg-primary. */
+.acct-ind-ok {
+  background-image: none;
+  background-color: var(--alert-success);
+}
+
+.acct-ind-warn {
+  background-image: none;
+  background-color: var(--alert-warning);
+}
+
+.acct-ind-danger {
+  background-image: none;
+  background-color: var(--destructive);
+}
+
+.acct-ind-brand {
+  background-image: linear-gradient(90deg, var(--brand), var(--brand-2));
+}
+
+@media (max-width: 980px) {
+  .acct-top {
+    grid-template-columns: 1fr;
+  }
+
+  .acct-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .cmp-panes-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ================================================================
+   Avatar Studio (REQ-UI-010) + Character Library (REQ-UI-011).
+   Host CSS (not Tailwind) — appended; existing classes untouched.
+   Reuses the shared .studio / .studio-col / .card-h3 / .param-*
+   helpers; only avatar-/char-/tier-/cost- scoped classes are new.
+   ================================================================ */
+
+/* ---- Avatar Studio ---- */
+.avatar-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 17px;
+  flex: none;
+  background: linear-gradient(135deg, #7c3aed, #d946ef);
+}
+
+.avatar-empty {
+  height: 84px;
+  border: 1px dashed var(--border);
+  background: var(--muted);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-foreground);
+}
+
+.avatar-preview {
+  aspect-ratio: 9 / 16;
+  max-width: 260px;
+  margin: 0 auto;
+  border-radius: 12px;
+  background: linear-gradient(160deg, #16162a, #4c1d95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c4b5fd;
+  position: relative;
+  overflow: hidden;
+}
+
+.avatar-playbtn {
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #18181b;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+/* ---- Render-tier RadioGroup rows ---- */
+.tier-option {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.tier-option.is-sel {
+  border-color: var(--primary);
+  background: var(--accent);
+}
+
+/* ---- Cost estimate key/value rows ---- */
+.cost-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.cost-total {
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  padding-top: 8px;
+}
+
+/* ---- Character Library ---- */
+.char-search {
+  position: relative;
+  width: 260px;
+  max-width: 100%;
+}
+
+.char-search > svg {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted-foreground);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.char-search :deep(input),
+.char-search input {
+  padding-left: 32px;
+}
+
+.char-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 14px;
+}
+
+.char-card {
+  cursor: pointer;
+  transition: border-color 0.12s;
+}
+
+.char-card:hover {
+  border-color: var(--primary);
+}
+
+.char-face {
+  aspect-ratio: 3 / 4;
+  border-radius: 10px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 10px;
+  color: #fff;
+  font-weight: 650;
+  font-size: 15px;
+}
+
+.char-face-a { background: linear-gradient(135deg, #7c3aed, #d946ef); }
+.char-face-b { background: linear-gradient(135deg, #f59e0b, #f43f5e); }
+.char-face-c { background: linear-gradient(135deg, #06b6d4, #10b981); }
+
+.char-empty {
+  text-align: center;
+  padding: 32px;
+  max-width: 460px;
+  margin: 8px auto 0;
+}
+
+.char-empty-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+  color: var(--muted-foreground);
+}
+
+.char-realism {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 8px 12px;
+  cursor: pointer;
+  flex: 1;
+  font-size: 13px;
+}
+
+.char-realism.is-sel {
+  border-color: var(--primary);
+  background: var(--accent);
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .char-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+
+  .avatar-preview {
+    max-width: 200px;
+  }
+}
+
+/* ================================================================
+   Admin ComfyUI import & debug (REQ-UI-072). Host CSS (not Tailwind)
+   — appended; existing classes untouched. Three-column import /
+   mapping / run-debug workspace with a mono code panel and per-node
+   status list.
+   ================================================================ */
+.comfy-work {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr) 320px;
+  gap: 14px;
+  align-items: start;
+}
+
+.comfy-work > * {
+  min-width: 0;
+}
+
+.comfy-col {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.comfy-divider {
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+  margin: 8px 0;
+}
+
+.comfy-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+}
+
+.comfy-node-sub {
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.comfy-code {
+  background: var(--muted);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11.5px;
+  line-height: 1.5;
+  overflow: auto;
+  max-height: 240px;
+  white-space: pre;
+}
+
+.comfy-preview {
+  aspect-ratio: 16 / 10;
+  border-radius: 8px;
+  background: linear-gradient(160deg, #16162a, #4c1d95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c4b5fd;
+  font-size: 12px;
+  margin: 10px 0;
+}
+
+.comfy-nstat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12.5px;
+}
+
+.comfy-nstat:last-child {
+  border-bottom: none;
+}
+
+.comfy-nstat-detail {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  font-size: 11.5px;
+}
+
+.comfy-nstat-err {
+  margin-left: auto;
+  color: var(--destructive);
+  font-size: 11.5px;
+}
+
+.comfy-ic {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.comfy-ic-ok {
+  background: color-mix(in oklch, var(--alert-success) 18%, transparent);
+  color: var(--alert-success);
+}
+
+.comfy-ic-run {
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+}
+
+.comfy-ic-err {
+  background: color-mix(in oklch, var(--destructive) 16%, transparent);
+  color: var(--destructive);
+}
+
+.comfy-ic-idle {
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+
+.comfy-map-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.comfy-map-table th {
+  color: var(--muted-foreground);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.comfy-map-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.comfy-map-table tr:last-child td {
+  border-bottom: none;
+}
+
+@media (max-width: 1100px) {
+  .comfy-work {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ================================================================
+   Video Studio (REQ-UI-040). Host CSS (not Tailwind) — appended;
+   existing classes untouched. Reuses the shared .studio /
+   .studio-col / .card-h3 / .param-* / .tier-option / .cost-row
+   helpers; only vid-* scoped classes are new.
+   ================================================================ */
+.vid-stage {
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  background: linear-gradient(160deg, #16162a, #4c1d95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #c4b5fd;
+  font-size: 13px;
+  text-align: center;
+  padding: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.vid-empty {
+  aspect-ratio: 16 / 9;
+  border: 1px dashed var(--border);
+  background: var(--muted);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  text-align: center;
+  padding: 12px;
+}
+
+.vid-frames {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.vid-track {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.vid-clip {
+  height: 46px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, var(--muted), var(--border));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--muted-foreground);
+  text-align: center;
+  padding: 0 6px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.vid-clip-add {
+  border: 1px dashed var(--border);
+  background: var(--muted);
+  cursor: pointer;
+}
+
+.vid-clip-audio {
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  border: 1px solid var(--brand-bd);
+}

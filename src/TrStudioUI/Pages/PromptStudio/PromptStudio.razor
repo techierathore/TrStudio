@@ -1,0 +1,1007 @@
+@page "/prompt-studio"
+@using TrBlazeUI.Components.FileUpload
+@inject IHttpClientFactory HttpClientFactory
+@inject ToastService ToastService
+@inject NavigationManager Navigation
+@inject IAuthSession AuthSession
+@inject IJSRuntime Js
+
+@*
+    Prompt Studio (REQ-UI-081 / REQ-UI-082). Chat with a text LLM to craft the precise prompts the
+    image / avatar / video models need. A two-column split: a per-user session rail (New chat, resume,
+    rename, delete — owner-scoped) and a chat card whose head carries the registry-driven LLM picker
+    (/api/v1/models/text-chat) + a vision badge that gates image attach on the picked row's
+    VisionCapable flag. Assistant turns render the crafted prompt in a copyable monospace block with
+    Copy / Save-to-Library (POST /presets, Type="prompt") / Send-to-Studio (routes with ?prompt=…).
+    Data + sessions ride /api/v1/prompt-chat (owner-scoped); the API-down path degrades to a clean
+    Alert with no dead UI. Loads AFTER first render (bearer token hydrated), never during prerender.
+    The 2-col split collapses to 1 col ≤860px, matching the approved mockup.
+*@
+
+<PageTitle>TrStudio — Prompt Studio</PageTitle>
+
+<div class="prompt-studio">
+<h1 class="page-title">Prompt Studio</h1>
+<p class="page-sub">Chat with a text LLM to craft the precise prompts your image, avatar and video models need. Attach a photo and ask for the ideal edit prompt. Chats are private to your account.</p>
+
+<div class="ps-split" data-testid="prompt-studio">
+    @* ---- LEFT: session rail (UI-082) ---- *@
+    <div class="ps-rail" data-testid="session-rail">
+        <Button OnClick="StartNewChat" data-testid="new-chat-btn">
+            <LucideIcon Name="plus" Size="14" />
+            New chat
+        </Button>
+
+        @if (objLoading)
+        {
+            @for (var vIndex = 0; vIndex < 3; vIndex++)
+            {
+                <Skeleton Class="ps-sess-skel" />
+            }
+        }
+        else
+        {
+            @foreach (var vSession in objSessions)
+            {
+                <div class="ps-sess @(vSession.SessionId == objActiveSessionId ? "active" : string.Empty)"
+                     @key="vSession.SessionId" @onclick="@(() => ResumeSessionAsync(vSession.SessionId))">
+                    <div class="ps-sess-t" title="@vSession.Title">@vSession.Title</div>
+                    <div class="ps-sess-m">
+                        <span>@ModelLabel(vSession.ModelId) · @vSession.UpdatedUtc.ToLocalTime().ToString("MMM d")</span>
+                        <button class="ps-icon-inline" title="Rename session"
+                                @onclick="@(() => OpenRename(vSession))" @onclick:stopPropagation="true">
+                            <LucideIcon Name="pencil" Size="13" />
+                        </button>
+                        <button class="ps-del" title="Delete session"
+                                @onclick="@(() => DeleteSessionAsync(vSession.SessionId))" @onclick:stopPropagation="true">
+                            <LucideIcon Name="trash-2" Size="13" />
+                        </button>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    @* ---- RIGHT: chat card (UI-081) ---- *@
+    <Card Class="ps-chat">
+        <div class="ps-chathead">
+            <span class="muted-sm">Model</span>
+            <div data-testid="llm-select" style="min-width:220px">
+                <Select Value="@objModelId" ValueChanged="OnModelChangedAsync" TValue="string">
+                    <SelectTrigger><SelectValue Placeholder="Select a model" /></SelectTrigger>
+                    <SelectContent>
+                        @foreach (var vModel in objModels)
+                        {
+                            <SelectItem Value="@vModel.Id" Text="@vModel.DisplayName" TValue="string">@vModel.DisplayName</SelectItem>
+                        }
+                    </SelectContent>
+                </Select>
+            </div>
+            <span data-testid="vision-badge">
+                @if (VisionOn)
+                {
+                    <Badge Variant="BadgeVariant.Outline" Class="badge-ok">vision — image attach on</Badge>
+                }
+                else
+                {
+                    <Badge Variant="BadgeVariant.Outline" Class="badge-warn">text-only — image attach off</Badge>
+                }
+            </span>
+        </div>
+
+        <div class="ps-thread" data-testid="chat-thread">
+            @if (objApiDown)
+            {
+                <div data-testid="api-alert">
+                    <Alert Variant="AlertVariant.Danger" AccentBorder="true">
+                        <LucideIcon Name="circle-alert" Size="16" />
+                        <AlertTitle>Prompt service unreachable</AlertTitle>
+                        <AlertDescription>
+                            We couldn't reach the chat service. Your message wasn't sent — try again in a moment.
+                        </AlertDescription>
+                    </Alert>
+                </div>
+            }
+
+            @if (!objLoading && objMessages.Count == 0 && !objSending)
+            {
+                <div class="ps-emptythread">
+                    <LucideIcon Name="message-square" Size="26" />
+                    <div class="muted-sm" style="margin-top:8px">
+                        Describe what you want to generate or change — the model will craft the ideal prompt.
+                    </div>
+                </div>
+            }
+
+            @foreach (var vMessage in objMessages)
+            {
+                @if (vMessage.Role == "assistant")
+                {
+                    <div class="ps-msg assistant" @key="vMessage.MessageId">
+                        <div class="ps-who">@ModelLabel(objActiveModelId)</div>
+                        <div class="ps-promptblock" data-testid="prompt-block">@vMessage.Content</div>
+                        <div class="ps-acts">
+                            <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
+                                    OnClick="@(() => CopyPromptAsync(vMessage.Content))" data-testid="copy-btn">
+                                <LucideIcon Name="copy" Size="13" />
+                                Copy
+                            </Button>
+                            <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
+                                    OnClick="@(() => OpenSaveToLibrary(vMessage.Content))" data-testid="save-btn">
+                                <LucideIcon Name="book-open" Size="13" />
+                                Save to Library
+                            </Button>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger>
+                                    <Button Size="ButtonSize.Small" data-testid="send-studio-btn">
+                                        <LucideIcon Name="image" Size="13" />
+                                        Send to Studio
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuItem OnClick="@(() => SendToStudio("/image", vMessage.Content))">
+                                        <LucideIcon Name="image" Size="16" />
+                                        <span class="ml-2">Image Studio</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem OnClick="@(() => SendToStudio("/avatar", vMessage.Content))">
+                                        <LucideIcon Name="user" Size="16" />
+                                        <span class="ml-2">Avatar Studio</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem OnClick="@(() => SendToStudio("/video", vMessage.Content))">
+                                        <LucideIcon Name="video" Size="16" />
+                                        <span class="ml-2">Video Studio</span>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="ps-msg user" @key="vMessage.MessageId">
+                        <div class="ps-who">You</div>
+                        @if (vMessage.HasImage)
+                        {
+                            <div class="ps-attachthumb">
+                                <LucideIcon Name="image" Size="14" />
+                                <span>image attached</span>
+                            </div>
+                        }
+                        <div class="ps-msg-body">@vMessage.Content</div>
+                    </div>
+                }
+            }
+
+            @if (objSending)
+            {
+                <div class="ps-msg assistant" data-testid="typing">
+                    <div class="ps-who">@ModelLabel(objActiveModelId)</div>
+                    <span class="ps-typing"><i></i><i></i><i></i></span>
+                </div>
+            }
+        </div>
+
+        <div class="ps-composer">
+            <div data-testid="attach-btn">
+                <FileUpload Accept="image/*" Multiple="false" ShowPreview="false"
+                            Disabled="@(!VisionOn)" Files="@objAttachFiles" FilesChanged="OnImageSelectedAsync" />
+            </div>
+            <Textarea @bind-Value="objComposerText" Class="ps-composer-text" data-testid="composer-text"
+                      Placeholder="Describe what you want to generate or change — the model will craft the ideal prompt…" />
+            <Button OnClick="SendMessageAsync" Disabled="@objSending" data-testid="send-btn">
+                @if (objSending)
+                {
+                    <Spinner Size="SpinnerSize.Small" Class="mr-2" />
+                    <span>Sending…</span>
+                }
+                else
+                {
+                    <LucideIcon Name="send" Size="14" />
+                    <span>Send</span>
+                }
+            </Button>
+        </div>
+        <div class="ps-visionfoot">
+            @if (objImageName is not null)
+            {
+                <span class="ps-visionhint">Attached: @objImageName — sent with your next message.</span>
+            }
+            else if (VisionOn)
+            {
+                <span class="ps-visionhint">Attachments go to the selected vision model with your message.</span>
+            }
+            else
+            {
+                <span class="ps-visionhint">This model can't see images — pick a vision-capable model to attach a photo.</span>
+            }
+        </div>
+    </Card>
+</div>
+</div>
+
+<Sheet @bind-Open="objSaveSheetOpen">
+    <SheetContent Class="w-[400px] sm:w-[460px]">
+        <SheetHeader>
+            <SheetTitle>Save prompt to Library</SheetTitle>
+            <SheetDescription>Save this crafted prompt for reuse across your studios — private to your account.</SheetDescription>
+        </SheetHeader>
+        <div style="padding:14px 0">
+            <Field Class="ps-form-field">
+                <FieldLabel>Name</FieldLabel>
+                <FieldContent>
+                    <Input @bind-Value="objSaveName" Placeholder="e.g. Diwali portrait — SDXL inpaint" data-testid="save-name" />
+                </FieldContent>
+            </Field>
+            <Field Class="ps-form-field">
+                <FieldLabel>Prompt</FieldLabel>
+                <FieldContent>
+                    <Textarea @bind-Value="objSaveContent" />
+                </FieldContent>
+            </Field>
+        </div>
+        <SheetFooter>
+            <SheetClose><Button Variant="ButtonVariant.Outline">Cancel</Button></SheetClose>
+            <Button OnClick="SavePresetAsync" data-testid="save-preset-confirm">Save preset</Button>
+        </SheetFooter>
+    </SheetContent>
+</Sheet>
+
+<Sheet @bind-Open="objRenameSheetOpen">
+    <SheetContent Class="w-[400px] sm:w-[420px]">
+        <SheetHeader>
+            <SheetTitle>Rename chat</SheetTitle>
+            <SheetDescription>Give this session a clearer title.</SheetDescription>
+        </SheetHeader>
+        <div style="padding:14px 0">
+            <Field Class="ps-form-field">
+                <FieldLabel>Title</FieldLabel>
+                <FieldContent>
+                    <Input @bind-Value="objRenameTitle" Placeholder="Session title" data-testid="rename-title" />
+                </FieldContent>
+            </Field>
+        </div>
+        <SheetFooter>
+            <SheetClose><Button Variant="ButtonVariant.Outline">Cancel</Button></SheetClose>
+            <Button OnClick="RenameSessionAsync" data-testid="rename-confirm">Save</Button>
+        </SheetFooter>
+    </SheetContent>
+</Sheet>
+
+@*
+    Prompt Studio layout (REQ-UI-081/082). The mockup's 2-col split (264px rail + chat) collapses to
+    a single column at ≤860px, where the rail becomes a horizontal scroller. Classes are prefixed
+    (.ps-*) and scoped under .prompt-studio, mapping the mockup CSS onto the app's design tokens.
+*@
+<style>
+    .prompt-studio > * { min-width: 0; }
+
+    .prompt-studio .ps-split {
+        display: grid;
+        grid-template-columns: 264px minmax(0, 1fr);
+        gap: 16px;
+        align-items: start;
+    }
+
+    .prompt-studio .ps-rail {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-width: 0;
+    }
+
+    .prompt-studio .ps-sess-skel { height: 56px; border-radius: 10px; }
+
+    .prompt-studio .ps-sess {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--card);
+        cursor: pointer;
+    }
+
+    .prompt-studio .ps-sess:hover { background: var(--muted); }
+
+    .prompt-studio .ps-sess.active {
+        background: var(--brand-soft);
+        border-color: var(--brand-bd);
+    }
+
+    .prompt-studio .ps-sess-t {
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .prompt-studio .ps-sess.active .ps-sess-t { color: var(--brand-ink); }
+
+    .prompt-studio .ps-sess-m {
+        font-size: 11.5px;
+        color: var(--muted-foreground);
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+
+    .prompt-studio .ps-sess-m span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .prompt-studio .ps-icon-inline,
+    .prompt-studio .ps-del {
+        margin-left: auto;
+        color: var(--muted-foreground);
+        cursor: pointer;
+        border: none;
+        background: none;
+        padding: 0;
+        display: inline-flex;
+    }
+
+    .prompt-studio .ps-del { margin-left: 0; }
+    .prompt-studio .ps-icon-inline:hover { color: var(--brand-ink); }
+    .prompt-studio .ps-del:hover { color: var(--alert-danger); }
+
+    .prompt-studio .ps-chat {
+        display: flex;
+        flex-direction: column;
+        min-height: 640px;
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .prompt-studio .ps-chathead {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+        flex-wrap: wrap;
+    }
+
+    .prompt-studio .ps-thread {
+        flex: 1;
+        padding: 18px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        overflow: auto;
+    }
+
+    .prompt-studio .ps-emptythread {
+        margin: auto;
+        text-align: center;
+        max-width: 340px;
+        color: var(--muted-foreground);
+    }
+
+    .prompt-studio .ps-msg {
+        max-width: 78%;
+        border-radius: 12px;
+        padding: 10px 13px;
+        font-size: 13.5px;
+        line-height: 1.55;
+    }
+
+    .prompt-studio .ps-msg.user {
+        align-self: flex-end;
+        background: linear-gradient(135deg, var(--brand), var(--brand-2));
+        color: #fff;
+        border-bottom-right-radius: 4px;
+    }
+
+    .prompt-studio .ps-msg.assistant {
+        align-self: flex-start;
+        background: var(--muted);
+        border: 1px solid var(--border);
+        border-bottom-left-radius: 4px;
+    }
+
+    .prompt-studio .ps-who {
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: .5px;
+        text-transform: uppercase;
+        opacity: .75;
+        margin-bottom: 4px;
+    }
+
+    .prompt-studio .ps-msg-body { white-space: pre-wrap; }
+
+    .prompt-studio .ps-attachthumb {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        background: rgba(255, 255, 255, .16);
+        border-radius: 8px;
+        padding: 6px 9px;
+        margin-bottom: 7px;
+        font-size: 12px;
+    }
+
+    .prompt-studio .ps-promptblock {
+        background: var(--card);
+        border: 1px solid var(--brand-bd);
+        border-radius: 9px;
+        padding: 10px 12px;
+        margin: 2px 0 7px;
+        font-size: 12.8px;
+        line-height: 1.6;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: var(--foreground);
+        white-space: pre-wrap;
+    }
+
+    .prompt-studio .ps-acts {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+    }
+
+    .prompt-studio .ps-composer {
+        border-top: 1px solid var(--border);
+        padding: 12px 16px;
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+        background: var(--card);
+    }
+
+    .prompt-studio .ps-composer-text {
+        flex: 1;
+        resize: none;
+        min-height: 44px;
+        max-height: 130px;
+    }
+
+    .prompt-studio .ps-visionfoot {
+        padding: 6px 16px 12px;
+        background: var(--card);
+    }
+
+    .prompt-studio .ps-visionhint {
+        font-size: 11.5px;
+        color: var(--muted-foreground);
+    }
+
+    .prompt-studio .ps-typing {
+        display: inline-flex;
+        gap: 4px;
+        align-items: center;
+    }
+
+    .prompt-studio .ps-typing i {
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: var(--muted-foreground);
+        display: block;
+        animation: ps-blink 1.2s infinite;
+    }
+
+    .prompt-studio .ps-typing i:nth-child(2) { animation-delay: .2s; }
+    .prompt-studio .ps-typing i:nth-child(3) { animation-delay: .4s; }
+
+    @@keyframes ps-blink {
+        0%, 80%, 100% { opacity: .25; }
+        40% { opacity: 1; }
+    }
+
+    .prompt-studio .ps-form-field { margin-bottom: 14px; }
+
+    @@media (max-width: 860px) {
+        .prompt-studio .ps-split { grid-template-columns: 1fr; }
+        .prompt-studio .ps-rail {
+            flex-direction: row;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+        .prompt-studio .ps-sess { min-width: 190px; flex: none; }
+        .prompt-studio .ps-sess-skel { min-width: 190px; flex: none; }
+        .prompt-studio .ps-msg { max-width: 92%; }
+    }
+</style>
+
+@code {
+    private List<RegistryModel> objModels = new();
+    private string? objModelId;
+
+    private readonly List<PromptChatSessionResponse> objSessions = new();
+    private Guid? objActiveSessionId;
+
+    /// <summary>The model id the active session was created with (drives the assistant "who" label).</summary>
+    private string? objActiveModelId;
+
+    private readonly List<PromptChatMessageResponse> objMessages = new();
+
+    private bool objLoading = true;
+    private bool objSending;
+    private bool objApiDown;
+
+    private string objComposerText = string.Empty;
+
+    private IReadOnlyList<FileUploadItem> objAttachFiles = new List<FileUploadItem>();
+    private string? objImageBase64;
+    private string? objImageMediaType;
+    private string? objImageName;
+
+    private bool objSaveSheetOpen;
+    private string objSaveName = string.Empty;
+    private string objSaveContent = string.Empty;
+
+    private bool objRenameSheetOpen;
+    private Guid? objRenameId;
+    private string objRenameTitle = string.Empty;
+
+    /// <summary>The picked text-chat model, or null before the picker loads.</summary>
+    private RegistryModel? SelectedModel => objModels.FirstOrDefault(aModel => aModel.Id == objModelId);
+
+    /// <summary>Whether the picked model accepts image attachments (gates the attach control, BRD-90).</summary>
+    private bool VisionOn => SelectedModel?.VisionCapable == true;
+
+    /// <summary>
+    /// Loads the text-chat picker + the owner-scoped session list AFTER the first interactive render —
+    /// once JS interop is available and <see cref="IAuthSession"/> can hydrate the bearer token. Loading
+    /// here (not in <c>OnInitializedAsync</c>, which runs during prerender before the token exists)
+    /// avoids a wasted anonymous 401.
+    /// </summary>
+    /// <param name="aFirstRender">Whether this is the component's first render.</param>
+    protected override async Task OnAfterRenderAsync(bool aFirstRender)
+    {
+        if (!aFirstRender)
+        {
+            return;
+        }
+
+        var vHasSession = await AuthSession.EnsureLoadedAsync();
+        await TryLoadAsync(vHasSession);
+        objLoading = false;
+        StateHasChanged();
+    }
+
+    /// <summary>Loads the text-chat models and the signed-in user's sessions; degrades quietly when the API is down.</summary>
+    /// <param name="aHasSession">Whether a signed-in session is present.</param>
+    private async Task TryLoadAsync(bool aHasSession)
+    {
+        if (!aHasSession)
+        {
+            return;
+        }
+
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+
+            var vModels = await vClient.GetFromJsonAsync<List<RegistryModel>>(ApiRoutes.TextChatModels);
+            if (vModels is { Count: > 0 })
+            {
+                objModels = vModels;
+                objModelId = objModels[0].Id;
+            }
+
+            var vSessions = await vClient.GetFromJsonAsync<List<PromptChatSessionResponse>>($"{ApiRoutes.PromptChat}/sessions");
+            if (vSessions is not null)
+            {
+                objSessions.Clear();
+                objSessions.AddRange(vSessions.OrderByDescending(aSession => aSession.UpdatedUtc));
+            }
+        }
+        catch
+        {
+            // Endpoint forming / unreachable — the picker + rail stay empty rather than flashing samples.
+        }
+    }
+
+    /// <summary>Switches the active picker model (updates the vision badge + attach gating).</summary>
+    /// <param name="aModelId">The chosen text-chat model id.</param>
+    private Task OnModelChangedAsync(string? aModelId)
+    {
+        objModelId = aModelId;
+        // A model change never sends the previously attached image to a text-only model — drop it.
+        if (!VisionOn)
+        {
+            ClearAttachment();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>Clears the current thread so the next Send starts a fresh session with the picked model.</summary>
+    private void StartNewChat()
+    {
+        objActiveSessionId = null;
+        objActiveModelId = null;
+        objMessages.Clear();
+        objComposerText = string.Empty;
+        objApiDown = false;
+        ClearAttachment();
+    }
+
+    /// <summary>Resumes a session — loads its full message history from the detail endpoint.</summary>
+    /// <param name="aSessionId">The session to resume.</param>
+    private async Task ResumeSessionAsync(Guid aSessionId)
+    {
+        objApiDown = false;
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vDetail = await vClient.GetFromJsonAsync<PromptChatSessionDetailResponse>($"{ApiRoutes.PromptChat}/sessions/{aSessionId}");
+            if (vDetail is not null)
+            {
+                objActiveSessionId = vDetail.Session.SessionId;
+                objActiveModelId = vDetail.Session.ModelId;
+                objModelId = vDetail.Session.ModelId;
+                objMessages.Clear();
+                objMessages.AddRange(vDetail.Messages);
+                ClearAttachment();
+            }
+        }
+        catch
+        {
+            ToastService.Error("Couldn't load that chat — the service is unreachable.", "Prompt Studio");
+        }
+    }
+
+    /// <summary>
+    /// Sends the composer message: creates a session first if none is active (with the picked model),
+    /// then posts the message and appends the persisted turns. A rejected message (e.g. an image on a
+    /// text-only model) surfaces a clean toast; an unreachable API surfaces the degrade Alert with no
+    /// dead UI.
+    /// </summary>
+    private async Task SendMessageAsync()
+    {
+        if (objSending)
+        {
+            return;
+        }
+
+        var vText = objComposerText.Trim();
+        if (string.IsNullOrEmpty(vText) && objImageBase64 is null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(objModelId))
+        {
+            ToastService.Error("Pick a model before sending.", "No model");
+            return;
+        }
+
+        objApiDown = false;
+        objSending = true;
+        StateHasChanged();
+
+        var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+
+        try
+        {
+            if (objActiveSessionId is null)
+            {
+                var vCreate = await vClient.PostAsJsonAsync($"{ApiRoutes.PromptChat}/sessions", new PromptChatSessionCreateRequest
+                {
+                    Title = string.IsNullOrEmpty(vText) ? null : Truncate(vText, 48),
+                    ModelId = objModelId,
+                });
+
+                if (!vCreate.IsSuccessStatusCode)
+                {
+                    objApiDown = true;
+                    return;
+                }
+
+                var vSession = await vCreate.Content.ReadFromJsonAsync<PromptChatSessionResponse>();
+                if (vSession is null)
+                {
+                    objApiDown = true;
+                    return;
+                }
+
+                objActiveSessionId = vSession.SessionId;
+                objActiveModelId = vSession.ModelId;
+                objSessions.Insert(0, vSession);
+            }
+
+            var vPost = await vClient.PostAsJsonAsync(
+                $"{ApiRoutes.PromptChat}/sessions/{objActiveSessionId}/messages",
+                new PromptChatPostMessageRequest
+                {
+                    Message = vText,
+                    ImageBase64 = objImageBase64,
+                    ImageMediaType = objImageMediaType,
+                });
+
+            var vResult = await ReadPostResultAsync(vPost);
+            if (vResult is null)
+            {
+                objApiDown = true;
+                return;
+            }
+
+            if (vResult.Rejected)
+            {
+                ToastService.Error(vResult.RejectionReason ?? "That message was rejected.", "Not sent");
+                return;
+            }
+
+            objMessages.Add(vResult.UserMessage);
+            if (vResult.AssistantMessage is not null)
+            {
+                objMessages.Add(vResult.AssistantMessage);
+            }
+
+            if (vResult.Degraded)
+            {
+                ToastService.Show("The chat model isn't fully configured — showing a best-effort reply.", "Degraded");
+            }
+
+            objComposerText = string.Empty;
+            ClearAttachment();
+            TouchActiveSession();
+        }
+        catch
+        {
+            objApiDown = true;
+        }
+        finally
+        {
+            objSending = false;
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Reads a post-message response body. A 2xx carries the full result; a 400 means the message was
+    /// rejected — its body is parsed for the reason (falling back to the raw text). A null return means
+    /// a transport/other failure the caller treats as API-down.
+    /// </summary>
+    /// <param name="aResponse">The HTTP response from the post-message call.</param>
+    private static async Task<PromptChatPostMessageResponse?> ReadPostResultAsync(HttpResponseMessage aResponse)
+    {
+        if (aResponse.IsSuccessStatusCode)
+        {
+            return await aResponse.Content.ReadFromJsonAsync<PromptChatPostMessageResponse>();
+        }
+
+        if (aResponse.StatusCode == System.Net.HttpStatusCode.BadRequest)
+        {
+            try
+            {
+                var vBody = await aResponse.Content.ReadFromJsonAsync<PromptChatPostMessageResponse>();
+                if (vBody is not null)
+                {
+                    vBody.Rejected = true;
+                    return vBody;
+                }
+            }
+            catch
+            {
+                // Not the typed shape — fall through to the raw-text reason.
+            }
+
+            var vReason = await aResponse.Content.ReadAsStringAsync();
+            return new PromptChatPostMessageResponse
+            {
+                Rejected = true,
+                RejectionReason = string.IsNullOrWhiteSpace(vReason) ? "That message was rejected." : vReason,
+            };
+        }
+
+        return null;
+    }
+
+    /// <summary>Reflects the active session's fresh activity to the top of the rail.</summary>
+    private void TouchActiveSession()
+    {
+        var vIndex = objSessions.FindIndex(aSession => aSession.SessionId == objActiveSessionId);
+        if (vIndex < 0)
+        {
+            return;
+        }
+
+        objSessions[vIndex].UpdatedUtc = DateTime.UtcNow;
+        var vSession = objSessions[vIndex];
+        objSessions.RemoveAt(vIndex);
+        objSessions.Insert(0, vSession);
+    }
+
+    /// <summary>Converts the chosen image to base64 for the vision request (honoured only by vision rows).</summary>
+    /// <param name="aFiles">The files chosen in the FileUpload control.</param>
+    private async Task OnImageSelectedAsync(IReadOnlyList<FileUploadItem> aFiles)
+    {
+        objAttachFiles = aFiles;
+        if (aFiles.Count == 0)
+        {
+            ClearAttachment();
+            return;
+        }
+
+        var vItem = aFiles[0];
+        try
+        {
+            await using var vStream = vItem.File.OpenReadStream(20L * 1024 * 1024);
+            using var vMemory = new MemoryStream();
+            await vStream.CopyToAsync(vMemory);
+            objImageBase64 = Convert.ToBase64String(vMemory.ToArray());
+            objImageMediaType = string.IsNullOrWhiteSpace(vItem.ContentType) ? "image/png" : vItem.ContentType;
+            objImageName = vItem.Name;
+        }
+        catch
+        {
+            ClearAttachment();
+            ToastService.Error("Couldn't read that image — try a different file.", "Attach failed");
+        }
+    }
+
+    /// <summary>Drops any staged attachment (on send, model change to text-only, or new/resumed chat).</summary>
+    private void ClearAttachment()
+    {
+        objImageBase64 = null;
+        objImageMediaType = null;
+        objImageName = null;
+        objAttachFiles = new List<FileUploadItem>();
+    }
+
+    /// <summary>Copies the crafted prompt to the clipboard.</summary>
+    /// <param name="aText">The prompt text to copy.</param>
+    private async Task CopyPromptAsync(string aText)
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("navigator.clipboard.writeText", aText);
+            ToastService.Success("Prompt copied to your clipboard.", "Copied");
+        }
+        catch
+        {
+            ToastService.Error("Couldn't access the clipboard.", "Copy failed");
+        }
+    }
+
+    /// <summary>Opens the Save-to-Library sheet seeded with the crafted prompt.</summary>
+    /// <param name="aContent">The prompt text to save as a preset.</param>
+    private void OpenSaveToLibrary(string aContent)
+    {
+        objSaveName = string.Empty;
+        objSaveContent = aContent;
+        objSaveSheetOpen = true;
+    }
+
+    /// <summary>Saves the crafted prompt as a reusable <c>prompt</c> preset (POST /api/v1/presets).</summary>
+    private async Task SavePresetAsync()
+    {
+        if (string.IsNullOrWhiteSpace(objSaveName))
+        {
+            ToastService.Error("A preset needs a name.", "Missing name");
+            return;
+        }
+
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vResponse = await vClient.PostAsJsonAsync(ApiRoutes.Presets, new PresetUpsertRequest
+            {
+                Type = "prompt",
+                Name = objSaveName.Trim(),
+                Content = objSaveContent,
+            });
+
+            if (vResponse.IsSuccessStatusCode)
+            {
+                objSaveSheetOpen = false;
+                ToastService.Success($"Saved \"{objSaveName.Trim()}\" to your Library.", "Saved");
+                return;
+            }
+        }
+        catch
+        {
+            // Fall through to the error toast below.
+        }
+
+        ToastService.Error("Couldn't save the preset — the Library service is unreachable.", "Save failed");
+    }
+
+    /// <summary>Routes to a studio with the crafted prompt pre-filled via the <c>?prompt=</c> query.</summary>
+    /// <param name="aRoute">The studio route (/image, /avatar, /video).</param>
+    /// <param name="aText">The crafted prompt to carry across.</param>
+    private void SendToStudio(string aRoute, string aText)
+    {
+        Navigation.NavigateTo($"{aRoute}?prompt={Uri.EscapeDataString(aText)}");
+    }
+
+    /// <summary>Opens the rename sheet for a session.</summary>
+    /// <param name="aSession">The session to rename.</param>
+    private void OpenRename(PromptChatSessionResponse aSession)
+    {
+        objRenameId = aSession.SessionId;
+        objRenameTitle = aSession.Title;
+        objRenameSheetOpen = true;
+    }
+
+    /// <summary>Persists a session rename (PUT /sessions/{id}).</summary>
+    private async Task RenameSessionAsync()
+    {
+        if (objRenameId is null || string.IsNullOrWhiteSpace(objRenameTitle))
+        {
+            return;
+        }
+
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vResponse = await vClient.PutAsJsonAsync(
+                $"{ApiRoutes.PromptChat}/sessions/{objRenameId}",
+                new PromptChatSessionRenameRequest { Title = objRenameTitle.Trim() });
+
+            if (vResponse.IsSuccessStatusCode)
+            {
+                var vSession = objSessions.FirstOrDefault(aSession => aSession.SessionId == objRenameId);
+                if (vSession is not null)
+                {
+                    vSession.Title = objRenameTitle.Trim();
+                }
+
+                objRenameSheetOpen = false;
+                return;
+            }
+        }
+        catch
+        {
+            // Fall through to the error toast.
+        }
+
+        ToastService.Error("Couldn't rename the chat — the service is unreachable.", "Rename failed");
+    }
+
+    /// <summary>Deletes a session (DELETE /sessions/{id}) and clears the thread if it was active.</summary>
+    /// <param name="aSessionId">The session to delete.</param>
+    private async Task DeleteSessionAsync(Guid aSessionId)
+    {
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vResponse = await vClient.DeleteAsync($"{ApiRoutes.PromptChat}/sessions/{aSessionId}");
+            if (!vResponse.IsSuccessStatusCode)
+            {
+                ToastService.Error("Couldn't delete that chat.", "Delete failed");
+                return;
+            }
+        }
+        catch
+        {
+            ToastService.Error("Couldn't delete that chat — the service is unreachable.", "Delete failed");
+            return;
+        }
+
+        objSessions.RemoveAll(aSession => aSession.SessionId == aSessionId);
+        if (objActiveSessionId == aSessionId)
+        {
+            StartNewChat();
+        }
+
+        ToastService.Success("Chat deleted.", "Prompt Studio");
+    }
+
+    /// <summary>Resolves a model id to its display name for the rail meta + assistant "who" label.</summary>
+    /// <param name="aModelId">The registry model id.</param>
+    private string ModelLabel(string? aModelId)
+    {
+        if (string.IsNullOrEmpty(aModelId))
+        {
+            return "assistant";
+        }
+
+        return objModels.FirstOrDefault(aModel => aModel.Id == aModelId)?.DisplayName ?? aModelId;
+    }
+
+    /// <summary>Truncates a string to a maximum length, appending an ellipsis when clipped.</summary>
+    /// <param name="aText">The text to truncate.</param>
+    /// <param name="aMax">The maximum length before the ellipsis.</param>
+    private static string Truncate(string aText, int aMax) =>
+        aText.Length <= aMax ? aText : aText[..aMax].TrimEnd() + "…";
+}

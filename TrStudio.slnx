@@ -1,0 +1,23 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/src/">
+    <Project Path="src/TrStudio.Desktop/TrStudio.Desktop.csproj" />
+    <Project Path="src/TrStudio.Engine/TrStudio.Engine.csproj" />
+    <Project Path="src/TrStudio.Models/TrStudio.Models.csproj" />
+    <Project Path="src/TrStudio/TrStudio.csproj" />
+    <Project Path="src/TrStudioApi/TrStudioApi.csproj" />
+    <Project Path="src/TrStudioDb/TrStudioDb.csproj" />
+    <Project Path="src/TrStudioUI/TrStudioUI.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/integration/">
+    <Project Path="tests/integration/TrStudio.Tests.Integration/TrStudio.Tests.Integration.csproj" />
+  </Folder>
+  <Folder Name="/tests/unit/">
+    <Project Path="tests/unit/TrStudio.Tests.Unit/TrStudio.Tests.Unit.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TrStudio — Usage Guide (Test Users · Test Plan · Setup)</title>
+<script>
+/* Resolve the theme BEFORE first paint (no flash). Saved choice wins; otherwise
+   pick by time of day — light 07:00–19:00 local, softened dark at night. */
+(function(){
+  try{
+    var t = localStorage.getItem('tf-theme');
+    if(t!=='light' && t!=='dark'){ var h = new Date().getHours(); t = (h>=7 && h<19) ? 'light' : 'dark'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){ document.documentElement.setAttribute('data-theme','light'); }
+})();
+</script>
+<style>
+/* LIGHT is the default theme — a warm off-white, easy on the eyes (never bright white). */
+:root{
+  --bg:#f4f1e9; --panel:#efe9db; --panel2:#e7e0cd; --line:#d8cfb6;
+  --ink:#2e2a22; --muted:#6f6857; --accent:#2f6f9f; --accent2:#3f7d54;
+  --warn:#9a6b15; --danger:#b03a52; --ok:#3f7d54;
+  --code-bg:#ece5d3; --code-ink:#332f26; --row-alt:#eae2cf;
+  --h3:#3a352b; --h4:#2f6f9f; --quote:#4a4537; --cta-bg:#e6eef5;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+/* DARK — softened near-black (warmer / less harsh than pure #0f1115). */
+html[data-theme="dark"]{
+  --bg:#11141a; --panel:#171b23; --panel2:#1e2430; --line:#2b3240;
+  --ink:#dfe3ea; --muted:#99a2b1; --accent:#7cc4ff; --accent2:#a6e3a1;
+  --warn:#f9c74f; --danger:#f38ba8; --ok:#a6e3a1;
+  --code-bg:#0c1016; --code-ink:#d8dde8; --row-alt:#141821;
+  --h3:#cfd5e3; --h4:#7cc4ff; --quote:#cfd5e3; --cta-bg:#0d2030;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;font-size:15px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono);font-size:13px;background:var(--code-bg);color:var(--code-ink);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+pre{font-family:var(--mono);font-size:12.5px;background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:auto;color:var(--code-ink);position:relative}
+pre code{background:none;border:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:11px;font-family:var(--sans);cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+/* floating light/dark toggle (top-right) */
+.theme-toggle{position:fixed;top:12px;right:14px;z-index:10000;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:12.5px;font-family:var(--sans);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.theme-toggle:hover{color:var(--accent);border-color:var(--accent)}
+
+.layout{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.layout.no-toc{grid-template-columns:1fr}
+nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid var(--line);background:var(--panel);padding:18px 14px}
+nav.side h1{font-size:14px;margin:0 0 4px;letter-spacing:.5px;color:var(--ink)}
+nav.side .sub{font-size:11.5px;color:var(--muted);margin-bottom:14px}
+nav.side ol,nav.side ul{list-style:none;padding:0;margin:0}
+nav.side li{font-size:13px;margin:2px 0}
+nav.side li a{display:block;padding:5px 8px;color:var(--ink);border-radius:6px}
+nav.side li a:hover{background:var(--panel2);text-decoration:none}
+nav.side li.h3 a{padding-left:22px;font-size:12.5px;color:var(--h3)}
+nav.side .group{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin:14px 8px 4px}
+
+main{padding:28px 40px 80px;max-width:1100px}
+.layout.no-toc main{margin:0 auto}
+
+h1{font-size:28px;margin:0 0 6px}
+h2{font-size:22px;margin:32px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+h3{font-size:17px;margin:22px 0 6px;color:var(--h3);scroll-margin-top:16px}
+h4{font-size:14px;margin:14px 0 4px;color:var(--h4);scroll-margin-top:16px}
+.subtitle{color:var(--muted);font-size:14px;margin-top:-4px;margin-bottom:18px}
+p{margin:6px 0 10px}
+blockquote{border-left:3px solid var(--accent);background:var(--panel);margin:8px 0;padding:8px 14px;color:var(--quote)}
+ul,ol{padding-left:22px}
+li{margin:2px 0}
+
+table{border-collapse:collapse;width:100%;font-size:13.5px;margin:8px 0}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2);color:var(--h3);font-weight:600}
+tr:nth-child(even) td{background:var(--row-alt)}
+
+hr{border:none;border-top:1px solid var(--line);margin:24px 0}
+.anchor-link{color:var(--muted);font-weight:400;font-size:0.85em;margin-left:8px;opacity:0;transition:opacity .15s;text-decoration:none}
+h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
+
+/* inline TOC at top of main content */
+.toc-inline{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 16px;margin:14px 0 24px}
+.toc-inline > div{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.toc-inline ol,.toc-inline ul{margin:4px 0;padding-left:18px}
+.toc-inline li{font-size:13px;margin:1px 0}
+.toc-inline a{color:var(--h3)}
+
+/* mermaid diagram wrapper + toolbar */
+.diagram{position:relative;border:1px solid var(--line);border-radius:8px;background:var(--code-bg);margin:14px 0;overflow:hidden}
+.diagram .mermaid{padding:14px;margin:0;background:transparent;border:none;overflow:auto}
+.diagram .dt{display:flex;gap:6px;justify-content:flex-end;padding:6px 8px;background:var(--row-alt);border-bottom:1px solid var(--line)}
+.diagram .dt button{background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:3px 10px;font-size:12px;font-family:var(--sans);cursor:pointer;min-width:30px}
+.diagram .dt button:hover{color:var(--accent);border-color:var(--accent)}
+.diagram .dt .zlabel{padding:3px 6px;font-size:11px;color:var(--muted);font-family:var(--mono);align-self:center}
+.diagram.fs{position:fixed;inset:0;z-index:9999;border-radius:0;border:none}
+.diagram.fs .mermaid{height:calc(100vh - 40px);display:flex;align-items:center;justify-content:center}
+
+@media(max-width:900px){.layout{grid-template-columns:1fr}nav.side{position:static;height:auto}}
+</style>
+</head>
+<body>
+<button id="themeToggle" class="theme-toggle" title="Toggle light / dark">☾ Dark</button>
+<div class="layout">
+  <nav class="side">
+    <h1>TrStudio — Usage Guide</h1>
+    <div class="sub">Test Users · Test Plan · Setup — Last rendered: 2026-07-07</div>
+    <div class="group">Contents</div>
+    <ol>
+      <li><a href="#test-users-canonical-use-these-for-all-smoke-verify-uat">Test users (canonical)</a></li>
+      <li><a href="#who-lands-where-default-pages-first-run-gate-screen-flow">Who lands where — default pages, first-run gate &amp; screen flow</a></li>
+      <li class="h3"><a href="#default-landing-page-by-role">Default landing page by role</a></li>
+      <li class="h3"><a href="#first-run-setup-gate-brd-85">First-run setup gate (BRD-85)</a></li>
+      <li class="h3"><a href="#screen-flow-by-role">Screen flow by role</a></li>
+      <li><a href="#how-to-test-screen-by-screen-menu-by-menu">How to test — screen by screen / menu by menu</a></li>
+      <li class="h3"><a href="#register-register-appmanager-backed">Register</a></li>
+      <li class="h3"><a href="#login-login-appmanager-backed">Login</a></li>
+      <li class="h3"><a href="#forgot-password-forgot-password">Forgot password</a></li>
+      <li class="h3"><a href="#first-run-setup-gate-setup-required-setup-required">First-run setup gate &amp; Setup-required</a></li>
+      <li class="h3"><a href="#admin-hardware-readiness-admin-setup-hardware">Admin — Hardware &amp; readiness</a></li>
+      <li class="h3"><a href="#admin-guided-setup-admin-setup">Admin — Guided setup</a></li>
+      <li class="h3"><a href="#admin-model-sources-admin-sources">Admin — Model sources</a></li>
+      <li class="h3"><a href="#admin-model-library-admin-models">Admin — Model library</a></li>
+      <li class="h3"><a href="#admin-model-provider-registry-admin-registry">Admin — Model &amp; Provider Registry</a></li>
+      <li class="h3"><a href="#admin-provider-config-admin-providers">Admin — Provider config</a></li>
+      <li class="h3"><a href="#admin-runpod-cost-guardrails-admin-ops">Admin — RunPod &amp; cost guardrails</a></li>
+      <li class="h3"><a href="#admin-comfyui-import-debug-admin-comfy-import-admin-comfy-debug">Admin — ComfyUI import &amp; debug</a></li>
+      <li class="h3"><a href="#admin-content-policy-nsfw-mode-admin-policy">Admin — Content policy / NSFW mode</a></li>
+      <li class="h3"><a href="#image-studio-image-image-batch">Image studio</a></li>
+      <li class="h3"><a href="#voice-studio-voice-voice-clone">Voice studio</a></li>
+      <li class="h3"><a href="#avatar-studio-avatar-avatar-characters">Avatar studio</a></li>
+      <li class="h3"><a href="#video-studio-video-video-edit">Video studio</a></li>
+      <li class="h3"><a href="#prompt-studio-prompt-studio-phase-10-shipped-2026-07-07">Prompt studio</a></li>
+      <li class="h3"><a href="#workspace-gallery-projects-comparison-library-account-gallery-projects-compare-library-account">Workspace — Gallery, Projects, Comparison, Library, Account</a></li>
+      <li class="h3"><a href="#safety-floors-must-always-fire">Safety floors</a></li>
+      <li class="h3"><a href="#per-user-isolation-gallery-projects">Per-user isolation</a></li>
+      <li><a href="#prerequisites">Prerequisites</a></li>
+      <li><a href="#which-projects-to-run-this-is-a-multi-project-solution">Which projects to run</a></li>
+      <li><a href="#how-to-run-visual-studio-recommended-for-uat">How to run — Visual Studio</a></li>
+      <li><a href="#how-to-run-command-line-alternative">How to run — command line</a></li>
+      <li><a href="#troubleshooting-startup">Troubleshooting startup</a></li>
+      <li><a href="#test-automated">Test (automated)</a></li>
+      <li><a href="#smoke-checklist-quick-capability-pass">Smoke checklist</a></li>
+      <li><a href="#known-limitations">Known limitations</a></li>
+    </ol>
+  </nav>
+  <main>
+    <h1>TrStudio — Usage Guide (Test Users · Test Plan · Setup)</h1>
+    <div class="subtitle">The single source for how to test and run this app — last rendered: 2026-07-07</div>
+
+    <div class="toc-inline">
+      <div>Contents</div>
+      <ol>
+        <li><a href="#test-users-canonical-use-these-for-all-smoke-verify-uat">Test users (canonical — use THESE for all smoke / verify / UAT)</a></li>
+        <li><a href="#who-lands-where-default-pages-first-run-gate-screen-flow">Who lands where — default pages, first-run gate &amp; screen flow</a></li>
+        <li><a href="#how-to-test-screen-by-screen-menu-by-menu">How to test — screen by screen / menu by menu</a></li>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#which-projects-to-run-this-is-a-multi-project-solution">Which projects to run (this is a multi-project solution)</a></li>
+        <li><a href="#how-to-run-visual-studio-recommended-for-uat">How to run — Visual Studio (recommended for UAT)</a></li>
+        <li><a href="#how-to-run-command-line-alternative">How to run — command line (alternative)</a></li>
+        <li><a href="#troubleshooting-startup">Troubleshooting startup</a></li>
+        <li><a href="#test-automated">Test (automated)</a></li>
+        <li><a href="#smoke-checklist-quick-capability-pass">Smoke checklist (quick capability pass)</a></li>
+        <li><a href="#known-limitations">Known limitations</a></li>
+      </ol>
+    </div>
+
+    <blockquote><p>The single source for <strong>how to test and run</strong> this app. Every agent (flow-master self-smoke, the verifier) <strong>and</strong> the human UAT use the SAME test users and the SAME walkthrough listed here (enforced by <code>.tfcore/tasks/_smoke-test-policy.md</code>). All 9 build phases (P1–P9) are shipped; the screen-by-screen plan below is the UAT script for the running app.</p></blockquote>
+
+    <h2 id="test-users-canonical-use-these-for-all-smoke-verify-uat">Test users (canonical — use THESE for all smoke / verify / UAT)<a class="anchor-link" href="#test-users-canonical-use-these-for-all-smoke-verify-uat">#</a></h2>
+
+    <blockquote>
+      <p>Identity is delegated to <strong>AppManager</strong> (child-app integration). TrStudio stores only the AppManager <code>userId</code>; no passwords are ever stored locally.<br>
+      <strong>✅ AppManager auth path RESOLVED + VERIFIED LIVE 2026-07-07.</strong> The earlier blocker (AppManager <code>/AuthSvc/*</code> → HTTP 500, root-caused to <code>System.UnauthorizedAccessException: Access to the path '/keys/rsa-private.pem' is denied</code> — its <code>RsaEncryptionService</code> couldn't write its RSA key) was <strong>fixed by the owner</strong> (made <code>/keys</code> writable + restarted the <code>appmanager-api</code> container). Re-verified end-to-end: real login <code>admin@appmanager.local</code>/<code>Admin@123!</code> → <strong>200 + JWT</strong> (Owner, role 0); <code>/auth/me</code> → 200 (AppManager <code>/AuthSvc/validate</code>); <code>/license</code> → 200 (AppManager <code>/LicenseSvc/validate</code>); <code>/register</code> created <code>creator@trstudio.test</code> → 200 (Creator, role 1) and login as that new account → 200. <strong>REQ-FN-012/013/015 now Verified; FN-016 login-driven landing Verified.</strong> Real AppManager login is the primary UAT path; the <code>/dev/session</code> seam remains available for role-switching smokes. Remaining external item: assign a <strong>Premium license</strong> in AppManager to fully exercise Premium tier-gating (FN-014).</p>
+    </blockquote>
+
+    <table>
+      <thead>
+        <tr><th>#</th><th>Username / Email</th><th>Password</th><th>Role / Permission</th><th>Created?</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>admin@appmanager.local</td><td><code>Admin@123!</code></td><td>Superadmin (Owner — Creator + Operator, all tiers)</td><td>✅ (pre-existing in AppManager)</td><td>Generic AppManager superadmin shared across the owner's apps; already exists — do NOT create. Credential provided by owner 2026-07-07. ⚠ Real TrStudio login via this account is currently <strong>blocked by an AppManager-side fault</strong> (its <code>/AuthSvc/*</code> → HTTP 500; see UAT-blocker note) — not a credential problem. Use <code>/dev/session</code> until AppManager is fixed</td></tr>
+        <tr><td>2</td><td>creator@trstudio.test</td><td>TrStudio!Creator1</td><td>Standard creator (Fast + High tiers)</td><td>✅ Created 2026-07-07 (AppManager userId 13, role Creator)</td><td>Registered live via <code>/register</code> once AppManager was fixed (FN-015 Verified). Real login works; lands on <code>/avatar</code></td></tr>
+        <tr><td>3</td><td>admin@trstudio.test</td><td>TrStudio!Admin1</td><td>Operator / Admin</td><td>⬜ Not yet created</td><td>Create in AppManager with the admin/operator role (AppManager auth works now) to exercise the management surface via real login</td></tr>
+        <tr><td>4</td><td>premium@trstudio.test</td><td>TrStudio!Premium1</td><td>Premium-licensed creator</td><td>⬜ Not yet created</td><td>Register via <code>/register</code>, then assign a Premium license in AppManager, to exercise Premium tier-gating (FN-014)</td></tr>
+      </tbody>
+    </table>
+
+    <ul>
+      <li><strong>Created?</strong> — ✅ = exists now. ⬜ Not yet created = the AppManager auth path works (2026-07-07); these just haven't been created yet (owner can create them now — no longer blocked).</li>
+      <li><strong>User 1</strong> is the pre-existing generic superadmin (<code>admin@appmanager.local</code>, password <code>Admin@123!</code>) — never create or overwrite it.</li>
+      <li><strong>Real AppManager login works (2026-07-07):</strong> users 1 and 2 log in through AppManager end-to-end. The <strong>dev-session seam</strong> (<code>AllowDevSymmetricTokens=true</code> + <code>/dev/session</code>) still works as an alternative for role-switching smokes.</li>
+    </ul>
+
+    <h2 id="who-lands-where-default-pages-first-run-gate-screen-flow">Who lands where — default pages, first-run gate &amp; screen flow<a class="anchor-link" href="#who-lands-where-default-pages-first-run-gate-screen-flow">#</a></h2>
+
+    <blockquote><p>Per <strong>BRD-84</strong> (role-based landing) and <strong>BRD-85</strong> (first-run setup gate).</p></blockquote>
+
+    <h3 id="default-landing-page-by-role">Default landing page by role<a class="anchor-link" href="#default-landing-page-by-role">#</a></h3>
+
+    <table>
+      <thead>
+        <tr><th>Role (test user)</th><th>Default landing after login</th><th>When first-run setup is incomplete</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Superadmin / Owner</strong> (user 1)</td><td>Avatar studio <code>/avatar</code> — full Creator surface, all tiers; switches to TrStudioAdmin via the sidebar footer link</td><td>TrStudioAdmin <strong>Guided setup</strong> <code>/admin/setup</code> (bootstrap account completes first-run)</td></tr>
+        <tr><td><strong>Operator / Admin</strong> (user 3)</td><td>TrStudioAdmin <strong>Ops dashboard</strong> <code>/admin/ops</code></td><td><strong>Hardware &amp; readiness</strong> <code>/admin/setup/hardware</code>, then the guided-setup wizard</td></tr>
+        <tr><td><strong>Standard creator</strong> (user 2)</td><td>Avatar studio <code>/avatar</code></td><td><strong>Setup required</strong> <code>/setup-required</code> — "no models configured; ask your admin"</td></tr>
+        <tr><td><strong>Premium creator</strong> (user 4)</td><td>Avatar studio <code>/avatar</code> (Premium tier selectable per license)</td><td><strong>Setup required</strong> <code>/setup-required</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="first-run-setup-gate-brd-85">First-run setup gate (BRD-85)<a class="anchor-link" href="#first-run-setup-gate-brd-85">#</a></h3>
+
+    <p>On every login the app checks: is there <strong>≥1 enabled model source</strong> <strong>and ≥1 ready registry model</strong>? Until both are true the app is un-set-up.</p>
+
+    <div class="diagram">
+      <div class="dt">
+        <button data-zout title="Zoom out">−</button>
+        <span class="zlabel">100%</span>
+        <button data-zin title="Zoom in">+</button>
+        <button data-fit title="Fit to width">Fit</button>
+        <button data-one title="Actual size">1:1</button>
+        <button data-fs title="Fullscreen">⛶</button>
+        <button data-pop title="Open in new tab">↗</button>
+      </div>
+      <pre class="mermaid">flowchart TD
+  L["Login (AppManager)"] --> R{"role?"}
+  R -->|"Superadmin / Operator"| C1{"setup complete?"}
+  R -->|"Creator (std / Premium)"| C2{"setup complete?"}
+  C1 -->|"yes"| A1["Superadmin to /avatar · Operator to /admin/ops"]
+  C1 -->|"no"| S1["Guided setup: /admin/setup(/hardware) to sources to model install"]
+  C2 -->|"yes"| A2["/avatar (Avatar studio)"]
+  C2 -->|"no"| S2["/setup-required — ask your admin"]</pre>
+    </div>
+
+    <ul>
+      <li>The <strong>superadmin</strong> (user 1) experiences the very first run: fresh install → login → guided setup → hardware check → runtime provisioning → add a model source → install a model → registry row ready → gate passes → next login lands on <code>/avatar</code>.</li>
+      <li>A <strong>creator</strong> logging in before setup completes only ever sees the Setup-required screen.</li>
+    </ul>
+
+    <h3 id="screen-flow-by-role">Screen flow by role<a class="anchor-link" href="#screen-flow-by-role">#</a></h3>
+
+    <ul>
+      <li><strong>Creator (users 2/4) — TrStudio app</strong>: land on <strong>Avatar studio</strong> → sidebar: Characters (<code>/avatar/characters</code>) · Image studio (<code>/image</code>) · Video studio (<code>/video</code>) · Voice studio (<code>/voice</code>) → Workspace: Gallery (<code>/gallery</code>) · Projects (<code>/projects</code>) · Account (<code>/account</code>). Comparison (<code>/compare</code>) and Library (<code>/library</code>) open from the Gallery toolbar.</li>
+      <li><strong>Operator / Admin (user 3) — TrStudioAdmin app</strong>: land on <strong>Ops dashboard</strong> → sidebar: Hardware &amp; Setup (<code>/admin/setup/hardware</code>, <code>/admin/setup</code>) · RunPod &amp; Ops (<code>/admin/ops</code>) → Models: Model Sources (<code>/admin/sources</code>) · Model Library (<code>/admin/models</code>) · Registry &amp; Providers (<code>/admin/registry</code>, <code>/admin/providers</code>) · ComfyUI Import (<code>/admin/comfy/import</code>, <code>/admin/comfy/debug</code>) → Governance: Content Policy (<code>/admin/policy</code>).</li>
+      <li><strong>Superadmin / Owner (user 1)</strong>: both surfaces — lands in TrStudio (<code>/avatar</code>), switches to TrStudioAdmin via the sidebar footer link. Exercises the owner-only NSFW toggle and all-tier avatar rendering.</li>
+    </ul>
+
+    <h2 id="how-to-test-screen-by-screen-menu-by-menu">How to test — screen by screen / menu by menu<a class="anchor-link" href="#how-to-test-screen-by-screen-menu-by-menu">#</a></h2>
+
+    <p>One subsection per screen, in navigation order. Each names the test user, the steps, the expected result, and the BRD-N it covers. Screens are shipped; where a capability is model/service-gated it degrades cleanly (noted).</p>
+
+    <h3 id="register-register-appmanager-backed">Register (<code>/register</code>, AppManager-backed)<a class="anchor-link" href="#register-register-appmanager-backed">#</a></h3>
+    <ul>
+      <li><strong>Log in as:</strong> n/a (creates user 2)</li>
+      <li><strong>Steps:</strong> 1) open <code>/register</code> → 2) enter name/email/password + confirm → 3) submit</li>
+      <li><strong>Expected:</strong> account created via the AppManager API; no local password store; redirect to login/home. ⚠ Blocked until app 4 published (FN-015) — UI + validation shipped</li>
+      <li><strong>Covers:</strong> BRD-83</li>
+    </ul>
+
+    <h3 id="login-login-appmanager-backed">Login (<code>/login</code>, AppManager-backed)<a class="anchor-link" href="#login-login-appmanager-backed">#</a></h3>
+    <ul>
+      <li><strong>Log in as:</strong> user 1, then users 2–4</li>
+      <li><strong>Steps:</strong> 1) open <code>/login</code> → 2) enter credentials → 3) submit → 4) note the landing page → 5) repeat per role</li>
+      <li><strong>Expected:</strong> JWT session via AppManager; each role lands per the table above; first run routes to the setup gate. ⚠ Real AppManager login Blocked until app 4 published; use <code>/dev/session</code> meanwhile</li>
+      <li><strong>Covers:</strong> BRD-57, BRD-84</li>
+    </ul>
+
+    <h3 id="forgot-password-forgot-password">Forgot password (<code>/forgot-password</code>)<a class="anchor-link" href="#forgot-password-forgot-password">#</a></h3>
+    <ul>
+      <li><strong>Log in as:</strong> n/a (Login screen link)</li>
+      <li><strong>Steps:</strong> 1) open <code>/forgot-password</code> → 2) enter the account email → 3) submit</li>
+      <li><strong>Expected:</strong> enumeration-safe confirmation; reset handed to AppManager; back-to-login works</li>
+      <li><strong>Covers:</strong> BRD-57</li>
+    </ul>
+
+    <h3 id="first-run-setup-gate-setup-required-setup-required">First-run setup gate &amp; Setup-required (<code>/setup-required</code>)<a class="anchor-link" href="#first-run-setup-gate-setup-required-setup-required">#</a></h3>
+    <ul>
+      <li><strong>Log in as:</strong> user 2 (fresh install), then user 1</li>
+      <li><strong>Steps:</strong> 1) as user 2 log in before setup → confirm <code>/setup-required</code> (no studio nav) → 2) log in as user 1 → confirm redirect into guided setup → 3) enable a source + install a model → 4) log in as user 2 again</li>
+      <li><strong>Expected:</strong> creator sees Setup-required until ≥1 enabled source AND ≥1 ready model; after setup user 2 lands on <code>/avatar</code></li>
+      <li><strong>Covers:</strong> BRD-85</li>
+    </ul>
+
+    <h3 id="admin-hardware-readiness-admin-setup-hardware">Admin — Hardware &amp; readiness (<code>/admin/setup/hardware</code>)<a class="anchor-link" href="#admin-hardware-readiness-admin-setup-hardware">#</a></h3>
+    <ul>
+      <li><strong>Log in as:</strong> user 3</li>
+      <li><strong>Steps:</strong> open the readiness summary; read detected GPU/CPU cores, memory, MPS-CoreML, disk</li>
+      <li><strong>Expected:</strong> accurate host capability summary with a readiness verdict (live <code>/api/v1/admin/capabilities</code>)</li>
+      <li><strong>Covers:</strong> BRD-8</li>
+    </ul>
+
+    <h3 id="admin-guided-setup-admin-setup">Admin — Guided setup (<code>/admin/setup</code>)<a class="anchor-link" href="#admin-guided-setup-admin-setup">#</a></h3>
+    <ul>
+      <li><strong>Log in as:</strong> user 3</li>
+      <li><strong>Steps:</strong> run the wizard → install ONNX Runtime → provision isolated Python + ComfyUI</li>
+      <li><strong>Expected:</strong> endpoints + state machine drive the steps (400 unknown / 409 running). ⚠ real ONNX/Python provisioning-to-completion needs a host GPU/env (PARTIAL)</li>
+      <li><strong>Covers:</strong> BRD-9, BRD-10</li>
+    </ul>
+
+    <h3 id="admin-model-sources-admin-sources">Admin — Model sources (<code>/admin/sources</code>)<a class="anchor-link" href="#admin-model-sources-admin-sources">#</a></h3>
+    <ul>
+      <li><strong>Log in as:</strong> user 3</li>
+      <li><strong>Steps:</strong> add a Hugging Face source (base URL + token) → Test connection → enable; add Civitai; add a custom URL source</li>
+      <li><strong>Expected:</strong> sources saved with tokens encrypted (absent from responses/logs); Test shows reachable; Model library lists models from enabled sources</li>
+      <li><strong>Covers:</strong> BRD-82</li>
+    </ul>
+
+    <h3 id="admin-model-library-admin-models">Admin — Model library (<code>/admin/models</code>)<a class="anchor-link" href="#admin-model-library-admin-models">#</a></h3>
+    <ul>
+      <li><strong>Log in as:</strong> user 3</li>
+      <li><strong>Steps:</strong> browse models from enabled sources → one-click install (resumable) → confirm size/VRAM/licence shown</li>
+      <li><strong>Expected:</strong> install lists/starts/pauses/resumes/cancels (validation paths live). ⚠ real resumable download needs a reachable model/network (PARTIAL)</li>
+      <li><strong>Covers:</strong> BRD-11</li>
+    </ul>
+
+    <h3 id="admin-model-provider-registry-admin-registry">Admin — Model &amp; Provider Registry (<code>/admin/registry</code>)<a class="anchor-link" href="#admin-model-provider-registry-admin-registry">#</a></h3>
+    <ul>
+      <li><strong>Log in as:</strong> user 3</li>
+      <li><strong>Steps:</strong> add a registry row → define its params schema → save</li>
+      <li><strong>Expected:</strong> the model is usable from TrStudio with UI controls <strong>auto-rendered from the schema</strong> (no code change) — proven live in Image studio</li>
+      <li><strong>Covers:</strong> BRD-6, BRD-77</li>
+    </ul>
+
+    <h3 id="admin-provider-config-admin-providers">Admin — Provider config (<code>/admin/providers</code>)<a class="anchor-link" href="#admin-provider-config-admin-providers">#</a></h3>
+    <ul>
+      <li><strong>Log in as:</strong> user 3</li>
+      <li><strong>Steps:</strong> add HeyGen + aggregator API keys → enable per model</li>
+      <li><strong>Expected:</strong> keys stored encrypted (never shown in logs/URLs, masked <code>****2345</code> on read); providers selectable per model</li>
+      <li><strong>Covers:</strong> BRD-7, BRD-73</li>
+    </ul>
+
+    <h3 id="admin-runpod-cost-guardrails-admin-ops">Admin — RunPod &amp; cost guardrails (<code>/admin/ops</code>)<a class="anchor-link" href="#admin-runpod-cost-guardrails-admin-ops">#</a></h3>
+    <ul>
+      <li><strong>Log in as:</strong> user 3</li>
+      <li><strong>Steps:</strong> register a RunPod endpoint → submit a heavy job → confirm scale-to-zero after idle → check spend-to-date vs the monthly cap</li>
+      <li><strong>Expected:</strong> spend tracked across RunPod + closed APIs; over-cap → HTTP 402; near-cap alert; non-admin 403. ⚠ live cold-start needs <code>RunPod:ApiKey</code> (Implemented)</li>
+      <li><strong>Covers:</strong> BRD-12, BRD-13, BRD-15, BRD-75</li>
+    </ul>
+
+    <h3 id="admin-comfyui-import-debug-admin-comfy-import-admin-comfy-debug">Admin — ComfyUI import &amp; debug (<code>/admin/comfy/import</code>, <code>/admin/comfy/debug</code>)<a class="anchor-link" href="#admin-comfyui-import-debug-admin-comfy-import-admin-comfy-debug">#</a></h3>
+    <ul>
+      <li><strong>Log in as:</strong> user 3</li>
+      <li><strong>Steps:</strong> drop an API-format workflow JSON → map inputs to registry params → run/debug → save as a registered model → version + pin</li>
+      <li><strong>Expected:</strong> invalid JSON → 400; save-as-model <strong>hides the graph</strong> (opaque version GUID); sandbox go-live before a passing smoke → 409, then 200; version-pin serves the pinned version. ⚠ live run/WS-previews need a reachable ComfyUI (<code>ComfyUI:BaseUrl</code>)</li>
+      <li><strong>Covers:</strong> BRD-34..41</li>
+    </ul>
+
+    <h3 id="admin-content-policy-nsfw-mode-admin-policy">Admin — Content policy / NSFW mode (<code>/admin/policy</code>)<a class="anchor-link" href="#admin-content-policy-nsfw-mode-admin-policy">#</a></h3>
+    <ul>
+      <li><strong>Log in as:</strong> user 1 (owner, personal mode)</li>
+      <li><strong>Steps:</strong> open content policy → toggle Unrestricted (NSFW) behind the confirmation gate → generate adult content from a <strong>synthetic</strong> adult character → attempt the same with a real-person reference</li>
+      <li><strong>Expected:</strong> synthetic-adult allowed; real-person / photoreal-of-real refused; CSAM + public-figure + minor floors STILL fire (403); toggle forced-off in multi-user/SaaS</li>
+      <li><strong>Covers:</strong> BRD-79, BRD-80</li>
+    </ul>
+
+    <h3 id="image-studio-image-image-batch">Image studio (<code>/image</code>, <code>/image/batch</code>)<a class="anchor-link" href="#image-studio-image-image-batch">#</a></h3>
+    <ul>
+      <li><strong>Log in as:</strong> user 2</li>
+      <li><strong>Steps:</strong> compose a prompt → generate → I2I/inpaint with a mask → ControlNet conditioning → upscale to 2K → seed grid → export 9:16 with background removed</li>
+      <li><strong>Expected:</strong> params render dynamically from the registry schema; same seed/params <strong>reproduces byte-identical</strong>; exports in the chosen social format. ⚠ real pixels need an installed ONNX model (synthetic seed-driven render otherwise)</li>
+      <li><strong>Covers:</strong> BRD-16..21</li>
+    </ul>
+
+    <h3 id="voice-studio-voice-voice-clone">Voice studio (<code>/voice</code>, <code>/voice/clone</code>)<a class="anchor-link" href="#voice-studio-voice-voice-clone">#</a></h3>
+    <ul>
+      <li><strong>Log in as:</strong> user 2</li>
+      <li><strong>Steps:</strong> type EN and HI text → pick a preset voice → generate → clone a synthetic voice (ungated) → attempt a real-person clone → confirm the consent gate blocks until consent recorded</li>
+      <li><strong>Expected:</strong> per-language routing behind one control; <strong>consent gate enforced for real people</strong> (403 until consent, owner-scoped). ⚠ real synthesis needs a voice model (<code>synthetic-dev</code> otherwise)</li>
+      <li><strong>Covers:</strong> BRD-22..26, BRD-62</li>
+    </ul>
+
+    <h3 id="avatar-studio-avatar-avatar-characters">Avatar studio (<code>/avatar</code>, <code>/avatar/characters</code>)<a class="anchor-link" href="#avatar-studio-avatar-avatar-characters">#</a></h3>
+    <ul>
+      <li><strong>Log in as:</strong> user 1 (all tiers)</li>
+      <li><strong>Steps:</strong> create a photoreal Character, lock identity → write a script (EN then HI) → generate voice → animate at <strong>Fast → High → Premium</strong> → add captions → reframe + export MP4</li>
+      <li><strong>Expected:</strong> one tier control resolves to <strong>3 distinct providers</strong>; captions produce valid SRT; provenance on export; <strong>realism flag feeds the safety floor</strong> (photoreal-of-real → 403). ⚠ live lip-sync/HeyGen execution needs models / HeyGen key</li>
+      <li><strong>Covers:</strong> BRD-27..31, BRD-33, BRD-53, BRD-55, BRD-63</li>
+    </ul>
+
+    <h3 id="video-studio-video-video-edit">Video studio (<code>/video</code>, <code>/video/edit</code>)<a class="anchor-link" href="#video-studio-video-video-edit">#</a></h3>
+    <ul>
+      <li><strong>Log in as:</strong> user 2</li>
+      <li><strong>Steps:</strong> generate I2V/T2V with duration/motion/aspect → first/last-frame conditioning → interpolate + upscale → trim/join + audio from Voice studio → export MP4</li>
+      <li><strong>Expected:</strong> tier routing → 3 providers with spend accrual + safety on every job; conditioning validated owner-scoped (foreign asset → 400); edit pipeline exports MP4 at 16:9/9:16/1:1/4:5. ⚠ generation needs a video model / aggregator key; real ffmpeg export needs ffmpeg on host (clean degrade otherwise)</li>
+      <li><strong>Covers:</strong> BRD-42..46</li>
+    </ul>
+
+    <h3 id="prompt-studio-prompt-studio-phase-10-shipped-2026-07-07">Prompt studio (<code>/prompt-studio</code>) — <em>Phase 10, shipped 2026-07-07</em><a class="anchor-link" href="#prompt-studio-prompt-studio-phase-10-shipped-2026-07-07">#</a></h3>
+    <ul>
+      <li><strong>Log in as:</strong> user 1</li>
+      <li><strong>Steps:</strong> open Prompt Studio from the Studios nav → pick a text-chat LLM from the picker (admin configures the list as <code>text-chat</code> rows on <code>/admin/registry</code>) → ask for an ideal prompt for a planned generation → attach a photo and ask for the ideal edit prompt → Copy / Save to Library / Send to Image Studio → reload and resume the session</li>
+      <li><strong>Expected:</strong> picker lists only registry <code>text-chat</code> LLMs (dev-seed ships GPT-4o vision + Llama-3-70B text-only); image attach is enabled only for vision-capable models (text-only model → attach disabled + hint, image on a non-vision row → 400); replies arrive via TechieRag chat-completion (no RAG setup) with the crafted prompt in a copyable block; Save-to-Library lands a <code>prompt</code> preset in <code>/library</code>; Send-to-Studio pre-fills the studio composer; sessions persist per user (other users' sessions invisible, cross-user GET → 404, BRD-81); token usage shows in <code>/api/v1/rag/usage</code> + spend rollup (<code>SpendChannel.LlmText</code>). ⚠ needs at least one text-chat LLM configured (endpoint + key); with none it degrades cleanly to a <code>[DEV SYNTHETIC PROMPT-CHAT]</code> best-effort reply + a "Degraded" toast (RAG-005). Native vision through TechieRag is blocked at 1.0.5 (TR-RAG-001) — vision uses a best-effort OpenAI-compatible HTTP fallback.</li>
+      <li><strong>Covers:</strong> BRD-88..92 (REQ-UI-081/082, FN-073/074 Verified; RAG-005 Implemented)</li>
+    </ul>
+
+    <h3 id="workspace-gallery-projects-comparison-library-account-gallery-projects-compare-library-account">Workspace — Gallery, Projects, Comparison, Library, Account (<code>/gallery</code>, <code>/projects</code>, <code>/compare</code>, <code>/library</code>, <code>/account</code>)<a class="anchor-link" href="#workspace-gallery-projects-comparison-library-account-gallery-projects-compare-library-account">#</a></h3>
+    <ul>
+      <li><strong>Log in as:</strong> user 2 (and user 4 for spend/license)</li>
+      <li><strong>Steps:</strong> browse/filter gallery, reuse an asset → open a project, one-click reproduce → compare two seeds/providers → save a preset to the library → bulk-export with provenance → (user 4) view usage/spend + license</li>
+      <li><strong>Expected:</strong> assets reusable; reproduce works; comparison param-diff renders; presets saved; exports carry <code>X-Provenance-Count</code>; spend by channel + license (degrades gracefully when AppManager unreachable)</li>
+      <li><strong>Covers:</strong> BRD-47..52, BRD-58</li>
+    </ul>
+
+    <h3 id="safety-floors-must-always-fire">Safety floors (must always fire)<a class="anchor-link" href="#safety-floors-must-always-fire">#</a></h3>
+    <ul>
+      <li><strong>Log in as:</strong> user 1</li>
+      <li><strong>Steps:</strong> attempt a blocked-class input → attempt a real public-figure likeness → check the audit log</li>
+      <li><strong>Expected:</strong> CSAM/NCII hard-blocked <strong>before enqueue</strong> (403) + logged; public-figure impersonation blocked by default; every job (allowed + blocked) in the audit trail</li>
+      <li><strong>Covers:</strong> BRD-60, BRD-61, BRD-64, BRD-65</li>
+    </ul>
+
+    <h3 id="per-user-isolation-gallery-projects">Per-user isolation (gallery/projects)<a class="anchor-link" href="#per-user-isolation-gallery-projects">#</a></h3>
+    <ul>
+      <li><strong>Log in as:</strong> user 2, then user 4</li>
+      <li><strong>Steps:</strong> as user 2 generate an asset → sign in as user 4 → open Gallery/Projects</li>
+      <li><strong>Expected:</strong> user 4 sees only their own content; user 2's asset is not visible and not reachable via the API (server-side <code>userId</code> filter; cross-user GET → 404)</li>
+      <li><strong>Covers:</strong> BRD-81</li>
+    </ul>
+
+    <h2 id="prerequisites">Prerequisites<a class="anchor-link" href="#prerequisites">#</a></h2>
+
+    <ul>
+      <li>.NET 10 SDK</li>
+      <li><strong>Docker Desktop running</strong>, with the two dependency containers up (see step 1 below) — PostgreSQL + PgVector <strong>and</strong> AppManager both run as Docker containers in dev. <strong>If they are not running, the app cannot reach its database or identity service and startup/login will fail</strong> (this is the usual cause of "can't connect" / "Docker" errors during UAT).</li>
+      <li>GitHub PAT (<code>read:packages</code>) for the TechieRag NuGet feed (see <code>nuget.config</code>)</li>
+    </ul>
+
+    <h2 id="which-projects-to-run-this-is-a-multi-project-solution">Which projects to run (this is a multi-project solution)<a class="anchor-link" href="#which-projects-to-run-this-is-a-multi-project-solution">#</a></h2>
+
+    <p><code>TrStudio.slnx</code> now has <strong>7 projects</strong> (the retired <code>TrStudioAdmin</code> was removed from the solution on 2026-07-05, ADR-012). Running the <strong>web</strong> app means starting <strong><code>TrStudioApi</code> + <code>TrStudio</code> together</strong> (API first) — everything else is a class library or the desktop head, which must <strong>not</strong> be set to start alongside the web app:</p>
+
+    <table>
+      <thead>
+        <tr><th>Project</th><th>Role</th><th>Start it?</th><th>URL</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong><code>src/TrStudioApi</code></strong></td><td>ASP.NET Core Web API (backend spine, DbUp migrations, Hangfire) — <strong>must start first</strong></td><td>✅ <strong>Startup</strong></td><td>http://localhost:5102 (<code>/swagger</code>, <code>/health</code>)</td></tr>
+        <tr><td><strong><code>src/TrStudio</code></strong></td><td>Blazor Web app — <strong>the ONE unified app</strong>: creator studios + (role-gated) management surface (Creator→studios, Operator→management, Owner→both with an in-app switch)</td><td>✅ <strong>Startup</strong></td><td>http://localhost:5099</td></tr>
+        <tr><td><strong><code>src/TrStudio.Desktop</code></strong></td><td>MAUI Blazor Hybrid <strong>desktop</strong> head (Windows + macOS), hosts the same unified app</td><td>✅ <strong>Startup — for the DESKTOP app</strong> (start it <strong>instead of</strong> <code>src/TrStudio</code>, with <code>TrStudioApi</code>)</td><td>(desktop window — no URL)</td></tr>
+        <tr><td><code>src/TrStudioAdmin</code></td><td><strong>RETIRED — merged into <code>TrStudio</code> on 2026-07-05 (ADR-012).</strong> No longer in <code>TrStudio.slnx</code>, not a startup project; its old :5098 host is gone</td><td>❌ retired</td><td>—</td></tr>
+        <tr><td><code>src/TrStudio.Engine</code></td><td>Domain/providers/workers class library</td><td>❌ library</td><td>—</td></tr>
+        <tr><td><code>src/TrStudio.Models</code></td><td>Shared models/contracts class library</td><td>❌ library</td><td>—</td></tr>
+        <tr><td><code>src/TrStudioUI</code></td><td>Razor Class Library (RCL) — now hosts <strong>all</strong> screens: creator screens + the relocated management screens under <code>Pages/Admin/</code></td><td>❌ library</td><td>—</td></tr>
+        <tr><td><code>src/TrStudioDb</code></td><td>DbUp migration runner (invoked by the API)</td><td>❌ library</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <blockquote><p><strong>Web vs. desktop delivery.</strong> The <strong>web</strong> delivery is <strong><code>TrStudio</code></strong> (Blazor Web, <code>net10.0</code>, http://localhost:5099). The <strong>desktop</strong> delivery is <strong><code>TrStudio.Desktop</code></strong> (MAUI Blazor Hybrid, Windows + macOS — TFMs <code>net10.0-windows10.0.19041.0</code> / <code>net10.0-maccatalyst</code>), hosting the same unified app. <strong>Start <code>TrStudioApi</code> first either way</strong> — it must be listening before the app makes its first call.</p></blockquote>
+
+    <h2 id="how-to-run-visual-studio-recommended-for-uat">How to run — Visual Studio (recommended for UAT)<a class="anchor-link" href="#how-to-run-visual-studio-recommended-for-uat">#</a></h2>
+
+    <ol>
+      <li><strong>Start the dependency containers</strong> (Docker Desktop must be running), then confirm both are up:
+        <pre><code class="language-powershell">docker start WinPgVectorDb appmanager-api
+docker ps        # expect WinPgVectorDb (0.0.0.0:5432) and appmanager-api (…:5101) both "Up"</code></pre>
+      </li>
+      <li>Open <code>TrStudio.slnx</code>. Right-click the <strong>solution</strong> → <strong>Configure Startup Projects…</strong> → <strong>Multiple startup projects</strong> and set <strong>Action = Start</strong> for <strong><code>TrStudioApi</code> + <code>TrStudio</code></strong> (leave every other project = <strong>None</strong>). Move <strong><code>TrStudioApi</code> to the top</strong> of the list so it launches first. Click OK.
+        <ul>
+          <li>For the <strong>DESKTOP</strong> app, set startup = <strong><code>TrStudioApi</code> + <code>TrStudio.Desktop</code></strong> instead (Windows head runs here; the Mac head needs a Mac).</li>
+        </ul>
+      </li>
+      <li>Press <strong>F5</strong> (or Ctrl+F5). Two console/app windows come up; wait for the API console to log <code>Now listening on: http://localhost:5102</code> and <code>Application started</code>.</li>
+      <li>Open <strong>http://localhost:5099</strong> — the ONE unified app (creator studios + role-gated management surface). Log in as a Test user, or use the <strong><code>/dev/session</code></strong> seam (<code>http://localhost:5099/dev/session</code>) until AppManager app 4 is published.</li>
+    </ol>
+
+    <h2 id="how-to-run-command-line-alternative">How to run — command line (alternative)<a class="anchor-link" href="#how-to-run-command-line-alternative">#</a></h2>
+
+    <pre><code class="language-powershell">docker start WinPgVectorDb appmanager-api        # 1. dependencies up first
+dotnet restore                                    # needs the GitHub Packages PAT for TechieRag
+dotnet build
+# open two terminals — API FIRST, wait for "Application started", then the unified web app:
+dotnet run --project src/TrStudioApi   --urls http://localhost:5102
+dotnet run --project src/TrStudio      --urls http://localhost:5099
+# optional — DESKTOP head instead of the web app (Windows; MAUI workloads required):
+dotnet build src/TrStudio.Desktop -f net10.0-windows10.0.19041.0   # then run the produced app</code></pre>
+    <p>Then open <code>http://localhost:5099</code> (or <code>/dev/session</code>).</p>
+
+    <h2 id="troubleshooting-startup">Troubleshooting startup<a class="anchor-link" href="#troubleshooting-startup">#</a></h2>
+
+    <ul>
+      <li><strong>"Docker is not running" / "can't connect" / DB or login errors on launch</strong> → a dependency container is down (or you started only one project). Run <code>docker ps</code> and confirm <strong>both</strong> <code>WinPgVectorDb</code> and <code>appmanager-api</code> are <strong>Up</strong>, then confirm you set <strong>both web projects (TrStudioApi + TrStudio)</strong> as startup (with the API first). The API logs a clear <code>Verify PostgreSQL is running…</code> fatal if it can't reach Postgres.</li>
+      <li><strong>Web app loads but every action errors / data won't save</strong> → the API isn't running or isn't on <code>:5102</code>. Check the API console is listening and hit <code>http://localhost:5102/health</code> (expect <code>{"status":"ok"}</code>).</li>
+      <li><strong>Login returns <code>UPSTREAM_ERROR</code> / HTTP 500 ("AppManager returned an unreadable response")</strong> → AppManager's <code>/AuthSvc/*</code> is erroring. Historically this was a <code>/keys/rsa-private.pem</code> permission fault (resolved 2026-07-07 by making the container's <code>/keys</code> writable + restart). If it recurs, check AppManager's container log for the <code>RsaEncryptionService</code> write path and the <code>/keys</code> volume permissions; <code>/dev/session</code> is the fallback meanwhile.</li>
+    </ul>
+
+    <h2 id="test-automated">Test (automated)<a class="anchor-link" href="#test-automated">#</a></h2>
+
+    <pre><code class="language-bash">dotnet test</code></pre>
+
+    <p>260 tests (259 unit + 1 SignalR integration). Headless Playwright verify specs live under <code>tests/verify/</code> (render + visual-truth sweep, incl. <code>prompt-studio.spec.ts</code>) — run them with <code>npx playwright test</code> against a running app (API :5102 + web :5099).</p>
+
+    <h2 id="smoke-checklist-quick-capability-pass">Smoke checklist (quick capability pass)<a class="anchor-link" href="#smoke-checklist-quick-capability-pass">#</a></h2>
+
+    <ul style="list-style:none;padding-left:4px">
+      <li><input type="checkbox" disabled> Log in (or <code>/dev/session</code>) and confirm each role lands on its default page (BRD-84); fresh install routes to setup / Setup-required (BRD-85)</li>
+      <li><input type="checkbox" disabled> Admin: hardware readiness summary renders from live host capabilities</li>
+      <li><input type="checkbox" disabled> Creator: generate + reproduce one image (byte-identical from the same seed)</li>
+      <li><input type="checkbox" disabled> Creator: generate EN and HI speech; real-person voice clone is consent-gated</li>
+      <li><input type="checkbox" disabled> Owner: one talking-avatar spec routes across Fast / High / Premium</li>
+      <li><input type="checkbox" disabled> Admin: import a ComfyUI workflow, save-as-model (graph hidden), sandbox gate blocks go-live before smoke</li>
+      <li><input type="checkbox" disabled> A safety block fires (CSAM/NCII → 403 before enqueue) and every job is in the audit trail; provenance present on an export</li>
+      <li><input type="checkbox" disabled> Prompt Studio: pick a text-chat LLM, get a crafted prompt back, Copy / Save-to-Library / Send-to-Studio work; attaching an image to a text-only model is blocked</li>
+      <li><input type="checkbox" disabled> Per-user isolation: a second user cannot see or fetch the first user's assets</li>
+    </ul>
+
+    <h2 id="known-limitations">Known limitations<a class="anchor-link" href="#known-limitations">#</a></h2>
+
+    <ul>
+      <li><strong>AppManager auth — RESOLVED 2026-07-07</strong> (was: <code>/AuthSvc/*</code> HTTP 500 from a <code>/keys/rsa-private.pem</code> permission fault). Fixed by making the container's <code>/keys</code> writable + restart. Real login/register/license verified live (REQ-FN-012/013/015 Verified). Remaining external item: assign a <strong>Premium license</strong> in AppManager to fully exercise Premium tier-gating (FN-014); create test users 3 (operator) and 4 (premium) when needed.</li>
+      <li><strong>Model/service-gated execution (Implemented/PARTIAL, degrade cleanly):</strong> real ONNX image pixels + guided-setup provisioning (FN-009/010/011/019/021); voice synthesis (FN-031/033/034/035); lip-sync/HeyGen (FN-037/038); ComfyUI live run + WS previews (FN-045/046/047); video generation/interpolation/upscale (FN-051/053); real ffmpeg export (FN-054); RunPod cold-start (FN-028); TechieRag LLM for script/captions (RAG-001/002) and Prompt Studio chat completion (RAG-005 — set <code>TechieRag:Llm:Source</code> + endpoint/key, or add a real key to a <code>/admin/registry</code> text-chat row). Each needs its model/key/service supplied — no rebuild.</li>
+      <li><strong>DPDP residency + retention config</strong> (NFR-010) are deployment config, not code.</li>
+      <li><strong>Deferred (Could, behind MVP):</strong> digital-twin (FN-041), multi-shot (FN-042), clip extension (FN-055), webhooks (FN-070), MCP server (FN-071).</li>
+      <li><strong>Library gaps:</strong> TrBlazeUI TR-001..010 (3 major, 6 minor, 1 nice-to-have — see <code>docs/TrStudio-TrBlazeUI-Feedback.md</code>); TechieRag 1 major + 3 minor — TR-RAG-001 = no native image/multimodal seam at 1.0.5, blocks the Prompt Studio vision path through the library (see <code>docs/TrStudio-TechieRag-Feedback.md</code>). All worked around.</li>
+      <li><strong>MAUI desktop head now shipped</strong> — <code>src/TrStudio.Desktop</code> (MAUI Blazor Hybrid, Windows + macOS) hosts the unified app as a desktop delivery (Windows head verified; Mac head build-only, needs a Mac). The web delivery remains <code>src/TrStudio</code> (Blazor Web, <code>net10.0</code>).</li>
+    </ul>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+<script>
+// Light/dark toggle. The initial theme was already applied flash-free by the
+// <head> script (saved choice, else time-of-day). Clicking flips it, saves the
+// choice, and reloads so Mermaid re-renders in the matching theme.
+(function(){
+  var btn = document.getElementById('themeToggle');
+  if(!btn) return;
+  var relabel = function(){
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    btn.textContent = dark ? '☀ Light' : '☾ Dark';
+  };
+  relabel();
+  btn.addEventListener('click', function(){
+    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    try{ localStorage.setItem('tf-theme', next); }catch(e){}
+    location.reload();
+  });
+})();
+
+// Copy buttons on every code <pre> — but NEVER on a `pre.mermaid`:
+// mermaid reads the <pre>'s textContent as the diagram source, so a button
+// appended here glues "copy" onto the last line and breaks the parse
+// (flowcharts → "Syntax error"; sequence diagrams silently absorb it).
+// Mermaid blocks get copy/export from their own .diagram toolbar instead.
+document.querySelectorAll('pre:not(.mermaid)').forEach(pre => {
+  const btn = document.createElement('button');
+  btn.className = 'copy';
+  btn.textContent = 'copy';
+  btn.addEventListener('click', () => {
+    const text = pre.querySelector('code') ? pre.querySelector('code').innerText : pre.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'copied';
+      setTimeout(() => { btn.textContent = 'copy'; }, 1200);
+    });
+  });
+  pre.appendChild(btn);
+});
+
+// Mermaid init — theme follows the resolved light/dark theme
+if (window.mermaid) {
+  var mermaidTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default';
+  mermaid.initialize({ startOnLoad: true, theme: mermaidTheme, securityLevel: 'loose' });
+}
+
+// Mermaid toolbar wiring — run after mermaid renders
+function wireMermaidToolbars() {
+  document.querySelectorAll('.diagram').forEach(dia => {
+    if (dia.dataset.wired) return;
+    const merm = dia.querySelector('.mermaid');
+    const svg = merm && merm.querySelector('svg');
+    if (!svg) return;
+    dia.dataset.wired = '1';
+    let scale = 1;
+    const label = dia.querySelector('.zlabel');
+    const apply = () => {
+      svg.style.transform = `scale(${scale})`;
+      svg.style.transformOrigin = 'top left';
+      if (label) label.textContent = Math.round(scale * 100) + '%';
+    };
+    const setScale = (s) => { scale = Math.max(0.25, Math.min(4, s)); apply(); };
+    dia.querySelector('[data-zin]').onclick = () => setScale(scale * 1.2);
+    dia.querySelector('[data-zout]').onclick = () => setScale(scale / 1.2);
+    dia.querySelector('[data-fit]').onclick = () => {
+      svg.style.transform = '';
+      svg.removeAttribute('width');
+      svg.style.maxWidth = '100%';
+      svg.style.height = 'auto';
+      scale = 1;
+      if (label) label.textContent = 'Fit';
+    };
+    dia.querySelector('[data-one]').onclick = () => {
+      svg.style.transform = '';
+      svg.style.maxWidth = 'none';
+      svg.style.width = '';
+      svg.style.height = '';
+      scale = 1;
+      if (label) label.textContent = '100%';
+    };
+    dia.querySelector('[data-fs]').onclick = () => {
+      dia.classList.toggle('fs');
+      if (dia.classList.contains('fs')) {
+        document.addEventListener('keydown', escFs);
+      } else {
+        document.removeEventListener('keydown', escFs);
+      }
+    };
+    function escFs(e) { if (e.key === 'Escape') { dia.classList.remove('fs'); document.removeEventListener('keydown', escFs); } }
+    dia.querySelector('[data-pop]').onclick = () => openInNewTab(svg);
+    // Ctrl+wheel zoom
+    merm.addEventListener('wheel', (e) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      setScale(scale * (e.deltaY < 0 ? 1.1 : 1/1.1));
+    }, { passive: false });
+  });
+}
+
+function openInNewTab(svg) {
+  const svgSource = new XMLSerializer().serializeToString(svg);
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Diagram</title>
+<style>
+  html,body{margin:0;height:100%;background:#0f1115;color:#e6e8ee;font-family:system-ui,sans-serif}
+  .bar{position:fixed;top:0;left:0;right:0;padding:8px 12px;background:#161a22;border-bottom:1px solid #2a3142;display:flex;gap:8px;z-index:10}
+  .bar button{background:#1c2230;color:#9aa3b2;border:1px solid #2a3142;border-radius:6px;padding:5px 12px;font-size:13px;cursor:pointer}
+  .bar button:hover{color:#7cc4ff;border-color:#7cc4ff}
+  .bar .hint{margin-left:auto;color:#9aa3b2;font-size:11.5px;align-self:center}
+  #stage{position:absolute;top:42px;bottom:0;left:0;right:0;overflow:hidden}
+  #stage svg{width:100%;height:100%}
+</style>
+</head><body>
+<div class="bar">
+  <button onclick="zpz.zoomIn()">+</button>
+  <button onclick="zpz.zoomOut()">−</button>
+  <button onclick="zpz.fit();zpz.center()">Fit</button>
+  <button onclick="zpz.resetZoom();zpz.center()">1:1</button>
+  <button onclick="window.print()">Print</button>
+  <button onclick="dlPng()">PNG</button>
+  <button onclick="dlSvg()">SVG</button>
+  <span class="hint">Drag to pan · Ctrl+wheel to zoom · + / − keys</span>
+</div>
+<div id="stage">${svgSource}</div>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"><\/script>
+<script>
+  const el = document.querySelector('#stage svg');
+  const zpz = svgPanZoom(el, { zoomScaleSensitivity: .3, minZoom: .2, maxZoom: 10, controlIconsEnabled: false, fit: true, center: true });
+  document.addEventListener('keydown', e => {
+    if (e.key === '+' || e.key === '=') zpz.zoomIn();
+    if (e.key === '-' || e.key === '_') zpz.zoomOut();
+    if (e.key === '0') { zpz.resetZoom(); zpz.center(); }
+  });
+  function dlSvg() {
+    const blob = new Blob([new XMLSerializer().serializeToString(el)], { type: 'image/svg+xml' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'diagram.svg'; a.click();
+  }
+  function dlPng() {
+    const src = new XMLSerializer().serializeToString(el);
+    const img = new Image();
+    const url = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(src)));
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = el.clientWidth * 2; c.height = el.clientHeight * 2;
+      const ctx = c.getContext('2d'); ctx.scale(2,2); ctx.drawImage(img, 0, 0);
+      c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'diagram.png'; a.click(); });
+    };
+    img.src = url;
+  }
+<\/script>
+</body></html>`;
+  const w = window.open();
+  w.document.write(html);
+  w.document.close();
+}
+
+// Run wiring after mermaid finishes (it renders async)
+if (window.mermaid) {
+  setTimeout(wireMermaidToolbars, 400);
+  setTimeout(wireMermaidToolbars, 1200);  // safety re-run for slow renders
+}
+</script>
+</body>
+</html>

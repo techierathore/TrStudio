@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TrStudio Dev Guide — Creator</title>
+<script>
+/* Resolve the theme BEFORE first paint (no flash). Saved choice wins; otherwise
+   pick by time of day — light 07:00–19:00 local, softened dark at night. */
+(function(){
+  try{
+    var t = localStorage.getItem('tf-theme');
+    if(t!=='light' && t!=='dark'){ var h = new Date().getHours(); t = (h>=7 && h<19) ? 'light' : 'dark'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){ document.documentElement.setAttribute('data-theme','light'); }
+})();
+</script>
+<style>
+/* LIGHT is the default theme — a warm off-white, easy on the eyes (never bright white). */
+:root{
+  --bg:#f4f1e9; --panel:#efe9db; --panel2:#e7e0cd; --line:#d8cfb6;
+  --ink:#2e2a22; --muted:#6f6857; --accent:#2f6f9f; --accent2:#3f7d54;
+  --warn:#9a6b15; --danger:#b03a52; --ok:#3f7d54;
+  --code-bg:#ece5d3; --code-ink:#332f26; --row-alt:#eae2cf;
+  --h3:#3a352b; --h4:#2f6f9f; --quote:#4a4537; --cta-bg:#e6eef5;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+/* DARK — softened near-black (warmer / less harsh than pure #0f1115). */
+html[data-theme="dark"]{
+  --bg:#11141a; --panel:#171b23; --panel2:#1e2430; --line:#2b3240;
+  --ink:#dfe3ea; --muted:#99a2b1; --accent:#7cc4ff; --accent2:#a6e3a1;
+  --warn:#f9c74f; --danger:#f38ba8; --ok:#a6e3a1;
+  --code-bg:#0c1016; --code-ink:#d8dde8; --row-alt:#141821;
+  --h3:#cfd5e3; --h4:#7cc4ff; --quote:#cfd5e3; --cta-bg:#0d2030;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;font-size:15px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono);font-size:13px;background:var(--code-bg);color:var(--code-ink);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+pre{font-family:var(--mono);font-size:12.5px;background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:auto;color:var(--code-ink);position:relative}
+pre code{background:none;border:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:11px;font-family:var(--sans);cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+/* floating light/dark toggle (top-right) */
+.theme-toggle{position:fixed;top:12px;right:14px;z-index:10000;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:12.5px;font-family:var(--sans);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.theme-toggle:hover{color:var(--accent);border-color:var(--accent)}
+
+.layout{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.layout.no-toc{grid-template-columns:1fr}
+nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid var(--line);background:var(--panel);padding:18px 14px}
+nav.side h1{font-size:14px;margin:0 0 4px;letter-spacing:.5px;color:var(--ink)}
+nav.side .sub{font-size:11.5px;color:var(--muted);margin-bottom:14px}
+nav.side ol,nav.side ul{list-style:none;padding:0;margin:0}
+nav.side li{font-size:13px;margin:2px 0}
+nav.side li a{display:block;padding:5px 8px;color:var(--ink);border-radius:6px}
+nav.side li a:hover{background:var(--panel2);text-decoration:none}
+nav.side li.h3 a{padding-left:22px;font-size:12.5px;color:var(--h3)}
+nav.side .group{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin:14px 8px 4px}
+
+main{padding:28px 40px 80px;max-width:1100px}
+.layout.no-toc main{margin:0 auto}
+
+h1{font-size:28px;margin:0 0 6px}
+h2{font-size:22px;margin:32px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+h3{font-size:17px;margin:22px 0 6px;color:var(--h3);scroll-margin-top:16px}
+h4{font-size:14px;margin:14px 0 4px;color:var(--h4);scroll-margin-top:16px}
+.subtitle{color:var(--muted);font-size:14px;margin-top:-4px;margin-bottom:18px}
+p{margin:6px 0 10px}
+blockquote{border-left:3px solid var(--accent);background:var(--panel);margin:8px 0;padding:8px 14px;color:var(--quote)}
+ul,ol{padding-left:22px}
+li{margin:2px 0}
+
+table{border-collapse:collapse;width:100%;font-size:13.5px;margin:8px 0}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2);color:var(--h3);font-weight:600}
+tr:nth-child(even) td{background:var(--row-alt)}
+
+hr{border:none;border-top:1px solid var(--line);margin:24px 0}
+.anchor-link{color:var(--muted);font-weight:400;font-size:0.85em;margin-left:8px;opacity:0;transition:opacity .15s;text-decoration:none}
+h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
+
+/* inline TOC at top of main content */
+.toc-inline{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 16px;margin:14px 0 24px}
+.toc-inline > div{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.toc-inline ol,.toc-inline ul{margin:4px 0;padding-left:18px}
+.toc-inline li{font-size:13px;margin:1px 0}
+.toc-inline a{color:var(--h3)}
+
+/* mermaid diagram wrapper + toolbar */
+.diagram{position:relative;border:1px solid var(--line);border-radius:8px;background:var(--code-bg);margin:14px 0;overflow:hidden}
+.diagram .mermaid{padding:14px;margin:0;background:transparent;border:none;overflow:auto}
+.diagram .dt{display:flex;gap:6px;justify-content:flex-end;padding:6px 8px;background:var(--row-alt);border-bottom:1px solid var(--line)}
+.diagram .dt button{background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:3px 10px;font-size:12px;font-family:var(--sans);cursor:pointer;min-width:30px}
+.diagram .dt button:hover{color:var(--accent);border-color:var(--accent)}
+.diagram .dt .zlabel{padding:3px 6px;font-size:11px;color:var(--muted);font-family:var(--mono);align-self:center}
+.diagram.fs{position:fixed;inset:0;z-index:9999;border-radius:0;border:none}
+.diagram.fs .mermaid{height:calc(100vh - 40px);display:flex;align-items:center;justify-content:center}
+
+@media(max-width:900px){.layout{grid-template-columns:1fr}nav.side{position:static;height:auto}}
+</style>
+</head>
+<body>
+<button id="themeToggle" class="theme-toggle" title="Toggle light / dark">☾ Dark</button>
+<div class="layout no-toc">
+  <main>
+    <h1>TrStudio Dev Guide — Creator</h1>
+    <div class="subtitle">Creator-role screen-by-screen code map · TrStudio</div>
+<div class="toc-inline">
+  <div>Contents</div>
+  <ol>
+    <li><a href="#pointer">§1 pointer</a>
+    </li>
+    <li><a href="#creator-menu-structure">Creator — menu structure</a>
+    </li>
+    <li><a href="#role-based-shell-access-control">Role-based shell &amp; access control</a>
+    </li>
+    <li><a href="#screen-by-screen-code-map">Screen-by-screen code map</a>
+      <ul>
+        <li><a href="#creator-sign-in">Creator · Sign in</a></li>
+        <li><a href="#creator-create-account">Creator · Create account</a></li>
+        <li><a href="#creator-reset-password">Creator · Reset password</a></li>
+        <li><a href="#creator-setup-required">Creator · Setup required</a></li>
+        <li><a href="#creator-home">Creator · Home</a></li>
+        <li><a href="#creator-avatar-studio-flagship">Creator · Avatar Studio (flagship)</a></li>
+        <li><a href="#creator-character-library">Creator · Character Library</a></li>
+        <li><a href="#creator-image-studio">Creator · Image Studio</a></li>
+        <li><a href="#creator-voice-studio">Creator · Voice Studio</a></li>
+        <li><a href="#creator-video-studio">Creator · Video Studio</a></li>
+        <li><a href="#creator-prompt-studio">Creator · Prompt Studio</a></li>
+        <li><a href="#creator-gallery-my-library">Creator · Gallery ("My Library")</a></li>
+        <li><a href="#creator-projects">Creator · Projects</a></li>
+        <li><a href="#creator-compare">Creator · Compare</a></li>
+        <li><a href="#creator-library">Creator · Library</a></li>
+        <li><a href="#creator-account-spend">Creator · Account &amp; spend</a></li>
+      </ul>
+    </li>
+    <li><a href="#defects-found">DEFECTS FOUND</a>
+    </li>
+  </ol>
+</div>
+<blockquote><p>✅ <strong>Runtime-verified 2026-07-05</strong> — exercised as Creator/Owner via the <code>/dev/session</code> seam in the ONE unified role-based <code>TrStudio</code> app (BRD-86, ADR-012 supersedes ADR-001; the separate <code>TrStudioAdmin</code> host is retired). Fresh per-role live smoke (Playwright headless, <code>.smoke/results.json</code>) confirms the Creator lands on the studios shell with <strong>no management nav</strong> (<code>hasStudios:true</code>, <code>hasMgmtNav:false</code>) and is bounced to <code>&lt;AccessDenied&gt;</code> on <code>/admin/*</code> (<code>deniedVisible:true</code>, registry table not shown, admin API → <strong>403</strong>); the Owner sees both surfaces with an in-app "Switch to Management" control. All 15 Creator screens were booted and observed at runtime, and a screenshot of each is embedded below (<code>docs/screenshots/TrStudio/</code>). All screens VISUAL-OK. <strong>Prompt Studio (<code>/prompt-studio</code>, Phase 10 — the 16th Creator screen) added + runtime-verified 2026-07-07</strong> (live web :5099 + API :5102 via <code>/dev/session</code>: render gate — picker→2 registry rows, reactive vision badge, all 3 prompt-use actions; §4b VISUAL-OK @1280/390; degrades cleanly to a synthetic reply when no LLM is configured — RAG-005). NOTE: the FE↔API route defects logged to the checklist (UI-010/030/040/053/011) did <strong>not</strong> surface as render-empty because they're swallowed by try/catch — they were <strong>functional</strong> (the backend call never landed), not visual — <strong>all fixed + re-verified live 2026-07-04</strong> (<code>*fix-issues</code>): voice → <code>/voice/synthesize</code>+<code>/preset-voices</code>, avatar script-assist → <code>/rag/script</code>, video → <code>/video/edit</code>, library preset vocab (201), character-bible GET now called. The Known-issues bullets on each screen below describe what WAS caught; the checklist rows are now <code>Verified</code>.</p>
+<p><strong>Purpose:</strong> screen-by-screen code map for the <strong>Creator role</strong> of the unified <code>TrStudio</code> app — every Creator-facing screen with its Razor file, controls, data lineage (control → client → API → engine → table) and known gotchas. The Creator surface is <strong>role-gated</strong>: studios only, no management nav, and any <code>/admin/*</code> route renders <code>&lt;AccessDenied&gt;</code> in-app (see §Role-based shell &amp; access control).</p></blockquote>
+<h2 id="pointer">§1 pointer<a class="anchor-link" href="#pointer">#</a></h2>
+<p>Creator-role screens of the ONE unified role-based <code>TrStudio</code> app (BRD-86, ADR-012 supersedes ADR-001 — the former <code>TrStudioAdmin</code> host is retired). After login the surface is role-gated: a Creator sees the studios only; <code>/admin/*</code> renders <code>&lt;AccessDenied&gt;</code>. Index + architecture cheat-sheet: <a href="./TrStudio-DevGuide.html">TrStudio-DevGuide.md</a>.</p>
+<h2 id="creator-menu-structure">Creator — menu structure<a class="anchor-link" href="#creator-menu-structure">#</a></h2>
+<p>The sidebar is data-driven: <code>AppSidebar.razor</code> renders <code>Shell.Current.Groups</code> for the <strong>active surface</strong> from DI (<code>AppSidebar.razor:29-50</code>). The active surface is chosen by the signed-in role via <code>AppShellNavigation</code> (<code>src/TrStudioUI/Navigation/AppShellNavigation.cs:59-60</code>) — for a Creator that surface is <code>TrStudioNavSets.CreateCreatorNavigation</code> (<code>src/TrStudioUI/Navigation/TrStudioNavSets.cs:20-42</code>), two groups (Studios + Workspace) and <strong>no management nav</strong>. The sidebar-footer "Switch to Management" control renders only when <code>Shell.CanSwitchSurface</code> is true — i.e. <strong>Owner only</strong> (<code>AppSidebar.razor:52-61</code>, <code>AppShellNavigation.cs:55-56,69-70</code>); a Creator never sees it. See §Role-based shell &amp; access control for how the surface + <code>/admin/*</code> gate are resolved.</p>
+<div style="overflow-x:auto"><table><thead><tr><th>Group</th><th>Item</th><th>Icon</th><th>Route</th><th>Razor file</th><th>Nav source (file:line)</th></tr></thead><tbody><tr><td>Studios</td><td>Avatar Studio</td><td><code>user</code></td><td><code>/avatar</code></td><td><code>Pages/Avatar/AvatarStudio.razor</code></td><td><code>TrStudioNavSets.cs:26</code></td></tr><tr><td>Studios</td><td>Characters</td><td><code>users</code></td><td><code>/avatar/characters</code></td><td><code>Pages/Avatar/CharacterLibrary.razor</code></td><td><code>TrStudioNavSets.cs:27</code></td></tr><tr><td>Studios</td><td>Image Studio</td><td><code>image</code></td><td><code>/image</code></td><td><code>Pages/Image/ImageStudio.razor</code></td><td><code>TrStudioNavSets.cs:28</code></td></tr><tr><td>Studios</td><td>Video Studio</td><td><code>video</code></td><td><code>/video</code></td><td><code>Pages/Video/VideoStudio.razor</code></td><td><code>TrStudioNavSets.cs:29</code></td></tr><tr><td>Studios</td><td>Voice Studio</td><td><code>mic</code></td><td><code>/voice</code></td><td><code>Pages/Voice/VoiceStudio.razor</code></td><td><code>TrStudioNavSets.cs:30</code></td></tr><tr><td>Studios</td><td>Prompt Studio</td><td><code>message-square</code></td><td><code>/prompt-studio</code></td><td><code>Pages/PromptStudio/PromptStudio.razor</code></td><td><code>TrStudioNavSets.cs:31</code></td></tr><tr><td>Workspace</td><td>Gallery</td><td><code>layout-grid</code></td><td><code>/gallery</code></td><td><code>Pages/Gallery/Gallery.razor</code></td><td><code>TrStudioNavSets.cs:34</code></td></tr><tr><td>Workspace</td><td>Projects</td><td><code>folder</code></td><td><code>/projects</code></td><td><code>Pages/Projects/Projects.razor</code></td><td><code>TrStudioNavSets.cs:35</code></td></tr><tr><td>Workspace</td><td>Library</td><td><code>book-open</code></td><td><code>/library</code></td><td><code>Pages/Library/Library.razor</code></td><td><code>TrStudioNavSets.cs:36</code></td></tr><tr><td>Workspace</td><td>Account</td><td><code>circle-user</code></td><td><code>/account</code></td><td><code>Pages/Account/Account.razor</code></td><td><code>TrStudioNavSets.cs:37</code></td></tr></tbody></table></div>
+<p>The auth screens (<code>/login</code>, <code>/register</code>, <code>/forgot-password</code>, <code>/setup-required</code>, plus dev <code>/dev/session</code>) are NOT in the sidebar — they render on the bare <code>EmptyLayout</code> (<code>@layout TrStudioUI.Layout.EmptyLayout</code> at the top of each). Home (<code>/</code>) is a shared stub that lists the same nav groups as launch cards (<code>Home.razor:22-43</code>).</p>
+<p><strong>Landing-truth (where a Creator lands after login) — re-read 2026-07-05.</strong> On successful <code>POST /api/v1/auth/login</code>, <code>Login.razor</code> persists the session via <code>AuthSession.SetAsync</code> then calls <code>Navigation.NavigateTo(ResolveLanding(vSession))</code> (<code>Login.razor:133,136</code>). <code>ResolveLanding</code> returns <code>aSession.DefaultLandingPath</code> when set, else <code>Operator → /admin/ops</code>, else <strong><code>/avatar</code></strong> for a Creator (<code>Login.razor:153-166</code>). <code>DefaultLandingPath</code> is stamped server-side by the setup gate: <code>IdentityEndpoints.ApplySetupGateAsync</code> sets it from <code>ISetupGateService.EvaluateAsync(...).RedirectPath</code> (<code>IdentityEndpoints.cs:313-322</code>, called from <code>LoginAsync</code> <code>IdentityEndpoints.cs:60-61</code>). So a Creator on a fully-set-up install lands on <strong><code>/avatar</code></strong> (live smoke <code>landUrl: …/avatar</code>, <code>.smoke/results.json</code>); on an un-set-up install the gate redirect sends them to <code>/setup-required</code>. The <strong>dev-session seam</strong> persists the pasted token, resolves the AUTHORITATIVE role/landing from <code>GET /api/v1/auth/me</code> (so the one seam can drive Creator/Operator/Owner), and for a Creator falls back to <strong><code>/projects</code></strong> (<code>DevSession.razor:75,80</code>). An <strong>Owner</strong> shares the Creator landing (<code>/avatar</code>) but additionally gets the sidebar-footer switch: <code>AppSidebar.SwitchSurface</code> toggles the surface and navigates to <code>Shell.CurrentLandingPath</code> (<code>AppSidebar.razor:85-89</code>) — <code>/admin/ops</code> on switch-in, back to <code>/avatar</code> on switch-out (<code>AppShellNavigation.cs:63-66</code>, live smoke <code>afterUrl: …/admin/ops</code>, <code>backUrl: …/avatar</code>).</p>
+<h2 id="role-based-shell-access-control">Role-based shell &amp; access control<a class="anchor-link" href="#role-based-shell-access-control">#</a></h2>
+<p>One app, one shell, one RCL — the surface a signed-in user sees is chosen from their <code>UserRole</code> at runtime; there is no longer a separate <code>TrStudioAdmin</code> host. This is what changed for the Creator role under the consolidation (BRD-86, ADR-012 supersedes ADR-001).</p>
+<p><strong>Shell resolution.</strong> <code>AppShellNavigation</code> is the circuit-scoped shell state (<code>src/TrStudioUI/Navigation/AppShellNavigation.cs:19</code>). It holds BOTH nav surfaces (creator + management), reads the role from <code>IAuthSession</code> on <code>InitializeAsync</code> (<code>AppShellNavigation.cs:81-93</code>), and exposes the active surface's <code>AppNavigationConfig</code> via <code>Current</code> (<code>AppShellNavigation.cs:59-60</code>). For a Creator, <code>Role == Creator</code> → <code>CanAccessCreator</code> true / <code>CanAccessManagement</code> false (<code>AppShellNavigation.cs:50,53</code>), so <code>Current</code> is the creator studios and <code>CanSwitchSurface</code> is false (<code>AppShellNavigation.cs:55-56</code>) — no in-app switch is rendered. <code>MainLayout.razor</code> (<code>:3</code>) and <code>AppSidebar.razor</code> (<code>:2</code>) both <code>@inject AppShellNavigation Shell</code> and initialise it on first interactive render (<code>MainLayout.razor:90</code>, <code>AppSidebar.razor:80</code>).</p>
+<p><strong><code>/admin/*</code> gate → AccessDenied.</strong> When a Creator navigates to any management route, <code>MainLayout</code> asks <code>Shell.IsRouteAllowed(path)</code> (<code>MainLayout.razor:135</code>); for an <code>admin/*</code> path with a non-management role it returns false (<code>AppShellNavigation.cs:131-141</code>, <code>IsManagementPath</code> <code>:146-157</code>), so the shell renders <code>&lt;AccessDenied /&gt;</code> <strong>in place of</strong> the page body — the page component never mounts and its admin API call is never issued from the client (<code>MainLayout.razor:43-46</code>; <code>AccessDenied.razor:10-25</code>, "Back to my studios" → <code>CreatorLandingPath</code>). The client gate never weakens the server: the admin API still returns <strong>403</strong> for a Creator token (live smoke <code>creatorAdminApiStatus: 403</code>, <code>.smoke/results.json</code>).</p>
+<p><strong>Screenshot — Creator studios shell (no management nav)</strong></p>
+<p><img src="../screenshots/TrStudio/creator-home-landing.png" alt="Creator studios landing — no management nav" style="max-width:100%"></p>
+<p><strong>Screenshot — Creator hitting <code>/admin/*</code> → AccessDenied</strong></p>
+<p><img src="../screenshots/TrStudio/creator-access-denied.png" alt="Creator AccessDenied on /admin/*" style="max-width:100%"></p>
+<p>The desktop head (MAUI Blazor Hybrid) shows the same in-window denial (<code>docs/screenshots/TrStudio/creator-desktop-denied.png</code>, from <code>.smoke/desktop/shots/creator-denied.png</code>).</p>
+<p><strong>Auth wiring after the consolidation (path citations).</strong> The auth contracts stay in the shared RCL — <code>IAuthSession</code> (<code>src/TrStudioUI/Auth/IAuthSession.cs</code>) + <code>AuthSessionState</code> (<code>src/TrStudioUI/Auth/AuthSessionState.cs</code>) — but the Blazor-Server auth <strong>implementations</strong> moved OUT of the RCL into the web host: <code>AuthSession</code>, <code>AuthTokenHandler</code>, <code>CircuitServicesAccessor</code>, <code>ServicesAccessorCircuitHandler</code>, <code>AuthServiceCollectionExtensions</code> now live under <code>src/TrStudio/Auth/</code> (e.g. <code>src/TrStudio/Auth/AuthSession.cs:13</code>, namespace still <code>TrStudioUI.Auth</code>). The desktop head supplies its own SecureStorage-backed implementation <code>src/TrStudio.Desktop/Auth/MauiAuthSession.cs</code> + <code>MauiAuthTokenHandler.cs</code>. So every Creator screen's <code>IAuthSession.*</code> call binds to the RCL contract, resolved at runtime to the web <code>AuthSession</code> or the desktop <code>MauiAuthSession</code> depending on the head (REQ-NFR-003).</p>
+<h2 id="screen-by-screen-code-map">Screen-by-screen code map<a class="anchor-link" href="#screen-by-screen-code-map">#</a></h2>
+<h3 id="creator-sign-in">Creator · Sign in<a class="anchor-link" href="#creator-sign-in">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/login</code></li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/Auth/Login.razor</code> (single-file, <code>@code</code> inline)</li><li><strong>Reached via:</strong> app entry / auth redirect; not in sidebar. <strong>Log in as:</strong> n/a (this IS the login)</li><li><strong>What this screen does:</strong> Email/password sign-in on the bare EmptyLayout; posts to the AppManager-backed auth API and routes to the setup-gate-aware role landing.</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-04)</li></ul>
+<p><strong>Screenshot</strong></p>
+<p><img src="../screenshots/TrStudio/login.png" alt="Sign in — Creator" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["Login.razor"] --> C1["Sign in Button (HandleSignInAsync)"]
+  C1 --> S1["HttpClient POST ApiRoutes.Auth + /login"]
+  S1 --> E1["IdentityEndpoints.LoginAsync (/api/v1/auth/login)"]
+  E1 --> SV1["IAppManagerClient.LoginAsync"]
+  E1 --> SV2["ISetupGateService.EvaluateAsync"]
+  SV1 --> EX1[("AppManager (external identity)")]
+  SV2 --> DB1[("ModelSource + RegistryModel (setup gate)")]</pre>
+</div>
+<p>(Mermaid rules: quote EVERY label; never use <code>end</code> as a node id.)</p>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>Email input</td><td><code>Input</code></td><td>Capture email</td><td>Two-way bind <code>objEmail</code>; <code>IsEmailValid</code> (<code>Login.razor:99-102</code>)</td></tr><tr><td>Password input</td><td><code>Input</code></td><td>Capture password</td><td>Bind <code>objPassword</code>; <code>IsPasswordValid</code> (<code>Login.razor:105</code>)</td></tr><tr><td>Sign in button</td><td><code>Button</code></td><td>Submit login</td><td><code>HandleSignInAsync</code>; disabled until <code>IsFormValid</code> (<code>Login.razor:68-69,108</code>)</td></tr><tr><td>Error alert</td><td><code>Alert</code></td><td>Show auth failure</td><td><code>objError</code> from <code>ReadErrorAsync</code> (<code>Login.razor:25-33,169</code>)</td></tr><tr><td>Forgot-password link</td><td><code>&lt;a&gt;</code></td><td>Nav to <code>/forgot-password</code></td><td>Static href (<code>Login.razor:55</code>)</td></tr><tr><td>Create-account link</td><td><code>&lt;a&gt;</code></td><td>Nav to <code>/register</code></td><td>Static href (<code>Login.razor:88</code>)</td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method (file)</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>Sign in</td><td><code>Login.razor:111-150</code></td><td><code>HttpClientFactory</code> client "TrStudioApi" <code>PostAsJsonAsync(ApiRoutes.Auth + "/login")</code> (<code>Login.razor:123-125</code>)</td><td><code>IdentityEndpoints.LoginAsync</code> <code>POST /api/v1/auth/login</code> <code>AllowAnonymous</code> (<code>IdentityEndpoints.cs:31,47</code>)</td><td><code>IAppManagerClient.LoginAsync</code> + <code>ISetupGateService.EvaluateAsync</code> (<code>IdentityEndpoints.cs:60-61</code>)</td><td>External AppManager; setup gate reads <code>"ModelSource"</code> + <code>"RegistryModel"</code></td><td>renders</td><td>Real login is Blocked externally (AppManager app 4 not published) — smokes use <code>/dev/session</code> seam</td></tr><tr><td>Landing redirect</td><td><code>Login.razor:136,153-166</code></td><td><code>NavigateTo(ResolveLanding)</code></td><td>—</td><td><code>LoginResponse.DefaultLandingPath</code> set by <code>ApplySetupGateAsync</code> (<code>IdentityEndpoints.cs:313-322</code>)</td><td>—</td><td>renders</td><td>Creator → <code>/avatar</code> fallback; gate may send <code>/setup-required</code></td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li>Submit stays disabled until <code>IsFormValid</code> (valid email syntax + non-empty password) (<code>Login.razor:107-108</code>).</li><li>Session persisted via <code>IAuthSession.SetAsync</code> BEFORE navigation so the next circuit carries the bearer token (<code>Login.razor:132-134</code>).</li><li>401 → "Invalid email or password."; other → generic; ProblemDetails <code>Detail</code> used when present (<code>Login.razor:184-186</code>).</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li>Real AppManager login is externally Blocked (AppManager app 4 not published) — this is an external dependency, not a screen defect. Use <code>/dev/session</code> for end-to-end smokes.</li></ul>
+<hr>
+<h3 id="creator-create-account">Creator · Create account<a class="anchor-link" href="#creator-create-account">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/register</code></li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/Auth/Register.razor</code></li><li><strong>Reached via:</strong> "Create an account" link on <code>/login</code>; not in sidebar. <strong>Log in as:</strong> n/a (provisions the account)</li><li><strong>What this screen does:</strong> Name/email/password/confirm + Creator-vs-Admin account-type selector; provisions via AppManager and routes by account type.</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-04)</li></ul>
+<p><strong>Screenshot</strong></p>
+<p><img src="../screenshots/TrStudio/register.png" alt="Create account — Creator" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["Register.razor"] --> C1["Create account Button (HandleCreateAsync)"]
+  C1 --> S1["HttpClient POST ApiRoutes.Auth + /register"]
+  S1 --> E1["IdentityEndpoints.RegisterAsync (/api/v1/auth/register)"]
+  E1 --> SV1["IAppManagerClient.RegisterAsync"]
+  SV1 --> EX1[("AppManager (external identity)")]</pre>
+</div>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>Name / Email / Password / Confirm</td><td><code>Input</code></td><td>Capture fields</td><td>Binds <code>objName/objEmail/objPassword/objConfirm</code>; validators <code>Register.razor:139-152</code></td></tr><tr><td>Account type toggle</td><td>two <code>Button</code>s</td><td>Creator vs Admin</td><td><code>objIsAdmin</code> (<code>Register.razor:95-100</code>)</td></tr><tr><td>Create account button</td><td><code>Button</code></td><td>Submit</td><td><code>HandleCreateAsync</code>; disabled until <code>IsFormValid</code> (<code>Register.razor:106-107,154</code>)</td></tr><tr><td>Error alert</td><td><code>Alert</code></td><td>Duplicate/other errors</td><td><code>objError</code>; <code>EMAIL_EXISTS</code> special-cased (<code>Register.razor:220-223</code>)</td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method (file)</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>Create account</td><td><code>Register.razor:157-202</code></td><td><code>PostAsJsonAsync(ApiRoutes.Auth + "/register")</code> (<code>Register.razor:177</code>)</td><td><code>IdentityEndpoints.RegisterAsync</code> <code>POST /api/v1/auth/register</code> <code>AllowAnonymous</code> (<code>IdentityEndpoints.cs:32,77</code>)</td><td><code>IAppManagerClient.RegisterAsync</code> (<code>IdentityEndpoints.cs:90</code>)</td><td>External AppManager; no local password store (BRD-57)</td><td>renders</td><td>AccountType <code>"Creator"</code>/<code>"AdminOperator"</code> (<code>Register.razor:175</code>)</td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li>Password strength: ≥12 chars with a digit and a non-alphanumeric symbol (<code>Register.razor:147-150</code>).</li><li>Confirm must equal password (<code>Register.razor:152</code>).</li><li>Landing: <code>DefaultLandingPath</code> if set, else Admin → <code>/admin/setup/hardware</code>, Creator → <code>/avatar</code> (<code>Register.razor:205-213</code>).</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li>External AppManager provisioning Blocked (app 4 not published) — external, not a screen defect.</li></ul>
+<hr>
+<h3 id="creator-reset-password">Creator · Reset password<a class="anchor-link" href="#creator-reset-password">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/forgot-password</code></li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/Auth/ForgotPassword.razor</code></li><li><strong>Reached via:</strong> "Forgot password?" link on <code>/login</code>; not in sidebar. <strong>Log in as:</strong> n/a</li><li><strong>What this screen does:</strong> Email + "Send reset link"; enumeration-safe — always shows the same generic success.</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-04)</li></ul>
+<p><strong>Screenshot</strong></p>
+<p><img src="../screenshots/TrStudio/forgot-password.png" alt="Reset password — Creator" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["ForgotPassword.razor"] --> C1["Send reset link Button (HandleSendAsync)"]
+  C1 --> S1["HttpClient POST ApiRoutes.Auth + /forgot-password"]
+  S1 --> E1["IdentityEndpoints.ForgotPasswordAsync (/api/v1/auth/forgot-password)"]
+  E1 --> SV1["IAppManagerClient.RequestPasswordResetAsync"]
+  SV1 --> EX1[("AppManager (external identity)")]</pre>
+</div>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>Email input</td><td><code>Input</code></td><td>Capture email</td><td>Bind <code>objEmail</code>; <code>IsEmailValid</code> (<code>ForgotPassword.razor:77-80</code>)</td></tr><tr><td>Send button</td><td><code>Button</code></td><td>Request reset</td><td><code>HandleSendAsync</code>; disabled until valid email (<code>ForgotPassword.razor:35-36</code>)</td></tr><tr><td>Success alert</td><td><code>Alert</code></td><td>Generic confirmation</td><td><code>objSent</code> — always shown on completion (<code>ForgotPassword.razor:49-60,105</code>)</td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method (file)</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>Send reset link</td><td><code>ForgotPassword.razor:83-107</code></td><td><code>PostAsJsonAsync(ApiRoutes.Auth + "/forgot-password")</code> (<code>ForgotPassword.razor:96</code>)</td><td><code>IdentityEndpoints.ForgotPasswordAsync</code> <code>POST /api/v1/auth/forgot-password</code> <code>AllowAnonymous</code> (<code>IdentityEndpoints.cs:34,134</code>)</td><td><code>IAppManagerClient.RequestPasswordResetAsync</code> (<code>IdentityEndpoints.cs:146</code>)</td><td>External AppManager</td><td>renders</td><td>All transport/account errors swallowed to prevent enumeration (<code>ForgotPassword.razor:98-101</code>)</td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li><code>objSent</code> is set in <code>finally</code> regardless of outcome — the success alert is enumeration-safe (<code>ForgotPassword.razor:103-106</code>).</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li>None confirmed.</li></ul>
+<hr>
+<h3 id="creator-setup-required">Creator · Setup required<a class="anchor-link" href="#creator-setup-required">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/setup-required</code></li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/Auth/SetupRequired.razor</code></li><li><strong>Reached via:</strong> setup-gate redirect after login when no model/source is ready (BRD-85); not in sidebar. <strong>Log in as:</strong> user 2 (creator@trstudio.test)</li><li><strong>What this screen does:</strong> First-run gate shown to creators when the install has no ready model; "Check again" re-evaluates the gate and forwards to the studio when setup completes.</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-04)</li></ul>
+<p><strong>Screenshot</strong></p>
+<p><img src="../screenshots/TrStudio/setup-required.png" alt="Setup required — Creator" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["SetupRequired.razor"] --> C1["Check again Button (CheckAgainAsync)"]
+  C1 --> S1["HttpClient GET ApiRoutes.SetupGate"]
+  S1 --> E1["IdentityEndpoints.GetSetupGateAsync (/api/v1/setup-gate)"]
+  E1 --> SV1["ISetupGateService.EvaluateAsync"]
+  SV1 --> DB1[("ModelSource (enabled) + RegistryModel (ready)")]
+  P --> C2["Sign in as admin Button (Href /login)"]</pre>
+</div>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>Sign in as admin</td><td><code>Button Href="/login"</code></td><td>Route to login</td><td>Static href (<code>SetupRequired.razor:37</code>)</td></tr><tr><td>Check again</td><td><code>Button</code></td><td>Re-evaluate gate</td><td><code>CheckAgainAsync</code> (<code>SetupRequired.razor:41-53,77</code>)</td></tr><tr><td>Waiting badge / steps</td><td><code>Badge</code>/static</td><td>Explain gate</td><td>Static markup (<code>SetupRequired.razor:25-70</code>)</td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method (file)</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>Check again</td><td><code>SetupRequired.razor:77-105</code></td><td><code>GetAsync(ApiRoutes.SetupGate)</code> (<code>SetupRequired.razor:83</code>)</td><td><code>IdentityEndpoints.GetSetupGateAsync</code> <code>GET /api/v1/setup-gate</code> <code>RequireAuthorization</code> (<code>IdentityEndpoints.cs:38,194</code>)</td><td><code>ISetupGateService.EvaluateAsync</code> (<code>IdentityEndpoints.cs:203</code>)</td><td>Reads <code>"ModelSource"</code> (enabled) + <code>"RegistryModel"</code> (ready); defined <code>0301_ModelSource.sql</code>, <code>0200_RegistryTables.sql</code></td><td>renders</td><td>On <code>SetupComplete</code> navigates to <code>RedirectPath</code> (<code>forceLoad:true</code>), else toast (<code>SetupRequired.razor:87-95</code>)</td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li>Gate complete ⇔ ≥1 enabled model source AND ≥1 ready registry model (<code>IdentityEndpoints.cs:191-193</code> remark).</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li>None confirmed. "Check again" requires an authenticated session (endpoint is <code>RequireAuthorization</code>).</li></ul>
+<hr>
+<h3 id="creator-home">Creator · Home<a class="anchor-link" href="#creator-home">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/</code> (Home)</li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/Home.razor</code></li><li><strong>Reached via:</strong> app shell root; renders inside sidebar layout. <strong>Log in as:</strong> user 2 (creator@trstudio.test)</li><li><strong>What this screen does:</strong> Shared landing stub — a primary CTA plus launch cards for every nav group/item.</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-04)</li></ul>
+<p><strong>Screenshot</strong></p>
+<p><img src="../screenshots/TrStudio/home.png" alt="Home — Creator" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["Home.razor"] --> C1["Primary Button (objPrimaryItem.Href)"]
+  P --> C2["Per-group launch cards (NavConfig.Groups)"]
+  C2 --> N1["Nav Buttons -> item.Href"]</pre>
+</div>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>Primary launch button</td><td><code>Button</code></td><td>Jump to first nav item</td><td><code>objPrimaryItem</code> = first group's first item (<code>Home.razor:14-20,49-52</code>)</td></tr><tr><td>Group cards</td><td><code>Card</code> grid</td><td>List nav items</td><td><code>NavConfig.Groups</code> (DI-injected) (<code>Home.razor:22-43</code>)</td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method (file)</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>Nav cards</td><td><code>Home.razor:23-42</code></td><td><code>AppNavigationConfig</code> (DI, in-proc)</td><td>—</td><td><code>TrStudioNavSets.CreateCreatorNavigation</code> (<code>TrStudioNavSets.cs:15</code>)</td><td>none (in-memory nav)</td><td>renders</td><td>Pure client render; no API/DB</td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li><code>objPrimaryItem</code> = <code>NavConfig.Groups.FirstOrDefault()?.Items.FirstOrDefault()</code> → Avatar Studio for Creator (<code>Home.razor:51</code>).</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li>None. Static shell; no data hop.</li></ul>
+<hr>
+<h3 id="creator-avatar-studio-flagship">Creator · Avatar Studio (flagship)<a class="anchor-link" href="#creator-avatar-studio-flagship">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/avatar</code></li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/Avatar/AvatarStudio.razor</code></li><li><strong>Reached via:</strong> Studios → Avatar Studio; also the Creator post-login landing. <strong>Log in as:</strong> user 2 (creator@trstudio.test)</li><li><strong>What this screen does:</strong> Three-column talking-head studio: character picker (enrich-or-seed), preset-voice + EN/HI toggle, script editor with TechieRag assist, Fast/High/Premium tier with cost/cap estimate + safety alerts, captions + aspect + Export MP4. Render rides the shared job spine.</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-04)</li></ul>
+<p><strong>Screenshot</strong></p>
+<p><img src="../screenshots/TrStudio/avatar.png" alt="Avatar Studio — Creator" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["AvatarStudio.razor"] --> C1["Character picker (TryEnrichCharactersAsync)"]
+  C1 --> S1["HttpClient GET /api/v1/characters"]
+  S1 --> E1["CharacterEndpoints.ListCharactersAsync"]
+  E1 --> SV1["ICharacterService.ListAsync"]
+  SV1 --> R1["CharacterRepository"]
+  R1 --> DB1[("Character (1100_Characters.sql)")]
+  P --> C2["Render Button (RenderAsync -> TrySubmitRenderAsync)"]
+  C2 --> S2["HttpClient POST ApiRoutes.Jobs"]
+  S2 --> E2["SpineEndpoints.SubmitJobAsync (/api/v1/jobs)"]
+  E2 --> SV2["IJobOrchestrator.SubmitAsync"]
+  SV2 --> R2["JobRepository"]
+  R2 --> DB2[("GenerationJob / GeneratedAsset (0100_SpineTables.sql)")]
+  P --> C3["Generate voice (GenerateVoiceAsync)"]
+  C3 --> S3["HttpClient POST ApiRoutes.Voice ROOT"]
+  S3 --> X3["no route at /api/v1/voice root -> 404 (DEFECT)"]
+  P --> C4["Script-assist (ScriptAssistAsync)"]
+  C4 --> S4["HttpClient POST /api/v1/rag/script-assist"]
+  S4 --> X4["no script-assist route -> 404 (DEFECT)"]</pre>
+</div>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>Character card</td><td>seed/enrich</td><td>Show identity-locked character</td><td><code>objCharacters</code> seed (<code>AvatarStudio.razor:559</code>), enriched from <code>/api/v1/characters</code> (<code>AvatarStudio.razor:390-414</code>)</td></tr><tr><td>Change / New character</td><td><code>Button</code></td><td>Nav to <code>/avatar/characters</code></td><td><code>GoToCharacters</code> (<code>AvatarStudio.razor:417</code>)</td></tr><tr><td>Voice select</td><td><code>Select</code></td><td>Pick preset voice</td><td>Hardcoded <code>objVoices</code> dict (<code>AvatarStudio.razor:291-297</code>) — NOT API-loaded</td></tr><tr><td>Language toggle</td><td><code>Button</code>s</td><td>EN/HI</td><td><code>objLanguage</code> (<code>AvatarStudio.razor:300-301</code>)</td></tr><tr><td>Generate voice</td><td><code>Button</code></td><td>Voice preview</td><td><code>GenerateVoiceAsync</code> (<code>AvatarStudio.razor:420-433</code>) — see defect</td></tr><tr><td>Script textarea</td><td><code>Textarea</code></td><td>Narration text</td><td>Bind <code>objScript</code>; <code>WordCount</code>/<code>EstimatedSeconds</code> computed (<code>AvatarStudio.razor:344-348</code>)</td></tr><tr><td>Script-assist</td><td><code>Button</code></td><td>TechieRag tighten hook</td><td><code>ScriptAssistAsync</code> (<code>AvatarStudio.razor:436-449</code>) — see defect</td></tr><tr><td>Render tier</td><td><code>RadioGroup</code></td><td>Fast/High/Premium</td><td><code>objTiers</code> seed (<code>AvatarStudio.razor:311-316</code>); HeyGen badge/routing alert computed</td></tr><tr><td>Cost estimate</td><td>computed</td><td>Render+voice vs cap</td><td><code>EstimatedTotal</code>, <code>OverCap</code>, <code>NearCap</code>, <code>CapPercent</code> (<code>AvatarStudio.razor:350-363</code>)</td></tr><tr><td>Render</td><td><code>Button</code></td><td>Submit lip-sync job</td><td><code>RenderAsync</code> → <code>TrySubmitRenderAsync</code> (<code>AvatarStudio.razor:456-545</code>)</td></tr><tr><td>Safety alert</td><td><code>Alert</code></td><td>SAFE-01..06 block</td><td><code>objSafetyBlocked</code> set when job returns <code>Blocked</code> (<code>AvatarStudio.razor:482-485,531</code>)</td></tr><tr><td>Captions switch / Aspect / Export</td><td><code>Switch</code>/<code>Select</code>/<code>Button</code></td><td>Export options</td><td><code>objCaptions</code>,<code>objAspect</code>; <code>ExportAsync</code> toast only (<code>AvatarStudio.razor:548-554</code>)</td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method (file)</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>Character list</td><td><code>AvatarStudio.razor:390-414</code></td><td><code>GetFromJsonAsync&lt;List&lt;CharacterSummary&gt;&gt;("/api/v1/characters")</code></td><td><code>CharacterEndpoints.ListCharactersAsync</code> <code>GET /api/v1/characters</code> (<code>CharacterEndpoints.cs:25,62</code>)</td><td><code>ICharacterService.ListAsync</code> → <code>CharacterRepository</code></td><td><code>"Character"</code> (<code>1100_Characters.sql</code>)</td><td>renders (seed; live enrich when session+rows)</td><td>Enrich-or-seed; seed always shows</td></tr><tr><td>Render job</td><td><code>AvatarStudio.razor:494-545</code></td><td><code>PostAsJsonAsync(ApiRoutes.Jobs)</code> then poll <code>GET /api/v1/jobs/{id}</code></td><td><code>SpineEndpoints.SubmitJobAsync</code> <code>POST /api/v1/jobs</code> (<code>SpineEndpoints.cs:44,65</code>)</td><td><code>IJobOrchestrator.SubmitAsync</code> → <code>JobRepository</code>; safety/cost pre-checks (<code>SpineEndpoints.cs:79,82,96</code>)</td><td><code>"GenerationJob"</code>/<code>"GeneratedAsset"</code> (<code>0100_SpineTables.sql</code>)</td><td>renders (progress animates; live submit best-effort)</td><td>Blocked → 403 SAFETY_BLOCKED surfaces safety alert</td></tr><tr><td>Generate voice</td><td><code>AvatarStudio.razor:420-433</code></td><td><code>PostAsJsonAsync(ApiRoutes.Voice, …)</code> → <code>/api/v1/voice</code> (root)</td><td><strong>no POST at <code>/api/v1/voice</code> root</strong> — synth is <code>/api/v1/voice/synthesize</code> (<code>VoiceEndpoints.cs:28</code>)</td><td>—</td><td>—</td><td>renders-empty (suspected defect — wrong route, always 404, swallowed)</td><td>Toast still fires; real synth never runs. <strong>DEFECT</strong></td></tr><tr><td>Script-assist</td><td><code>AvatarStudio.razor:436-449</code></td><td><code>PostAsJsonAsync("/api/v1/rag/script-assist", …)</code></td><td><strong>no <code>script-assist</code> route</strong> — RAG maps <code>script</code>/<code>captions</code>/<code>usage</code> (<code>RagEndpoints.cs:25-27</code>)</td><td>—</td><td>—</td><td>renders-empty (suspected defect — 404, swallowed)</td><td>Toast still fires. <strong>DEFECT</strong></td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li><code>EstimatedTotal = SelectedTier.Cost + VoiceCost</code> (captions free) (<code>AvatarStudio.razor:351</code>).</li><li><code>OverCap</code> disables Render; <code>NearCap</code> warns under $10 headroom (<code>AvatarStudio.razor:357-360,242</code>).</li><li>Job <code>ModelId</code> chosen by tier: <code>heygen-avatar</code> vs <code>musetalk-local</code> (<code>AvatarStudio.razor:501</code>); <code>Task=LipSync</code>.</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li>Voice-preview and script-assist calls hit non-existent routes (see lineage) — both are swallowed try/catch, so the studio still demos via toasts, but the backend is never exercised. REQ-UI-010 / REQ-FN-031 / RAG-001 wiring.</li><li>Voice <code>Select</code> in this studio is a hardcoded 4-item dict, never enriched from the voice catalog (by design seed, but note it will not reflect installed voices).</li><li>Provider/tier costs are seed constants, not the live registry — model-gated by design.</li></ul>
+<hr>
+<h3 id="creator-character-library">Creator · Character Library<a class="anchor-link" href="#creator-character-library">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/avatar/characters</code></li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/Avatar/CharacterLibrary.razor</code></li><li><strong>Reached via:</strong> Studios → Characters (or Avatar Studio "Change/New character"). <strong>Log in as:</strong> user 2 (creator@trstudio.test)</li><li><strong>What this screen does:</strong> Grid of identity-locked characters (enrich-or-seed) with search, a create/edit Dialog (prompt + realism + seed/LoRA lock), and a per-character bible Sheet.</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-04)</li></ul>
+<p><strong>Screenshot</strong></p>
+<p><img src="../screenshots/TrStudio/avatar-characters.png" alt="Character Library — Creator" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["CharacterLibrary.razor"] --> C1["Grid (TryEnrichCharactersAsync)"]
+  C1 --> S1["HttpClient GET /api/v1/characters"]
+  S1 --> E1["CharacterEndpoints.ListCharactersAsync"]
+  E1 --> SV1["ICharacterService.ListAsync"]
+  SV1 --> R1["CharacterRepository"]
+  R1 --> DB1[("Character (1100_Characters.sql)")]
+  P --> C2["Create character (SaveCharacterAsync)"]
+  C2 --> S2["HttpClient POST /api/v1/characters"]
+  S2 --> E2["CharacterEndpoints.CreateCharacterAsync"]
+  E2 --> SV2["ICharacterService.CreateAsync"]
+  SV2 --> R1</pre>
+</div>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>Search box</td><td><code>Input</code></td><td>Filter grid</td><td><code>objSearch</code> → <code>FilteredCharacters</code> (<code>CharacterLibrary.razor:207-212</code>)</td></tr><tr><td>Character card</td><td><code>Card</code></td><td>Show character</td><td><code>objCharacters</code> seed/enriched (<code>CharacterLibrary.razor:337,235-255</code>)</td></tr><tr><td>New Character dialog</td><td><code>Dialog</code></td><td>Create form</td><td><code>objDraftPrompt/Realism/Seed/Lora</code> (<code>CharacterLibrary.razor:201-204</code>)</td></tr><tr><td>Create button</td><td><code>Button</code></td><td>Persist character</td><td><code>SaveCharacterAsync</code> (<code>CharacterLibrary.razor:280-325</code>)</td></tr><tr><td>Bible sheet</td><td><code>Sheet</code></td><td>Persona notes</td><td><code>objBibleChar</code> (static persona copy) (<code>CharacterLibrary.razor:149-185</code>)</td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method (file)</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>Load grid</td><td><code>CharacterLibrary.razor:235-255</code></td><td><code>GetFromJsonAsync&lt;List&lt;CharacterCard&gt;&gt;("/api/v1/characters")</code></td><td><code>CharacterEndpoints.ListCharactersAsync</code> (<code>CharacterEndpoints.cs:62</code>)</td><td><code>ICharacterService.ListAsync</code> → <code>CharacterRepository</code></td><td><code>"Character"</code> (<code>1100_Characters.sql</code>)</td><td>renders (seed + live enrich)</td><td>5-item seed always shows</td></tr><tr><td>Create character</td><td><code>CharacterLibrary.razor:280-325</code></td><td><code>PostAsJsonAsync("/api/v1/characters", { name, description, realism, seed, loraRef, isAdult })</code> (<code>CharacterLibrary.razor:307-315</code>)</td><td><code>CharacterEndpoints.CreateCharacterAsync</code> <code>POST /api/v1/characters</code> (<code>CharacterEndpoints.cs:24,38</code>)</td><td><code>ICharacterService.CreateAsync</code> → <code>CharacterRepository</code></td><td><code>"Character"</code></td><td>renders (optimistic prepend; live POST best-effort)</td><td>Body maps to <code>CharacterUpsertRequest</code>; <code>realism</code> numeric enum</td></tr><tr><td>Bible sheet</td><td><code>CharacterLibrary.razor:155-177</code></td><td>none (static copy)</td><td>(<code>CharacterEndpoints</code> has <code>/{id}/bible</code> but the sheet does not call it)</td><td>—</td><td>—</td><td>renders-empty (static; no bible fetch)</td><td>Sheet shows canned persona text, not <code>ListBibleEntriesAsync</code> data — cosmetic, not wired</td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li>Seed parsed from field or randomized 10000–99999 (<code>CharacterLibrary.razor:288</code>); <code>HasLora</code> when LoRA ≠ "None".</li><li>Name derived from first 3 prompt words (<code>CharacterLibrary.razor:329-334</code>).</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li>The bible Sheet renders static persona copy and never calls <code>GET /api/v1/characters/{id}/bible</code> (<code>CharacterEndpoints.cs:31</code>). Not a broken route — the feature is simply not wired to the API. REQ-UI-011 / RAG-004.</li></ul>
+<hr>
+<h3 id="creator-image-studio">Creator · Image Studio<a class="anchor-link" href="#creator-image-studio">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/image</code></li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/Image/ImageStudio.razor</code></li><li><strong>Reached via:</strong> Studios → Image Studio. <strong>Log in as:</strong> user 2 (creator@trstudio.test)</li><li><strong>What this screen does:</strong> Registry-schema-driven param panel (controls render from the selected model's <code>Params</code> schema), canvas + prompt, ControlNet tabs + upload, results strip with per-seed badges, upscale + export. Generation rides the shared spine.</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-04)</li></ul>
+<p><strong>Screenshot</strong></p>
+<p><img src="../screenshots/TrStudio/image.png" alt="Image Studio — Creator" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["ImageStudio.razor"] --> C1["Model select (TryLoadModelsAsync)"]
+  C1 --> S1["HttpClient GET ApiRoutes.Models"]
+  S1 --> E1["RegistryEndpoints.ListModelsAsync (/api/v1/models)"]
+  E1 --> SV1["IModelCatalogService.ListVisibleAsync"]
+  SV1 --> R1["RegistryRepository.ListAsync(enabledOnly)"]
+  R1 --> DB1[("RegistryModel (0200_RegistryTables.sql)")]
+  P --> C2["Generate (GenerateAsync -> TrySubmitJobAsync)"]
+  C2 --> S2["HttpClient POST ApiRoutes.Jobs + poll + /result"]
+  S2 --> E2["SpineEndpoints.SubmitJobAsync / GetJobResultAsync"]
+  E2 --> SV2["IJobOrchestrator.SubmitAsync / GetResultAsync"]
+  SV2 --> R2["JobRepository / AssetRepository"]
+  R2 --> DB2[("GenerationJob / GeneratedAsset (0100_SpineTables.sql)")]</pre>
+</div>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>Model select</td><td><code>Select</code></td><td>Choose registry model</td><td><code>objModels</code> from <code>/api/v1/models</code> (<code>ImageStudio.razor:337-364</code>)</td></tr><tr><td>Dynamic params</td><td><code>Slider</code>/<code>Switch</code>/<code>Select</code>/<code>Input</code></td><td>Render from schema</td><td><code>SelectedModel.Params</code> switch on <code>Type</code> (<code>ImageStudio.razor:53-98</code>); values in <code>objNumeric/objText/objBool</code></td></tr><tr><td>ControlNet tabs + upload</td><td><code>Tabs</code>/<code>FileUpload</code></td><td>Conditioning</td><td><code>objControlTabs</code> (<code>ImageStudio.razor:104-115</code>)</td></tr><tr><td>Prompt</td><td><code>Textarea</code></td><td>Prompt text</td><td><code>PromptText</code> mirrors <code>objText["prompt"]</code> (<code>ImageStudio.razor:303-307</code>)</td></tr><tr><td>Generate</td><td><code>Button</code></td><td>Submit job</td><td><code>GenerateAsync</code> (<code>ImageStudio.razor:411-446</code>)</td></tr><tr><td>Results strip</td><td>tiles</td><td>Per-seed results</td><td><code>objResults</code> from assets or representative seeds (<code>ImageStudio.razor:433-441</code>)</td></tr><tr><td>Upscale / Export</td><td><code>Button</code></td><td>Post-steps</td><td><code>UpscaleAsync</code>/<code>ExportAsync</code> toast only (<code>ImageStudio.razor:525-537</code>)</td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method (file)</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>Model catalog</td><td><code>ImageStudio.razor:337-364</code></td><td><code>GetFromJsonAsync&lt;List&lt;RegistryModel&gt;&gt;(ApiRoutes.Models)</code></td><td><code>RegistryEndpoints.ListModelsAsync</code> <code>GET /api/v1/models</code> (<code>RegistryEndpoints.cs:32,62</code>)</td><td><code>IModelCatalogService.ListVisibleAsync</code> → <code>RegistryRepository.ListAsync</code> (<code>ModelCatalogService.cs:28</code>, <code>RegistryRepository.cs:46</code>)</td><td><code>SELECT … FROM "RegistryModel"</code> (<code>RegistryRepository.cs:48</code>; <code>0200_RegistryTables.sql</code>)</td><td>renders (empty when no session; fallback catalog only when authed+zero rows)</td><td>Param panel is fully schema-driven — no per-model code</td></tr><tr><td>Generate</td><td><code>ImageStudio.razor:449-501</code></td><td><code>PostAsJsonAsync(ApiRoutes.Jobs)</code>, poll <code>GET /api/v1/jobs/{id}</code>, <code>GET /api/v1/jobs/{id}/result</code></td><td><code>SpineEndpoints.SubmitJobAsync</code>/<code>GetJobResultAsync</code> (<code>SpineEndpoints.cs:44,47</code>)</td><td><code>IJobOrchestrator.SubmitAsync</code>/<code>GetResultAsync</code> → <code>JobRepository</code>/<code>AssetRepository</code></td><td><code>"GenerationJob"</code>/<code>"GeneratedAsset"</code> (<code>0100_SpineTables.sql</code>)</td><td>renders (representative seeds when offline)</td><td><code>Task</code>/<code>Tier</code> taken from selected model</td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li><code>IsSidePanelParam</code> hides <code>prompt</code>, <code>image</code>/<code>mask</code>, <code>controlType</code> from the left panel (<code>ImageStudio.razor:405-408</code>).</li><li><code>RebuildParamValues</code> seeds each control from schema <code>DefaultValue</code>/<code>Min</code> (<code>ImageStudio.razor:376-402</code>).</li><li><code>BuildParamsJson</code> serializes all dynamic values into the job (<code>ImageStudio.razor:504-523</code>).</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li>With no session the catalog is intentionally empty (no fallback flash); the representative fallback only appears on an authenticated call that returns zero models (<code>ImageStudio.razor:337-364</code>). Correct-by-design, model-gated.</li></ul>
+<hr>
+<h3 id="creator-voice-studio">Creator · Voice Studio<a class="anchor-link" href="#creator-voice-studio">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/voice</code></li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/Voice/VoiceStudio.razor</code></li><li><strong>Reached via:</strong> Studios → Voice Studio. <strong>Log in as:</strong> user 2 (creator@trstudio.test)</li><li><strong>What this screen does:</strong> Narration composer — language + preset-voice combobox (routing hidden), emotion/speed gates by voice capability, waveform player, consent-gated clone dialog (SAFE-02/03). Enrich-or-seed preset list.</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-04)</li></ul>
+<p><strong>Screenshot</strong></p>
+<p><img src="../screenshots/TrStudio/voice.png" alt="Voice Studio — Creator" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["VoiceStudio.razor"] --> C1["Preset combobox (TryEnrichVoicesAsync)"]
+  C1 --> S1["HttpClient GET /api/v1/voice/presets"]
+  S1 --> X1["server route is /api/v1/voice/preset-voices -> 404 (DEFECT)"]
+  P --> C2["Generate voice (GenerateAsync -> TrySynthesizeAsync)"]
+  C2 --> S2["HttpClient POST /api/v1/voice ROOT"]
+  S2 --> X2["synth route is /api/v1/voice/synthesize -> 404 (DEFECT)"]
+  P --> C3["Create clone (CreateCloneAsync)"]
+  C3 --> S3["HttpClient POST /api/v1/voice/clone"]
+  S3 --> E3["VoiceEndpoints.CloneVoiceAsync"]
+  E3 --> SV3["IVoiceCloneService.RequestCloneAsync"]</pre>
+</div>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>Language select</td><td><code>Select</code></td><td>EN/HI/Hinglish</td><td><code>objLanguages</code> (<code>VoiceStudio.razor:277-282</code>)</td></tr><tr><td>Emotion select</td><td><code>Select</code></td><td>Style</td><td><code>objEmotions</code>; disabled when <code>!EmotionSupported</code> (<code>VoiceStudio.razor:318</code>)</td></tr><tr><td>Script textarea</td><td><code>Textarea</code></td><td>Text to speak</td><td>Bind <code>objScript</code>, 5000-char counter</td></tr><tr><td>Preset voice combobox</td><td><code>Combobox</code></td><td>Pick voice</td><td><code>objVoices</code> seed, enriched (<code>VoiceStudio.razor:350-374</code>)</td></tr><tr><td>Speed/Pitch sliders</td><td><code>Slider</code></td><td>Controls</td><td><code>objSpeed</code> gated by <code>SpeedSupported</code>; <code>objPitch</code> (<code>VoiceStudio.razor:321</code>)</td></tr><tr><td>Generate voice</td><td><code>Button</code></td><td>Synthesize</td><td><code>GenerateAsync</code> → <code>TrySynthesizeAsync</code> (<code>VoiceStudio.razor:393-458</code>) — see defect</td></tr><tr><td>Player / model-missing alert</td><td>waveform/<code>Alert</code></td><td>Playback / gate</td><td><code>objHasAudio</code>; <code>ModelInstalled</code> gate (<code>VoiceStudio.razor:156-191</code>)</td></tr><tr><td>Clone dialog + consent gate</td><td><code>Dialog</code>/<code>AlertDialog</code></td><td>Consent-gated clone</td><td><code>objCloneSynthetic</code>, <code>objConsentOpen</code> (<code>VoiceStudio.razor:474-497</code>)</td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method (file)</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>Preset list</td><td><code>VoiceStudio.razor:350-374</code></td><td><code>GetFromJsonAsync&lt;List&lt;PresetVoice&gt;&gt;("/api/v1/voice/presets")</code> (<code>VoiceStudio.razor:360</code>)</td><td><strong>route is <code>/api/v1/voice/preset-voices</code></strong> (<code>VoiceEndpoints.cs:27</code>) — <code>/presets</code> 404s</td><td><code>IPresetVoiceCatalog.GetAll</code> (<code>VoiceEndpoints.cs:41</code>) never reached</td><td>in-memory catalog</td><td>renders-empty (suspected defect — wrong path, always seed)</td><td>Also DTO shape differs (<code>Id/Name</code> vs <code>VoiceId/DisplayName</code>). <strong>DEFECT</strong></td></tr><tr><td>Generate voice</td><td><code>VoiceStudio.razor:437-458</code></td><td><code>PostAsJsonAsync(VoiceApiRoute, …)</code> → <code>/api/v1/voice</code> root (<code>VoiceStudio.razor:452</code>)</td><td><strong>synth route is <code>/api/v1/voice/synthesize</code></strong> (<code>VoiceEndpoints.cs:28</code>) — root 404s</td><td><code>IVoiceSynthesizer.SynthesizeAsync</code> never reached</td><td>—</td><td>renders-empty (suspected defect — swallowed 404)</td><td>Placeholder waveform stands in. <strong>DEFECT</strong></td></tr><tr><td>Create clone</td><td><code>VoiceStudio.razor:500-526</code></td><td><code>PostAsJsonAsync("/api/v1/voice/clone", …)</code> (<code>VoiceStudio.razor:512</code>)</td><td><code>VoiceEndpoints.CloneVoiceAsync</code> <code>POST /api/v1/voice/clone</code> (<code>VoiceEndpoints.cs:30,86</code>)</td><td><code>IVoiceCloneService.RequestCloneAsync</code> (<code>VoiceEndpoints.cs:98</code>)</td><td>consent tables (<code>0900_Safety.sql</code>/<code>0800_Voice.sql</code>)</td><td>renders (route correct; best-effort)</td><td>Real-person path gated by consent AlertDialog first (client-side SAFE-02/03)</td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li><code>EmotionSupported</code>/<code>SpeedSupported</code> gate the emotion select + speed slider by the voice's capability flags (<code>VoiceStudio.razor:318-321</code>).</li><li>Clone: synthetic proceeds immediately; real-person routed through the consent AlertDialog before <code>CreateCloneAsync</code> (<code>VoiceStudio.razor:474-497</code>).</li><li>Generate blocks up front when <code>!ModelInstalled</code> (<code>VoiceStudio.razor:402-406</code>).</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li><strong>Preset-voice list route mismatch</strong> (<code>/presets</code> vs <code>/preset-voices</code>) and <strong>synthesize route mismatch</strong> (root vs <code>/synthesize</code>) — both swallowed, so the studio demos on the seed voices and placeholder audio, but no live voice call ever lands. REQ-UI-030 / REQ-FN-031/033.</li></ul>
+<hr>
+<h3 id="creator-video-studio">Creator · Video Studio<a class="anchor-link" href="#creator-video-studio">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/video</code></li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/Video/VideoStudio.razor</code></li><li><strong>Reached via:</strong> Studios → Video Studio. <strong>Log in as:</strong> user 2 (creator@trstudio.test)</li><li><strong>What this screen does:</strong> I2V/T2V mode tabs swap conditioning; duration/motion/aspect controls; Fast/High/Premium tier; timeline/editor with a trim/join/reframe/add-audio/split toolbar; post-processing + export. Generation rides the spine.</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-04)</li></ul>
+<p><strong>Screenshot</strong></p>
+<p><img src="../screenshots/TrStudio/video.png" alt="Video Studio — Creator" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["VideoStudio.razor"] --> C1["Generate (GenerateAsync -> TrySubmitJobAsync)"]
+  C1 --> S1["HttpClient POST ApiRoutes.Jobs + poll"]
+  S1 --> E1["SpineEndpoints.SubmitJobAsync (/api/v1/jobs)"]
+  E1 --> SV1["IJobOrchestrator.SubmitAsync"]
+  SV1 --> R1["JobRepository"]
+  R1 --> DB1[("GenerationJob / GeneratedAsset (0100_SpineTables.sql)")]
+  P --> C2["Timeline edit (EditAsync)"]
+  C2 --> S2["HttpClient POST ApiRoutes.Avatar + /edit"]
+  S2 --> X2["edit route is /api/v1/video/edit -> avatar/edit 404 (DEFECT)"]
+  P --> C3["Upscale (UpscaleAsync)"]
+  C3 --> S3["HttpClient POST ApiRoutes.Jobs (Upscale task)"]
+  S3 --> E1</pre>
+</div>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>Mode tabs</td><td><code>Tabs</code></td><td>I2V / T2V</td><td><code>objMode</code>; <code>IsImageToVideo</code> (<code>VideoStudio.razor:36-41,378</code>)</td></tr><tr><td>Frame uploads / prompt</td><td><code>FileUpload</code>/<code>Textarea</code></td><td>Conditioning</td><td><code>objFirstFrame</code>/<code>objLastFrame</code> or <code>objPrompt</code> (<code>VideoStudio.razor:46-75</code>)</td></tr><tr><td>Duration/Motion/Aspect</td><td><code>Slider</code>/<code>Select</code></td><td>Controls</td><td><code>objDuration</code>,<code>objMotion</code>,<code>objAspect</code></td></tr><tr><td>Quality tier</td><td><code>RadioGroup</code></td><td>Fast/High/Premium</td><td><code>objTiers</code> seed (<code>VideoStudio.razor:346-352</code>); routing alert computed</td></tr><tr><td>Generate</td><td><code>Button</code></td><td>Submit job</td><td><code>GenerateAsync</code> (<code>VideoStudio.razor:433-465</code>)</td></tr><tr><td>Timeline toolbar</td><td><code>Toolbar</code></td><td>Trim/Join/…</td><td><code>EditAsync</code> per tool (<code>VideoStudio.razor:525-543</code>) — see defect</td></tr><tr><td>Post-processing / export</td><td><code>Switch</code>/<code>Button</code></td><td>Interp/upscale/export</td><td><code>UpscaleAsync</code>/<code>ExportAsync</code> (<code>VideoStudio.razor:546-573</code>)</td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method (file)</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>Generate clip</td><td><code>VideoStudio.razor:468-521</code></td><td><code>PostAsJsonAsync(ApiRoutes.Jobs)</code> + poll (<code>VideoStudio.razor:492</code>)</td><td><code>SpineEndpoints.SubmitJobAsync</code> <code>POST /api/v1/jobs</code> (<code>SpineEndpoints.cs:44,65</code>)</td><td><code>IJobOrchestrator.SubmitAsync</code> → <code>JobRepository</code></td><td><code>"GenerationJob"</code>/<code>"GeneratedAsset"</code> (<code>0100_SpineTables.sql</code>)</td><td>renders (representative clip when offline)</td><td><code>Task=ImageToVideo</code>/<code>TextToVideo</code>; Blocked → safety toast</td></tr><tr><td>Upscale</td><td><code>VideoStudio.razor:546-565</code></td><td><code>PostAsJsonAsync(ApiRoutes.Jobs, Task=Upscale)</code></td><td><code>SpineEndpoints.SubmitJobAsync</code></td><td><code>IJobOrchestrator.SubmitAsync</code> → <code>JobRepository</code></td><td><code>"GenerationJob"</code></td><td>renders (toast)</td><td>Correct route</td></tr><tr><td>Timeline edit</td><td><code>VideoStudio.razor:525-543</code></td><td><code>PostAsJsonAsync($"{ApiRoutes.Avatar}/edit", …)</code> → <code>/api/v1/avatar/edit</code> (<code>VideoStudio.razor:535</code>)</td><td><strong>edit endpoint is <code>/api/v1/video/edit</code></strong> (<code>VideoEndpoints.cs:29</code>); Avatar group has no <code>/edit</code> (<code>AvatarEndpoints.cs:26-28</code>)</td><td><code>VideoEndpoints.EditAsync</code> never reached</td><td>—</td><td>renders-empty (suspected defect — wrong prefix, 404, swallowed)</td><td>Should be <code>ApiRoutes.Video</code>. <strong>DEFECT</strong></td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li><code>ModelId</code> chosen by tier/mode: <code>heygen-video</code>/<code>wan-video</code>/<code>svd-local</code> (<code>VideoStudio.razor:475</code>).</li><li><code>TimelineDuration</code> sums clip seconds (<code>VideoStudio.razor:385-392</code>); "Add audio" flips <code>objHasAudio</code>.</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li><strong>Timeline edit route mismatch</strong> — posts to <code>/api/v1/avatar/edit</code> instead of <code>/api/v1/video/edit</code>; swallowed, so the editor toast fires but no server edit runs. REQ-UI-040 / REQ-FN-053.</li><li>First-frame required for I2V is only a caption hint — not enforced before Generate (<code>VideoStudio.razor:56</code>).</li></ul>
+<hr>
+<h3 id="creator-prompt-studio">Creator · Prompt Studio<a class="anchor-link" href="#creator-prompt-studio">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/prompt-studio</code></li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/PromptStudio/PromptStudio.razor</code></li><li><strong>Reached via:</strong> Studios → Prompt Studio. <strong>Log in as:</strong> user 1 (owner) / user 2 (creator@trstudio.test)</li><li><strong>What this screen does:</strong> A chat screen that crafts generation prompts via a registry-configured <strong>text-chat LLM</strong> (Phase 10, F-PROMPT). Two-column split: a per-user <strong>session rail</strong> (new/resume/rename/delete) + a chat card with a registry-driven LLM picker, a reactive <strong>vision badge</strong> that gates image attach, a message thread, and per-reply prompt-use actions (<strong>Copy / Save to Library / Send to Studio</strong>). Chat runs through TechieRag <strong>direct chat-completion — no RAG/vector</strong> (ADR-013); degrades cleanly to a synthetic best-effort reply when no LLM is configured.</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-07) — §4b no-overlap @1280, single-column collapse @390 (<code>scrollWidth==390</code>, no overflow)</li></ul>
+<p><strong>Screenshot</strong></p>
+<p><img src="../screenshots/TrStudio/prompt-studio.png" alt="Prompt Studio — Creator" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["PromptStudio.razor"] --> C1["LLM picker (TryLoadAsync)"]
+  C1 --> S1["HttpClient GET /api/v1/models/text-chat"]
+  S1 --> E1["RegistryEndpoints.ListTextChatModelsAsync"]
+  E1 --> SV1["IModelCatalogService.ListTextChatAsync"]
+  SV1 --> R1["RegistryRepository.ListAsync (Task=TextChat, enabled)"]
+  R1 --> DB1[("RegistryModel (0200_ + 0201_RegistryTextChatColumns.sql)")]
+  P --> C2["Send message (SendMessageAsync)"]
+  C2 --> S2["HttpClient POST /api/v1/prompt-chat/sessions/{id}/messages"]
+  S2 --> E2["PromptChatEndpoints.PostMessageAsync"]
+  E2 --> SV2["IPromptChatService.CompleteAsync (vision gate + ILlmProvider.ChatAsync + token accrual)"]
+  SV2 --> R2["PromptChatRepository (owner-filtered)"]
+  R2 --> DB2[("PromptChatSession / PromptChatMessage (0620_PromptChat.sql)")]
+  SV2 --> T1["ILlmTokenTracker -> SpendChannel.LlmText (BRD-56)"]
+  P --> C3["Save to Library (SavePresetAsync)"]
+  C3 --> S3["HttpClient POST /api/v1/presets (Type=prompt)"]</pre>
+</div>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>New chat</td><td><code>Button</code></td><td>Start a session</td><td><code>StartNewChat</code> (<code>PromptStudio.razor:30,617</code>)</td></tr><tr><td>Session rail</td><td>list + rename/delete</td><td>Per-user sessions</td><td><code>objSessions</code> from <code>/api/v1/prompt-chat/sessions</code> (<code>PromptStudio.razor:44-56,516,592</code>)</td></tr><tr><td>LLM picker</td><td><code>Select</code></td><td>Choose text-chat model</td><td><code>objModels</code> from <code>/api/v1/models/text-chat</code> (<code>PromptStudio.razor:69-78,513,585</code>)</td></tr><tr><td>Vision badge</td><td><code>Badge</code></td><td>Reflects <code>VisionCapable</code> of picked row</td><td><code>VisionOn =&gt; SelectedModel?.VisionCapable</code> (<code>PromptStudio.razor:80-89,544-547</code>)</td></tr><tr><td>Attach image</td><td><code>FileUpload</code></td><td>Vision-only image attach</td><td><code>Disabled=@(!VisionOn)</code>, <code>FilesChanged=OnImageSelectedAsync</code> (<code>PromptStudio.razor:185-187</code>)</td></tr><tr><td>Composer + Send</td><td><code>Textarea</code>/<code>Button</code></td><td>Send a turn</td><td><code>objComposerText</code> → <code>SendMessageAsync</code> (<code>PromptStudio.razor:189-191,658</code>)</td></tr><tr><td>Prompt block + actions</td><td>copy/save/send-to-studio</td><td>Reply + prompt-use</td><td><code>CopyPromptAsync</code> / <code>OpenSaveToLibrary</code>→<code>SavePresetAsync</code> / <code>SendToStudio</code> (<code>PromptStudio.razor:122-150,853,876,912</code>)</td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>LLM picker</td><td><code>PromptStudio.razor:571-586</code></td><td><code>GetFromJsonAsync&lt;List&lt;RegistryModel&gt;&gt;("/api/v1/models/text-chat")</code></td><td><code>RegistryEndpoints.ListTextChatModelsAsync</code> <code>GET /api/v1/models/text-chat</code> (<code>RegistryEndpoints.cs:38,76</code>)</td><td><code>IModelCatalogService.ListTextChatAsync</code> → <code>RegistryRepository.ListAsync</code> (<code>ModelCatalogService.cs:55</code>)</td><td><code>"RegistryModel"</code> Task=TextChat (<code>0201_RegistryTextChatColumns.sql</code>)</td><td>✓ renders (2 dev-seed rows: gpt-4o-chat vision, llama-3-70b-chat text-only)</td><td><code>/api/v1/models</code> <strong>excludes</strong> these (FN-074)</td></tr><tr><td>Sessions</td><td><code>PromptStudio.razor:588-593</code></td><td><code>GET/POST/PUT/DELETE /api/v1/prompt-chat/sessions[/{id}]</code></td><td><code>PromptChatEndpoints</code> (<code>PromptChatEndpoints.cs:33-38</code>)</td><td><code>PromptChatRepository</code> (<code>PromptChatRepository.cs:16-52</code>)</td><td><code>"PromptChatSession"</code> (<code>0620_PromptChat.sql</code>), <code>"UserId"=@aUserId</code> on every stmt</td><td>✓ renders (owner-scoped; cross-user GET → 404)</td><td>BRD-81 owner filter server-side</td></tr><tr><td>Send message</td><td><code>PromptStudio.razor:658</code></td><td><code>POST /api/v1/prompt-chat/sessions/{id}/messages</code></td><td><code>PromptChatEndpoints.PostMessageAsync</code> (<code>PromptChatEndpoints.cs:38,172</code>)</td><td><code>IPromptChatService.CompleteAsync</code> (<code>PromptChatService.cs:79</code>) → <code>ILlmProvider.ChatAsync</code></td><td><code>"PromptChatMessage"</code> (<code>0620_PromptChat.sql</code>)</td><td>✓ renders (degrades to <code>[DEV SYNTHETIC]</code> when no LLM configured)</td><td>Vision gate: image on non-vision row → 400 (<code>PromptChatService.cs:95-96</code>); tokens → <code>SpendChannel.LlmText</code></td></tr><tr><td>Save to Library</td><td><code>PromptStudio.razor:876</code></td><td><code>POST /api/v1/presets</code> Type=<code>prompt</code></td><td><code>PresetEndpoints</code> (FN-066, Verified)</td><td><code>IPresetService</code> → <code>PresetRepository</code></td><td><code>"Preset"</code></td><td>✓ renders</td><td>Send-to-Studio routes <code>/image</code>|<code>/avatar</code>|<code>/video</code> with <code>?prompt=</code> (<code>PromptStudio.razor:912</code>)</td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li><code>VisionOn</code> is derived from the selected row's <code>VisionCapable</code>; on model change, <code>OnModelChangedAsync</code> clears any staged image when the new row is text-only (<code>PromptStudio.razor:604-615</code>).</li><li>The picker is fed from <strong>enabled <code>text-chat</code> registry rows only</strong> and is disjoint from the generation model catalog — a text-chat model submitted to <code>/api/v1/jobs</code> is rejected with HTTP 400 (<code>JobOrchestrator</code>, FN-074).</li><li>Post-auth-hydration load happens in <code>OnAfterRenderAsync</code> → <code>TryLoadAsync</code>; an API-down path renders a clean <code>Alert</code> (<code>PromptStudio.razor:95,556-571</code>).</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li><strong>RAG-005 real-LLM completion is config-gated</strong> — with no <code>TechieRag:Llm:Source</code>/no key on the picked row, the reply degrades to a <code>[DEV SYNTHETIC PROMPT-CHAT]</code> best-effort prompt + a "Degraded" toast (expected, like RAG-001/002). Supply an endpoint+key on a <code>/admin/registry</code> text-chat row to light up the live path.</li><li><strong>Native vision through TechieRag is blocked at 1.0.5 (TR-RAG-001)</strong> — <code>ChatMessage.Content</code> is a plain string with no image seam; the vision path uses a best-effort OpenAI-compatible multimodal HTTP POST, and non-OpenAI-compatible families degrade cleanly. Non-vision rows reject an attached image up front (BRD-90).</li></ul>
+<hr>
+<h3 id="creator-gallery-my-library">Creator · Gallery ("My Library")<a class="anchor-link" href="#creator-gallery-my-library">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/gallery</code></li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/Gallery/Gallery.razor</code></li><li><strong>Reached via:</strong> Workspace → Gallery. <strong>Log in as:</strong> user 2 (creator@trstudio.test)</li><li><strong>What this screen does:</strong> Per-user asset grid (server owner-filters), search + type/model/project filters, multi-select bulk export/compare/reproduce toolbar, detail Sheet with one-click reproduce.</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-04)</li></ul>
+<p><strong>Screenshot</strong></p>
+<p><img src="../screenshots/TrStudio/gallery.png" alt="Gallery — Creator" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["Gallery.razor"] --> C1["Asset grid (TryLoadAssetsAsync)"]
+  C1 --> S1["HttpClient GET ApiRoutes.Assets ?aPageSize=100"]
+  S1 --> E1["WorkspaceEndpoints.ListAssetsAsync (/api/v1/assets)"]
+  E1 --> R1["IAssetRepository.ListAsync (owner-filtered)"]
+  R1 --> DB1[("GeneratedAsset (0100_SpineTables.sql)")]
+  P --> C2["Reproduce (TryReproduceAsync)"]
+  C2 --> S2["HttpClient POST ApiRoutes.GenerationLog /{jobId}/reproduce"]
+  S2 --> E2["SpineEndpoints.ReproduceFromLogAsync"]
+  E2 --> SV2["IJobOrchestrator.ReproduceAsync"]</pre>
+</div>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>Filter bar</td><td><code>Input</code>/<code>Select</code>×3</td><td>Search + type/model/project</td><td><code>objSearch</code>,<code>objTypeFilter</code>,<code>ModelOptions</code>,<code>ProjectOptions</code> (<code>Gallery.razor:181-190</code>)</td></tr><tr><td>Asset cards</td><td><code>Card</code> grid</td><td>Owner assets</td><td><code>objAssets</code> from <code>/api/v1/assets</code> (<code>Gallery.razor:218-252</code>); <code>Filtered</code> (<code>Gallery.razor:190</code>)</td></tr><tr><td>Select + export bar</td><td><code>Button</code>s</td><td>Bulk actions</td><td><code>objSelected</code> set; count <code>Gallery.razor:56-74</code></td></tr><tr><td>Detail sheet</td><td><code>Sheet</code></td><td>Full params + reproduce</td><td><code>objDetail</code> (<code>Gallery.razor:128-157</code>)</td></tr><tr><td>Reproduce</td><td><code>Button</code></td><td>One-click reproduce</td><td><code>ReproduceOne</code> → <code>TryReproduceAsync</code> (<code>Gallery.razor:306-339</code>)</td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method (file)</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>Load assets</td><td><code>Gallery.razor:218-252</code></td><td><code>GetFromJsonAsync&lt;PagedResult&lt;AssetResponse&gt;&gt;($"{ApiRoutes.Assets}?aPageSize=100")</code> (<code>Gallery.razor:228</code>)</td><td><code>WorkspaceEndpoints.ListAssetsAsync</code> <code>GET /api/v1/assets</code> (<code>WorkspaceEndpoints.cs:31,47</code>)</td><td><code>IAssetRepository.ListAsync(filter, userId)</code> (<code>WorkspaceEndpoints.cs:74</code>)</td><td><code>SELECT … FROM "GeneratedAsset" … WHERE "UserId"=@aUserId</code> (<code>AssetRepository.cs:99</code>; <code>0100_SpineTables.sql</code>)</td><td>renders (empty w/o session; representative seed only on authed+zero rows)</td><td>Owner-scoped (BRD-81)</td></tr><tr><td>Reproduce</td><td><code>Gallery.razor:327-339</code></td><td><code>PostAsync($"{ApiRoutes.GenerationLog}/{jobId}/reproduce")</code> (<code>Gallery.razor:333</code>)</td><td><code>SpineEndpoints.ReproduceFromLogAsync</code> <code>POST /api/v1/generation-log/{id}/reproduce</code> (<code>SpineEndpoints.cs:52,214</code>)</td><td><code>IJobOrchestrator.ReproduceAsync</code> (<code>SpineEndpoints.cs:228</code>)</td><td><code>"GenerationLog"</code>/<code>"GenerationJob"</code> (<code>0100_SpineTables.sql</code>)</td><td>renders (toast; best-effort)</td><td>Passes <code>aAsset.JobId</code></td></tr><tr><td>Compare hand-off</td><td><code>Gallery.razor:316-322</code></td><td><code>NavigateTo("/compare")</code></td><td>—</td><td>—</td><td>—</td><td>renders</td><td>Selection carried via <code>/compare</code></td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li><code>Matches</code> applies type/model/project + free-text search over title/model/seed/provenance (<code>Gallery.razor:254-282</code>).</li><li><code>SeedRepresentative</code> illustrates the empty state only when authenticated with zero rows (<code>Gallery.razor:341-355</code>).</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li>Query param <code>aPageSize</code> matches the endpoint's parameter name (<code>WorkspaceEndpoints.cs:56</code>) — correct.</li><li>Bulk Export/Reproduce buttons on the export bar are toast-only (<code>Gallery.razor:313,324</code>); the single-asset Reproduce is the wired path. FN-067 bulk export endpoint exists (<code>Phase9Endpoints.cs:56</code>) but is not called from the bar.</li></ul>
+<hr>
+<h3 id="creator-projects">Creator · Projects<a class="anchor-link" href="#creator-projects">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/projects</code></li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/Projects/Projects.razor</code></li><li><strong>Reached via:</strong> Workspace → Projects (dev seam also lands here). <strong>Log in as:</strong> user 2 (creator@trstudio.test)</li><li><strong>What this screen does:</strong> Searchable project list + detail with a generation-history DataTable (All/Images/Video/Voice), per-row reproduce, and a run-parameters card.</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-04)</li></ul>
+<p><strong>Screenshot</strong></p>
+<p><img src="../screenshots/TrStudio/projects.png" alt="Projects — Creator" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["Projects.razor"] --> C1["Project list (TryLoadProjectsAsync)"]
+  C1 --> S1["HttpClient GET ApiRoutes.Projects"]
+  S1 --> E1["WorkspaceEndpoints.ListProjectsAsync (/api/v1/projects)"]
+  E1 --> R1["IProjectRepository.ListAsync (owner-filtered)"]
+  R1 --> DB1[("Project (0600_Projects.sql)")]
+  P --> C2["History (LoadHistoryAsync)"]
+  C2 --> S2["HttpClient GET /api/v1/projects/{id}/history"]
+  S2 --> E2["WorkspaceEndpoints.GetProjectHistoryAsync"]
+  E2 --> R2["IAssetRepository.ListAsync (ProjectId)"]
+  R2 --> DB2[("GeneratedAsset (0100_SpineTables.sql)")]
+  P --> C3["New project (CreateProjectAsync)"]
+  C3 --> S3["HttpClient POST ApiRoutes.Projects"]
+  S3 --> E3["WorkspaceEndpoints.CreateProjectAsync"]
+  E3 --> R1</pre>
+</div>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>Project list</td><td><code>Card</code>s</td><td>Owner projects</td><td><code>objProjects</code> (<code>Projects.razor:235-263</code>); <code>FilteredProjects</code> (<code>Projects.razor:188-191</code>)</td></tr><tr><td>New project</td><td><code>Button</code></td><td>Create</td><td><code>CreateProjectAsync</code> (<code>Projects.razor:312-340</code>)</td></tr><tr><td>History DataTable</td><td><code>DataTable</code></td><td>Per-project runs</td><td><code>objHistory</code> (<code>Projects.razor:279-310</code>); <code>FilteredHistory</code> by tab (<code>Projects.razor:194-200</code>)</td></tr><tr><td>Run parameters card</td><td><code>kv</code> rows</td><td>Full stored params</td><td><code>objRun</code> (selected history row) (<code>Projects.razor:136-166</code>)</td></tr><tr><td>Reproduce</td><td><code>Button</code></td><td>One-click reproduce</td><td><code>ReproduceRowAsync</code> (<code>Projects.razor:370-384</code>)</td></tr><tr><td>Archive</td><td><code>Button</code></td><td>Delete project</td><td><code>ArchiveProjectAsync</code> → <code>DELETE</code> (<code>Projects.razor:348-366</code>)</td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method (file)</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>List projects</td><td><code>Projects.razor:235-263</code></td><td><code>GetFromJsonAsync&lt;List&lt;ProjectResponse&gt;&gt;(ApiRoutes.Projects)</code></td><td><code>WorkspaceEndpoints.ListProjectsAsync</code> <code>GET /api/v1/projects</code> (<code>WorkspaceEndpoints.cs:35,102</code>)</td><td><code>IProjectRepository.ListAsync(userId)</code> (<code>WorkspaceEndpoints.cs:114</code>)</td><td><code>SELECT … FROM "Project" WHERE "UserId"=@aUserId</code> (<code>ProjectRepository.cs:24</code>; <code>0600_Projects.sql</code>)</td><td>renders (seed on authed+zero rows)</td><td>Owner-scoped</td></tr><tr><td>Project history</td><td><code>Projects.razor:279-310</code></td><td><code>GetFromJsonAsync&lt;PagedResult&lt;AssetResponse&gt;&gt;($"{ApiRoutes.Projects}/{id}/history")</code></td><td><code>WorkspaceEndpoints.GetProjectHistoryAsync</code> (<code>WorkspaceEndpoints.cs:40,223</code>)</td><td><code>IAssetRepository.ListAsync(ProjectId filter)</code> (<code>WorkspaceEndpoints.cs:248</code>)</td><td><code>SELECT … FROM "GeneratedAsset" …</code> (<code>AssetRepository.cs:99</code>)</td><td>renders (seed history when zero rows)</td><td>History = project's assets</td></tr><tr><td>Create project</td><td><code>Projects.razor:312-340</code></td><td><code>PostAsJsonAsync(ApiRoutes.Projects, ProjectCreateRequest)</code> (<code>Projects.razor:319</code>)</td><td><code>WorkspaceEndpoints.CreateProjectAsync</code> <code>POST /api/v1/projects</code> (<code>WorkspaceEndpoints.cs:36,118</code>)</td><td><code>IProjectRepository.InsertAsync</code> (<code>WorkspaceEndpoints.cs:147</code>)</td><td><code>INSERT … "Project"</code> (<code>ProjectRepository.cs:54</code>)</td><td>renders (optimistic add)</td><td>—</td></tr><tr><td>Archive</td><td><code>Projects.razor:348-366</code></td><td><code>DeleteAsync($"{ApiRoutes.Projects}/{id}")</code></td><td><code>WorkspaceEndpoints.ArchiveProjectAsync</code> <code>DELETE</code> (<code>WorkspaceEndpoints.cs:39,201</code>)</td><td><code>IProjectRepository.ArchiveAsync</code> (<code>WorkspaceEndpoints.cs:219</code>)</td><td><code>UPDATE "Project" … IsArchived</code> (<code>ProjectRepository.cs:102</code>)</td><td>renders (toast)</td><td>—</td></tr><tr><td>Reproduce row</td><td><code>Projects.razor:370-384</code></td><td><code>PostAsync($"{ApiRoutes.GenerationLog}/{jobId}/reproduce")</code></td><td><code>SpineEndpoints.ReproduceFromLogAsync</code> (<code>SpineEndpoints.cs:214</code>)</td><td><code>IJobOrchestrator.ReproduceAsync</code></td><td><code>"GenerationLog"</code></td><td>renders (toast; best-effort)</td><td>—</td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li>History tab filter maps Images/Video/Voice → asset <code>Kind</code> image/video/audio (<code>Projects.razor:194-200</code>).</li><li><code>Rename</code> is a toast placeholder only (<code>Projects.razor:342-346</code>).</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li><code>RenameProjectAsync</code> is a no-op toast ("Rename dialog would open here") — deliberate stub, <code>PUT /api/v1/projects/{id}</code> (<code>WorkspaceEndpoints.cs:38</code>) exists but is not called from Rename. REQ-UI-051.</li><li>Reproduce/CopyParamsJson use client-side stored rows; <code>CopyParamsJson</code> is toast-only (<code>Projects.razor:386-387</code>).</li></ul>
+<hr>
+<h3 id="creator-compare">Creator · Compare<a class="anchor-link" href="#creator-compare">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/compare</code></li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/Compare/Compare.razor</code></li><li><strong>Reached via:</strong> Gallery "Compare" action (breadcrumb Gallery / Compare), carrying <code>?assetIds=</code>. <strong>Log in as:</strong> user 2 (creator@trstudio.test)</li><li><strong>What this screen does:</strong> Side-by-side A/B(/C) panes across models/seeds/providers with a highlighted parameter diff. Owner-filtered server-side.</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-04)</li></ul>
+<p><strong>Screenshot</strong></p>
+<p><img src="../screenshots/TrStudio/compare.png" alt="Compare — Creator" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["Compare.razor"] --> C1["Load compare set (TryLoadCompareAsync)"]
+  C1 --> S1["HttpClient GET /api/v1/compare ?assetIds="]
+  S1 --> E1["Phase9Endpoints.CompareAssetsAsync (/api/v1/compare)"]
+  E1 --> R1["IAssetRepository.GetAsync (owner-filtered, per id)"]
+  R1 --> DB1[("GeneratedAsset (0100_SpineTables.sql)")]
+  E1 --> SV1["AssetComparer.Compare (param diff)"]</pre>
+</div>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>Slot toolbar A/B/C</td><td><code>Select</code>s/<code>Button</code></td><td>Pick assets</td><td><code>objSlots</code>, <code>AddThird</code> (<code>Compare.razor:47-67,292-303</code>)</td></tr><tr><td>View mode / sync</td><td><code>Tabs</code>/<code>Switch</code></td><td>Side/overlay + sync</td><td><code>objViewMode</code>,<code>objSyncPlayback</code></td></tr><tr><td>Result panes</td><td><code>Card</code>s</td><td>Per-asset detail</td><td><code>Panes</code> (<code>Compare.razor:183-187</code>)</td></tr><tr><td>Parameter diff table</td><td><code>DataTable</code></td><td>Highlight differences</td><td><code>DiffRows</code>/<code>VisibleDiffRows</code>/<code>DiffCount</code> (<code>Compare.razor:196-203</code>)</td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method (file)</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>Load compare set</td><td><code>Compare.razor:232-259</code></td><td><code>GetFromJsonAsync&lt;List&lt;CompareAsset&gt;&gt;($"{CompareRoute}?assetIds=…")</code> (<code>Compare.razor:242</code>)</td><td><code>Phase9Endpoints.CompareAssetsAsync</code> <code>GET /api/v1/compare</code> (<code>Phase9Endpoints.cs:42,80</code>)</td><td><code>IAssetRepository.GetAsync(id, userId)</code> per id + <code>AssetComparer.Compare</code> (<code>Phase9Endpoints.cs:102,114</code>)</td><td><code>SELECT … FROM "GeneratedAsset" WHERE "GeneratedAssetId"=@aAssetId AND "UserId"=@aUserId</code> (<code>AssetRepository.cs:64</code>)</td><td>renders (seed always fills when session absent/empty)</td><td>Needs ≥2 owned assets else 400; page falls to seed</td></tr><tr><td>Reproduce/Export panes</td><td><code>Compare.razor:305-309</code></td><td>none (toast)</td><td>—</td><td>—</td><td>—</td><td>renders-empty (toast-only)</td><td>Pane reproduce/export are demo toasts</td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li>Client <code>BuildDiff</code> compares model/provider·tier/resolution/cost/character/voice/script/seed/captions (<code>Compare.razor:312-323</code>); server also computes a diff via <code>AssetComparer</code> (<code>Phase9Endpoints.cs:114</code>).</li><li><code>DiffRow.Of</code> flags a row differing when the two values are unequal (<code>Compare.razor:374-375</code>).</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li>Endpoint lacks a declarative <code>.RequireAuthorization()</code> on the map (<code>Phase9Endpoints.cs:42</code>); auth is enforced in-handler via <code>ResolveUserId</code> → <code>Unauthorized</code> (<code>Phase9Endpoints.cs:86-90</code>), plus the app's fallback auth policy. Not a confirmed hole, but noted.</li><li>Pane Reproduce/Export are toast-only (<code>Compare.razor:305-309</code>).</li></ul>
+<hr>
+<h3 id="creator-library">Creator · Library<a class="anchor-link" href="#creator-library">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/library</code></li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/Library/Library.razor</code></li><li><strong>Reached via:</strong> Workspace → Library. <strong>Log in as:</strong> user 2 (creator@trstudio.test)</li><li><strong>What this screen does:</strong> Reusable prompts/scripts/style/voice presets — search + type tabs, card grid with "Use in {Studio}", and a New/Edit Sheet. Owner-filtered server-side.</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-04)</li></ul>
+<p><strong>Screenshot</strong></p>
+<p><img src="../screenshots/TrStudio/library.png" alt="Library — Creator" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["Library.razor"] --> C1["Preset grid (TryLoadPresetsAsync)"]
+  C1 --> S1["HttpClient GET /api/v1/presets"]
+  S1 --> E1["Phase9Endpoints.ListPresetsAsync (/api/v1/presets)"]
+  E1 --> R1["IPresetRepository.ListAsync (owner-filtered)"]
+  R1 --> DB1[("Preset (1000_Presets.sql)")]
+  P --> C2["Save preset (SavePresetAsync)"]
+  C2 --> S2["HttpClient POST/PUT /api/v1/presets"]
+  S2 --> E2["Phase9Endpoints.CreatePresetAsync / UpdatePresetAsync"]
+  E2 --> R1</pre>
+</div>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>Search + type tabs</td><td><code>Input</code>/<code>Tabs</code></td><td>Filter</td><td><code>objSearch</code>,<code>objTypeTab</code> → <code>Filtered</code> (<code>Library.razor:179,231-248</code>)</td></tr><tr><td>Preset cards</td><td><code>Card</code> grid</td><td>Presets</td><td><code>objPresets</code> (<code>Library.razor:207-229</code>)</td></tr><tr><td>Use in {Studio}</td><td><code>Button</code></td><td>Route with preset</td><td><code>UsePreset</code> → <code>/avatar</code>\</td></tr><tr><td>New/Edit sheet</td><td><code>Sheet</code> form</td><td>Create/edit</td><td><code>objForm*</code> fields; <code>SavePresetAsync</code> (<code>Library.razor:267-308</code>)</td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method (file)</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>Load presets</td><td><code>Library.razor:207-229</code></td><td><code>GetFromJsonAsync&lt;List&lt;PresetView&gt;&gt;("/api/v1/presets")</code> (<code>Library.razor:214</code>)</td><td><code>Phase9Endpoints.ListPresetsAsync</code> <code>GET /api/v1/presets</code> (<code>Phase9Endpoints.cs:46,119</code>)</td><td><code>IPresetRepository.ListAsync(userId, type)</code> (<code>Phase9Endpoints.cs:131</code>)</td><td><code>SELECT … FROM "Preset" WHERE "UserId"=@aUserId</code> (<code>PresetRepository.cs:31</code>; <code>1000_Presets.sql</code>)</td><td>renders (seed when no session/empty)</td><td>Owner-scoped</td></tr><tr><td>Save preset</td><td><code>Library.razor:267-308</code></td><td><code>PostAsJsonAsync</code>/<code>PutAsJsonAsync("/api/v1/presets"[/{id}])</code> (<code>Library.razor:284,288</code>)</td><td><code>Phase9Endpoints.CreatePresetAsync</code>/<code>UpdatePresetAsync</code> (<code>Phase9Endpoints.cs:47,49</code>)</td><td><code>IPresetRepository.InsertAsync</code>/<code>UpdateAsync</code> (<code>Phase9Endpoints.cs:172,221</code>)</td><td><code>INSERT</code>/<code>UPDATE "Preset"</code> (<code>PresetRepository.cs:61,96</code>)</td><td>renders (optimistic upsert)</td><td>—</td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li><code>StudioName</code>/<code>StudioRoute</code> map preset type → target studio: script→Avatar, voice→Voice, else Image (<code>Library.razor:343-356</code>).</li><li>Note the client <code>PresetView</code> type values are <code>prompt/script/style/voice</code>, while the server validates <code>prompt/script/style-preset/voice-preset</code> (<code>Phase9Endpoints.cs:26</code>) — see gotcha.</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li><strong>Preset-type vocabulary mismatch:</strong> the Library form/tabs use <code>style</code>/<code>voice</code> but the API's <code>PresetTypes</code> requires <code>style-preset</code>/<code>voice-preset</code> (<code>Phase9Endpoints.cs:26,152-155</code>). A create/update of a style or voice preset would 400 server-side; swallowed by the client's try/catch so the card still saves locally. <code>prompt</code>/<code>script</code> match and persist. Confirmed contract mismatch. REQ-UI-053 / FN-066.</li></ul>
+<hr>
+<h3 id="creator-account-spend">Creator · Account &amp; spend<a class="anchor-link" href="#creator-account-spend">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/account</code></li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/Account/Account.razor</code></li><li><strong>Reached via:</strong> Workspace → Account. <strong>Log in as:</strong> user 2 (creator@trstudio.test)</li><li><strong>What this screen does:</strong> Read-only AppManager profile + license/tier, three spend KPI cards vs monthly cap, and a recent-jobs DataTable. Owner-scoped server-side.</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-04)</li></ul>
+<p><strong>Screenshot</strong></p>
+<p><img src="../screenshots/TrStudio/account.png" alt="Account &amp; spend — Creator" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["Account.razor"] --> C1["Load snapshot (TryLoadAccountAsync)"]
+  C1 --> S1["HttpClient GET /api/v1/account"]
+  S1 --> E1["Phase9Endpoints.GetAccountAsync (/api/v1/account)"]
+  E1 --> SV1["IAccountService.GetSummaryAsync (userId, bearer)"]
+  SV1 --> R1["SpendRepository + AppManager LicenseSvc"]
+  R1 --> DB1[("SpendLedger (0700_SpendLedger.sql)")]
+  SV1 --> EX1[("AppManager LicenseSvc / profile (external)")]</pre>
+</div>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>Profile card</td><td><code>Card</code></td><td>AppManager identity</td><td><code>objProfile</code> (<code>Account.razor:311-334</code>)</td></tr><tr><td>License/tier card</td><td><code>Card</code></td><td>License + upgrade CTA</td><td><code>objLicense</code>; degrades to "unavailable" (<code>Account.razor:336-355</code>)</td></tr><tr><td>Spend KPI cards ×3</td><td><code>Card</code>+<code>Progress</code></td><td>RunPod/Closed-API/total-vs-cap</td><td><code>objSpend</code>; <code>Pct</code>/<code>PctValue</code> (<code>Account.razor:288-292</code>)</td></tr><tr><td>Cap alert</td><td><code>Alert</code></td><td>Near/over cap</td><td><code>objSpend.NearCap</code>/<code>OverCap</code> (<code>Account.razor:147-164</code>)</td></tr><tr><td>Recent jobs table</td><td><code>DataTable</code></td><td>Billed jobs</td><td><code>objJobs</code>; <code>FilteredJobs</code> by tab (<code>Account.razor:214-220</code>)</td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method (file)</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>Load account snapshot</td><td><code>Account.razor:249-277</code></td><td><code>GetFromJsonAsync&lt;AccountResponse&gt;("/api/v1/account")</code> (<code>Account.razor:256</code>)</td><td><code>Phase9Endpoints.GetAccountAsync</code> <code>GET /api/v1/account</code> (<code>Phase9Endpoints.cs:60,306</code>)</td><td><code>IAccountService.GetSummaryAsync(userId, bearer)</code> (<code>Phase9Endpoints.cs:319</code>)</td><td>Spend from <code>"SpendLedger"</code> (<code>0700_SpendLedger.sql</code>); license/profile from external AppManager LicenseSvc</td><td>renders (seed when no session/empty jobs)</td><td>DTOs are intentionally loose — unmatched shapes → seed (<code>Account.razor:390-397</code>)</td></tr><tr><td>Manage/Upgrade</td><td><code>Account.razor:279-283</code></td><td>none (toast)</td><td>—</td><td>— (AppManager is the system of record)</td><td>—</td><td>renders-empty (toast-only)</td><td>Identity/licensing live in AppManager</td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li><code>Pct</code>/<code>PctValue</code> compute percentage-of-cap for the progress bars (<code>Account.razor:288-292</code>).</li><li>GPU/API budgets derived as 75% of the monthly cap in <code>SpendView.FromResponse</code> (<code>Account.razor:373-374</code>).</li><li>License unavailable → warning card with limited-features message (<code>Account.razor:59-67,344-349</code>).</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li>Manage-in-AppManager and Upgrade are toast-only by design — AppManager is the external system of record for identity/licensing. Not a defect.</li><li>Account endpoint has no declarative <code>.RequireAuthorization()</code> on the map (<code>Phase9Endpoints.cs:60</code>); enforced in-handler + fallback policy.</li></ul>
+<hr>
+<h2 id="defects-found">DEFECTS FOUND<a class="anchor-link" href="#defects-found">#</a></h2>
+<ol><li><strong>Voice Studio — preset-voice list route mismatch.</strong> Client calls <code>GET /api/v1/voice/presets</code>; server route is <code>/api/v1/voice/preset-voices</code>. Always 404 (swallowed) → the studio only ever shows seed voices. <code>VoiceStudio.razor:360</code> vs <code>VoiceEndpoints.cs:27</code>. Owning REQ: <strong>REQ-UI-030 / REQ-FN-031</strong>. (Secondary: returned DTO shape also differs — <code>Id/Name</code> vs <code>VoiceId/DisplayName</code>.)</li><li><strong>Voice Studio — synthesize route mismatch.</strong> Client posts <code>POST /api/v1/voice</code> (group root); synthesize endpoint is <code>/api/v1/voice/synthesize</code>. Always 404 (swallowed) → no live TTS. <code>VoiceStudio.razor:452</code> vs <code>VoiceEndpoints.cs:28</code>. Owning REQ: <strong>REQ-UI-030 / REQ-FN-033</strong>.</li><li><strong>Avatar Studio — voice-preview route mismatch.</strong> <code>GenerateVoiceAsync</code> posts <code>POST /api/v1/voice</code> (root); no route there (synth is <code>/synthesize</code>). Always 404 (swallowed). <code>AvatarStudio.razor:425</code> vs <code>VoiceEndpoints.cs:28</code>. Owning REQ: <strong>REQ-UI-010 / REQ-FN-031</strong>.</li><li><strong>Avatar Studio — script-assist route does not exist.</strong> <code>ScriptAssistAsync</code> posts <code>POST /api/v1/rag/script-assist</code>; RAG only maps <code>script</code>/<code>captions</code>/<code>usage</code>. Always 404 (swallowed). <code>AvatarStudio.razor:441</code> vs <code>RagEndpoints.cs:25-27</code>. Owning REQ: <strong>REQ-UI-010 / RAG-001</strong>.</li><li><strong>Video Studio — timeline-edit route mismatch (wrong prefix).</strong> <code>EditAsync</code> posts <code>POST /api/v1/avatar/edit</code>; the edit endpoint is <code>/api/v1/video/edit</code> (Avatar group has no <code>/edit</code>). Always 404 (swallowed) → toolbar edits never reach the server. <code>VideoStudio.razor:535</code> vs <code>VideoEndpoints.cs:29</code> / <code>AvatarEndpoints.cs:26-28</code>. Owning REQ: <strong>REQ-UI-040 / REQ-FN-053</strong>.</li><li><strong>Library — preset-type vocabulary mismatch.</strong> Form/tabs emit <code>style</code>/<code>voice</code>; API <code>PresetTypes</code> requires <code>style-preset</code>/<code>voice-preset</code>, so creating/updating a style or voice preset 400s server-side (swallowed; card still saves locally). <code>prompt</code>/<code>script</code> are unaffected. <code>Library.razor:126-127,343-356</code> vs <code>Phase9Endpoints.cs:26,152-155</code>. Owning REQ: <strong>REQ-UI-053 / FN-066</strong>.</li></ol>
+<p>Non-defect notes (not logged): Character-bible Sheet renders static copy and never calls <code>GET /api/v1/characters/{id}/bible</code> (feature not wired, not a broken route); Projects "Rename", Compare/Gallery-bar bulk actions, and Account Manage/Upgrade are intentional toast stubs; Compare/Presets/Account/Assets/Projects/Jobs endpoints rely on in-handler <code>ResolveUserId</code> + the app's fallback auth policy rather than a declarative <code>.RequireAuthorization()</code> — auth is still enforced.</p>
+  </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+<script>
+// Light/dark toggle. The initial theme was already applied flash-free by the
+// <head> script (saved choice, else time-of-day). Clicking flips it, saves the
+// choice, and reloads so Mermaid re-renders in the matching theme.
+(function(){
+  var btn = document.getElementById('themeToggle');
+  if(!btn) return;
+  var relabel = function(){
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    btn.textContent = dark ? '☀ Light' : '☾ Dark';
+  };
+  relabel();
+  btn.addEventListener('click', function(){
+    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    try{ localStorage.setItem('tf-theme', next); }catch(e){}
+    location.reload();
+  });
+})();
+
+// Copy buttons on every code <pre> — but NEVER on a `pre.mermaid`:
+// mermaid reads the <pre>'s textContent as the diagram source, so a button
+// appended here glues "copy" onto the last line and breaks the parse
+// (flowcharts → "Syntax error"; sequence diagrams silently absorb it).
+// Mermaid blocks get copy/export from their own .diagram toolbar instead.
+document.querySelectorAll('pre:not(.mermaid)').forEach(pre => {
+  const btn = document.createElement('button');
+  btn.className = 'copy';
+  btn.textContent = 'copy';
+  btn.addEventListener('click', () => {
+    const text = pre.querySelector('code') ? pre.querySelector('code').innerText : pre.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'copied';
+      setTimeout(() => { btn.textContent = 'copy'; }, 1200);
+    });
+  });
+  pre.appendChild(btn);
+});
+
+// Mermaid init — theme follows the resolved light/dark theme
+if (window.mermaid) {
+  var mermaidTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default';
+  mermaid.initialize({ startOnLoad: true, theme: mermaidTheme, securityLevel: 'loose' });
+}
+
+// Mermaid toolbar wiring — run after mermaid renders
+function wireMermaidToolbars() {
+  document.querySelectorAll('.diagram').forEach(dia => {
+    if (dia.dataset.wired) return;
+    const merm = dia.querySelector('.mermaid');
+    const svg = merm && merm.querySelector('svg');
+    if (!svg) return;
+    dia.dataset.wired = '1';
+    let scale = 1;
+    const label = dia.querySelector('.zlabel');
+    const apply = () => {
+      svg.style.transform = `scale(${scale})`;
+      svg.style.transformOrigin = 'top left';
+      if (label) label.textContent = Math.round(scale * 100) + '%';
+    };
+    const setScale = (s) => { scale = Math.max(0.25, Math.min(4, s)); apply(); };
+    dia.querySelector('[data-zin]').onclick = () => setScale(scale * 1.2);
+    dia.querySelector('[data-zout]').onclick = () => setScale(scale / 1.2);
+    dia.querySelector('[data-fit]').onclick = () => {
+      svg.style.transform = '';
+      svg.removeAttribute('width');
+      svg.style.maxWidth = '100%';
+      svg.style.height = 'auto';
+      scale = 1;
+      if (label) label.textContent = 'Fit';
+    };
+    dia.querySelector('[data-one]').onclick = () => {
+      svg.style.transform = '';
+      svg.style.maxWidth = 'none';
+      svg.style.width = '';
+      svg.style.height = '';
+      scale = 1;
+      if (label) label.textContent = '100%';
+    };
+    dia.querySelector('[data-fs]').onclick = () => {
+      dia.classList.toggle('fs');
+      if (dia.classList.contains('fs')) {
+        document.addEventListener('keydown', escFs);
+      } else {
+        document.removeEventListener('keydown', escFs);
+      }
+    };
+    function escFs(e) { if (e.key === 'Escape') { dia.classList.remove('fs'); document.removeEventListener('keydown', escFs); } }
+    dia.querySelector('[data-pop]').onclick = () => openInNewTab(svg);
+    // Ctrl+wheel zoom
+    merm.addEventListener('wheel', (e) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      setScale(scale * (e.deltaY < 0 ? 1.1 : 1/1.1));
+    }, { passive: false });
+  });
+}
+
+function openInNewTab(svg) {
+  const svgSource = new XMLSerializer().serializeToString(svg);
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Diagram</title>
+<style>
+  html,body{margin:0;height:100%;background:#0f1115;color:#e6e8ee;font-family:system-ui,sans-serif}
+  .bar{position:fixed;top:0;left:0;right:0;padding:8px 12px;background:#161a22;border-bottom:1px solid #2a3142;display:flex;gap:8px;z-index:10}
+  .bar button{background:#1c2230;color:#9aa3b2;border:1px solid #2a3142;border-radius:6px;padding:5px 12px;font-size:13px;cursor:pointer}
+  .bar button:hover{color:#7cc4ff;border-color:#7cc4ff}
+  .bar .hint{margin-left:auto;color:#9aa3b2;font-size:11.5px;align-self:center}
+  #stage{position:absolute;top:42px;bottom:0;left:0;right:0;overflow:hidden}
+  #stage svg{width:100%;height:100%}
+</style>
+</head><body>
+<div class="bar">
+  <button onclick="zpz.zoomIn()">+</button>
+  <button onclick="zpz.zoomOut()">−</button>
+  <button onclick="zpz.fit();zpz.center()">Fit</button>
+  <button onclick="zpz.resetZoom();zpz.center()">1:1</button>
+  <button onclick="window.print()">Print</button>
+  <button onclick="dlPng()">PNG</button>
+  <button onclick="dlSvg()">SVG</button>
+  <span class="hint">Drag to pan · Ctrl+wheel to zoom · + / − keys</span>
+</div>
+<div id="stage">${svgSource}</div>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"><\/script>
+<script>
+  const el = document.querySelector('#stage svg');
+  const zpz = svgPanZoom(el, { zoomScaleSensitivity: .3, minZoom: .2, maxZoom: 10, controlIconsEnabled: false, fit: true, center: true });
+  document.addEventListener('keydown', e => {
+    if (e.key === '+' || e.key === '=') zpz.zoomIn();
+    if (e.key === '-' || e.key === '_') zpz.zoomOut();
+    if (e.key === '0') { zpz.resetZoom(); zpz.center(); }
+  });
+  function dlSvg() {
+    const blob = new Blob([new XMLSerializer().serializeToString(el)], { type: 'image/svg+xml' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'diagram.svg'; a.click();
+  }
+  function dlPng() {
+    const src = new XMLSerializer().serializeToString(el);
+    const img = new Image();
+    const url = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(src)));
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = el.clientWidth * 2; c.height = el.clientHeight * 2;
+      const ctx = c.getContext('2d'); ctx.scale(2,2); ctx.drawImage(img, 0, 0);
+      c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'diagram.png'; a.click(); });
+    };
+    img.src = url;
+  }
+<\/script>
+</body></html>`;
+  const w = window.open();
+  w.document.write(html);
+  w.document.close();
+}
+
+// Run wiring after mermaid finishes (it renders async)
+if (window.mermaid) {
+  setTimeout(wireMermaidToolbars, 400);
+  setTimeout(wireMermaidToolbars, 1200);  // safety re-run for slow renders
+}
+</script>
+</body>
+</html>

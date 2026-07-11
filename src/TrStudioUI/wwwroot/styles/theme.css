@@ -1,0 +1,120 @@
+/* TrStudio brand theme (REQ-UI-005) — CANONICAL OKLCH tokens for BOTH apps.
+   Single source of truth per docs/TrStudio-UIDesign.md §Branding guide.
+   Load order (both hosts): _content/TrStudioUI/styles/theme.css
+     -> host styles/theme.css (per-host token overrides, normally empty)
+     -> _content/TrBlazeUI.Components/trblazeui.css
+     -> _content/TrStudioUI/styles/base.css
+     -> host styles/base.css (per-host overrides, normally empty).
+   Dark is the DEFAULT: <html class="dark"> is rendered by both hosts and
+   _content/TrStudioUI/js/theme.js re-applies the persisted choice pre-paint. */
+@layer base {
+  :root {
+    /* Brand primitives (violet-600 -> fuchsia-600 in light) */
+    --brand: oklch(0.5413 0.2466 293.01);      /* #7c3aed */
+    --brand-2: oklch(0.5915 0.2569 322.90);    /* #c026d3 */
+    --brand-soft: oklch(0.9522 0.0245 298.61); /* #f1ecfe */
+    --brand-ink: oklch(0.4320 0.2106 292.76);  /* #5b21b6 */
+    --brand-bd: oklch(0.8817 0.0601 298.99);   /* #ddd0fb */
+    --glow: 0 4px 14px rgba(124, 58, 237, 0.16);
+    --shadow: 0 1px 2px rgba(23, 23, 31, 0.05), 0 1px 3px rgba(23, 23, 31, 0.07);
+    --wash: radial-gradient(1100px 480px at 82% -12%, rgba(124, 58, 237, 0.05), transparent);
+
+    /* TrBlazeUI semantic tokens */
+    --background: oklch(0.9743 0.0053 286.30); /* #f6f6fa */
+    --foreground: oklch(0.2084 0.0158 284.95); /* #17171f */
+    --card: oklch(1 0 0);                      /* #ffffff */
+    --card-foreground: oklch(0.2084 0.0158 284.95);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.2084 0.0158 284.95);
+    --primary: var(--brand);                   /* solid controls resolve to brand */
+    --primary-foreground: oklch(1 0 0);
+    --secondary: var(--brand-soft);
+    --secondary-foreground: var(--brand-ink);
+    --muted: oklch(0.9571 0.0093 286.22);      /* #f0f0f7 (neutral hover/chip) */
+    --muted-foreground: oklch(0.5488 0.0309 285.34); /* #6f6f83 */
+    --accent: var(--brand-soft);               /* selected / active state */
+    --accent-foreground: var(--brand-ink);
+    --destructive: oklch(0.5771 0.2152 27.33); /* #dc2626 */
+    --destructive-foreground: oklch(1 0 0);
+    --border: oklch(0.9248 0.0135 286.13);     /* #e5e5ef */
+    --input: oklch(0.9248 0.0135 286.13);
+    --ring: var(--brand);                      /* focus ring is brand */
+    --radius: 0.75rem;                         /* 12px per Branding guide */
+
+    /* Sidebar */
+    --sidebar: oklch(0.9832 0.0053 286.30);    /* #f9f9fd */
+    --sidebar-foreground: oklch(0.2084 0.0158 284.95);
+    --sidebar-primary: var(--brand);
+    --sidebar-primary-foreground: oklch(1 0 0);
+    --sidebar-accent: oklch(0.9571 0.0093 286.22); /* neutral hover */
+    --sidebar-accent-foreground: oklch(0.2084 0.0158 284.95);
+    --sidebar-border: oklch(0.9248 0.0135 286.13);
+
+    /* Alert variants — info is kept ON-BRAND (overrides TrBlazeUI's blue) */
+    --alert-success: oklch(0.6271 0.1699 149.21); /* #16a34a */
+    --alert-info: var(--brand);
+    --alert-warning: oklch(0.6658 0.1574 58.32);  /* #d97706 */
+    --alert-danger: oklch(0.5771 0.2152 27.33);   /* #dc2626 */
+
+    /* Chart colors (brand-led ramp) */
+    --chart-1: var(--brand);
+    --chart-2: var(--brand-2);
+    --chart-3: oklch(0.6271 0.1699 149.21);
+    --chart-4: oklch(0.6658 0.1574 58.32);
+    --chart-5: oklch(0.5771 0.2152 27.33);
+  }
+
+  .dark {
+    /* Brand primitives (violet-400 -> fuchsia-400 in dark) */
+    --brand: oklch(0.6056 0.2189 292.72);      /* #8b5cf6 */
+    --brand-2: oklch(0.6668 0.2591 322.15);    /* #d946ef */
+    --brand-soft: oklch(0.2704 0.0959 286.44); /* #251b52 */
+    --brand-ink: oklch(0.8112 0.1013 293.57);  /* #c4b5fd */
+    --brand-bd: oklch(0.4373 0.1669 284.23);   /* #4c3ba8 */
+    --glow: 0 4px 22px rgba(139, 92, 246, 0.38);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+    --wash: radial-gradient(1100px 480px at 82% -12%, rgba(139, 92, 246, 0.10), transparent);
+
+    /* TrBlazeUI semantic tokens */
+    --background: oklch(0.1533 0.0149 284.51); /* #0b0b12 */
+    --foreground: oklch(0.9629 0.0080 286.25); /* #f2f2f8 */
+    --card: oklch(0.1957 0.0180 284.61);       /* #14141d */
+    --card-foreground: oklch(0.9629 0.0080 286.25);
+    --popover: oklch(0.1957 0.0180 284.61);
+    --popover-foreground: oklch(0.9629 0.0080 286.25);
+    --primary: var(--brand);
+    --primary-foreground: oklch(1 0 0);
+    --secondary: var(--brand-soft);
+    --secondary-foreground: var(--brand-ink);
+    --muted: oklch(0.2322 0.0230 284.46);      /* #1c1c28 */
+    --muted-foreground: oklch(0.7022 0.0275 285.67); /* #9d9db0 */
+    --accent: var(--brand-soft);
+    --accent-foreground: var(--brand-ink);
+    --destructive: oklch(0.7106 0.1661 22.22); /* #f87171 */
+    --destructive-foreground: oklch(0.1533 0.0149 284.51);
+    --border: oklch(0.2760 0.0294 284.31);     /* #262636 */
+    --input: oklch(0.2760 0.0294 284.31);
+    --ring: var(--brand);
+
+    /* Sidebar */
+    --sidebar: oklch(0.1679 0.0166 284.46);    /* #0e0e16 */
+    --sidebar-foreground: oklch(0.9629 0.0080 286.25);
+    --sidebar-primary: var(--brand);
+    --sidebar-primary-foreground: oklch(1 0 0);
+    --sidebar-accent: oklch(0.2322 0.0230 284.46); /* neutral hover */
+    --sidebar-accent-foreground: oklch(0.9629 0.0080 286.25);
+    --sidebar-border: oklch(0.2760 0.0294 284.31);
+
+    /* Alert variants */
+    --alert-success: oklch(0.8003 0.1821 151.71); /* #4ade80 */
+    --alert-info: var(--brand);
+    --alert-warning: oklch(0.8369 0.1644 84.43);  /* #fbbf24 */
+    --alert-danger: oklch(0.7106 0.1661 22.22);   /* #f87171 */
+
+    --chart-1: var(--brand);
+    --chart-2: var(--brand-2);
+    --chart-3: oklch(0.8003 0.1821 151.71);
+    --chart-4: oklch(0.8369 0.1644 84.43);
+    --chart-5: oklch(0.7106 0.1661 22.22);
+  }
+}

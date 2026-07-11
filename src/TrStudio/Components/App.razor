@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <ResourcePreloader />
+    @* Canonical brand tokens live in the TrStudioUI RCL (REQ-UI-005); the host theme.css
+       is a per-app override hook only. Theme CSS MUST precede trblazeui.css. *@
+    <link rel="stylesheet" href="_content/TrStudioUI/styles/theme.css" />
+    <link rel="stylesheet" href="styles/theme.css" />
+    <link rel="stylesheet" href="_content/TrBlazeUI.Components/trblazeui.css" />
+    <link rel="stylesheet" href="_content/TrStudioUI/styles/base.css" />
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="@Assets["TrStudio.styles.css"]" />
+    @* Synchronous on purpose: applies the persisted theme before first paint (dark default). *@
+    <script src="_content/TrStudioUI/js/theme.js"></script>
+    <ImportMap />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <HeadOutlet @rendermode="InteractiveServer" />
+</head>
+
+<body>
+    <Routes @rendermode="InteractiveServer" />
+    <ReconnectModal />
+    <script src="@Assets["_framework/blazor.web.js"]"></script>
+</body>
+
+</html>

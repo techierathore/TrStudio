@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TrStudio — Account &amp; spend</title>
+<style>
+:root{
+  --bg:#f6f6fa;--card:#ffffff;--border:#e5e5ef;--ink:#17171f;--muted:#6f6f83;
+  --primary:#17171f;--primary-fg:#fafafa;
+  --brand:#7c3aed;--brand-2:#c026d3;--brand-soft:#f1ecfe;--brand-bd:#ddd0fb;--brand-ink:#5b21b6;
+  --ok:#16a34a;--ok-bg:#f0fdf4;--ok-ink:#166534;--ok-bd:#bbf7d0;
+  --warn:#d97706;--warn-bg:#fffbeb;--warn-ink:#92400e;--warn-bd:#fde68a;
+  --danger:#dc2626;--danger-bg:#fef2f2;--danger-ink:#991b1b;--danger-bd:#fecaca;
+  --hover:#f0f0f7;--active:#e5e5ef;--chip:#f0f0f7;--sel:#f1ecfe;
+  --skel-a:#f0f0f7;--skel-b:#e5e5ef;--thumb-a:#e5e5ef;--thumb-b:#d6d6e4;
+  --sidebar:#f9f9fd;--shadow:0 1px 2px rgba(23,23,31,.05),0 1px 3px rgba(23,23,31,.07);
+  --glow:0 4px 14px rgba(124,58,237,.16);
+  --wash:radial-gradient(1100px 480px at 82% -12%,rgba(124,58,237,.05),transparent);
+  --radius:12px;
+  --sans:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+html.dark{
+  --bg:#0b0b12;--card:#14141d;--border:#262636;--ink:#f2f2f8;--muted:#9d9db0;
+  --primary:#f2f2f8;--primary-fg:#14141d;
+  --brand:#8b5cf6;--brand-2:#d946ef;--brand-soft:#251b52;--brand-bd:#4c3ba8;--brand-ink:#c4b5fd;
+  --ok:#4ade80;--ok-bg:#0a2e1a;--ok-ink:#86efac;--ok-bd:#1d6a3c;
+  --warn:#fbbf24;--warn-bg:#33210a;--warn-ink:#fcd34d;--warn-bd:#92400e;
+  --danger:#f87171;--danger-bg:#391111;--danger-ink:#fca5a5;--danger-bd:#7f1d1d;
+  --hover:#1c1c28;--active:#262636;--chip:#1c1c28;--sel:#251b52;
+  --skel-a:#1c1c28;--skel-b:#262636;--thumb-a:#20202e;--thumb-b:#2b2b3d;
+  --sidebar:#0e0e16;--shadow:0 1px 2px rgba(0,0,0,.45);
+  --glow:0 4px 22px rgba(139,92,246,.38);
+  --wash:radial-gradient(1100px 480px at 82% -12%,rgba(139,92,246,.10),transparent);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);background:var(--wash),var(--bg);color:var(--ink);font-size:14px;-webkit-font-smoothing:antialiased}
+.app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+.side{background:var(--sidebar);border-right:1px solid var(--border);padding:14px;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:9px;font-weight:650;padding:8px;margin-bottom:12px;font-size:14.5px}
+.logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;flex:none}
+.nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:13.5px;margin:1px 0}
+.nav a svg{color:var(--muted);flex:none}
+.nav a.active{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;font-weight:600}
+.nav a.active svg{color:#fff}
+.nav a:hover:not(.active){background:var(--hover)}
+.navgroup{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:14px 10px 4px;font-weight:600}
+.sidefoot{margin-top:auto;padding-top:14px;border-top:1px solid var(--border)}
+.sidefoot a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--muted);text-decoration:none;font-size:12.5px}
+.sidefoot a:hover{background:var(--hover);color:var(--ink)}
+.main{display:flex;flex-direction:column;min-width:0}
+.top{height:56px;border-bottom:1px solid var(--border);background:var(--card);display:flex;align-items:center;gap:12px;padding:0 18px;position:sticky;top:0;z-index:40}
+.crumb{color:var(--muted);font-size:13px}.crumb.here{color:var(--ink);font-weight:550}.spacer{flex:1}
+.iconbtn{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+.iconbtn:hover{background:var(--hover)}
+.userchip{width:32px;height:32px;border-radius:999px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:650;flex:none}
+.content{padding:24px;overflow:auto}
+.h{font-size:22px;font-weight:700;margin:0 0 3px;letter-spacing:-.3px}.sub{color:var(--muted);margin:0 0 18px}
+.grid{display:grid;gap:14px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 8px;font-size:14px;font-weight:625}
+.btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;box-shadow:var(--glow);border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:550;cursor:pointer;font-family:inherit}
+.btn:hover{opacity:.92}
+.btn.brand{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;box-shadow:var(--glow)}
+.btn.outline{background:transparent;color:var(--ink);border:1px solid var(--border)}.btn.outline:hover{background:var(--hover);opacity:1}
+.btn.ghost{background:transparent;color:var(--ink)}.btn.ghost:hover{background:var(--hover);opacity:1}
+.btn.danger{background:var(--danger);color:#fff}
+.badge{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:999px;padding:2px 10px;font-size:11.5px;background:var(--chip);font-weight:500}
+.badge.brand{background:var(--brand-soft);color:var(--brand-ink);border-color:var(--brand-bd)}
+.badge.primary{background:var(--primary);color:var(--primary-fg);border-color:var(--primary)}
+.badge.ok{background:var(--ok-bg);color:var(--ok-ink);border-color:var(--ok-bd)}
+.badge.warn{background:var(--warn-bg);color:var(--warn-ink);border-color:var(--warn-bd)}
+.badge.danger{background:var(--danger-bg);color:var(--danger-ink);border-color:var(--danger-bd)}
+.dot{width:7px;height:7px;border-radius:999px;background:var(--muted);flex:none}
+.dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}.dot.danger{background:var(--danger)}.dot.brand{background:var(--brand)}
+.input,.select,textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--card);color:var(--ink);font-family:inherit}
+.input::placeholder,textarea::placeholder{color:var(--muted)}
+.input:focus,.select:focus,textarea:focus{outline:2px solid var(--brand);outline-offset:-1px}
+.label{font-size:12.5px;font-weight:600;margin-bottom:4px;display:block}.muted{color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{border-bottom:1px solid var(--border);padding:9px 10px;text-align:left}
+th{color:var(--muted);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px}
+tbody tr:hover td{background:var(--hover)}
+tr.sel td{background:var(--sel)}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:9px;overflow:hidden;background:var(--card)}
+.seg button{border:none;background:transparent;color:var(--ink);padding:8px 14px;cursor:pointer;font-size:13px;font-family:inherit;border-right:1px solid var(--border)}
+.seg button:last-child{border-right:none}
+.seg button.active{background:var(--brand-soft);color:var(--brand-ink);font-weight:600}
+.prog{height:8px;background:var(--skel-a);border-radius:999px;overflow:hidden}
+.prog>i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--brand-2))}
+.alert{border:1px solid var(--border);border-left:3px solid var(--brand);border-radius:8px;padding:10px 12px;background:var(--brand-soft);font-size:13px}
+.alert.warn{border-left-color:var(--warn);background:var(--warn-bg);border-color:var(--warn-bd)}
+.alert.danger{border-left-color:var(--danger);background:var(--danger-bg);border-color:var(--danger-bd)}
+.alert.ok{border-left-color:var(--ok);background:var(--ok-bg);border-color:var(--ok-bd)}
+.thumb{aspect-ratio:1;border-radius:10px;background:linear-gradient(135deg,var(--thumb-a),var(--thumb-b));display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;overflow:hidden}
+.skel{background:linear-gradient(90deg,var(--skel-a),var(--skel-b),var(--skel-a));border-radius:8px;height:14px}
+.row{display:flex;gap:12px;align-items:center}.col{display:flex;flex-direction:column;gap:6px}
+.toggle{width:36px;height:20px;border-radius:999px;background:var(--active);position:relative;flex:none;cursor:pointer}
+.toggle.on{background:var(--brand)}
+.toggle::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:999px;background:#fff;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.toggle.on::after{left:18px}
+.kv{display:flex;justify-content:space-between;padding:4px 0;font-size:13px}
+/* ---- account page ---- */
+.avatar{width:56px;height:56px;border-radius:999px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:650;flex:none}
+.kpi b{font-size:24px;letter-spacing:-.3px}
+.prog.ok>i{background:var(--ok)}
+.prog.warn>i{background:var(--warn)}
+.splitbar{display:flex;height:10px;border-radius:999px;overflow:hidden;background:var(--skel-a);margin:8px 0 6px}
+.splitbar i{display:block;height:100%}
+.splitbar .runpod{background:linear-gradient(90deg,var(--brand),var(--brand-2))}
+.splitbar .closed{background:var(--warn)}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--muted)}
+.legend .dot{width:8px;height:8px}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="side">
+  <div class="brand"><div class="logo">TR</div>TrStudio</div>
+  <div class="navgroup">Studios</div>
+  <nav class="nav">
+    <a href="avatar-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Avatar Studio</a>
+    <a href="character-library.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Characters</a>
+    <a href="image-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Image Studio</a>
+    <a href="video-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>Video Studio</a>
+    <a href="voice-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 19v3"/></svg>Voice Studio</a>
+    <a href="prompt-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>Prompt Studio</a>
+  </nav>
+  <div class="navgroup">Workspace</div>
+  <nav class="nav">
+    <a href="gallery.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Gallery</a>
+    <a href="projects.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Projects</a>
+    <a href="library.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Library</a>
+    <a href="account.html" class="active"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/></svg>Account</a>
+  </nav>
+  <div class="sidefoot">
+    <a href="admin-hardware.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudioAdmin</a>
+  </div>
+</aside>
+<div class="main">
+<header class="top">
+  <span class="crumb">TrStudio</span><span class="crumb">/</span><span class="crumb here">Account</span>
+  <span class="spacer"></span>
+  <span class="badge warn"><span class="dot warn"></span>$84.90 / $100.00 cap</span>
+  <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
+  <div class="userchip">TR</div>
+</header>
+<div class="content">
+  <h1 class="h">Account &amp; spend</h1>
+  <p class="sub">Profile, subscription and usage — identity and licensing are read-only from AppManager.</p>
+
+  <!-- Profile + license -->
+  <div class="grid" style="grid-template-columns:1.4fr 1fr;margin-bottom:14px">
+    <div class="card">
+      <h3>Profile</h3>
+      <div class="row">
+        <span class="avatar">TR</span>
+        <div class="col" style="gap:2px">
+          <b style="font-size:15px">Techie Rathore</b>
+          <span class="muted">techierathore@gmail.com</span>
+          <span class="muted" style="font-size:12px">AppManager userId · usr_8f31c2 · joined Jan 2026</span>
+        </div>
+        <span class="spacer"></span>
+        <button class="btn outline">Manage in AppManager
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>License &amp; tier</h3>
+      <div class="row" style="justify-content:space-between;margin-bottom:8px">
+        <div class="col" style="gap:4px"><b style="font-size:15px">Creator Pro</b><span class="muted">$100 / mo spend cap · closed-API enabled</span></div>
+        <span class="badge primary">Pro</span>
+      </div>
+      <div class="muted" style="font-size:12px;margin-bottom:12px">Renews 15 Jul 2026 · read-only from AppManager LicenseSvc</div>
+      <button class="btn brand" style="width:100%;justify-content:center">Upgrade to Studio (higher cap)</button>
+    </div>
+  </div>
+
+  <!-- Spend KPIs -->
+  <div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px">
+    <div class="card kpi">
+      <div class="row" style="justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">RunPod (GPU)</h3><span class="badge ok"><span class="dot ok"></span>on track</span></div>
+      <b>$46.20</b>
+      <div class="muted" style="margin:4px 0 8px">62% of GPU budget · Wan / FLUX / Hunyuan jobs</div>
+      <div class="prog ok"><i style="width:62%"></i></div>
+    </div>
+    <div class="card kpi">
+      <div class="row" style="justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">Closed APIs</h3><span class="badge">HeyGen + aggregators</span></div>
+      <b>$38.70</b>
+      <div class="muted" style="margin:4px 0 8px">53% of API budget · Premium-tier renders</div>
+      <div class="prog"><i style="width:53%"></i></div>
+    </div>
+    <div class="card kpi" style="border-color:var(--warn-bd)">
+      <div class="row" style="justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">Total vs cap</h3><span class="badge warn"><span class="dot warn"></span>near cap</span></div>
+      <b>$84.90 <span class="muted" style="font-size:14px;font-weight:500">/ $100.00</span></b>
+      <div class="muted" style="margin:4px 0 8px">85% of monthly cap</div>
+      <div class="prog warn"><i style="width:85%"></i></div>
+    </div>
+  </div>
+
+  <div class="alert warn" style="margin-bottom:14px">You are at <b>85%</b> of your $100 monthly cap. New paid jobs over the remaining <b>$15.10</b> will be blocked until the cycle resets on 1 Aug 2026. Local-GPU jobs remain free.</div>
+
+  <!-- Spend split -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="row" style="justify-content:space-between">
+      <h3 style="margin:0">Spend split — RunPod vs closed APIs</h3>
+      <span class="muted" style="font-size:12px">cycle: 1 Jul – 31 Jul 2026</span>
+    </div>
+    <div class="splitbar"><i class="runpod" style="width:54%"></i><i class="closed" style="width:46%"></i></div>
+    <div class="legend">
+      <span class="row" style="gap:6px"><span class="dot brand"></span>RunPod GPU · $46.20 (54%)</span>
+      <span class="row" style="gap:6px"><span class="dot warn"></span>Closed APIs · $38.70 (46%)</span>
+      <span class="spacer"></span>
+      <span>142 jobs this cycle</span>
+    </div>
+  </div>
+
+  <!-- Usage table -->
+  <div class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:10px">
+      <h3 style="margin:0">Recent jobs</h3>
+      <div class="seg"><button class="active">All</button><button>Images</button><button>Video</button><button>Voice</button></div>
+    </div>
+    <table>
+      <thead><tr><th>Job</th><th>Model</th><th>Tier</th><th>Duration</th><th>Cost</th><th>Outcome</th></tr></thead>
+      <tbody>
+        <tr><td>Diwali avatar intro — Kavya</td><td>Hunyuan-Avatar</td><td>High</td><td>4m 02s</td><td>$0.42</td><td><span class="row" style="gap:7px"><span class="dot ok"></span>Completed</span></td></tr>
+        <tr><td>Product reel teaser</td><td>HeyGen Avatar IV</td><td>Premium</td><td>2m 11s</td><td>$0.90</td><td><span class="row" style="gap:7px"><span class="dot ok"></span>Completed</span></td></tr>
+        <tr><td>Ravi (Hindi) voice-over</td><td>IndicF5</td><td>Fast</td><td>0m 21s</td><td>$0.00</td><td><span class="row" style="gap:7px"><span class="dot ok"></span>Completed</span></td></tr>
+        <tr><td>Diwali poster v3</td><td>FLUX.1</td><td>High</td><td>0m 48s</td><td>$0.06</td><td><span class="row" style="gap:7px"><span class="dot ok"></span>Completed</span></td></tr>
+        <tr><td>Lip-sync test — MuseTalk</td><td>MuseTalk</td><td>High</td><td>1m 33s</td><td>$0.14</td><td><span class="row" style="gap:7px"><span class="dot danger"></span>Failed (OOM)</span></td></tr>
+        <tr><td>Arjun headshot</td><td>SDXL (local)</td><td>Fast</td><td>0m 09s</td><td>$0.00</td><td><span class="row" style="gap:7px"><span class="dot ok"></span>Completed</span></td></tr>
+      </tbody>
+    </table>
+    <div class="muted" style="margin-top:10px;font-size:12px">Showing 6 of 142 jobs this cycle · spend tracked against RunPod + closed APIs; local-GPU runs are $0.00.</div>
+  </div>
+</div>
+</div>
+</div>
+<script>
+(function(){
+  var KEY='trstudio-mock-theme';
+  var SUN='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+  var MOON='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg>';
+  function apply(t){
+    document.documentElement.classList.toggle('dark',t==='dark');
+    var b=document.getElementById('themeBtn');
+    if(b)b.innerHTML=t==='dark'?SUN:MOON;
+  }
+  var s=null;try{s=localStorage.getItem(KEY);}catch(e){}
+  apply(s==='light'?'light':'dark');
+  document.addEventListener('click',function(e){
+    var tb=e.target.closest&&e.target.closest('#themeBtn');
+    if(tb){var n=document.documentElement.classList.contains('dark')?'light':'dark';
+      try{localStorage.setItem(KEY,n);}catch(e2){}apply(n);return;}
+    var sg=e.target.closest&&e.target.closest('.seg button,.tabbtn');
+    if(sg&&sg.parentElement){Array.prototype.forEach.call(sg.parentElement.querySelectorAll('button,.tabbtn'),function(x){x.classList.remove('active');});sg.classList.add('active');}
+    var ib=e.target.closest&&e.target.closest('[data-act]');
+    if(ib&&!ib.disabled){ib.disabled=true;ib.style.opacity=.7;ib.textContent='Working…';setTimeout(function(){ib.textContent='Done ✓';},700);}
+  });
+})();
+</script>
+</body>
+</html>

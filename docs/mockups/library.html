@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TrStudio — Library</title>
+<style>
+:root{
+  --bg:#f6f6fa;--card:#ffffff;--border:#e5e5ef;--ink:#17171f;--muted:#6f6f83;
+  --primary:#17171f;--primary-fg:#fafafa;
+  --brand:#7c3aed;--brand-2:#c026d3;--brand-soft:#f1ecfe;--brand-bd:#ddd0fb;--brand-ink:#5b21b6;
+  --ok:#16a34a;--ok-bg:#f0fdf4;--ok-ink:#166534;--ok-bd:#bbf7d0;
+  --warn:#d97706;--warn-bg:#fffbeb;--warn-ink:#92400e;--warn-bd:#fde68a;
+  --danger:#dc2626;--danger-bg:#fef2f2;--danger-ink:#991b1b;--danger-bd:#fecaca;
+  --hover:#f0f0f7;--active:#e5e5ef;--chip:#f0f0f7;--sel:#f1ecfe;
+  --skel-a:#f0f0f7;--skel-b:#e5e5ef;--thumb-a:#e5e5ef;--thumb-b:#d6d6e4;
+  --sidebar:#f9f9fd;--shadow:0 1px 2px rgba(23,23,31,.05),0 1px 3px rgba(23,23,31,.07);
+  --glow:0 4px 14px rgba(124,58,237,.16);
+  --wash:radial-gradient(1100px 480px at 82% -12%,rgba(124,58,237,.05),transparent);
+  --radius:12px;
+  --sans:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+html.dark{
+  --bg:#0b0b12;--card:#14141d;--border:#262636;--ink:#f2f2f8;--muted:#9d9db0;
+  --primary:#f2f2f8;--primary-fg:#14141d;
+  --brand:#8b5cf6;--brand-2:#d946ef;--brand-soft:#251b52;--brand-bd:#4c3ba8;--brand-ink:#c4b5fd;
+  --ok:#4ade80;--ok-bg:#0a2e1a;--ok-ink:#86efac;--ok-bd:#1d6a3c;
+  --warn:#fbbf24;--warn-bg:#33210a;--warn-ink:#fcd34d;--warn-bd:#92400e;
+  --danger:#f87171;--danger-bg:#391111;--danger-ink:#fca5a5;--danger-bd:#7f1d1d;
+  --hover:#1c1c28;--active:#262636;--chip:#1c1c28;--sel:#251b52;
+  --skel-a:#1c1c28;--skel-b:#262636;--thumb-a:#20202e;--thumb-b:#2b2b3d;
+  --sidebar:#0e0e16;--shadow:0 1px 2px rgba(0,0,0,.45);
+  --glow:0 4px 22px rgba(139,92,246,.38);
+  --wash:radial-gradient(1100px 480px at 82% -12%,rgba(139,92,246,.10),transparent);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);background:var(--wash),var(--bg);color:var(--ink);font-size:14px;-webkit-font-smoothing:antialiased}
+.app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+.side{background:var(--sidebar);border-right:1px solid var(--border);padding:14px;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:9px;font-weight:650;padding:8px;margin-bottom:12px;font-size:14.5px}
+.logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;flex:none}
+.nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:13.5px;margin:1px 0}
+.nav a svg{color:var(--muted);flex:none}
+.nav a.active{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;font-weight:600}
+.nav a.active svg{color:#fff}
+.nav a:hover:not(.active){background:var(--hover)}
+.navgroup{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:14px 10px 4px;font-weight:600}
+.sidefoot{margin-top:auto;padding-top:14px;border-top:1px solid var(--border)}
+.sidefoot a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--muted);text-decoration:none;font-size:12.5px}
+.sidefoot a:hover{background:var(--hover);color:var(--ink)}
+.main{display:flex;flex-direction:column;min-width:0}
+.top{height:56px;border-bottom:1px solid var(--border);background:var(--card);display:flex;align-items:center;gap:12px;padding:0 18px;position:sticky;top:0;z-index:40}
+.crumb{color:var(--muted);font-size:13px}.crumb.here{color:var(--ink);font-weight:550}.spacer{flex:1}
+.iconbtn{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+.iconbtn:hover{background:var(--hover)}
+.userchip{width:32px;height:32px;border-radius:999px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:650;flex:none}
+.content{padding:24px;overflow:auto}
+.h{font-size:22px;font-weight:700;margin:0 0 3px;letter-spacing:-.3px}.sub{color:var(--muted);margin:0 0 18px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;box-shadow:var(--glow);border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:550;cursor:pointer;font-family:inherit}
+.btn:hover{opacity:.92}
+.btn.brand{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;box-shadow:var(--glow)}
+.btn.outline{background:transparent;color:var(--ink);border:1px solid var(--border);box-shadow:none}.btn.outline:hover{background:var(--hover);opacity:1}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:none}.btn.ghost:hover{background:var(--hover);opacity:1}
+.badge{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:999px;padding:2px 10px;font-size:11.5px;background:var(--chip);font-weight:500}
+.badge.brand{background:var(--brand-soft);color:var(--brand-ink);border-color:var(--brand-bd)}
+.badge.ok{background:var(--ok-bg);color:var(--ok-ink);border-color:var(--ok-bd)}
+.badge.warn{background:var(--warn-bg);color:var(--warn-ink);border-color:var(--warn-bd)}
+.dot{width:7px;height:7px;border-radius:999px;background:var(--muted);flex:none}
+.dot.ok{background:var(--ok)}
+.input,.select{border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--card);color:var(--ink);font-family:inherit}
+.input::placeholder{color:var(--muted)}
+.input:focus,.select:focus{outline:2px solid var(--brand);outline-offset:-1px}
+.muted{color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:9px;overflow:hidden;background:var(--card)}
+.seg button{border:none;background:transparent;color:var(--ink);padding:8px 14px;cursor:pointer;font-size:13px;font-family:inherit;border-right:1px solid var(--border)}
+.seg button:last-child{border-right:none}
+.seg button.active{background:var(--brand-soft);color:var(--brand-ink);font-weight:600}
+.row{display:flex;gap:12px;align-items:center}
+.wave{display:flex;align-items:center;gap:3px;height:24px}
+.wave i{width:3px;border-radius:2px;background:var(--brand);display:block}
+/* ---- library page ---- */
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.toolbar .input{width:270px}
+.presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.preset{display:flex;flex-direction:column;gap:9px}
+.preset .head{display:flex;align-items:center;gap:8px}
+.preset .t{font-size:13.5px;font-weight:625;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.typetag{font-size:10.5px;font-weight:700;letter-spacing:.5px;border-radius:6px;padding:2px 8px;flex:none}
+.typetag.prompt{background:var(--brand-soft);color:var(--brand-ink);border:1px solid var(--brand-bd)}
+.typetag.script{background:var(--ok-bg);color:var(--ok-ink);border:1px solid var(--ok-bd)}
+.typetag.style{background:var(--warn-bg);color:var(--warn-ink);border:1px solid var(--warn-bd)}
+.typetag.voice{background:var(--chip);color:var(--ink);border:1px solid var(--border)}
+.snippet{font-size:12.5px;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;background:var(--hover);border-radius:8px;padding:9px 11px;font-style:italic}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.preset .acts{display:flex;gap:4px;margin-top:auto;padding-top:2px}
+.preset .acts .btn{padding:5px 10px;font-size:12px}
+.usecount{font-size:11.5px;color:var(--muted);margin-left:auto;align-self:center}
+.emptystate{margin-top:18px;text-align:center;padding:34px 16px}
+.emptyicon{width:46px;height:46px;border-radius:12px;background:var(--brand-soft);color:var(--brand-ink);display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="side">
+  <div class="brand"><div class="logo">TR</div>TrStudio</div>
+  <div class="navgroup">Studios</div>
+  <nav class="nav">
+    <a href="avatar-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Avatar Studio</a>
+    <a href="character-library.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Characters</a>
+    <a href="image-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Image Studio</a>
+    <a href="video-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>Video Studio</a>
+    <a href="voice-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 19v3"/></svg>Voice Studio</a>
+  </nav>
+  <div class="navgroup">Workspace</div>
+  <nav class="nav">
+    <a href="gallery.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Gallery</a>
+    <a href="projects.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Projects</a>
+    <a href="library.html" class="active"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Library</a>
+    <a href="account.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/></svg>Account</a>
+  </nav>
+  <div class="sidefoot">
+    <a href="admin-hardware.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudioAdmin</a>
+  </div>
+</aside>
+<div class="main">
+<header class="top">
+  <span class="crumb">TrStudio</span><span class="crumb">/</span><span class="crumb here">Library</span>
+  <span class="spacer"></span>
+  <span class="badge ok"><span class="dot ok"></span>$38.40 / $100.00 cap</span>
+  <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
+  <div class="userchip">TR</div>
+</header>
+<div class="content">
+  <h1 class="h">Library</h1>
+  <p class="sub">Reusable prompts, scripts and style/voice presets — save once from any studio, reuse everywhere. Private to your account.</p>
+
+  <!-- Toolbar: search + type tabs + save -->
+  <div class="toolbar">
+    <input class="input" placeholder="Search prompts, scripts, presets…">
+    <div class="seg">
+      <button class="active">All</button><button>Prompts</button><button>Scripts</button><button>Style presets</button><button>Voice presets</button>
+    </div>
+    <span class="spacer"></span>
+    <button class="btn brand"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>New preset</button>
+  </div>
+
+  <!-- Preset grid -->
+  <div class="presets">
+    <div class="card preset">
+      <div class="head"><span class="typetag prompt">PROMPT</span><div class="t">Kavya portrait — warm festive light</div></div>
+      <div class="snippet">"photoreal portrait of a young Indian woman, warm diya light, bokeh marigold garlands, editorial lens, 85mm, soft rim light…"</div>
+      <div class="tags"><span class="badge">portrait</span><span class="badge">diwali</span><span class="badge">SDXL</span></div>
+      <div class="acts"><button class="btn ghost" data-act>Use in Image Studio</button><button class="btn ghost" data-act>Edit</button><span class="usecount">used 14×</span></div>
+    </div>
+    <div class="card preset">
+      <div class="head"><span class="typetag script">SCRIPT</span><div class="t">Diwali greeting — Hindi 30s</div></div>
+      <div class="snippet">"Is Diwali, apno ko dijiye mithaas ka tohfa. Hamare haath se bane laddoo aur barfi, ghar tak pahunchenge…" (62 words · HI)</div>
+      <div class="tags"><span class="badge">hindi</span><span class="badge">festival</span><span class="badge">30s</span></div>
+      <div class="acts"><button class="btn ghost" data-act>Use in Avatar Studio</button><button class="btn ghost" data-act>Edit</button><span class="usecount">used 6×</span></div>
+    </div>
+    <div class="card preset">
+      <div class="head"><span class="typetag style">STYLE</span><div class="t">Product reel look — saree line</div></div>
+      <div class="snippet">FLUX.1 · guidance 4.5 · steps 28 · 4:5 · film-grain LUT · bg-remove off — the locked look for all catalog shots.</div>
+      <div class="tags"><span class="badge">e-commerce</span><span class="badge">FLUX.1</span><span class="badge">4:5</span></div>
+      <div class="acts"><button class="btn ghost" data-act>Use in Image Studio</button><button class="btn ghost" data-act>Edit</button><span class="usecount">used 22×</span></div>
+    </div>
+    <div class="card preset">
+      <div class="head"><span class="typetag voice">VOICE</span><div class="t">Ravi — Hindi narrator</div></div>
+      <div class="row" style="gap:8px"><span class="wave"><i style="height:8px"></i><i style="height:16px"></i><i style="height:22px"></i><i style="height:12px"></i><i style="height:19px"></i><i style="height:9px"></i><i style="height:15px"></i></span><span class="muted" style="font-size:12px">IndicF5 · warm · speed 1.0</span></div>
+      <div class="tags"><span class="badge">hindi</span><span class="badge brand">preset voice</span><span class="badge ok">no consent needed</span></div>
+      <div class="acts"><button class="btn ghost" data-act>Use in Voice Studio</button><button class="btn ghost" data-act>Edit</button><span class="usecount">used 31×</span></div>
+    </div>
+    <div class="card preset">
+      <div class="head"><span class="typetag prompt">PROMPT</span><div class="t">Rangoli poster motif</div></div>
+      <div class="snippet">"top-down rangoli mandala, vivid pigment powder, marigold accents, symmetric, festive poster background, negative: text, watermark…"</div>
+      <div class="tags"><span class="badge">poster</span><span class="badge">FLUX.1</span></div>
+      <div class="acts"><button class="btn ghost" data-act>Use in Image Studio</button><button class="btn ghost" data-act>Edit</button><span class="usecount">used 9×</span></div>
+    </div>
+    <div class="card preset">
+      <div class="head"><span class="typetag script">SCRIPT</span><div class="t">Product explainer — EN opener</div></div>
+      <div class="snippet">"Meet the easiest way to bring festive sweets home. Handmade, small-batch, and delivered fresh — here's how it works…" (48 words · EN)</div>
+      <div class="tags"><span class="badge">english</span><span class="badge">explainer</span></div>
+      <div class="acts"><button class="btn ghost" data-act>Use in Avatar Studio</button><button class="btn ghost" data-act>Edit</button><span class="usecount">used 4×</span></div>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div class="card emptystate">
+    <div class="emptyicon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+    <h3 style="margin:0 0 4px">No presets yet</h3>
+    <div class="muted" style="margin-bottom:14px">Save a prompt from any studio composer, a script from the Avatar studio, or a voice/style setup — it lands here for reuse.</div>
+    <a class="btn brand" href="image-studio.html" style="text-decoration:none">Go to Image Studio</a>
+  </div>
+</div>
+</div>
+</div>
+<script>
+(function(){
+  var KEY='trstudio-mock-theme';
+  var SUN='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+  var MOON='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg>';
+  function apply(t){
+    document.documentElement.classList.toggle('dark',t==='dark');
+    var b=document.getElementById('themeBtn');
+    if(b)b.innerHTML=t==='dark'?SUN:MOON;
+  }
+  var s=null;try{s=localStorage.getItem(KEY);}catch(e){}
+  apply(s==='light'?'light':'dark');
+  document.addEventListener('click',function(e){
+    var tb=e.target.closest&&e.target.closest('#themeBtn');
+    if(tb){var n=document.documentElement.classList.contains('dark')?'light':'dark';
+      try{localStorage.setItem(KEY,n);}catch(e2){}apply(n);return;}
+    var sg=e.target.closest&&e.target.closest('.seg button');
+    if(sg&&sg.parentElement){Array.prototype.forEach.call(sg.parentElement.querySelectorAll('button'),function(x){x.classList.remove('active');});sg.classList.add('active');}
+    var ib=e.target.closest&&e.target.closest('[data-act]');
+    if(ib&&!ib.disabled){ib.disabled=true;ib.style.opacity=.7;ib.textContent='Working…';setTimeout(function(){ib.textContent='Done ✓';},700);}
+  });
+})();
+</script>
+</body>
+</html>

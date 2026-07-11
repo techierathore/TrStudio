@@ -1,0 +1,422 @@
+@page "/library"
+@inject IHttpClientFactory HttpClientFactory
+@inject ToastService ToastService
+@inject NavigationManager Navigation
+@inject IAuthSession AuthSession
+
+@*
+    Library (REQ-UI-053). Reusable prompts, scripts and style/voice presets — save once from any
+    studio, reuse everywhere; private per user. A search + type segmented Tabs (All / Prompts /
+    Scripts / Style presets / Voice presets) filter a preset Card grid; each card carries a type tag,
+    a clamped snippet or param summary, tag Badges, a use-count, and "Use in {Studio}" (routes to the
+    right studio with the preset applied) + Edit. "New preset" and Edit open a Sheet form. Per-user:
+    /api/v1/presets is owner-filtered server-side; a representative seed keeps the page usable while
+    the Phase-9 endpoint is forming. An empty state covers over-narrow filters.
+*@
+
+<PageTitle>TrStudio — Library</PageTitle>
+
+<div class="library-page">
+<h1 class="page-title">Library</h1>
+<p class="page-sub">Reusable prompts, scripts and style/voice presets — save once from any studio, reuse everywhere. Private to your account.</p>
+
+<div class="lib-toolbar" data-testid="library-toolbar">
+    <div class="lib-search">
+        <Input @bind-Value="objSearch" @bind-Value:after="StateHasChanged" Placeholder="Search prompts, scripts, presets…" />
+    </div>
+    <div class="lib-tabscroll">
+        <Tabs @bind-Value="objTypeTab" @bind-Value:after="StateHasChanged">
+            <TabsList>
+                @foreach (var vTab in objTabs)
+                {
+                    <TabsTrigger Value="@vTab.Key">@vTab.Value</TabsTrigger>
+                }
+            </TabsList>
+        </Tabs>
+    </div>
+    <div class="grow"></div>
+    <Button OnClick="@(() => OpenEditor(null))" data-testid="new-preset-btn">
+        <LucideIcon Name="plus" Size="14" />
+        New preset
+    </Button>
+</div>
+
+@if (objLoading)
+{
+    <div class="lib-presets">
+        @for (var vIndex = 0; vIndex < 6; vIndex++)
+        {
+            <Card Class="lib-preset">
+                <Skeleton Class="h-4 w-1/2 mb-2" />
+                <Skeleton Class="lib-snippet" />
+                <Skeleton Class="h-4 w-2/5" />
+            </Card>
+        }
+    </div>
+}
+else if (Filtered.Count == 0)
+{
+    <Card Class="emptystate" data-testid="library-empty">
+        <div class="emptyicon"><LucideIcon Name="book-open" Size="22" /></div>
+        <h3 style="margin:0 0 4px">No presets yet</h3>
+        <div class="muted-sm" style="margin-bottom:14px">Save a prompt from any studio composer, a script from the Avatar studio, or a voice/style setup — it lands here for reuse.</div>
+        <Button OnClick="@(() => Navigation.NavigateTo("/image"))">Go to Image Studio</Button>
+    </Card>
+}
+else
+{
+    <div class="lib-presets" data-testid="preset-grid">
+        @foreach (var vPreset in Filtered)
+        {
+            <Card Class="lib-preset" @key="vPreset.PresetId">
+                <div class="lib-preset-head">
+                    <span class="lib-typetag lib-typetag-@vPreset.Type">@vPreset.TypeLabel</span>
+                    <div class="lib-preset-t" title="@vPreset.Name">@vPreset.Name</div>
+                </div>
+                @if (vPreset.Type == "voice")
+                {
+                    <div class="flex-row">
+                        <span class="lib-wave">
+                            @foreach (var vBar in objWaveBars)
+                            {
+                                <i style="height:@(vBar)px"></i>
+                            }
+                        </span>
+                        <span class="muted-sm">@vPreset.Snippet</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="lib-snippet">@vPreset.Snippet</div>
+                }
+                <div class="lib-tags">
+                    @foreach (var vTag in vPreset.Tags)
+                    {
+                        <Badge Variant="BadgeVariant.Outline">@vTag</Badge>
+                    }
+                </div>
+                <div class="lib-preset-acts">
+                    <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => UsePreset(vPreset))">Use in @vPreset.StudioName</Button>
+                    <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => OpenEditor(vPreset))">Edit</Button>
+                    <span class="lib-usecount">used @vPreset.UseCount×</span>
+                </div>
+            </Card>
+        }
+    </div>
+}
+</div>
+
+@*
+    Mobile reflow (REQ-UI-053). At 390px the toolbar's filter Tabs strip and the preset Card grid
+    (.lib-presets) pushed the page body past the viewport (~483px). The tab strip now scrolls inside
+    its own .lib-tabscroll box (never widening the page), the preset grid collapses to a single column
+    at ≤430px, and the page's direct children may shrink (min-width:0). Desktop is unchanged — the
+    scroll box only scrolls when the tabs actually exceed the row, and the collapse is ≤430px-only.
+*@
+<style>
+    .library-page > * {
+        min-width: 0;
+    }
+
+    .library-page .lib-tabscroll {
+        max-width: 100%;
+        overflow-x: auto;
+        min-width: 0;
+    }
+
+    @@media (max-width: 430px) {
+        .library-page .lib-presets {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<Sheet @bind-Open="objSheetOpen">
+    <SheetContent Class="w-[400px] sm:w-[460px]">
+        <SheetHeader>
+            <SheetTitle>@(objEditingId is null ? "New preset" : "Edit preset")</SheetTitle>
+            <SheetDescription>Save a reusable prompt, script or style/voice preset — private to your account.</SheetDescription>
+        </SheetHeader>
+        <div style="padding:14px 0" data-testid="preset-editor">
+            <Field Class="lib-form-field">
+                <FieldLabel>Name</FieldLabel>
+                <FieldContent>
+                    <Input @bind-Value="objFormName" Placeholder="e.g. Kavya portrait — warm festive light" />
+                </FieldContent>
+            </Field>
+            <Field Class="lib-form-field">
+                <FieldLabel>Type</FieldLabel>
+                <FieldContent>
+                    <Select @bind-Value="objFormType" TValue="string">
+                        <SelectTrigger><SelectValue Placeholder="Prompt" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem Value="@("prompt")" Text="Prompt" TValue="string">Prompt</SelectItem>
+                            <SelectItem Value="@("script")" Text="Script" TValue="string">Script</SelectItem>
+                            <SelectItem Value="@("style")" Text="Style preset" TValue="string">Style preset</SelectItem>
+                            <SelectItem Value="@("voice")" Text="Voice preset" TValue="string">Voice preset</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </FieldContent>
+            </Field>
+            <Field Class="lib-form-field">
+                <FieldLabel>Content</FieldLabel>
+                <FieldContent>
+                    <Textarea @bind-Value="objFormSnippet" Placeholder="The prompt text, script, or a summary of the style/voice settings…" />
+                </FieldContent>
+            </Field>
+            <Field Class="lib-form-field">
+                <FieldLabel>Tags (comma-separated)</FieldLabel>
+                <FieldContent>
+                    <Input @bind-Value="objFormTags" Placeholder="portrait, diwali, SDXL" />
+                </FieldContent>
+            </Field>
+        </div>
+        <SheetFooter>
+            <SheetClose><Button Variant="ButtonVariant.Outline">Cancel</Button></SheetClose>
+            <Button OnClick="SavePresetAsync" data-testid="save-preset-btn">Save preset</Button>
+        </SheetFooter>
+    </SheetContent>
+</Sheet>
+
+@code {
+    private const string PresetsRoute = "/api/v1/presets";
+
+    private readonly List<PresetView> objPresets = new();
+    private bool objLoading = true;
+    private string objSearch = string.Empty;
+    private string objTypeTab = "all";
+
+    private bool objSheetOpen;
+    private Guid? objEditingId;
+    private string objFormName = string.Empty;
+    private string objFormType = "prompt";
+    private string objFormSnippet = string.Empty;
+    private string objFormTags = string.Empty;
+
+    private readonly int[] objWaveBars = { 8, 16, 22, 12, 19, 9, 15 };
+
+    private readonly Dictionary<string, string> objTabs = new()
+    {
+        ["all"] = "All",
+        ["prompt"] = "Prompts",
+        ["script"] = "Scripts",
+        ["style"] = "Style presets",
+        ["voice"] = "Voice presets",
+    };
+
+    /// <summary>The presets remaining after the type tab + search filters are applied.</summary>
+    private List<PresetView> Filtered => objPresets.Where(Matches).ToList();
+
+    /// <summary>
+    /// Loads owner-scoped presets AFTER the first interactive render — once JS interop is available and
+    /// <see cref="IAuthSession"/> can hydrate the bearer token. Loading here (not in
+    /// <c>OnInitializedAsync</c>, which runs during prerender before the token exists) avoids a wasted
+    /// anonymous 401 and the sample-data flash it would cause.
+    /// </summary>
+    /// <param name="aFirstRender">Whether this is the component's first render.</param>
+    protected override async Task OnAfterRenderAsync(bool aFirstRender)
+    {
+        if (!aFirstRender)
+        {
+            return;
+        }
+
+        var vHasSession = await AuthSession.EnsureLoadedAsync();
+        await TryLoadPresetsAsync(vHasSession);
+        objLoading = false;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Loads the owner-scoped presets. Live rows render when the authenticated call returns them; a
+    /// representative seed only stands in when there is no session or the call yields nothing — keeping
+    /// the page usable while the Phase-9 preset endpoint is forming.
+    /// </summary>
+    /// <param name="aHasSession">Whether a signed-in session is present.</param>
+    private async Task TryLoadPresetsAsync(bool aHasSession)
+    {
+        if (aHasSession)
+        {
+            try
+            {
+                var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+                var vPresets = await vClient.GetFromJsonAsync<List<PresetView>>(PresetsRoute);
+                if (vPresets is { Count: > 0 })
+                {
+                    objPresets.Clear();
+                    // Normalize the API type vocab (style-preset/voice-preset) back to the short UI vocab
+                    // (style/voice) the tabs, CSS type tags and studio-routing switch match on; the API
+                    // carries no tags field, so coalesce to an empty list to keep the card render null-safe.
+                    objPresets.AddRange(vPresets.Select(aPreset => aPreset with
+                    {
+                        Type = FromApiType(aPreset.Type),
+                        Tags = aPreset.Tags ?? new List<string>(),
+                    }));
+                    return;
+                }
+            }
+            catch
+            {
+                // Endpoint forming or unreachable — fall through to the representative seed.
+            }
+        }
+
+        SeedRepresentative();
+    }
+
+    private bool Matches(PresetView aPreset)
+    {
+        if (objTypeTab != "all" && aPreset.Type != objTypeTab)
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(objSearch))
+        {
+            var vHay = $"{aPreset.Name} {aPreset.Snippet} {string.Join(' ', aPreset.Tags)}";
+            if (vHay.IndexOf(objSearch.Trim(), StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>Routes to the studio that consumes the preset's type, carrying its id so it applies.</summary>
+    private void UsePreset(PresetView aPreset)
+    {
+        ToastService.Success($"Applied \"{aPreset.Name}\" in {aPreset.StudioName}.", "Use preset");
+        Navigation.NavigateTo($"{aPreset.StudioRoute}?preset={aPreset.PresetId}");
+    }
+
+    private void OpenEditor(PresetView? aPreset)
+    {
+        objEditingId = aPreset?.PresetId;
+        objFormName = aPreset?.Name ?? string.Empty;
+        objFormType = aPreset?.Type ?? "prompt";
+        objFormSnippet = aPreset?.Snippet ?? string.Empty;
+        objFormTags = aPreset is null ? string.Empty : string.Join(", ", aPreset.Tags);
+        objSheetOpen = true;
+    }
+
+    private async Task SavePresetAsync()
+    {
+        if (string.IsNullOrWhiteSpace(objFormName))
+        {
+            ToastService.Error("A preset needs a name.", "Missing name");
+            return;
+        }
+
+        var vTags = objFormTags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        var vId = objEditingId ?? Guid.NewGuid();
+        var vSaved = new PresetView(vId, objFormName.Trim(), objFormType, objFormSnippet.Trim(), vTags, 0);
+
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            // Map the short UI type (style/voice) onto the API's wire vocab (style-preset/voice-preset) so
+            // the upsert lands instead of 400-ing; tags fold into Description (the API has no tags field).
+            var vRequest = new PresetUpsertRequest
+            {
+                Type = ToApiType(vSaved.Type),
+                Name = vSaved.Name,
+                Description = vTags.Count > 0 ? string.Join(", ", vTags) : null,
+                Content = vSaved.Snippet,
+            };
+
+            if (objEditingId is null)
+            {
+                await vClient.PostAsJsonAsync(PresetsRoute, vRequest);
+            }
+            else
+            {
+                await vClient.PutAsJsonAsync($"{PresetsRoute}/{vId}", vRequest);
+            }
+        }
+        catch
+        {
+            // Optimistic save for the offline demo flow — the card updates locally either way.
+        }
+
+        var vExisting = objPresets.FindIndex(aPreset => aPreset.PresetId == vId);
+        if (vExisting >= 0)
+        {
+            objPresets[vExisting] = vSaved with { UseCount = objPresets[vExisting].UseCount };
+        }
+        else
+        {
+            objPresets.Insert(0, vSaved);
+        }
+
+        objSheetOpen = false;
+        ToastService.Success($"Saved \"{vSaved.Name}\".", "Preset");
+    }
+
+    /// <summary>Maps the short UI preset type onto the API's wire vocab (style→style-preset, voice→voice-preset).</summary>
+    /// <param name="aType">The UI type (prompt/script/style/voice).</param>
+    private static string ToApiType(string aType) => aType switch
+    {
+        "style" => "style-preset",
+        "voice" => "voice-preset",
+        _ => aType,
+    };
+
+    /// <summary>Maps the API preset-type vocab back onto the short UI type (style-preset→style, voice-preset→voice).</summary>
+    /// <param name="aType">The API type (prompt/script/style-preset/voice-preset).</param>
+    private static string FromApiType(string aType) => aType switch
+    {
+        "style-preset" => "style",
+        "voice-preset" => "voice",
+        _ => aType,
+    };
+
+    private void SeedRepresentative()
+    {
+        objPresets.Clear();
+        objPresets.AddRange(new[]
+        {
+            new PresetView(Guid.NewGuid(), "Kavya portrait — warm festive light", "prompt",
+                "\"photoreal portrait of a young Indian woman, warm diya light, bokeh marigold garlands, editorial lens, 85mm, soft rim light…\"",
+                new List<string> { "portrait", "diwali", "SDXL" }, 14),
+            new PresetView(Guid.NewGuid(), "Diwali greeting — Hindi 30s", "script",
+                "\"Is Diwali, apno ko dijiye mithaas ka tohfa. Hamare haath se bane laddoo aur barfi, ghar tak pahunchenge…\" (62 words · HI)",
+                new List<string> { "hindi", "festival", "30s" }, 6),
+            new PresetView(Guid.NewGuid(), "Product reel look — saree line", "style",
+                "FLUX.1 · guidance 4.5 · steps 28 · 4:5 · film-grain LUT · bg-remove off — the locked look for all catalog shots.",
+                new List<string> { "e-commerce", "FLUX.1", "4:5" }, 22),
+            new PresetView(Guid.NewGuid(), "Ravi — Hindi narrator", "voice",
+                "IndicF5 · warm · speed 1.0",
+                new List<string> { "hindi", "preset voice", "no consent needed" }, 31),
+            new PresetView(Guid.NewGuid(), "Rangoli poster motif", "prompt",
+                "\"top-down rangoli mandala, vivid pigment powder, marigold accents, symmetric, festive poster background, negative: text, watermark…\"",
+                new List<string> { "poster", "FLUX.1" }, 9),
+            new PresetView(Guid.NewGuid(), "Product explainer — EN opener", "script",
+                "\"Meet the easiest way to bring festive sweets home. Handmade, small-batch, and delivered fresh — here's how it works…\" (48 words · EN)",
+                new List<string> { "english", "explainer" }, 4),
+        });
+    }
+
+    /// <summary>A reusable Library preset (prompt/script/style/voice) with its reuse routing.</summary>
+    private sealed record PresetView(Guid PresetId, string Name, string Type, string Snippet, List<string> Tags, int UseCount)
+    {
+        /// <summary>The short uppercase type tag shown on the card (PROMPT / SCRIPT / STYLE / VOICE).</summary>
+        public string TypeLabel => Type.ToUpperInvariant();
+
+        /// <summary>The studio this preset type is used in.</summary>
+        public string StudioName => Type switch
+        {
+            "script" => "Avatar Studio",
+            "voice" => "Voice Studio",
+            _ => "Image Studio",
+        };
+
+        /// <summary>The route of the studio this preset type is used in.</summary>
+        public string StudioRoute => Type switch
+        {
+            "script" => "/avatar",
+            "voice" => "/voice",
+            _ => "/image",
+        };
+    }
+}

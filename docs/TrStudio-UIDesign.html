@@ -1,0 +1,960 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TrStudio — UI Design Spec (Mockups)</title>
+<script>
+/* Resolve the theme BEFORE first paint (no flash). Saved choice wins; otherwise
+   pick by time of day — light 07:00–19:00 local, softened dark at night. */
+(function(){
+  try{
+    var t = localStorage.getItem('tf-theme');
+    if(t!=='light' && t!=='dark'){ var h = new Date().getHours(); t = (h>=7 && h<19) ? 'light' : 'dark'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){ document.documentElement.setAttribute('data-theme','light'); }
+})();
+</script>
+<style>
+/* LIGHT is the default theme — a warm off-white, easy on the eyes (never bright white). */
+:root{
+  --bg:#f4f1e9; --panel:#efe9db; --panel2:#e7e0cd; --line:#d8cfb6;
+  --ink:#2e2a22; --muted:#6f6857; --accent:#2f6f9f; --accent2:#3f7d54;
+  --warn:#9a6b15; --danger:#b03a52; --ok:#3f7d54;
+  --code-bg:#ece5d3; --code-ink:#332f26; --row-alt:#eae2cf;
+  --h3:#3a352b; --h4:#2f6f9f; --quote:#4a4537; --cta-bg:#e6eef5;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+/* DARK — softened near-black (warmer / less harsh than pure #0f1115). */
+html[data-theme="dark"]{
+  --bg:#11141a; --panel:#171b23; --panel2:#1e2430; --line:#2b3240;
+  --ink:#dfe3ea; --muted:#99a2b1; --accent:#7cc4ff; --accent2:#a6e3a1;
+  --warn:#f9c74f; --danger:#f38ba8; --ok:#a6e3a1;
+  --code-bg:#0c1016; --code-ink:#d8dde8; --row-alt:#141821;
+  --h3:#cfd5e3; --h4:#7cc4ff; --quote:#cfd5e3; --cta-bg:#0d2030;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;font-size:15px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono);font-size:13px;background:var(--code-bg);color:var(--code-ink);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+pre{font-family:var(--mono);font-size:12.5px;background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:auto;color:var(--code-ink);position:relative}
+pre code{background:none;border:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:11px;font-family:var(--sans);cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+/* floating light/dark toggle (top-right) */
+.theme-toggle{position:fixed;top:12px;right:14px;z-index:10000;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:12.5px;font-family:var(--sans);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.theme-toggle:hover{color:var(--accent);border-color:var(--accent)}
+
+.layout{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.layout.no-toc{grid-template-columns:1fr}
+nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid var(--line);background:var(--panel);padding:18px 14px}
+nav.side h1{font-size:14px;margin:0 0 4px;letter-spacing:.5px;color:var(--ink)}
+nav.side .sub{font-size:11.5px;color:var(--muted);margin-bottom:14px}
+nav.side ol,nav.side ul{list-style:none;padding:0;margin:0}
+nav.side li{font-size:13px;margin:2px 0}
+nav.side li a{display:block;padding:5px 8px;color:var(--ink);border-radius:6px}
+nav.side li a:hover{background:var(--panel2);text-decoration:none}
+nav.side li.h3 a{padding-left:22px;font-size:12.5px;color:var(--h3)}
+nav.side .group{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin:14px 8px 4px}
+
+main{padding:28px 40px 80px;max-width:1100px}
+.layout.no-toc main{margin:0 auto}
+
+h1{font-size:28px;margin:0 0 6px}
+h2{font-size:22px;margin:32px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+h3{font-size:17px;margin:22px 0 6px;color:var(--h3);scroll-margin-top:16px}
+h4{font-size:14px;margin:14px 0 4px;color:var(--h4);scroll-margin-top:16px}
+.subtitle{color:var(--muted);font-size:14px;margin-top:-4px;margin-bottom:18px}
+p{margin:6px 0 10px}
+blockquote{border-left:3px solid var(--accent);background:var(--panel);margin:8px 0;padding:8px 14px;color:var(--quote)}
+ul,ol{padding-left:22px}
+li{margin:2px 0}
+
+table{border-collapse:collapse;width:100%;font-size:13.5px;margin:8px 0}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2);color:var(--h3);font-weight:600}
+tr:nth-child(even) td{background:var(--row-alt)}
+
+hr{border:none;border-top:1px solid var(--line);margin:24px 0}
+.anchor-link{color:var(--muted);font-weight:400;font-size:0.85em;margin-left:8px;opacity:0;transition:opacity .15s;text-decoration:none}
+h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
+
+/* inline TOC at top of main content */
+.toc-inline{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 16px;margin:14px 0 24px}
+.toc-inline > div{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.toc-inline ol,.toc-inline ul{margin:4px 0;padding-left:18px}
+.toc-inline li{font-size:13px;margin:1px 0}
+.toc-inline a{color:var(--h3)}
+
+/* mermaid diagram wrapper + toolbar */
+.diagram{position:relative;border:1px solid var(--line);border-radius:8px;background:var(--code-bg);margin:14px 0;overflow:hidden}
+.diagram .mermaid{padding:14px;margin:0;background:transparent;border:none;overflow:auto}
+.diagram .dt{display:flex;gap:6px;justify-content:flex-end;padding:6px 8px;background:var(--row-alt);border-bottom:1px solid var(--line)}
+.diagram .dt button{background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:3px 10px;font-size:12px;font-family:var(--sans);cursor:pointer;min-width:30px}
+.diagram .dt button:hover{color:var(--accent);border-color:var(--accent)}
+.diagram .dt .zlabel{padding:3px 6px;font-size:11px;color:var(--muted);font-family:var(--mono);align-self:center}
+.diagram.fs{position:fixed;inset:0;z-index:9999;border-radius:0;border:none}
+.diagram.fs .mermaid{height:calc(100vh - 40px);display:flex;align-items:center;justify-content:center}
+
+@media(max-width:900px){.layout{grid-template-columns:1fr}nav.side{position:static;height:auto}}
+</style>
+</head>
+<body>
+<button id="themeToggle" class="theme-toggle" title="Toggle light / dark">☾ Dark</button>
+<div class="layout no-toc">
+  <main>
+    <h1>TrStudio — UI Design Spec (Mockups)</h1>
+    <div class="subtitle">Approved visual design — rendered mockups + TrBlazeUI component maps · Rendered from docs/TrStudio-UIDesign.md on 2026-07-07</div>
+
+    <blockquote><p><strong>What this is.</strong> The approved visual design for TrStudio, produced at day-1 (greenfield) before any UI is built. Each screen has a <strong>rendered mockup</strong> (<code>docs/mockups/{screen}.html</code>, styled to look like TrBlazeUI) and a <strong>component map</strong> tying every region to a real <strong>TrBlazeUI control</strong>, so the build (<code>/trblazeui</code>) reproduces it 1:1 and the verifier's visual-truth gate (<code>verify-phase.md §4b</code>) can diff the live screen against it. This is a HUMAN document → rendered to HTML. The owner APPROVES it (alongside the BRD + Architecture) before build.</p></blockquote>
+
+    <div class="toc-inline">
+      <div>Contents</div>
+      <ol>
+        <li><a href="#how-to-use">How to use</a></li>
+        <li><a href="#design-system-trblazeui">Design system (TrBlazeUI)</a></li>
+        <li><a href="#branding-guide-trblazeui-theming">Branding guide (TrBlazeUI theming)</a></li>
+        <li><a href="#screens">Screens</a>
+          <ul>
+            <li><a href="#screen-register">Screen: Register</a></li>
+            <li><a href="#screen-login">Screen: Login</a></li>
+            <li><a href="#screen-forgot-password">Screen: Forgot password</a></li>
+            <li><a href="#screen-setup-required-first-run-gate">Screen: Setup required (first-run gate)</a></li>
+            <li><a href="#screen-avatar-studio">Screen: Avatar studio</a></li>
+            <li><a href="#screen-character-library">Screen: Character library</a></li>
+            <li><a href="#screen-image-studio">Screen: Image studio</a></li>
+            <li><a href="#screen-voice-studio">Screen: Voice studio</a></li>
+            <li><a href="#screen-video-studio">Screen: Video studio</a></li>
+            <li><a href="#screen-prompt-studio">Screen: Prompt studio</a></li>
+            <li><a href="#screen-gallery">Screen: Gallery</a></li>
+            <li><a href="#screen-projects">Screen: Projects</a></li>
+            <li><a href="#screen-comparison">Screen: Comparison</a></li>
+            <li><a href="#screen-library">Screen: Library</a></li>
+            <li><a href="#screen-account-spend">Screen: Account &amp; spend</a></li>
+            <li><a href="#screen-admin-hardware-setup">Screen: Admin — Hardware &amp; setup</a></li>
+            <li><a href="#screen-admin-model-sources">Screen: Admin — Model Sources</a></li>
+            <li><a href="#screen-admin-model-library">Screen: Admin — Model Library</a></li>
+            <li><a href="#screen-admin-model-provider-registry">Screen: Admin — Model &amp; Provider Registry</a></li>
+            <li><a href="#screen-admin-comfyui-import-debug">Screen: Admin — ComfyUI import &amp; debug</a></li>
+            <li><a href="#screen-admin-runpod-ops">Screen: Admin — RunPod &amp; ops</a></li>
+            <li><a href="#screen-admin-content-policy-nsfw">Screen: Admin — Content policy (NSFW)</a></li>
+          </ul>
+        </li>
+      </ol>
+    </div>
+
+    <h2 id="how-to-use">How to use<a class="anchor-link" href="#how-to-use">#</a></h2>
+
+    <ul>
+      <li>Every screen below links to its rendered mockup in <code>docs/mockups/</code>. Open those <code>.html</code> files in a browser to see the intended layout.</li>
+      <li>The <strong>Component map</strong> is the build contract: <code>region → TrBlazeUI control</code>. Only controls that actually ship in TrBlazeUI are used (the catalog <code>.trblazeui/TrBlazeUI-AI-Reference.md</code> was read first). If a screen needs something the library lacks, it is flagged here and logged to <code>docs/TrStudio-TrBlazeUI-Feedback.md</code>.</li>
+      <li>To change a screen after approval: run <code>*mockups TrStudio --update</code> (or <code>*amend-docs</code> for a requirement change that adds screens).</li>
+    </ul>
+
+    <h2 id="design-system-trblazeui">Design system (TrBlazeUI)<a class="anchor-link" href="#design-system-trblazeui">#</a></h2>
+
+    <ul>
+      <li><strong>Source:</strong> TrBlazeUI component library (<code>.trblazeui/TrBlazeUI-AI-Reference.md</code>) — .NET 10 Blazor + Tailwind v4 + shadcn/ui design language (OKLCH tokens, <code>--radius</code> rounded corners, <code>Card</code>/<code>Button</code>/<code>Badge</code> shapes).</li>
+      <li><strong>Layout shell:</strong> <strong>collapsible left <code>Sidebar</code></strong> (<code>SidebarProvider</code> → <code>Sidebar</code> → <code>SidebarHeader</code>/<code>SidebarContent</code>/<code>SidebarFooter</code>) + <code>SidebarInset</code> with a top <code>header</code> (<code>SidebarTrigger</code>, breadcrumb, theme toggle, user menu). The creator app (<code>TrStudio</code>) and management app (<code>TrStudioAdmin</code>) share this shell via the <code>TrStudioUI</code> RCL; the nav items differ.</li>
+      <li><strong>Theme:</strong> <strong>dark by default</strong> (cinematic, in line with the competitor set — HeyGen/Higgsfield) with light available via a persisted toggle; TrBlazeUI applies dark via <code>class="dark"</code> on <code>&lt;html&gt;</code> (custom OKLCH theme via tweakcn). The brand is a <strong>violet→fuchsia gradient</strong>, theme-tuned so it reads elegant on both canvases: refined <code>#7c3aed→#c026d3</code> (violet-600→fuchsia-600) in light — brighter, cleaner mid-tone so it stays luminous rather than muddy on the white canvas — and <code>#8b5cf6→#d946ef</code> (violet-400→fuchsia-400) in dark (see the <a href="#branding-guide-trblazeui-theming">Branding guide</a> for the full palette and usage rules). The toggle is an icon button <strong>inside the topbar</strong> (second-to-last, before the user chip) on app screens, and a fixed top-right button only on the auth screens (which have no topbar) — never a floating button over topbar actions. Every surface color is a CSS token with light+dark values, so both themes are fully covered on every screen. The mockups ship a working theme toggle and interactive controls (segmented tier selectors, tabs, buttons, the character dialog/bible sheet, the login/register landing redirects, the sources add-panel toggle, model-library pagination) so reviewers can click through them.</li>
+      <li><strong>One primary button style everywhere:</strong> every solid call-to-action is <code>Button</code> themed with the brand gradient (<code>.btn brand</code> in the mockups) — Sign in, Create account, ＋ Add model, ＋ Add source, Install, Render, Generate, Save, Export. Secondary actions are <code>Button</code> (Outline); tertiary are <code>Button</code> (Ghost). No screen uses a plain monochrome solid button.</li>
+      <li><strong>Navigation is fully wired:</strong> every sidebar item on every mockup links to a real mockup page (creator: Avatar / Characters / Image / Video / Voice / <strong>Prompt Studio</strong> (added 2026-07-07, F-PROMPT) / Gallery / Projects / Library / Account; admin: Hardware &amp; Setup / RunPod &amp; Ops / Model Sources / Model Library / Registry &amp; Providers / ComfyUI Import / Content Policy), plus a footer cross-link between the two app shells. There is no separate "Providers" nav item — provider keys live on the <strong>Registry &amp; Providers</strong> screen (route <code>/admin/providers</code> renders as that screen's panel). <strong>Comparison</strong> (<code>/compare</code>) has no sidebar item either — it is reached from the Gallery's Compare action (and breadcrumbs back to Gallery), since a comparison always starts from selected assets.</li>
+      <li><strong>Controls inventory used:</strong> <code>SidebarProvider</code>/<code>Sidebar</code>/<code>SidebarMenu</code>/<code>SidebarMenuButton</code>, <code>Card</code>/<code>CardHeader</code>/<code>CardTitle</code>/<code>CardContent</code>/<code>CardFooter</code>, <code>Button</code>, <code>Badge</code>, <code>Tabs</code>, <code>Select</code>, <code>RadioGroup</code>, <code>Input</code>, <code>Textarea</code>, <code>Field</code>/<code>FieldLabel</code>, <code>Slider</code>, <code>Switch</code>, <code>Combobox</code>, <code>FileUpload</code>, <code>DataTable</code>, <code>Progress</code>, <code>Skeleton</code>, <code>Spinner</code>, <code>Avatar</code>, <code>Alert</code>, <code>Dialog</code>/<code>Sheet</code>, <code>Tooltip</code>, <code>Breadcrumb</code>, <code>Empty</code>, <code>LucideIcon</code>, <code>Toast</code> (via <code>ToastService</code>), <code>Toolbar</code> (desktop/hybrid).</li>
+      <li><strong>Tier control (AV-04):</strong> a <code>RadioGroup</code> or segmented <code>Tabs</code> rendering <strong>Fast · High · Premium</strong> with a per-option cost/eta hint and a <code>Badge</code> for the active provider — the single most important shared control; appears in Avatar, Image, Video studios.</li>
+      <li><strong>Provider-routing transparency (NFR-06):</strong> an <code>Alert</code>/<code>Badge</code> banner appears when a job is routed to a closed API (HeyGen/aggregator).</li>
+    </ul>
+
+    <h2 id="branding-guide-trblazeui-theming">Branding guide (TrBlazeUI theming)<a class="anchor-link" href="#branding-guide-trblazeui-theming">#</a></h2>
+
+    <p>The single source of truth for TrStudio's look. The build implements it as <strong>one custom OKLCH theme</strong> in the <code>TrStudioUI</code> RCL (shadcn/tweakcn-style CSS variables, which is exactly how TrBlazeUI is themed — see reference §2), so every TrBlazeUI control picks the brand up automatically; no per-component color overrides.</p>
+
+    <h3 id="brand-palette">Brand palette<a class="anchor-link" href="#brand-palette">#</a></h3>
+
+    <table>
+      <thead>
+        <tr><th>Token (mockups)</th><th>Light</th><th>Dark</th><th>TrBlazeUI variable it themes</th><th>Used for</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>--brand</code></td><td><code>#7c3aed</code> (violet-600)</td><td><code>#8b5cf6</code> (violet-400)</td><td><code>--primary</code> (+ <code>--ring</code>, <code>--sidebar-primary</code>)</td><td>gradient start, focus ring, accents, progress</td></tr>
+        <tr><td><code>--brand-2</code></td><td><code>#c026d3</code> (fuchsia-600)</td><td><code>#d946ef</code> (fuchsia-400)</td><td>(gradient end — utility class, see below)</td><td>gradient end</td></tr>
+        <tr><td><code>--brand-soft</code></td><td><code>#f1ecfe</code></td><td><code>#251b52</code></td><td><code>--accent</code> / <code>--secondary</code></td><td>selected rows, seg-active, info alerts</td></tr>
+        <tr><td><code>--brand-ink</code></td><td><code>#5b21b6</code></td><td><code>#c4b5fd</code></td><td><code>--accent-foreground</code></td><td>text/links on brand-soft</td></tr>
+        <tr><td><code>--brand-bd</code></td><td><code>#ddd0fb</code></td><td><code>#4c3ba8</code></td><td>(border of brand badges)</td><td>brand badge borders</td></tr>
+        <tr><td><code>--bg</code></td><td><code>#f6f6fa</code></td><td><code>#0b0b12</code></td><td><code>--background</code></td><td>page canvas (plus <code>--wash</code>)</td></tr>
+        <tr><td><code>--card</code></td><td><code>#ffffff</code></td><td><code>#14141d</code></td><td><code>--card</code> / <code>--popover</code></td><td>cards, topbar, inputs</td></tr>
+        <tr><td><code>--ink</code></td><td><code>#17171f</code></td><td><code>#f2f2f8</code></td><td><code>--foreground</code></td><td>body text</td></tr>
+        <tr><td><code>--muted</code></td><td><code>#6f6f83</code></td><td><code>#9d9db0</code></td><td><code>--muted-foreground</code></td><td>secondary text, idle icons</td></tr>
+        <tr><td><code>--border</code></td><td><code>#e5e5ef</code></td><td><code>#262636</code></td><td><code>--border</code> / <code>--input</code></td><td>hairlines, control borders</td></tr>
+        <tr><td><code>--sidebar</code></td><td><code>#f9f9fd</code></td><td><code>#0e0e16</code></td><td><code>--sidebar</code></td><td>app sidebar</td></tr>
+        <tr><td><code>--ok</code> family</td><td><code>#16a34a</code> on <code>#f0fdf4</code></td><td><code>#4ade80</code> on <code>#0a2e1a</code></td><td><code>--alert-success</code></td><td>success badges/alerts/dots</td></tr>
+        <tr><td><code>--warn</code> family</td><td><code>#d97706</code> on <code>#fffbeb</code></td><td><code>#fbbf24</code> on <code>#33210a</code></td><td><code>--alert-warning</code></td><td>warnings, restrictive licenses, near-cap</td></tr>
+        <tr><td><code>--danger</code> family</td><td><code>#dc2626</code> on <code>#fef2f2</code></td><td><code>#f87171</code> on <code>#391111</code></td><td><code>--destructive</code> / <code>--alert-danger</code></td><td>failures, over-cap, validation</td></tr>
+        <tr><td><code>--info</code> (on-brand)</td><td><code>--brand-ink</code> on <code>--brand-soft</code></td><td><code>--brand-ink</code> on <code>--brand-soft</code></td><td><code>--accent</code> (<strong>overrides</strong> TrBlazeUI's default blue <code>--alert-info</code>)</td><td>info alerts/banners kept on-brand (e.g. provider-routing notice NFR-06)</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>The brand gradient</strong> is <code>linear-gradient(135deg, var(--brand), var(--brand-2))</code> — because the stops are theme-tuned, light mode gets a refined, luminous violet→fuchsia (brighter than the buttons' old deep magenta, which read heavy on white) and dark mode a luminous violet→fuchsia from the same rule. Glow shadow accompanies it: <code>0 4px 14px rgba(124,58,237,.16)</code> light / <code>0 4px 22px rgba(139,92,246,.38)</code> dark. In the build this is one utility class in the <code>TrStudioUI</code> theme CSS (e.g. <code>.brand-gradient</code>), passed to <code>Button</code>/elements via the <code>Class</code> parameter — never inline styles.</p>
+
+    <p><strong>Solid buttons are brand by default.</strong> The theme's base solid <code>Button</code> IS the brand gradient — there is no monochrome (black/white) solid variant. Secondary actions are <code>Outline</code>, tertiary are <code>Ghost</code>, destructive is <code>--destructive</code>. This is enforced at the theme level so a <code>Button</code> that omits its variant degrades to the brand gradient, never to a raw <code>--primary</code> black/white slab. (<code>--primary</code>'s dark ink is reserved for the neutral <code>primary</code> <strong>badge</strong> only, never buttons.)</p>
+
+    <h3 id="gradient-glow-usage-rules">Gradient &amp; glow usage rules<a class="anchor-link" href="#gradient-glow-usage-rules">#</a></h3>
+
+    <ul>
+      <li><strong>Use on:</strong> the logo mark and user chip; the ACTIVE sidebar item (white text/icon on the pill); ONE primary CTA per card/panel; <code>Progress</code> fills; the active pagination page; persona/preview placeholder art.</li>
+      <li><strong>Never on:</strong> body text, table rows, borders, more than one button in the same action row, or disabled-state emphasis (disabled primaries keep the gradient at reduced opacity).</li>
+      <li><strong>Canvas wash:</strong> the page background layers <code>--wash</code> (a faint brand-tinted radial, top-right) over <code>--bg</code> — ambience only, never behind text at readable contrast cost.</li>
+    </ul>
+
+    <h3 id="control-state-colors-trblazeui-mapping">Control state colors (TrBlazeUI mapping)<a class="anchor-link" href="#control-state-colors-trblazeui-mapping">#</a></h3>
+
+    <p>Interactive states resolve to theme tokens — never hand-picked per control — so every TrBlazeUI control (<code>Button</code>, <code>Input</code>, <code>Select</code>, <code>Switch</code>, <code>Tabs</code>, <code>DataTable</code>, <code>RadioGroup</code>…) reacts identically:</p>
+
+    <table>
+      <thead>
+        <tr><th>State</th><th>Color token</th><th>TrBlazeUI variable</th><th>Applies to</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Focus ring</td><td><code>--brand</code></td><td><code>--ring</code></td><td>inputs, selects, textareas, buttons (2px outline)</td></tr>
+        <tr><td>Selected / active</td><td><code>--brand-soft</code> bg + <code>--brand-ink</code> text</td><td><code>--accent</code> / <code>--accent-foreground</code></td><td>active segmented tab, selected table row, active nav pill (nav pill uses the full gradient)</td></tr>
+        <tr><td>Hover (neutral)</td><td><code>--hover</code></td><td><code>--accent</code> (subtle)</td><td>rows, ghost/outline buttons, nav items</td></tr>
+        <tr><td>Idle icon / placeholder</td><td><code>--muted</code></td><td><code>--muted-foreground</code></td><td>idle <code>LucideIcon</code>, input placeholders, secondary text</td></tr>
+        <tr><td>On (toggle/switch)</td><td><code>--brand</code></td><td><code>--primary</code></td><td><code>Switch</code> track when on</td></tr>
+        <tr><td>Disabled</td><td>reduced opacity of its own token</td><td>—</td><td>disabled primaries keep the gradient at reduced opacity (never a grey slab)</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="typography-shape">Typography &amp; shape<a class="anchor-link" href="#typography-shape">#</a></h3>
+
+    <ul>
+      <li><strong>Face:</strong> <code>"Inter", ui-sans-serif, system-ui, …</code> (system fallback); antialiased.</li>
+      <li><strong>Scale:</strong> page title 22px/700/-0.3px · card title 14px/625 · body 14px · secondary 12.5px · overline labels 11px/600 uppercase +0.6px.</li>
+      <li><strong>Radius:</strong> <code>--radius: 12px</code> (<code>0.75rem</code> for TrBlazeUI's <code>--radius</code>); pills/badges 999px.</li>
+      <li><strong>Elevation:</strong> cards <code>--shadow</code> (1–3px soft); brand CTAs add <code>--glow</code>; no other drop shadows.</li>
+    </ul>
+
+    <h3 id="iconography-lucideicon-map">Iconography (LucideIcon map)<a class="anchor-link" href="#iconography-lucideicon-map">#</a></h3>
+
+    <p>All icons are <strong>TrBlazeUI <code>LucideIcon</code></strong>, <code>Size="16"</code> (15 in the sidebar footer), <code>StrokeWidth="2"</code>, <code>Color="currentColor"</code> — so they inherit text color: <code>--muted-foreground</code> when idle, white inside the active gradient pill, <code>--foreground</code> on hover.</p>
+
+    <table>
+      <thead>
+        <tr><th>Where</th><th>Item</th><th><code>LucideIcon Name</code></th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Creator nav</td><td>Avatar Studio</td><td><code>user</code></td></tr>
+        <tr><td>Creator nav</td><td>Characters</td><td><code>users</code></td></tr>
+        <tr><td>Creator nav</td><td>Image Studio</td><td><code>image</code></td></tr>
+        <tr><td>Creator nav</td><td>Video Studio</td><td><code>video</code></td></tr>
+        <tr><td>Creator nav</td><td>Voice Studio</td><td><code>mic</code></td></tr>
+        <tr><td>Creator nav</td><td>Prompt Studio</td><td><code>message-square-text</code></td></tr>
+        <tr><td>Creator nav</td><td>Gallery</td><td><code>layout-grid</code></td></tr>
+        <tr><td>Creator nav</td><td>Projects</td><td><code>folder</code></td></tr>
+        <tr><td>Creator nav</td><td>Library</td><td><code>book-open</code></td></tr>
+        <tr><td>Creator nav</td><td>Account</td><td><code>circle-user</code></td></tr>
+        <tr><td>Admin nav</td><td>Hardware &amp; Setup</td><td><code>cpu</code></td></tr>
+        <tr><td>Admin nav</td><td>RunPod &amp; Ops</td><td><code>cloud</code></td></tr>
+        <tr><td>Admin nav</td><td>Model Sources</td><td><code>link</code></td></tr>
+        <tr><td>Admin nav</td><td>Model Library</td><td><code>package</code></td></tr>
+        <tr><td>Admin nav</td><td>Registry &amp; Providers</td><td><code>database</code></td></tr>
+        <tr><td>Admin nav</td><td>ComfyUI Import</td><td><code>workflow</code></td></tr>
+        <tr><td>Admin nav</td><td>Content Policy</td><td><code>shield</code></td></tr>
+        <tr><td>Shell</td><td>Theme toggle</td><td><code>moon</code> / <code>sun</code></td></tr>
+        <tr><td>Shell</td><td>Switch app (sidebar footer)</td><td><code>arrow-left-right</code></td></tr>
+        <tr><td>Common actions</td><td>Add / new</td><td><code>plus</code></td></tr>
+        <tr><td>Common actions</td><td>Search</td><td><code>search</code></td></tr>
+        <tr><td>Common actions</td><td>Sign in / register</td><td><code>log-in</code> / <code>user-plus</code></td></tr>
+        <tr><td>Media</td><td>Play / export / locked</td><td><code>play</code> / <code>download</code> / <code>lock</code></td></tr>
+      </tbody>
+    </table>
+
+    <p>Status dots/badges never carry icons of their own color scheme — they use the ok/warn/danger families above; <code>LucideIcon</code> inside them inherits the badge ink.</p>
+
+    <h2 id="screens">Screens<a class="anchor-link" href="#screens">#</a></h2>
+
+    <h3 id="screen-register">Screen: Register<a class="anchor-link" href="#screen-register">#</a></h3>
+
+    <p><strong>Mockup:</strong> <a href="./mockups/register.html">docs/mockups/register.html</a> · <strong>Role(s):</strong> new user · <strong>BRD:</strong> BRD-83 · <strong>REQ:</strong> REQ-UI-002</p>
+
+    <p><strong>Layout (one line):</strong> centered single <code>Card</code> (matches Login); name/email/password/confirm fields; <strong>account-type selector (Creator / Admin)</strong>; create-account button; "already have an account? Sign in" link. Creates the account via the AppManager API.</p>
+
+    <p><strong>Component map:</strong></p>
+
+    <table>
+      <thead>
+        <tr><th>Region</th><th>TrBlazeUI control</th><th>Shows / binds</th><th>States</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Brand</td><td><code>LucideIcon</code> + heading</td><td>"Create your TrStudio account"</td><td>—</td></tr>
+        <tr><td>Name</td><td><code>Field</code> + <code>Input</code></td><td><code>objName</code></td><td>invalid → <code>FieldError</code></td></tr>
+        <tr><td>Email</td><td><code>Field</code> + <code>Input</code> (Email)</td><td><code>objEmail</code></td><td>duplicate → <code>Alert</code> (Danger)</td></tr>
+        <tr><td>Password / confirm</td><td>2× <code>Field</code> + <code>Input</code> (Password)</td><td><code>objPassword</code>, <code>objConfirm</code> (RSA-encrypted)</td><td>mismatch → <code>FieldError</code></td></tr>
+        <tr><td>Account type</td><td><code>RadioGroup</code> or segmented <code>Tabs</code> (Creator / Admin-Operator)</td><td><code>objRole</code> — the AppManager role the account is provisioned with</td><td>hint text explains the difference</td></tr>
+        <tr><td>Submit</td><td><code>Button</code> (brand gradient, Submit)</td><td>"Create account" (→ AppManager API)</td><td>loading → <code>Spinner</code></td></tr>
+        <tr><td>Switch link</td><td><code>Button</code> (Link)</td><td>"Already have an account? Sign in" → <code>/login</code></td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Notes / interactions:</strong> registration is a child-app call to the AppManager API; no local password store. The chosen <strong>account type decides the role</strong> and therefore the BRD-84 landing after sign-up — the mockup demonstrates it: Create account as Creator → <code>/avatar</code>, as Admin → the setup landing. <strong>Empty/loading/error:</strong> disabled until valid; <code>Alert</code> on AppManager error (e.g. email exists).</p>
+
+    <h3 id="screen-login">Screen: Login<a class="anchor-link" href="#screen-login">#</a></h3>
+
+    <p><strong>Mockup:</strong> <a href="./mockups/login.html">docs/mockups/login.html</a> · <strong>Role(s):</strong> all · <strong>BRD:</strong> BRD-57 · <strong>REQ:</strong> REQ-UI-001</p>
+
+    <p><strong>Layout (one line):</strong> centered single <code>Card</code> on a warm canvas; brand mark; email/password fields; primary sign-in button; "via AppManager" note.</p>
+
+    <p><strong>Component map:</strong></p>
+
+    <table>
+      <thead>
+        <tr><th>Region</th><th>TrBlazeUI control</th><th>Shows / binds</th><th>States</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Brand</td><td><code>LucideIcon</code> + heading</td><td>"TrStudio" logo + tagline</td><td>—</td></tr>
+        <tr><td>Email</td><td><code>Field</code> + <code>Input</code> (Email)</td><td><code>objEmail</code></td><td>invalid → <code>FieldError</code></td></tr>
+        <tr><td>Password</td><td><code>Field</code> + <code>Input</code> (Password)</td><td><code>objPassword</code> (RSA-encrypted in transit)</td><td>invalid → <code>FieldError</code></td></tr>
+        <tr><td>Submit</td><td><code>Button</code> (primary, Submit)</td><td>sign in</td><td>loading → <code>Spinner</code></td></tr>
+        <tr><td>Auth note</td><td><code>TypographyMuted</code></td><td>"Authenticated via AppManager"</td><td>error → <code>Alert</code> (Danger)</td></tr>
+        <tr><td>Register link</td><td><code>Button</code> (Link)</td><td>"Create an account" → <code>/register</code></td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Notes / interactions:</strong> no local password store; the generic superadmin <code>admin@appmanager.local</code> signs in here too. <strong>Login has no role selector</strong> — the role comes from the AppManager account; on success the user is routed to their <strong>role-based default landing page (BRD-84)</strong> (Owner/Creator → <code>/avatar</code>, Operator/Admin → <code>/admin/ops</code>, or into the first-run setup gate BRD-85). The mockup's Sign-in demonstrates the owner path (redirects to <code>/avatar</code>); the role-specific landings are demonstrated on the Register screen's account-type selector. "Forgot password?" links to the Forgot-password screen. <strong>Empty/loading/error:</strong> disabled button until both fields valid; <code>Alert</code> on auth failure.</p>
+
+    <h3 id="screen-forgot-password">Screen: Forgot password<a class="anchor-link" href="#screen-forgot-password">#</a></h3>
+
+    <p><strong>Mockup:</strong> <a href="./mockups/forgot-password.html">docs/mockups/forgot-password.html</a> · <strong>Role(s):</strong> all · <strong>BRD:</strong> BRD-57 · <strong>REQ:</strong> REQ-UI-003</p>
+
+    <p><strong>Layout (one line):</strong> centered single <code>Card</code> (matches Login); email field + "Send reset link"; AppManager note; back-to-login link.</p>
+
+    <p><strong>Component map:</strong></p>
+
+    <table>
+      <thead>
+        <tr><th>Region</th><th>TrBlazeUI control</th><th>Shows / binds</th><th>States</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Brand</td><td><code>LucideIcon</code> + heading</td><td>"Reset your password"</td><td>—</td></tr>
+        <tr><td>Email</td><td><code>Field</code> + <code>Input</code> (Email)</td><td><code>objEmail</code></td><td>invalid → <code>FieldError</code></td></tr>
+        <tr><td>Submit</td><td><code>Button</code> (primary, Submit)</td><td>"Send reset link" (→ AppManager API)</td><td>loading → <code>Spinner</code>; sent → <code>Alert</code> (Success)</td></tr>
+        <tr><td>AppManager note</td><td><code>TypographyMuted</code></td><td>reset completes through AppManager; TrStudio never stores passwords</td><td>—</td></tr>
+        <tr><td>Back link</td><td><code>Button</code> (Link)</td><td>"← Back to sign in" → <code>/login</code></td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Notes / interactions:</strong> the reset itself is an AppManager flow (child-app API); this screen only requests it and confirms. <strong>Empty/loading/error:</strong> disabled until a valid email; confirmation <code>Alert</code> after submit.</p>
+
+    <h3 id="screen-setup-required-first-run-gate">Screen: Setup required (first-run gate)<a class="anchor-link" href="#screen-setup-required-first-run-gate">#</a></h3>
+
+    <p><strong>Mockup:</strong> <a href="./mockups/setup-required.html">docs/mockups/setup-required.html</a> · <strong>Role(s):</strong> Creator (pre-setup) · <strong>BRD:</strong> BRD-85 · <strong>REQ:</strong> REQ-UI-004</p>
+
+    <p><strong>Layout (one line):</strong> centered <code>Card</code> (no sidebar — the creator has no usable nav yet): headline "TrStudio isn't set up yet", ask-your-admin copy, sign-in-as-admin CTA + re-check button, 3-step admin hint.</p>
+
+    <p><strong>Component map:</strong></p>
+
+    <table>
+      <thead>
+        <tr><th>Region</th><th>TrBlazeUI control</th><th>Shows / binds</th><th>States</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Status</td><td><code>Badge</code></td><td>"Waiting for admin setup"</td><td>—</td></tr>
+        <tr><td>Message</td><td>heading + <code>TypographyMuted</code></td><td>no model sources / models configured; ask your admin or sign in as an admin</td><td>—</td></tr>
+        <tr><td>Actions</td><td><code>Button</code> (primary) + <code>Button</code> (outline)</td><td>"Sign in as admin" → <code>/login</code>; "Check again" re-runs the gate</td><td>checking → <code>Spinner</code></td></tr>
+        <tr><td>Admin steps hint</td><td><code>Card</code> + numbered list</td><td>enable a source → install a model → registry row</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Notes / interactions:</strong> shown to Creators whenever the BRD-85 gate fails (no enabled source or no ready registry model); admins are never sent here — they are routed into guided setup instead. <strong>Empty/loading/error:</strong> this screen IS the empty state; "Check again" re-evaluates and forwards to <code>/avatar</code> once setup completes.</p>
+
+    <h3 id="screen-avatar-studio">Screen: Avatar studio<a class="anchor-link" href="#screen-avatar-studio">#</a></h3>
+
+    <p><strong>Mockup:</strong> <a href="./mockups/avatar-studio.html">docs/mockups/avatar-studio.html</a> · <strong>Role(s):</strong> Creator/Owner · <strong>BRD:</strong> BRD-27..33, BRD-30, BRD-53, BRD-55, BRD-63 · <strong>REQ:</strong> REQ-UI-010</p>
+
+    <p><strong>Layout (one line):</strong> three-column working surface — left: character + voice pickers; center: script editor + preview player; right: tier selector + job/cost panel.</p>
+
+    <p><strong>Component map:</strong></p>
+
+    <table>
+      <thead>
+        <tr><th>Region</th><th>TrBlazeUI control</th><th>Shows / binds</th><th>States</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Sidebar nav</td><td><code>Sidebar</code> + <code>SidebarMenu</code></td><td>Avatar / Characters / Image / Video / Voice · Gallery / Projects / Account</td><td>active item highlighted</td></tr>
+        <tr><td>Character picker</td><td><code>Card</code> + <code>Avatar</code> + <code>Button</code> ("Change")</td><td>selected Character thumbnail + name + realism <code>Badge</code></td><td>empty → <code>Empty</code> "create a character"</td></tr>
+        <tr><td>Voice picker</td><td><code>Select</code> + <code>Button</code> ("Generate voice")</td><td>chosen voice + language (EN/HI)</td><td>generating → <code>Spinner</code></td></tr>
+        <tr><td>Script editor</td><td><code>Textarea</code> + script-assist <code>Button</code></td><td><code>objScript</code> (EN/HI)</td><td>assist → TechieRag suggestion inline</td></tr>
+        <tr><td>Preview</td><td>video player <code>Card</code></td><td>rendered clip / placeholder</td><td>loading → <code>Skeleton</code>; rendering → <code>Progress</code></td></tr>
+        <tr><td>Tier selector</td><td><code>RadioGroup</code> (Fast/High/Premium)</td><td><code>objTier</code> + per-tier cost/eta hint</td><td>Premium → <code>Badge</code> "HeyGen"</td></tr>
+        <tr><td>Provider banner</td><td><code>Alert</code> (Info)</td><td>"Routed to HeyGen (closed API)" when Premium</td><td>hidden for local</td></tr>
+        <tr><td>Job panel</td><td><code>Card</code> + <code>Button</code> ("Render") + cost estimate</td><td>estimate before run</td><td>over cap → <code>Alert</code> (Warning)</td></tr>
+        <tr><td>Captions / export</td><td><code>Switch</code> (captions) + <code>Select</code> (aspect) + <code>Button</code> ("Export MP4")</td><td>EN/HI captions, 9:16/1:1/16:9</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Notes / interactions:</strong> the tier selector swaps the provider underneath (Fast=Mac, High=RunPod, Premium=HeyGen); cost estimate shown before render; provenance stamped on export. <strong>Empty/loading/error:</strong> character empty-state; render <code>Progress</code> with live eta; <code>Alert</code> on safety block.</p>
+
+    <h3 id="screen-character-library">Screen: Character library<a class="anchor-link" href="#screen-character-library">#</a></h3>
+
+    <p><strong>Mockup:</strong> <a href="./mockups/character-library.html">docs/mockups/character-library.html</a> · <strong>Role(s):</strong> Creator · <strong>BRD:</strong> BRD-27, BRD-55 · <strong>REQ:</strong> REQ-UI-011</p>
+
+    <p><strong>Layout (one line):</strong> responsive grid of character <code>Card</code>s with a "New Character" action; each card shows the locked identity reference + realism badge.</p>
+
+    <p><strong>Component map:</strong></p>
+
+    <table>
+      <thead>
+        <tr><th>Region</th><th>TrBlazeUI control</th><th>Shows / binds</th><th>States</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Toolbar</td><td><code>Button</code> ("New Character") + <code>Input</code> (search)</td><td>filter</td><td>—</td></tr>
+        <tr><td>Character grid</td><td>grid of <code>Card</code> + <code>Avatar</code> + <code>Badge</code></td><td>name, photoreal/stylized badge, reference set</td><td>empty → <code>Empty</code></td></tr>
+        <tr><td>New / edit</td><td><code>Dialog</code></td><td>image-gen prompt, realism <code>RadioGroup</code>, seed/LoRA lock</td><td>saving → <code>Spinner</code></td></tr>
+        <tr><td>Character bible</td><td><code>Sheet</code> (right)</td><td>RAG persona voice/wording notes (TechieRag/PgVector)</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Notes / interactions:</strong> identity lock = reference set + seed/embedding (+ optional LoRA); realism flag scopes model + safety class. <strong>Empty/loading/error:</strong> empty-state CTA; skeleton cards while loading.</p>
+
+    <h3 id="screen-image-studio">Screen: Image studio<a class="anchor-link" href="#screen-image-studio">#</a></h3>
+
+    <p><strong>Mockup:</strong> <a href="./mockups/image-studio.html">docs/mockups/image-studio.html</a> · <strong>Role(s):</strong> Creator · <strong>BRD:</strong> BRD-16..21 · <strong>REQ:</strong> REQ-UI-020</p>
+
+    <p><strong>Layout (one line):</strong> left prompt+params panel (dynamic from registry schema); center canvas (generate / I2I / inpaint mask); right results strip with seed grid.</p>
+
+    <p><strong>Component map:</strong></p>
+
+    <table>
+      <thead>
+        <tr><th>Region</th><th>TrBlazeUI control</th><th>Shows / binds</th><th>States</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Model + params</td><td><code>Select</code> (model) + dynamic <code>Field</code>s (<code>Input</code>/<code>Slider</code>/<code>Switch</code>)</td><td>registry params schema</td><td>schema-driven render</td></tr>
+        <tr><td>Prompt composer</td><td><code>Textarea</code> + <code>Button</code> ("Generate")</td><td><code>objPrompt</code></td><td>generating → <code>Progress</code></td></tr>
+        <tr><td>Canvas</td><td><code>Card</code> + tool <code>Toolbar</code> (mask/inpaint)</td><td>image + mask layer</td><td>empty → placeholder</td></tr>
+        <tr><td>Conditioning</td><td><code>Tabs</code> (ControlNet: pose/depth/edges) + <code>FileUpload</code></td><td>reference image</td><td>—</td></tr>
+        <tr><td>Upscale</td><td><code>Button</code> ("Upscale 2K/4K")</td><td>face-restore</td><td>processing → <code>Spinner</code></td></tr>
+        <tr><td>Results</td><td>grid of <code>Card</code> + seed <code>Badge</code></td><td>batch/grid variations</td><td>reproduce via seed</td></tr>
+        <tr><td>Export</td><td><code>Select</code> (1:1/4:5/9:16/16:9) + <code>Switch</code> (bg-remove) + <code>Button</code></td><td>preset export</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Notes / interactions:</strong> params auto-render from the registry schema (NFR-09); seed shown for reproducibility. <strong>Empty/loading/error:</strong> canvas placeholder; per-tile skeletons.</p>
+
+    <h3 id="screen-voice-studio">Screen: Voice studio<a class="anchor-link" href="#screen-voice-studio">#</a></h3>
+
+    <p><strong>Mockup:</strong> <a href="./mockups/voice-studio.html">docs/mockups/voice-studio.html</a> · <strong>Role(s):</strong> Creator · <strong>BRD:</strong> BRD-22..26, BRD-62 · <strong>REQ:</strong> REQ-UI-030</p>
+
+    <p><strong>Layout (one line):</strong> top text+language controls; center voice list + waveform player; a clone panel with a consent gate for real people.</p>
+
+    <p><strong>Component map:</strong></p>
+
+    <table>
+      <thead>
+        <tr><th>Region</th><th>TrBlazeUI control</th><th>Shows / binds</th><th>States</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Text + language</td><td><code>Textarea</code> + <code>Select</code> (EN/HI/Hinglish)</td><td><code>objText</code>, <code>objLang</code></td><td>—</td></tr>
+        <tr><td>Voice picker</td><td><code>Combobox</code> (preset voices)</td><td>routed model hidden behind one control</td><td>—</td></tr>
+        <tr><td>Controls</td><td><code>Slider</code> (speed) + <code>Select</code> (emotion/style)</td><td>emotion/speed</td><td>disabled if unsupported</td></tr>
+        <tr><td>Player</td><td><code>Card</code> + waveform + <code>Button</code> ("Play")</td><td>generated audio</td><td>generating → <code>Progress</code></td></tr>
+        <tr><td>Clone panel</td><td><code>Dialog</code> + <code>FileUpload</code> (sample)</td><td>clone from sample</td><td>real-person → consent gate</td></tr>
+        <tr><td>Consent gate</td><td><code>AlertDialog</code> + <code>Checkbox</code></td><td>recorded consent (evidence)</td><td>blocks until confirmed</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Notes / interactions:</strong> synthetic/preset voices need no gate; real-person clone requires recorded consent (BRD-62). <strong>Empty/loading/error:</strong> <code>Alert</code> if consent missing; spinner while synthesizing.</p>
+
+    <h3 id="screen-video-studio">Screen: Video studio<a class="anchor-link" href="#screen-video-studio">#</a></h3>
+
+    <p><strong>Mockup:</strong> <a href="./mockups/video-studio.html">docs/mockups/video-studio.html</a> · <strong>Role(s):</strong> Creator · <strong>BRD:</strong> BRD-42..46, BRD-30 · <strong>REQ:</strong> REQ-UI-040</p>
+
+    <p><strong>Layout (one line):</strong> left I2V/T2V controls + tier selector; center timeline/editor; right export panel.</p>
+
+    <p><strong>Component map:</strong></p>
+
+    <table>
+      <thead>
+        <tr><th>Region</th><th>TrBlazeUI control</th><th>Shows / binds</th><th>States</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Mode</td><td><code>Tabs</code> (Image→Video / Text→Video)</td><td><code>objMode</code></td><td>—</td></tr>
+        <tr><td>Controls</td><td><code>Slider</code> (duration/motion) + <code>Select</code> (aspect) + <code>FileUpload</code> (first/last frame)</td><td>conditioning</td><td>—</td></tr>
+        <tr><td>Tier selector</td><td><code>RadioGroup</code> (Fast/High/Premium)</td><td><code>objTier</code></td><td>closed-API → <code>Alert</code></td></tr>
+        <tr><td>Timeline / editor</td><td><code>Card</code> + <code>Toolbar</code> (trim/join/reframe)</td><td>clip segments + audio track</td><td>empty → placeholder</td></tr>
+        <tr><td>Post</td><td><code>Switch</code> (interpolate) + <code>Button</code> ("Upscale")</td><td>RIFE/FILM + upscale</td><td>processing → <code>Progress</code></td></tr>
+        <tr><td>Export</td><td><code>Button</code> ("Export MP4")</td><td>platform format</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Notes / interactions:</strong> add audio from Voice studio; stitching for longer sequences. <strong>Empty/loading/error:</strong> timeline placeholder; render progress with eta.</p>
+
+    <h3 id="screen-prompt-studio">Screen: Prompt studio<a class="anchor-link" href="#screen-prompt-studio">#</a></h3>
+
+    <p><em>Added 2026-07-07 (F-PROMPT amendment).</em></p>
+
+    <p><strong>Mockup:</strong> <a href="./mockups/prompt-studio.html">docs/mockups/prompt-studio.html</a> · <strong>Role(s):</strong> Creator · <strong>BRD:</strong> BRD-88, BRD-89, BRD-90, BRD-91, BRD-92 · <strong>REQ:</strong> REQ-UI-081, REQ-UI-082</p>
+
+    <p><strong>Layout (one line):</strong> left session rail ("New chat" CTA + per-user session cards with delete); right chat <code>Card</code> — header (registry-driven LLM <code>Select</code> + vision <code>Badge</code> + session token <code>Badge</code>), message thread (user bubbles with optional image-attachment chip; assistant bubbles with a monospace crafted-prompt block + Copy / Save to Library / Send to Studio actions), composer (attach <code>iconbtn</code> + <code>Textarea</code> + Send).</p>
+
+    <p><strong>Component map:</strong></p>
+
+    <table>
+      <thead>
+        <tr><th>Region</th><th>TrBlazeUI control</th><th>Shows / binds</th><th>States</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Session rail</td><td><code>Button</code> (brand, "New chat") + list of <code>Card</code>s (title, model, date, delete icon)</td><td>per-user <code>PromptChatSession</code> list (BRD-81, BRD-91)</td><td>active session highlighted (<code>--brand-soft</code>); empty → <code>Empty</code> with "New chat" CTA</td></tr>
+        <tr><td>LLM picker</td><td><code>Select</code>/<code>Combobox</code> over registry <code>text-chat</code> rows</td><td>picked LLM (BRD-89)</td><td>vision-capable → ok <code>Badge</code>; text-only → warn <code>Badge</code></td></tr>
+        <tr><td>Vision gate</td><td><code>Badge</code> (ok/warn) + attach <code>Button</code> (Icon) enable/disable</td><td><code>visionCapable</code> from the registry row (BRD-90)</td><td>non-vision → attach disabled + hint text</td></tr>
+        <tr><td>Thread</td><td>chat bubbles (user = brand gradient, assistant = muted <code>Card</code>)</td><td>session message history</td><td>assistant pending → typing <code>Spinner</code>/dots; API down → <code>Alert</code> (Danger)</td></tr>
+        <tr><td>Attachment chip</td><td>thumbnail chip inside the user bubble</td><td>attached image name/size</td><td>—</td></tr>
+        <tr><td>Crafted-prompt block</td><td>bordered monospace block inside the assistant bubble</td><td>the reusable prompt text</td><td>—</td></tr>
+        <tr><td>Prompt-use actions</td><td><code>Button</code> (Outline "Copy", Outline "Save to Library", brand "Send to Image/Avatar/Video Studio")</td><td>copy / BRD-50 preset save / studio prompt-field handoff (BRD-92)</td><td>save/send → <code>Toast</code> confirmation</td></tr>
+        <tr><td>Composer</td><td><code>Textarea</code> + attach <code>Button</code> (Icon) + <code>Button</code> (brand, "Send")</td><td>new message</td><td>send disabled while empty/pending</td></tr>
+        <tr><td>Token usage</td><td><code>Badge</code> (topbar month total + chat-header session total)</td><td>BRD-56 token tracking</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Notes / interactions:</strong> the picker lists ONLY registry rows with <code>task: "text-chat"</code> (managed on Admin — Registry, REQ-FN-074); switching to a non-vision model disables the attach control with a hint rather than failing on send; sessions are owner-scoped server-side (BRD-81) with rename/delete; "Send to Studio" pre-fills the target studio's prompt composer like the Library's "Use in Studio" (BRD-50/92). This chat is advisory text only — no generation job, no tier selector, no provider-routing banner. <strong>Empty/loading/error:</strong> new-session empty thread shows a "what to ask" hint; assistant typing indicator while awaiting the LLM; "LLM not configured / unreachable" renders as a clean <code>Alert</code> in-thread (mirrors REQ-RAG-001 degradation).</p>
+
+    <h3 id="screen-gallery">Screen: Gallery<a class="anchor-link" href="#screen-gallery">#</a></h3>
+
+    <p><strong>Mockup:</strong> <a href="./mockups/gallery.html">docs/mockups/gallery.html</a> · <strong>Role(s):</strong> Creator · <strong>BRD:</strong> BRD-47, BRD-48, BRD-49, BRD-51, BRD-81 · <strong>REQ:</strong> REQ-UI-050</p>
+
+    <p><strong>Layout (one line):</strong> filter bar; masonry/grid of asset <code>Card</code>s; detail <code>Sheet</code> with full params + reproduce; bulk-export toolbar.</p>
+
+    <p><strong>Component map:</strong></p>
+
+    <table>
+      <thead>
+        <tr><th>Region</th><th>TrBlazeUI control</th><th>Shows / binds</th><th>States</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Filter bar</td><td><code>Input</code> (search) + <code>Select</code> (type/model/project) + <code>Badge</code>s</td><td>filters</td><td>—</td></tr>
+        <tr><td>Asset grid</td><td>grid of <code>Card</code> (image/video thumb) + provenance <code>Badge</code></td><td>every output, reusable as input</td><td>empty → <code>Empty</code></td></tr>
+        <tr><td>Detail</td><td><code>Sheet</code> (right)</td><td>full params + one-click reproduce <code>Button</code></td><td>—</td></tr>
+        <tr><td>Compare</td><td><code>Button</code> → comparison view</td><td>side-by-side across seeds/providers</td><td>—</td></tr>
+        <tr><td>Bulk export</td><td><code>Toolbar</code> + <code>Button</code> ("Export selected")</td><td>provenance metadata included</td><td>selection count <code>Badge</code></td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Notes / interactions:</strong> <strong>per-user only (BRD-81)</strong> — the gallery shows only the signed-in user's own assets (server-side owner filter on <code>userId</code>); the header reads "My Library" to make ownership explicit. Any asset reusable as a new input; one-click reproduce from history. <strong>Empty/loading/error:</strong> empty-state; skeleton tiles.</p>
+
+    <h3 id="screen-projects">Screen: Projects<a class="anchor-link" href="#screen-projects">#</a></h3>
+
+    <p><strong>Mockup:</strong> <a href="./mockups/projects.html">docs/mockups/projects.html</a> · <strong>Role(s):</strong> Creator · <strong>BRD:</strong> BRD-48, BRD-81 · <strong>REQ:</strong> REQ-UI-051</p>
+
+    <p><strong>Layout (one line):</strong> left: searchable project list (<code>Card</code>s with asset counts + updated dates) with a create CTA; right: selected-project detail — generation-history table with per-row one-click reproduce, plus a full run-parameters panel.</p>
+
+    <p><strong>Component map:</strong></p>
+
+    <table>
+      <thead>
+        <tr><th>Region</th><th>TrBlazeUI control</th><th>Shows / binds</th><th>States</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Project list</td><td><code>Card</code> list + <code>Input</code> (search) + <code>Button</code> ("New project")</td><td>name, asset count, updated date</td><td>empty → <code>Empty</code> "create a project"</td></tr>
+        <tr><td>Project header</td><td><code>Card</code> + <code>Badge</code>s + <code>Button</code>s (Open in Gallery / Rename / Archive)</td><td>selected project meta</td><td>—</td></tr>
+        <tr><td>Generation history</td><td><code>DataTable</code> + <code>Tabs</code> (All/Images/Video/Voice)</td><td>asset, model, provider·tier, seed, date, per-row "Reproduce" <code>Button</code></td><td>empty → message</td></tr>
+        <tr><td>Run parameters</td><td><code>Card</code> + <code>Badge</code> (run id)</td><td>full parameter set of the selected run (prompt, character, model, tier, seed, resolution, voice, cost, C2PA provenance) + "Reproduce with these params" <code>Button</code></td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Notes / interactions:</strong> every run stores its complete parameter set, so any result reproduces in one click even after prompt tweaks (BRD-48); per-user scoped like the gallery (BRD-81). <strong>Empty/loading/error:</strong> empty project list CTA; history empty message.</p>
+
+    <h3 id="screen-comparison">Screen: Comparison<a class="anchor-link" href="#screen-comparison">#</a></h3>
+
+    <p><strong>Mockup:</strong> <a href="./mockups/compare.html">docs/mockups/compare.html</a> · <strong>Role(s):</strong> Creator · <strong>BRD:</strong> BRD-49 · <strong>REQ:</strong> REQ-UI-052</p>
+
+    <p><strong>Layout (one line):</strong> slot toolbar (A/B asset pickers, "Add third", side-by-side/overlay toggle, sync-playback switch); two result panes side-by-side (preview + provider/tier/seed badges + cost/duration/resolution); a parameter table below with <strong>differing rows highlighted</strong> and identical rows collapsible. No sidebar item — reached from the Gallery's Compare action; breadcrumb <code>Gallery / Compare</code>.</p>
+
+    <p><strong>Component map:</strong></p>
+
+    <table>
+      <thead>
+        <tr><th>Region</th><th>TrBlazeUI control</th><th>Shows / binds</th><th>States</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Slot pickers</td><td>2× <code>Select</code>/<code>Combobox</code> + <code>Button</code> (outline, "Add third")</td><td>the assets under comparison (from Gallery selection or picked here)</td><td>&lt;2 picked → <code>Empty</code> state</td></tr>
+        <tr><td>View mode</td><td>segmented <code>Tabs</code> (Side-by-side / Overlay) + <code>Switch</code> (sync playback)</td><td><code>objViewMode</code>, synced scrub for videos</td><td>—</td></tr>
+        <tr><td>Result panes</td><td>2..3× <code>Card</code> + media preview + <code>Badge</code>s (model, provider·tier, seed, provenance)</td><td>per-asset cost / render duration / resolution rows</td><td>video → play control</td></tr>
+        <tr><td>Pane actions</td><td><code>Button</code> (Ghost): Reproduce / Export / Open in Gallery</td><td>per-asset actions</td><td>reproduce → job submit</td></tr>
+        <tr><td>Parameter diff</td><td><code>DataTable</code> — one row per param, differing rows highlighted (<code>--accent</code> selected style) + "N differ" <code>Badge</code></td><td>model, provider·tier, seed, prompt/script, resolution, cost…; identical rows span both columns</td><td><code>Switch</code> "show identical rows"</td></tr>
+        <tr><td>Verdict hint</td><td><code>Alert</code> (Info, on-brand)</td><td>what differs in one sentence</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Notes / interactions:</strong> comparison is across models/seeds/providers of the <em>same</em> creative intent (BRD-49) — same-seed different-model is the headline case; per-user scoped (BRD-81). <strong>Empty/loading/error:</strong> empty state ("select two assets in the Gallery") with a Go-to-Gallery CTA; per-pane skeleton while assets load.</p>
+
+    <h3 id="screen-library">Screen: Library<a class="anchor-link" href="#screen-library">#</a></h3>
+
+    <p><strong>Mockup:</strong> <a href="./mockups/library.html">docs/mockups/library.html</a> · <strong>Role(s):</strong> Creator · <strong>BRD:</strong> BRD-50, BRD-81 · <strong>REQ:</strong> REQ-UI-053</p>
+
+    <p><strong>Layout (one line):</strong> toolbar (search + type segmented <code>Tabs</code>: All / Prompts / Scripts / Style presets / Voice presets + "New preset" CTA); responsive grid of preset <code>Card</code>s — type tag, title, snippet/param summary, tag badges, "Use in {Studio}" + Edit actions and a use-count; empty state.</p>
+
+    <p><strong>Component map:</strong></p>
+
+    <table>
+      <thead>
+        <tr><th>Region</th><th>TrBlazeUI control</th><th>Shows / binds</th><th>States</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Toolbar</td><td><code>Input</code> (search) + segmented <code>Tabs</code> (type filter) + <code>Button</code> (brand, "New preset")</td><td>filter + create</td><td>—</td></tr>
+        <tr><td>Preset grid</td><td>grid of <code>Card</code> + type <code>Badge</code> (PROMPT/SCRIPT/STYLE/VOICE) + tag <code>Badge</code>s</td><td>title, clamped snippet or param summary, use-count</td><td>empty → <code>Empty</code></td></tr>
+        <tr><td>Prompt/script snippet</td><td>quoted text block (muted)</td><td>the reusable text, 3-line clamp</td><td>—</td></tr>
+        <tr><td>Style preset summary</td><td>text row</td><td>model + key params (guidance/steps/aspect/LUT) it locks</td><td>—</td></tr>
+        <tr><td>Voice preset row</td><td>waveform glyph + <code>Badge</code>s (language, preset-voice, consent state)</td><td>routed voice + speed/emotion</td><td>preset voices → "no consent needed" <code>Badge</code></td></tr>
+        <tr><td>Card actions</td><td><code>Button</code> (Ghost): "Use in {Image/Avatar/Voice} Studio" / Edit</td><td>inserts the preset into the owning studio's composer</td><td>—</td></tr>
+        <tr><td>New / edit</td><td><code>Sheet</code> (right)</td><td>name, type <code>Select</code>, content <code>Textarea</code>/params, tags</td><td>saving → <code>Spinner</code></td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Notes / interactions:</strong> "Use in Studio" routes to the studio whose composer the preset targets and pre-fills it (BRD-50); presets are per-user (BRD-81); voice presets reference Voice-studio voices — real-person cloned voices keep their consent linkage (BRD-62). <strong>Empty/loading/error:</strong> empty-state CTA pointing at the studio composers; skeleton cards while loading.</p>
+
+    <h3 id="screen-account-spend">Screen: Account &amp; spend<a class="anchor-link" href="#screen-account-spend">#</a></h3>
+
+    <p><strong>Mockup:</strong> <a href="./mockups/account.html">docs/mockups/account.html</a> · <strong>Role(s):</strong> Creator · <strong>BRD:</strong> BRD-52, BRD-58, BRD-59, BRD-75 · <strong>REQ:</strong> REQ-UI-060</p>
+
+    <p><strong>Layout (one line):</strong> profile card (from AppManager); spend KPI cards (RunPod / closed-API / total vs cap); license/tier card; usage table.</p>
+
+    <p><strong>Component map:</strong></p>
+
+    <table>
+      <thead>
+        <tr><th>Region</th><th>TrBlazeUI control</th><th>Shows / binds</th><th>States</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Profile</td><td><code>Card</code> + <code>Avatar</code></td><td>name/email (AppManager <code>userId</code>)</td><td>—</td></tr>
+        <tr><td>Spend KPIs</td><td>3× <code>Card</code> + <code>Progress</code></td><td>RunPod $, closed-API $, total vs monthly cap</td><td>over cap → <code>Progress</code> danger</td></tr>
+        <tr><td>License</td><td><code>Card</code> + <code>Badge</code></td><td>subscription/tier from AppManager LicenseSvc</td><td>gated → upgrade <code>Button</code></td></tr>
+        <tr><td>Usage table</td><td><code>DataTable</code></td><td>recent jobs (model/cost/duration/outcome)</td><td>empty → message</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Notes / interactions:</strong> license/billing read-only from AppManager; spend tracks RunPod + closed APIs against the cap. <strong>Empty/loading/error:</strong> skeleton KPIs; empty usage message.</p>
+
+    <h3 id="screen-admin-hardware-setup">Screen: Admin — Hardware &amp; setup<a class="anchor-link" href="#screen-admin-hardware-setup">#</a></h3>
+
+    <p><strong>Mockup:</strong> <a href="./mockups/admin-hardware.html">docs/mockups/admin-hardware.html</a> · <strong>Role(s):</strong> Operator/Admin · <strong>BRD:</strong> BRD-8, BRD-9, BRD-10 · <strong>REQ:</strong> REQ-UI-070</p>
+
+    <p><strong>Layout (one line):</strong> readiness summary cards (GPU cores / unified memory / MPS-CoreML / disk); a guided-setup stepper; disk alert links to the Model Library screen for installs.</p>
+
+    <p><strong>Component map:</strong></p>
+
+    <table>
+      <thead>
+        <tr><th>Region</th><th>TrBlazeUI control</th><th>Shows / binds</th><th>States</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Admin sidebar</td><td><code>Sidebar</code></td><td>Hardware &amp; Setup / RunPod &amp; Ops · Model Sources / Model Library / Registry &amp; Providers / ComfyUI Import · Content Policy</td><td>active highlighted</td></tr>
+        <tr><td>Readiness</td><td>4× <code>Card</code> + <code>Badge</code> (ready/warn)</td><td>detected capabilities</td><td>detecting → <code>Skeleton</code></td></tr>
+        <tr><td>Guided setup</td><td><code>Card</code> + steps + <code>Button</code>s</td><td>ONNX install, isolated Python+ComfyUI provision</td><td>running → <code>Progress</code></td></tr>
+        <tr><td>Disk / install hand-off</td><td><code>Alert</code> (Warning) + link</td><td>low-disk warning; installs happen on the <strong>Model Library</strong> screen</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Notes / interactions:</strong> isolated env never collides with system Python; big models → network volume. <strong>Empty/loading/error:</strong> skeletons while detecting; <code>Alert</code> on install failure.</p>
+
+    <h3 id="screen-admin-model-sources">Screen: Admin — Model Sources<a class="anchor-link" href="#screen-admin-model-sources">#</a></h3>
+
+    <p><strong>Mockup:</strong> <a href="./mockups/admin-sources.html">docs/mockups/admin-sources.html</a> · <strong>Role(s):</strong> Operator/Admin · <strong>BRD:</strong> BRD-82 · <strong>REQ:</strong> REQ-UI-074</p>
+
+    <p><strong>Layout (one line):</strong> a sources-list card whose header row carries the search input and the <strong>"＋ Add source"</strong> button (the topbar holds only crumbs + theme toggle + user chip); clicking Add source slides in the add/edit panel beside the list; this is what the Model Library browses/installs from.</p>
+
+    <p><strong>Component map:</strong></p>
+
+    <table>
+      <thead>
+        <tr><th>Region</th><th>TrBlazeUI control</th><th>Shows / binds</th><th>States</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Sources list</td><td><code>DataTable</code> or <code>Card</code> list — header row: title + <code>Input</code> (search) + <code>Button</code> ("＋ Add source")</td><td>name, type (HuggingFace/Civitai/Custom), base URL, enabled <code>Switch</code>, status <code>Badge</code></td><td>empty → <code>Empty</code> "add a source"</td></tr>
+        <tr><td>Add / edit source</td><td><code>Sheet</code> (opened by "＋ Add source"; hidden until then; Cancel closes)</td><td>name, type <code>Select</code>, base URL <code>Input</code>, API token <code>Input</code> (Password), <code>Switch</code> (enabled)</td><td>testing → <code>Spinner</code>; bad URL/token → <code>Alert</code></td></tr>
+        <tr><td>Test connection</td><td><code>Button</code> ("Test")</td><td>validates the source reachable/authorized</td><td>ok → <code>Badge</code> (ok); fail → <code>Alert</code></td></tr>
+        <tr><td>Note</td><td><code>Alert</code> (Info)</td><td>"Sources supply open model <em>files</em>; closed-API generation keys live under Providers"</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Notes / interactions:</strong> distinct from Provider config (which holds HeyGen/aggregator <em>generation</em> keys). Tokens stored encrypted; never logged. <strong>Empty/loading/error:</strong> empty-state CTA; <code>Alert</code> on unreachable source.</p>
+
+    <h3 id="screen-admin-model-library">Screen: Admin — Model Library<a class="anchor-link" href="#screen-admin-model-library">#</a></h3>
+
+    <p><strong>Mockup:</strong> <a href="./mockups/admin-models.html">docs/mockups/admin-models.html</a> · <strong>Role(s):</strong> Operator/Admin · <strong>BRD:</strong> BRD-11, BRD-82 · <strong>REQ:</strong> REQ-UI-076</p>
+
+    <p><strong>Layout (one line):</strong> search + task/source filters over a model results table (size/VRAM/license per row, one-click install); right rail with the resumable install queue and a destination (local vs RunPod network volume) card.</p>
+
+    <p><strong>Component map:</strong></p>
+
+    <table>
+      <thead>
+        <tr><th>Region</th><th>TrBlazeUI control</th><th>Shows / binds</th><th>States</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Filters</td><td><code>Input</code> (search) + <code>Tabs</code> (All/Image/Video/Avatar/Voice) + <code>Select</code> (source)</td><td>browse the ENABLED sources (Hugging Face, Civitai)</td><td>no sources enabled → <code>Empty</code> → link to Model Sources</td></tr>
+        <tr><td>Results table</td><td><code>DataTable</code> + license <code>Badge</code> + <code>Button</code> ("Install")</td><td>name, source, task, size, min VRAM, license (restrictive → warn badge)</td><td>installed → ok <code>Badge</code></td></tr>
+        <tr><td>Pagination</td><td><code>Pagination</code> (footer under the table)</td><td>"Showing 1–8 of 42 models" + Prev / page numbers / Next</td><td>active page highlighted</td></tr>
+        <tr><td>Install queue</td><td><code>Card</code> + <code>Progress</code> + <code>Button</code>s (Pause/Resume/Cancel)</td><td>resumable downloads with speed + destination</td><td>paused → warn <code>Badge</code>; done → ok</td></tr>
+        <tr><td>Destination</td><td><code>Card</code> + note</td><td>local disk vs RunPod network volume free space; &gt;10 GB defaults to volume</td><td>over free disk → <code>Alert</code> (Warning)</td></tr>
+        <tr><td>Registry hand-off</td><td><code>Alert</code> (Info)</td><td>installed models still need a Registry row before creators see them</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Notes / interactions:</strong> browses/installs only from sources enabled on the <strong>Model Sources</strong> screen (BRD-82); downloads are resumable with size/VRAM/licence shown before install (BRD-11); big models default to the RunPod network volume. <strong>Empty/loading/error:</strong> no-sources empty state; per-row install progress; disk-exceeded alert.</p>
+
+    <h3 id="screen-admin-model-provider-registry">Screen: Admin — Model &amp; Provider Registry<a class="anchor-link" href="#screen-admin-model-provider-registry">#</a></h3>
+
+    <p><strong>Mockup:</strong> <a href="./mockups/admin-registry.html">docs/mockups/admin-registry.html</a> · <strong>Role(s):</strong> Operator/Admin · <strong>BRD:</strong> BRD-6, BRD-7, BRD-77 · <strong>REQ:</strong> REQ-UI-071</p>
+
+    <p><strong>Layout (one line):</strong> registry <code>DataTable</code> (model rows: task/provider/tier/license/safety); edit <code>Sheet</code> with a params-schema editor; provider keys panel.</p>
+
+    <p><strong>Component map:</strong></p>
+
+    <table>
+      <thead>
+        <tr><th>Region</th><th>TrBlazeUI control</th><th>Shows / binds</th><th>States</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Registry table</td><td><code>DataTable</code></td><td>id, displayName, task, providerType, tier <code>Badge</code>, license, safetyClass</td><td>filter/sort</td></tr>
+        <tr><td>Add / edit</td><td><code>Sheet</code> (right)</td><td>row fields + declarative params editor</td><td>saving → <code>Spinner</code></td></tr>
+        <tr><td>Params editor</td><td>repeated <code>Field</code> rows (<code>Input</code>/<code>Select</code>/<code>Switch</code>)</td><td>key/type/required/default</td><td>validation inline</td></tr>
+        <tr><td>Provider keys</td><td><code>Card</code> + <code>Input</code> (Password) per provider + <code>Switch</code> (enabled)</td><td>HeyGen / aggregator keys (encrypted)</td><td>masked; never logged</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Notes / interactions:</strong> the params schema is what auto-renders <code>TrStudio</code>'s controls (no code change). This screen also carries <strong>Provider config</strong> (BRD-7): there is no separate Providers screen — the <code>/admin/providers</code> route renders as this screen's Provider-keys panel, and the admin nav labels it "Registry &amp; Providers". <strong>Empty/loading/error:</strong> empty registry → <code>Empty</code> CTA; masked secret fields.</p>
+
+    <h3 id="screen-admin-comfyui-import-debug">Screen: Admin — ComfyUI import &amp; debug<a class="anchor-link" href="#screen-admin-comfyui-import-debug">#</a></h3>
+
+    <p><strong>Mockup:</strong> <a href="./mockups/admin-comfy.html">docs/mockups/admin-comfy.html</a> · <strong>Role(s):</strong> Operator/Admin · <strong>BRD:</strong> BRD-34..41 · <strong>REQ:</strong> REQ-UI-072</p>
+
+    <p><strong>Layout (one line):</strong> left: workflow drop-zone + parsed node/param list; center: input→registry-param mapping; right: run/debug panel with per-node status + WebSocket previews.</p>
+
+    <p><strong>Component map:</strong></p>
+
+    <table>
+      <thead>
+        <tr><th>Region</th><th>TrBlazeUI control</th><th>Shows / binds</th><th>States</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Import</td><td><code>FileUpload</code> (drag-drop) + <code>Textarea</code> (paste JSON)</td><td>API-format workflow</td><td>parse error → <code>Alert</code></td></tr>
+        <tr><td>Parsed inputs</td><td><code>DataTable</code></td><td>nodes + parameterizable inputs</td><td>—</td></tr>
+        <tr><td>Mapping</td><td>rows of <code>Field</code> (<code>Select</code> type, <code>Switch</code> required, <code>Input</code> default)</td><td>input → registry param</td><td>—</td></tr>
+        <tr><td>Run / debug</td><td><code>Card</code> + <code>Button</code> ("Run") + per-node status list</td><td>per-node status, errors, exact JSON sent</td><td>running → <code>Progress</code> + previews</td></tr>
+        <tr><td>Missing deps</td><td><code>Alert</code> (Warning) + <code>Button</code> ("Install")</td><td>missing custom nodes / models + hints</td><td>—</td></tr>
+        <tr><td>Save / version</td><td><code>Button</code> ("Save as model") + <code>Select</code> (version) + <code>Badge</code> ("known-good")</td><td>register + pin</td><td>smoke → <code>Spinner</code></td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Notes / interactions:</strong> saved workflow becomes a registry model (graph hidden from end users); smoke-test before live. <strong>Empty/loading/error:</strong> <code>Alert</code> on parse/run errors; live WebSocket previews.</p>
+
+    <h3 id="screen-admin-runpod-ops">Screen: Admin — RunPod &amp; ops<a class="anchor-link" href="#screen-admin-runpod-ops">#</a></h3>
+
+    <p><strong>Mockup:</strong> <a href="./mockups/admin-ops.html">docs/mockups/admin-ops.html</a> · <strong>Role(s):</strong> Operator/Admin · <strong>BRD:</strong> BRD-12, BRD-13, BRD-14, BRD-15, BRD-75 · <strong>REQ:</strong> REQ-UI-073</p>
+
+    <p><strong>Layout (one line):</strong> top spend/guardrail cards (RunPod / closed-API / cap with progress); worker health + queue depth cards; generation log table.</p>
+
+    <p><strong>Component map:</strong></p>
+
+    <table>
+      <thead>
+        <tr><th>Region</th><th>TrBlazeUI control</th><th>Shows / binds</th><th>States</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Spend guardrails</td><td>3× <code>Card</code> + <code>Progress</code></td><td>RunPod $, closed-API $, total vs monthly cap</td><td>near cap → danger + <code>Alert</code></td></tr>
+        <tr><td>RunPod control</td><td><code>Card</code> + <code>Switch</code> (auto-idle-stop) + <code>Button</code> (start/stop)</td><td>endpoint state (scale-to-zero)</td><td>cold-start → <code>Badge</code> "starting"</td></tr>
+        <tr><td>Worker health</td><td><code>Card</code> + <code>Badge</code>s</td><td>worker status, queue depth, error rate</td><td>—</td></tr>
+        <tr><td>Generation log</td><td><code>DataTable</code></td><td>who/model/params/cost/duration/outcome</td><td>filter; reproduce action</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Notes / interactions:</strong> monthly cap spans RunPod <strong>and</strong> closed APIs (incl. HeyGen); per-job estimate enforced before run. <strong>Empty/loading/error:</strong> empty log message; skeleton KPIs.</p>
+
+    <h3 id="screen-admin-content-policy-nsfw">Screen: Admin — Content policy (NSFW)<a class="anchor-link" href="#screen-admin-content-policy-nsfw">#</a></h3>
+
+    <p><strong>Mockup:</strong> <a href="./mockups/admin-policy.html">docs/mockups/admin-policy.html</a> · <strong>Role(s):</strong> Owner (personal mode only) · <strong>BRD:</strong> BRD-79, BRD-80 · <strong>REQ:</strong> REQ-UI-075</p>
+
+    <p><strong>Layout (one line):</strong> a single content-policy <code>Card</code> — an "Unrestricted (NSFW) content mode" <code>Switch</code> (off by default) with a confirmation gate, beneath a clearly-labelled list of the floors that stay locked regardless.</p>
+
+    <p><strong>Component map:</strong></p>
+
+    <table>
+      <thead>
+        <tr><th>Region</th><th>TrBlazeUI control</th><th>Shows / binds</th><th>States</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Mode toggle</td><td><code>Card</code> + <code>Switch</code> ("Unrestricted / NSFW mode")</td><td><code>objNsfwEnabled</code> (off by default)</td><td>disabled + note when multi-user/SaaS (auto-off)</td></tr>
+        <tr><td>Confirm gate</td><td><code>AlertDialog</code></td><td>"Synthetic adult (18+) personas only — confirm"</td><td>blocks until confirmed</td></tr>
+        <tr><td>Always-locked floors</td><td><code>Alert</code> (Warning) + list</td><td>CSAM · real-person/NCII · minors · public-figure · provenance · audit — "cannot be disabled"</td><td>static</td></tr>
+        <tr><td>Scope note</td><td><code>TypographyMuted</code></td><td>"Applies only to characters flagged synthetic + adult; personal mode only"</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Notes / interactions:</strong> toggling on requires explicit confirmation; the screen makes the non-disableable floors visible so the boundary is unambiguous; the toggle is hidden/disabled in multi-user/SaaS mode (FeatureSvc). <strong>Empty/loading/error:</strong> disabled state with an explanatory note when not in personal mode.</p>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+<script>
+// Light/dark toggle. The initial theme was already applied flash-free by the
+// <head> script (saved choice, else time-of-day). Clicking flips it, saves the
+// choice, and reloads so Mermaid re-renders in the matching theme.
+(function(){
+  var btn = document.getElementById('themeToggle');
+  if(!btn) return;
+  var relabel = function(){
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    btn.textContent = dark ? '☀ Light' : '☾ Dark';
+  };
+  relabel();
+  btn.addEventListener('click', function(){
+    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    try{ localStorage.setItem('tf-theme', next); }catch(e){}
+    location.reload();
+  });
+})();
+
+// Copy buttons on every code <pre> — but NEVER on a `pre.mermaid`:
+// mermaid reads the <pre>'s textContent as the diagram source, so a button
+// appended here glues "copy" onto the last line and breaks the parse
+// (flowcharts → "Syntax error"; sequence diagrams silently absorb it).
+// Mermaid blocks get copy/export from their own .diagram toolbar instead.
+document.querySelectorAll('pre:not(.mermaid)').forEach(pre => {
+  const btn = document.createElement('button');
+  btn.className = 'copy';
+  btn.textContent = 'copy';
+  btn.addEventListener('click', () => {
+    const text = pre.querySelector('code') ? pre.querySelector('code').innerText : pre.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'copied';
+      setTimeout(() => { btn.textContent = 'copy'; }, 1200);
+    });
+  });
+  pre.appendChild(btn);
+});
+
+// Mermaid init — theme follows the resolved light/dark theme
+if (window.mermaid) {
+  var mermaidTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default';
+  mermaid.initialize({ startOnLoad: true, theme: mermaidTheme, securityLevel: 'loose' });
+}
+
+// Mermaid toolbar wiring — run after mermaid renders
+function wireMermaidToolbars() {
+  document.querySelectorAll('.diagram').forEach(dia => {
+    if (dia.dataset.wired) return;
+    const merm = dia.querySelector('.mermaid');
+    const svg = merm && merm.querySelector('svg');
+    if (!svg) return;
+    dia.dataset.wired = '1';
+    let scale = 1;
+    const label = dia.querySelector('.zlabel');
+    const apply = () => {
+      svg.style.transform = `scale(${scale})`;
+      svg.style.transformOrigin = 'top left';
+      if (label) label.textContent = Math.round(scale * 100) + '%';
+    };
+    const setScale = (s) => { scale = Math.max(0.25, Math.min(4, s)); apply(); };
+    dia.querySelector('[data-zin]').onclick = () => setScale(scale * 1.2);
+    dia.querySelector('[data-zout]').onclick = () => setScale(scale / 1.2);
+    dia.querySelector('[data-fit]').onclick = () => {
+      svg.style.transform = '';
+      svg.removeAttribute('width');
+      svg.style.maxWidth = '100%';
+      svg.style.height = 'auto';
+      scale = 1;
+      if (label) label.textContent = 'Fit';
+    };
+    dia.querySelector('[data-one]').onclick = () => {
+      svg.style.transform = '';
+      svg.style.maxWidth = 'none';
+      svg.style.width = '';
+      svg.style.height = '';
+      scale = 1;
+      if (label) label.textContent = '100%';
+    };
+    dia.querySelector('[data-fs]').onclick = () => {
+      dia.classList.toggle('fs');
+      if (dia.classList.contains('fs')) {
+        document.addEventListener('keydown', escFs);
+      } else {
+        document.removeEventListener('keydown', escFs);
+      }
+    };
+    function escFs(e) { if (e.key === 'Escape') { dia.classList.remove('fs'); document.removeEventListener('keydown', escFs); } }
+    dia.querySelector('[data-pop]').onclick = () => openInNewTab(svg);
+    // Ctrl+wheel zoom
+    merm.addEventListener('wheel', (e) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      setScale(scale * (e.deltaY < 0 ? 1.1 : 1/1.1));
+    }, { passive: false });
+  });
+}
+
+function openInNewTab(svg) {
+  const svgSource = new XMLSerializer().serializeToString(svg);
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Diagram</title>
+<style>
+  html,body{margin:0;height:100%;background:#0f1115;color:#e6e8ee;font-family:system-ui,sans-serif}
+  .bar{position:fixed;top:0;left:0;right:0;padding:8px 12px;background:#161a22;border-bottom:1px solid #2a3142;display:flex;gap:8px;z-index:10}
+  .bar button{background:#1c2230;color:#9aa3b2;border:1px solid #2a3142;border-radius:6px;padding:5px 12px;font-size:13px;cursor:pointer}
+  .bar button:hover{color:#7cc4ff;border-color:#7cc4ff}
+  .bar .hint{margin-left:auto;color:#9aa3b2;font-size:11.5px;align-self:center}
+  #stage{position:absolute;top:42px;bottom:0;left:0;right:0;overflow:hidden}
+  #stage svg{width:100%;height:100%}
+</style>
+</head><body>
+<div class="bar">
+  <button onclick="zpz.zoomIn()">+</button>
+  <button onclick="zpz.zoomOut()">−</button>
+  <button onclick="zpz.fit();zpz.center()">Fit</button>
+  <button onclick="zpz.resetZoom();zpz.center()">1:1</button>
+  <button onclick="window.print()">Print</button>
+  <button onclick="dlPng()">PNG</button>
+  <button onclick="dlSvg()">SVG</button>
+  <span class="hint">Drag to pan · Ctrl+wheel to zoom · + / − keys</span>
+</div>
+<div id="stage">${svgSource}</div>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"><\/script>
+<script>
+  const el = document.querySelector('#stage svg');
+  const zpz = svgPanZoom(el, { zoomScaleSensitivity: .3, minZoom: .2, maxZoom: 10, controlIconsEnabled: false, fit: true, center: true });
+  document.addEventListener('keydown', e => {
+    if (e.key === '+' || e.key === '=') zpz.zoomIn();
+    if (e.key === '-' || e.key === '_') zpz.zoomOut();
+    if (e.key === '0') { zpz.resetZoom(); zpz.center(); }
+  });
+  function dlSvg() {
+    const blob = new Blob([new XMLSerializer().serializeToString(el)], { type: 'image/svg+xml' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'diagram.svg'; a.click();
+  }
+  function dlPng() {
+    const src = new XMLSerializer().serializeToString(el);
+    const img = new Image();
+    const url = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(src)));
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = el.clientWidth * 2; c.height = el.clientHeight * 2;
+      const ctx = c.getContext('2d'); ctx.scale(2,2); ctx.drawImage(img, 0, 0);
+      c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'diagram.png'; a.click(); });
+    };
+    img.src = url;
+  }
+<\/script>
+</body></html>`;
+  const w = window.open();
+  w.document.write(html);
+  w.document.close();
+}
+
+// Run wiring after mermaid finishes (it renders async)
+if (window.mermaid) {
+  setTimeout(wireMermaidToolbars, 400);
+  setTimeout(wireMermaidToolbars, 1200);  // safety re-run for slow renders
+}
+</script>
+</body>
+</html>

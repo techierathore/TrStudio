@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TrStudioAdmin — Hardware &amp; Setup</title>
+<style>
+:root{
+  --bg:#f6f6fa;--card:#ffffff;--border:#e5e5ef;--ink:#17171f;--muted:#6f6f83;
+  --primary:#17171f;--primary-fg:#fafafa;
+  --brand:#7c3aed;--brand-2:#c026d3;--brand-soft:#f1ecfe;--brand-bd:#ddd0fb;--brand-ink:#5b21b6;
+  --ok:#16a34a;--ok-bg:#f0fdf4;--ok-ink:#166534;--ok-bd:#bbf7d0;
+  --warn:#d97706;--warn-bg:#fffbeb;--warn-ink:#92400e;--warn-bd:#fde68a;
+  --danger:#dc2626;--danger-bg:#fef2f2;--danger-ink:#991b1b;--danger-bd:#fecaca;
+  --hover:#f0f0f7;--active:#e5e5ef;--chip:#f0f0f7;--sel:#f1ecfe;
+  --skel-a:#f0f0f7;--skel-b:#e5e5ef;--thumb-a:#e5e5ef;--thumb-b:#d6d6e4;
+  --sidebar:#f9f9fd;--shadow:0 1px 2px rgba(23,23,31,.05),0 1px 3px rgba(23,23,31,.07);
+  --glow:0 4px 14px rgba(124,58,237,.16);
+  --wash:radial-gradient(1100px 480px at 82% -12%,rgba(124,58,237,.05),transparent);
+  --radius:12px;
+  --sans:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+html.dark{
+  --bg:#0b0b12;--card:#14141d;--border:#262636;--ink:#f2f2f8;--muted:#9d9db0;
+  --primary:#f2f2f8;--primary-fg:#14141d;
+  --brand:#8b5cf6;--brand-2:#d946ef;--brand-soft:#251b52;--brand-bd:#4c3ba8;--brand-ink:#c4b5fd;
+  --ok:#4ade80;--ok-bg:#0a2e1a;--ok-ink:#86efac;--ok-bd:#1d6a3c;
+  --warn:#fbbf24;--warn-bg:#33210a;--warn-ink:#fcd34d;--warn-bd:#92400e;
+  --danger:#f87171;--danger-bg:#391111;--danger-ink:#fca5a5;--danger-bd:#7f1d1d;
+  --hover:#1c1c28;--active:#262636;--chip:#1c1c28;--sel:#251b52;
+  --skel-a:#1c1c28;--skel-b:#262636;--thumb-a:#20202e;--thumb-b:#2b2b3d;
+  --sidebar:#0e0e16;--shadow:0 1px 2px rgba(0,0,0,.45);
+  --glow:0 4px 22px rgba(139,92,246,.38);
+  --wash:radial-gradient(1100px 480px at 82% -12%,rgba(139,92,246,.10),transparent);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);background:var(--wash),var(--bg);color:var(--ink);font-size:14px;-webkit-font-smoothing:antialiased}
+.app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+.side{background:var(--sidebar);border-right:1px solid var(--border);padding:14px;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:9px;font-weight:650;padding:8px;margin-bottom:12px;font-size:14.5px}
+.logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;flex:none}
+.nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:13.5px;margin:1px 0}
+.nav a svg{color:var(--muted);flex:none}
+.nav a.active{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;font-weight:600}
+.nav a.active svg{color:#fff}
+.nav a:hover:not(.active){background:var(--hover)}
+.navgroup{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:14px 10px 4px;font-weight:600}
+.sidefoot{margin-top:auto;padding-top:14px;border-top:1px solid var(--border)}
+.sidefoot a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--muted);text-decoration:none;font-size:12.5px}
+.sidefoot a:hover{background:var(--hover);color:var(--ink)}
+.main{display:flex;flex-direction:column;min-width:0}
+.top{height:56px;border-bottom:1px solid var(--border);background:var(--card);display:flex;align-items:center;gap:12px;padding:0 18px;position:sticky;top:0;z-index:40}
+.crumb{color:var(--muted);font-size:13px}.crumb.here{color:var(--ink);font-weight:550}.spacer{flex:1}
+.iconbtn{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+.iconbtn:hover{background:var(--hover)}
+.userchip{width:32px;height:32px;border-radius:999px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:650;flex:none}
+.content{padding:24px;overflow:auto}
+.h{font-size:22px;font-weight:700;margin:0 0 3px;letter-spacing:-.3px}.sub{color:var(--muted);margin:0 0 18px}
+.grid{display:grid;gap:14px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 8px;font-size:14px;font-weight:625}
+.btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;box-shadow:var(--glow);border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:550;cursor:pointer;font-family:inherit}
+.btn:hover{opacity:.92}
+.btn.brand{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;box-shadow:var(--glow)}
+.btn.outline{background:transparent;color:var(--ink);border:1px solid var(--border)}.btn.outline:hover{background:var(--hover);opacity:1}
+.btn.ghost{background:transparent;color:var(--ink)}.btn.ghost:hover{background:var(--hover);opacity:1}
+.btn.danger{background:var(--danger);color:#fff}
+.badge{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:999px;padding:2px 10px;font-size:11.5px;background:var(--chip);font-weight:500}
+.badge.brand{background:var(--brand-soft);color:var(--brand-ink);border-color:var(--brand-bd)}
+.badge.primary{background:var(--primary);color:var(--primary-fg);border-color:var(--primary)}
+.badge.ok{background:var(--ok-bg);color:var(--ok-ink);border-color:var(--ok-bd)}
+.badge.warn{background:var(--warn-bg);color:var(--warn-ink);border-color:var(--warn-bd)}
+.badge.danger{background:var(--danger-bg);color:var(--danger-ink);border-color:var(--danger-bd)}
+.dot{width:7px;height:7px;border-radius:999px;background:var(--muted);flex:none}
+.dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}.dot.danger{background:var(--danger)}.dot.brand{background:var(--brand)}
+.input,.select,textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--card);color:var(--ink);font-family:inherit}
+.input::placeholder,textarea::placeholder{color:var(--muted)}
+.input:focus,.select:focus,textarea:focus{outline:2px solid var(--brand);outline-offset:-1px}
+.label{font-size:12.5px;font-weight:600;margin-bottom:4px;display:block}.muted{color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{border-bottom:1px solid var(--border);padding:9px 10px;text-align:left}
+th{color:var(--muted);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px}
+tbody tr:hover td{background:var(--hover)}
+tr.sel td{background:var(--sel)}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:9px;overflow:hidden;background:var(--card)}
+.seg button{border:none;background:transparent;color:var(--ink);padding:8px 14px;cursor:pointer;font-size:13px;font-family:inherit;border-right:1px solid var(--border)}
+.seg button:last-child{border-right:none}
+.seg button.active{background:var(--brand-soft);color:var(--brand-ink);font-weight:600}
+.prog{height:8px;background:var(--skel-a);border-radius:999px;overflow:hidden}
+.prog>i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--brand-2))}
+.alert{border:1px solid var(--border);border-left:3px solid var(--brand);border-radius:8px;padding:10px 12px;background:var(--brand-soft);font-size:13px}
+.alert.warn{border-left-color:var(--warn);background:var(--warn-bg);border-color:var(--warn-bd)}
+.alert.danger{border-left-color:var(--danger);background:var(--danger-bg);border-color:var(--danger-bd)}
+.alert.ok{border-left-color:var(--ok);background:var(--ok-bg);border-color:var(--ok-bd)}
+.thumb{aspect-ratio:1;border-radius:10px;background:linear-gradient(135deg,var(--thumb-a),var(--thumb-b));display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;overflow:hidden}
+.skel{background:linear-gradient(90deg,var(--skel-a),var(--skel-b),var(--skel-a));border-radius:8px;height:14px}
+.row{display:flex;gap:12px;align-items:center}.col{display:flex;flex-direction:column;gap:6px}
+.toggle{width:36px;height:20px;border-radius:999px;background:var(--active);position:relative;flex:none;cursor:pointer}
+.toggle.on{background:var(--brand)}
+.toggle::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:999px;background:#fff;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.toggle.on::after{left:18px}
+.kv{display:flex;justify-content:space-between;padding:4px 0;font-size:13px}
+/* page-specific */
+.kpi .big{font-size:23px;font-weight:680;margin:7px 0 2px;letter-spacing:-.4px}
+.kpi .lbl{font-size:12px;color:var(--muted)}
+.step{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--border);align-items:flex-start}
+.step:last-child{border-bottom:none;padding-bottom:4px}
+.stepdot{width:26px;height:26px;border-radius:999px;flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:var(--chip);color:var(--muted);border:1px solid var(--border)}
+.stepdot.done{background:var(--ok-bg);color:var(--ok-ink);border-color:var(--ok-bd)}
+.stepdot.run{background:var(--brand-soft);color:var(--brand-ink);border-color:var(--brand-bd)}
+.step .body{flex:1;min-width:0}
+.step .t{font-weight:600;font-size:13.5px}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="side">
+  <div class="brand"><div class="logo">TR</div><div>TrStudioAdmin <span class="badge" style="font-size:10px;padding:1px 7px;vertical-align:middle">admin</span></div></div>
+  <div class="navgroup">Environment</div>
+  <nav class="nav">
+    <a class="active" href="admin-hardware.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M9 2v2M15 20v2M9 20v2M2 15h2M2 9h2M20 15h2M20 9h2"/></svg>Hardware &amp; Setup</a>
+    <a href="admin-ops.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 1 0-.4-8.98 6 6 0 1 0-11.6 2.2A3.5 3.5 0 0 0 6.5 19z"/></svg>RunPod &amp; Ops</a>
+  </nav>
+  <div class="navgroup">Models</div>
+  <nav class="nav">
+    <a href="admin-sources.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Model Sources</a>
+    <a href="admin-models.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>Model Library</a>
+    <a href="admin-registry.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>Registry &amp; Providers</a>
+    <a href="admin-comfy.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>ComfyUI Import</a>
+  </nav>
+  <div class="navgroup">Governance</div>
+  <nav class="nav">
+    <a href="admin-policy.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Content Policy</a>
+  </nav>
+  <div class="sidefoot">
+    <a href="avatar-studio.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudio</a>
+  </div>
+</aside>
+<div class="main">
+<header class="top">
+  <span class="crumb">Admin</span><span class="crumb">/</span><span class="crumb here">Hardware &amp; Setup</span>
+  <span class="spacer"></span>
+  <span class="badge ok"><span class="dot ok"></span>Node healthy</span>
+  <button class="btn outline" data-act="Re-detect">Re-detect</button>
+  <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
+  <div class="userchip">TR</div>
+</header>
+<div class="content grid" style="max-width:1100px">
+  <div>
+    <h1 class="h">Hardware &amp; Setup</h1>
+    <p class="sub" style="margin-bottom:0">Detected capabilities on this node and guided environment provisioning — isolated from system Python.</p>
+  </div>
+
+  <!-- Capability detection -->
+  <div class="grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="card kpi">
+      <div class="row"><span class="lbl">GPU cores</span><span class="spacer"></span><span class="badge ok">ready</span></div>
+      <div class="big">32-core</div>
+      <div class="lbl">Apple M4 Max GPU</div>
+    </div>
+    <div class="card kpi">
+      <div class="row"><span class="lbl">Unified memory</span><span class="spacer"></span><span class="badge ok">ready</span></div>
+      <div class="big">36 GB</div>
+      <div class="lbl">unified · 31 GB usable</div>
+    </div>
+    <div class="card kpi">
+      <div class="row"><span class="lbl">MPS + CoreML</span><span class="spacer"></span><span class="badge ok">ready</span></div>
+      <div class="big">Enabled</div>
+      <div class="lbl">Metal 3 · ANE available</div>
+    </div>
+    <div class="card kpi">
+      <div class="row"><span class="lbl">Disk free</span><span class="spacer"></span><span class="badge warn">low</span></div>
+      <div class="big">412 GB</div>
+      <div class="prog" style="margin:4px 0 4px"><i style="width:80%"></i></div>
+      <div class="lbl">of 2 TB used · large models → volume</div>
+    </div>
+  </div>
+
+  <!-- Guided setup wizard -->
+  <div class="card">
+    <div class="row"><h3 style="margin:0">Guided setup</h3><span class="spacer"></span><span class="badge brand">2 of 4 complete</span></div>
+    <p class="muted" style="margin:6px 0 4px;font-size:12.5px">Provisions an isolated environment — never collides with system Python.</p>
+    <div class="step">
+      <div class="stepdot done">✓</div>
+      <div class="body"><div class="t">ONNX Runtime</div><div class="muted" style="font-size:12.5px">CoreML execution provider installed · v1.20.1</div></div>
+      <button class="btn outline" data-act="Reinstall">Reinstall</button>
+    </div>
+    <div class="step">
+      <div class="stepdot done">✓</div>
+      <div class="body"><div class="t">MuseTalk + base weights</div><div class="muted" style="font-size:12.5px">Lip-sync runtime verified · 1.8 GB on disk</div></div>
+      <button class="btn outline" data-act="Verify">Verify</button>
+    </div>
+    <div class="step">
+      <div class="stepdot run">3</div>
+      <div class="body">
+        <div class="t">Isolated Python + ComfyUI</div>
+        <div class="muted" style="font-size:12.5px;margin-bottom:6px">Provisioning venv (python 3.11) and ComfyUI core… installing dependencies</div>
+        <div class="prog"><i style="width:64%"></i></div>
+        <div class="muted" style="font-size:11.5px;margin-top:4px">64% · resolving torch / torchvision wheels</div>
+      </div>
+      <button class="btn outline">Logs</button>
+    </div>
+    <div class="step">
+      <div class="stepdot">4</div>
+      <div class="body"><div class="t">Network volume mount</div><div class="muted" style="font-size:12.5px">For large checkpoints (SDXL, Hunyuan-Avatar) — unlocks after step 3</div></div>
+      <button class="btn brand" disabled style="opacity:.5;cursor:not-allowed">Start</button>
+    </div>
+  </div>
+
+  <div class="alert warn"><b>Disk space low.</b> The 24 GB Hunyuan-Avatar checkpoint exceeds local free space — attach a network volume before installing from the <a href="admin-models.html" style="color:inherit;font-weight:600">Model Library</a>. <a href="admin-ops.html" style="color:inherit;font-weight:600">Configure volume →</a></div>
+</div>
+</div>
+</div>
+<script>
+(function(){
+  var KEY='trstudio-mock-theme';
+  var SUN='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+  var MOON='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg>';
+  function apply(t){
+    document.documentElement.classList.toggle('dark',t==='dark');
+    var b=document.getElementById('themeBtn');
+    if(b)b.innerHTML=t==='dark'?SUN:MOON;
+  }
+  var s=null;try{s=localStorage.getItem(KEY);}catch(e){}
+  apply(s==='light'?'light':'dark');
+  document.addEventListener('click',function(e){
+    var tb=e.target.closest&&e.target.closest('#themeBtn');
+    if(tb){var n=document.documentElement.classList.contains('dark')?'light':'dark';
+      try{localStorage.setItem(KEY,n);}catch(e2){}apply(n);return;}
+    var sg=e.target.closest&&e.target.closest('.seg button,.tabbtn');
+    if(sg&&sg.parentElement){Array.prototype.forEach.call(sg.parentElement.querySelectorAll('button,.tabbtn'),function(x){x.classList.remove('active');});sg.classList.add('active');}
+    var ib=e.target.closest&&e.target.closest('[data-act]');
+    if(ib&&!ib.disabled){ib.disabled=true;ib.style.opacity=.7;ib.textContent='Working…';setTimeout(function(){ib.textContent='Done ✓';},700);}
+  });
+})();
+</script>
+</body>
+</html>

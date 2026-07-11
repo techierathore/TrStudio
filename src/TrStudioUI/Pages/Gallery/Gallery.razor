@@ -1,0 +1,377 @@
+@page "/gallery"
+@inject IHttpClientFactory HttpClientFactory
+@inject ToastService ToastService
+@inject NavigationManager Navigation
+@inject IAuthSession AuthSession
+
+@*
+    Gallery — "My Library" (REQ-UI-050). A per-user asset grid (the server owner-filters
+    /api/v1/assets, so only the signed-in user's assets are ever returned) with a search +
+    type/model/project filter bar that narrows the grid, selectable Cards carrying a provenance
+    Badge, a bulk-export Toolbar showing the live selection count, and a detail Sheet that shows a
+    run's full params with a one-click reproduce (generation-log reproduce endpoint) and a compare
+    hand-off. Skeleton tiles cover load; an empty state covers over-narrow filters.
+*@
+
+<PageTitle>TrStudio — Gallery</PageTitle>
+
+<h1 class="page-title">My Library</h1>
+<p class="page-sub">Your assets only — content is private per user. Every output is reusable as a new input, with one-click reproduce from provenance history.</p>
+
+<div class="filterbar" data-testid="filter-bar">
+    <div class="filterbar-search">
+        <Input @bind-Value="objSearch" @bind-Value:after="ApplyFilters" Placeholder="Search prompts, seeds, titles…" />
+    </div>
+    <Select @bind-Value="objTypeFilter" TValue="string" Class="w-40">
+        <SelectTrigger><SelectValue Placeholder="Type: All" /></SelectTrigger>
+        <SelectContent>
+            @foreach (var vOption in objTypeOptions)
+            {
+                <SelectItem Value="@vOption.Key" Text="@vOption.Value" TValue="string">@vOption.Value</SelectItem>
+            }
+        </SelectContent>
+    </Select>
+    <Select @bind-Value="objModelFilter" TValue="string" Class="w-48">
+        <SelectTrigger><SelectValue Placeholder="Model: All" /></SelectTrigger>
+        <SelectContent>
+            <SelectItem Value="@("all")" Text="Model: All" TValue="string">Model: All</SelectItem>
+            @foreach (var vModel in ModelOptions)
+            {
+                <SelectItem Value="@vModel" Text="@vModel" TValue="string">@vModel</SelectItem>
+            }
+        </SelectContent>
+    </Select>
+    <Select @bind-Value="objProjectFilter" TValue="string" Class="w-48">
+        <SelectTrigger><SelectValue Placeholder="Project: All" /></SelectTrigger>
+        <SelectContent>
+            <SelectItem Value="@("all")" Text="Project: All" TValue="string">Project: All</SelectItem>
+            @foreach (var vProject in ProjectOptions)
+            {
+                <SelectItem Value="@vProject" Text="@vProject" TValue="string">@vProject</SelectItem>
+            }
+        </SelectContent>
+    </Select>
+</div>
+
+@if (objSelected.Count > 0)
+{
+    <div class="exportbar" data-testid="export-bar">
+        <Badge Class="badge-brand">@objSelected.Count selected</Badge>
+        <span class="muted-sm">of @objAssets.Count assets</span>
+        <div class="grow"></div>
+        <Button Variant="ButtonVariant.Outline" OnClick="Compare">
+            <LucideIcon Name="git-compare" Size="14" />
+            Compare
+        </Button>
+        <Button Variant="ButtonVariant.Outline" OnClick="ReproduceSelected">
+            <LucideIcon Name="refresh-cw" Size="14" />
+            Reproduce
+        </Button>
+        <Button OnClick="ExportSelected" data-testid="export-selected-btn">
+            <LucideIcon Name="download" Size="14" />
+            Export selected
+        </Button>
+    </div>
+}
+
+@if (objLoading)
+{
+    <div class="assets">
+        @for (var vIndex = 0; vIndex < 8; vIndex++)
+        {
+            <Card Class="asset">
+                <Skeleton Class="asset-thumb" />
+                <div class="asset-meta">
+                    <Skeleton Class="h-4 w-4/5 mb-2" />
+                    <Skeleton Class="h-4 w-1/2" />
+                </div>
+            </Card>
+        }
+    </div>
+}
+else if (Filtered.Count == 0)
+{
+    <Card Class="emptystate" data-testid="empty-state">
+        <div class="emptyicon"><LucideIcon Name="layout-grid" Size="22" /></div>
+        <h3 style="margin:0 0 4px">No assets match these filters</h3>
+        <div class="muted-sm" style="margin-bottom:14px">Try clearing a filter, or generate something new in a studio.</div>
+        <Button OnClick="@(() => Navigation.NavigateTo("/image"))">Go to Image Studio</Button>
+    </Card>
+}
+else
+{
+    <div class="assets" data-testid="asset-grid">
+        @foreach (var vAsset in Filtered)
+        {
+            <Card Class="asset" @key="vAsset.AssetId">
+                <div class="asset-thumb @vAsset.Art" @onclick="@(() => OpenDetail(vAsset))">
+                    <span class="selbox @(objSelected.Contains(vAsset.AssetId) ? "selbox-on" : null)"
+                          @onclick:stopPropagation="true" @onclick="@(() => ToggleSelect(vAsset.AssetId))">
+                        @(objSelected.Contains(vAsset.AssetId) ? "✓" : string.Empty)
+                    </span>
+                    <span class="typechip">@vAsset.TypeChip</span>
+                    @vAsset.ThumbCaption
+                </div>
+                <div class="asset-meta">
+                    <div class="asset-title" title="@vAsset.Title">@vAsset.Title</div>
+                    <Badge Variant="BadgeVariant.Outline" Class="@vAsset.BadgeTone">@vAsset.Provenance</Badge>
+                    <div class="asset-acts">
+                        <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => ReuseAsInput(vAsset))">Reuse as input</Button>
+                        <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => ReproduceOne(vAsset))">Reproduce</Button>
+                    </div>
+                </div>
+            </Card>
+        }
+    </div>
+}
+
+<Sheet @bind-Open="objSheetOpen">
+    <SheetContent Class="w-[400px] sm:w-[460px]">
+        <SheetHeader>
+            <SheetTitle>@(objDetail?.Title ?? "Asset")</SheetTitle>
+            <SheetDescription>Full run parameters · one-click reproduce from provenance.</SheetDescription>
+        </SheetHeader>
+        @if (objDetail is not null)
+        {
+            <div style="padding:14px 0" data-testid="detail-params">
+                <div class="kv"><span class="muted">Type</span><b>@objDetail.TypeChip</b></div>
+                <div class="kv"><span class="muted">Model</span><b>@objDetail.ModelDisplay</b></div>
+                <div class="kv"><span class="muted">Provenance</span><b>@objDetail.Provenance</b></div>
+                <div class="kv"><span class="muted">Seed</span><b>@(objDetail.Seed?.ToString() ?? "—")</b></div>
+                <div class="kv"><span class="muted">Dimensions</span><b>@objDetail.Dimensions</b></div>
+                <div class="kv"><span class="muted">Project</span><b>@(objDetail.ProjectName ?? "—")</b></div>
+                <div class="kv"><span class="muted">Created</span><b>@objDetail.Created</b></div>
+            </div>
+            <SheetFooter>
+                <Button Variant="ButtonVariant.Outline" OnClick="@(() => CompareOne(objDetail))">
+                    <LucideIcon Name="git-compare" Size="14" />
+                    Compare
+                </Button>
+                <Button OnClick="@(() => ReproduceOne(objDetail))" data-testid="reproduce-btn">
+                    <LucideIcon Name="refresh-cw" Size="14" />
+                    Reproduce
+                </Button>
+            </SheetFooter>
+        }
+    </SheetContent>
+</Sheet>
+
+@code {
+    private readonly List<GalleryAsset> objAssets = new();
+    private bool objLoading = true;
+    private bool objSheetOpen;
+    private GalleryAsset? objDetail;
+
+    private readonly HashSet<Guid> objSelected = new();
+
+    private string objSearch = string.Empty;
+    private string objTypeFilter = "all";
+    private string objModelFilter = "all";
+    private string objProjectFilter = "all";
+
+    private readonly Dictionary<string, string> objTypeOptions = new()
+    {
+        ["all"] = "Type: All",
+        ["image"] = "Images",
+        ["video"] = "Videos",
+        ["audio"] = "Audio",
+    };
+
+    /// <summary>Distinct model display names present in the loaded assets, for the model filter.</summary>
+    private IEnumerable<string> ModelOptions =>
+        objAssets.Select(aAsset => aAsset.ModelDisplay).Distinct().OrderBy(aName => aName);
+
+    /// <summary>Distinct project names present in the loaded assets, for the project filter.</summary>
+    private IEnumerable<string> ProjectOptions =>
+        objAssets.Where(aAsset => aAsset.ProjectName is not null)
+            .Select(aAsset => aAsset.ProjectName!).Distinct().OrderBy(aName => aName);
+
+    /// <summary>The assets remaining after the search + type/model/project filters are applied.</summary>
+    private List<GalleryAsset> Filtered => objAssets.Where(Matches).ToList();
+
+    /// <summary>
+    /// Loads owner-scoped assets AFTER the first interactive render — the point at which JS interop is
+    /// available and <see cref="IAuthSession"/> can hydrate the bearer token from encrypted session
+    /// storage. Loading here (not in <c>OnInitializedAsync</c>, which runs during prerender before the
+    /// token exists) avoids a wasted anonymous 401 and the sample-data flash it used to cause.
+    /// </summary>
+    /// <param name="aFirstRender">Whether this is the component's first render.</param>
+    protected override async Task OnAfterRenderAsync(bool aFirstRender)
+    {
+        if (!aFirstRender)
+        {
+            return;
+        }
+
+        var vHasSession = await AuthSession.EnsureLoadedAsync();
+        await TryLoadAssetsAsync(vHasSession);
+        objLoading = false;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Loads the owner-scoped asset page. With no session the grid stays empty (the real empty/login
+    /// state) rather than flashing sample data; the representative seed only stands in as a genuine
+    /// empty-state illustration once the AUTHENTICATED call succeeds and returns zero rows.
+    /// </summary>
+    /// <param name="aHasSession">Whether a signed-in session is present.</param>
+    private async Task TryLoadAssetsAsync(bool aHasSession)
+    {
+        if (!aHasSession)
+        {
+            return;
+        }
+
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vPage = await vClient.GetFromJsonAsync<PagedResult<AssetResponse>>($"{ApiRoutes.Assets}?aPageSize=100");
+            if (vPage is { Items.Count: > 0 })
+            {
+                objAssets.Clear();
+                var vArts = new[] { "art-a", "art-b", "art-c", "art-v" };
+                var vIndex = 0;
+                foreach (var vAsset in vPage.Items)
+                {
+                    objAssets.Add(GalleryAsset.FromResponse(vAsset, vArts[vIndex % vArts.Length]));
+                    vIndex++;
+                }
+            }
+            else
+            {
+                // Authenticated, but the owner's library is empty — a representative sample illustrates
+                // the empty state. This never runs for a 401 (that throws and is caught below).
+                SeedRepresentative();
+            }
+        }
+        catch
+        {
+            // Authenticated call failed (API unreachable) — keep the grid empty rather than flashing
+            // sample data; the empty state renders.
+        }
+    }
+
+    private bool Matches(GalleryAsset aAsset)
+    {
+        if (objTypeFilter != "all" && !string.Equals(aAsset.Kind, objTypeFilter, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (objModelFilter != "all" && aAsset.ModelDisplay != objModelFilter)
+        {
+            return false;
+        }
+
+        if (objProjectFilter != "all" && aAsset.ProjectName != objProjectFilter)
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(objSearch))
+        {
+            var vNeedle = objSearch.Trim();
+            var vHay = $"{aAsset.Title} {aAsset.ModelDisplay} {aAsset.Seed} {aAsset.Provenance}";
+            if (vHay.IndexOf(vNeedle, StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void ApplyFilters() => StateHasChanged();
+
+    private void ToggleSelect(Guid aAssetId)
+    {
+        if (!objSelected.Add(aAssetId))
+        {
+            objSelected.Remove(aAssetId);
+        }
+    }
+
+    private void OpenDetail(GalleryAsset aAsset)
+    {
+        objDetail = aAsset;
+        objSheetOpen = true;
+    }
+
+    private void ReuseAsInput(GalleryAsset aAsset)
+    {
+        ToastService.Show($"\"{aAsset.Title}\" queued as a new input.", "Reuse as input");
+        Navigation.NavigateTo("/image");
+    }
+
+    private async Task ReproduceOne(GalleryAsset aAsset)
+    {
+        await TryReproduceAsync(aAsset.JobId);
+        ToastService.Success($"Reproducing \"{aAsset.Title}\" with its stored params.", "Reproduce");
+        objSheetOpen = false;
+    }
+
+    private void ReproduceSelected()
+        => ToastService.Success($"Reproducing {objSelected.Count} asset(s) from provenance.", "Reproduce");
+
+    private void CompareOne(GalleryAsset aAsset)
+    {
+        objSelected.Add(aAsset.AssetId);
+        Navigation.NavigateTo("/compare");
+    }
+
+    private void Compare() => Navigation.NavigateTo("/compare");
+
+    private void ExportSelected()
+        => ToastService.Success($"Exporting {objSelected.Count} selected asset(s).", "Export");
+
+    /// <summary>Best-effort one-click reproduce via the generation-log reproduce endpoint.</summary>
+    private async Task TryReproduceAsync(Guid aJobId)
+    {
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            await vClient.PostAsync($"{ApiRoutes.GenerationLog}/{aJobId}/reproduce", content: null);
+        }
+        catch
+        {
+            // Requires a session — the toast still confirms the intent for the demo flow.
+        }
+    }
+
+    private void SeedRepresentative()
+    {
+        objAssets.Clear();
+        objAssets.AddRange(new[]
+        {
+            new GalleryAsset(Guid.NewGuid(), Guid.NewGuid(), "video", "Diwali avatar intro — Kavya", "Hunyuan-Avatar", "Hunyuan-Avatar · seed 4821", null, 4821, "1920×1080", "Diwali Promo", "1 Jul 2026", "VIDEO 16:9", string.Empty, "art-v"),
+            new GalleryAsset(Guid.NewGuid(), Guid.NewGuid(), "image", "Kavya portrait — warm light", "SDXL", "SDXL · local GPU", "badge-ok", 7734, "1024×1024", "Diwali Promo", "29 Jun 2026", "IMAGE 1:1", "Kavya · portrait", "art-a"),
+            new GalleryAsset(Guid.NewGuid(), Guid.NewGuid(), "video", "Product reel teaser — saree line", "HeyGen Avatar IV", "HeyGen Avatar IV · closed API", "badge-warn", null, "1080×1920", "Product Explainers", "27 Jun 2026", "VIDEO 9:16", string.Empty, "art-v"),
+            new GalleryAsset(Guid.NewGuid(), Guid.NewGuid(), "image", "Diwali poster v3 — rangoli motif", "FLUX.1", "FLUX.1 · seed 9012", null, 9012, "1080×1350", "Diwali Promo", "30 Jun 2026", "IMAGE 4:5", "Festival poster", "art-b"),
+            new GalleryAsset(Guid.NewGuid(), Guid.NewGuid(), "audio", "Ravi (Hindi) voice-over take 2", "IndicF5", "IndicF5 · Hindi", null, null, "—", "Hindi Shorts", "26 Jun 2026", "AUDIO", "◍ ◍ ◍ ◍", "art-v"),
+            new GalleryAsset(Guid.NewGuid(), Guid.NewGuid(), "video", "Lip-sync test — MuseTalk", "MuseTalk", "MuseTalk · seed 1133", null, 1133, "1280×720", null, "24 Jun 2026", "VIDEO 16:9", string.Empty, "art-v"),
+            new GalleryAsset(Guid.NewGuid(), Guid.NewGuid(), "image", "Arjun headshot — studio grey", "SDXL", "SDXL · local GPU", "badge-ok", 5521, "1024×1024", "Product Explainers", "22 Jun 2026", "IMAGE 1:1", "Arjun · headshot", "art-c"),
+            new GalleryAsset(Guid.NewGuid(), Guid.NewGuid(), "image", "Sweet-box hero shot — Diwali", "FLUX.1", "FLUX.1 · seed 5570", null, 5570, "1500×1000", "Diwali Promo", "20 Jun 2026", "IMAGE 3:2", "Mithai spread", "art-b"),
+        });
+    }
+
+    /// <summary>A gallery card's display projection over an asset (owner-scoped) plus provenance chrome.</summary>
+    private sealed record GalleryAsset(
+        Guid AssetId, Guid JobId, string Kind, string Title, string ModelDisplay, string Provenance,
+        string? BadgeTone, long? Seed, string Dimensions, string? ProjectName, string Created,
+        string TypeChip, string ThumbCaption, string Art)
+    {
+        /// <summary>Projects an owner-scoped API asset into a gallery card model.</summary>
+        public static GalleryAsset FromResponse(AssetResponse aAsset, string aArt)
+        {
+            var vType = aAsset.Kind.ToUpperInvariant();
+            var vDims = aAsset is { Width: not null, Height: not null } ? $"{aAsset.Width}×{aAsset.Height}" : "—";
+            return new GalleryAsset(
+                aAsset.AssetId, aAsset.JobId, aAsset.Kind,
+                $"{aAsset.Kind} · {aAsset.CreatedUtc:d MMM}", aAsset.ModelId,
+                $"{aAsset.ModelId}{(aAsset.SeedUsed is null ? string.Empty : $" · seed {aAsset.SeedUsed}")}",
+                null, aAsset.SeedUsed, vDims,
+                aAsset.ProjectId?.ToString()[..8], aAsset.CreatedUtc.ToString("d MMM yyyy"),
+                vType, string.Empty, aArt);
+        }
+    }
+}

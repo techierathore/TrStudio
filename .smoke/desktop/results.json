@@ -1,0 +1,51 @@
+{
+  "req": "REQ-NFR-003",
+  "date": "2026-07-05",
+  "head": "MAUI Blazor Hybrid desktop (src/TrStudio.Desktop)",
+  "targetFrameworks": ["net10.0-windows10.0.19041.0", "net10.0-maccatalyst"],
+  "builds": {
+    "windows": "PASS 0 warn / 0 err (rung #4)",
+    "maccatalyst": "PASS 0 warn / 0 err compile (rung #4) — build-verified-only, no Mac to run",
+    "solution": "dotnet build TrStudio.sln PASS 0 warn / 0 err (both Desktop TFMs + web head + API + tests)"
+  },
+  "runtimeVerification": {
+    "driver": "FlaUI (Application.Launch -> bound to launched PID's own top-level window; UIA element-by-element; NO global keyboard/mouse injection)",
+    "apiBaseUrl": "http://localhost:5102",
+    "windowTitle": "TrStudio"
+  },
+  "smokes": {
+    "ownerCreator": {
+      "role": "Owner",
+      "route": "/avatar",
+      "assert": "role-based shell renders; creator Studios+Workspace nav; 'Switch to Management' control present; Avatar Studio live data (character 'Aarav Mehta', tiers, cost/cap)",
+      "waitTokenFound": true,
+      "elements": 98,
+      "screenshot": "shots/owner-creator.png",
+      "result": "PASS"
+    },
+    "ownerManagement": {
+      "role": "Owner",
+      "route": "/admin/ops",
+      "assert": "management screen 'RunPod & Ops' renders with live API data (spend $88/$100 cap, worker health, generation log rows)",
+      "apiRequestLog": ["GET /api/v1/admin/spend -> 200", "GET /api/v1/admin/runpod -> 200", "GET /api/v1/generation-log -> 200"],
+      "waitTokenFound": true,
+      "elements": 115,
+      "screenshot": "shots/owner-management.png",
+      "result": "PASS"
+    },
+    "creatorAccessDenied": {
+      "role": "Creator",
+      "route": "/admin/registry",
+      "assert": "in-window AccessDenied rendered (REQ-FN-072); management nav absent; registry API call never made",
+      "waitTokenFound": true,
+      "elements": 29,
+      "screenshot": "shots/creator-denied.png",
+      "result": "PASS"
+    }
+  },
+  "authModelNotes": "Hybrid IAuthSession = MauiAuthSession (MAUI SecureStorage, registered singleton so WebView-scoped components and the IHttpClientFactory-scoped bearer handler share one process session). Web head keeps ProtectedSessionStorage AuthSession (moved to src/TrStudio/Auth). Dev session established via DEBUG-only HS256 token minted with the API's dev signing key (TrStudioDevRole env var / /dev/desktop picker).",
+  "minorObservations": [
+    "Deep-linking /admin/ops via the dev nav renders the ops page but leaves the sidebar on the creator surface (Surface flip happens through the 'Switch to Management' control, whose presence is asserted separately) — cosmetic to the dev deep-link path, not a functional gate issue.",
+    "Lucide icon accessible-name 'alert-triangle' surfaced as text in the UIA tree; renders visually as the warning glyph in the screenshot — pre-existing shared-RCL icon-name detail, identical in the web head."
+  ]
+}

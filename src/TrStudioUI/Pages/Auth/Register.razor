@@ -1,0 +1,243 @@
+@page "/register"
+@layout TrStudioUI.Layout.EmptyLayout
+@inject NavigationManager Navigation
+@inject IHttpClientFactory HttpClientFactory
+@inject IAuthSession AuthSession
+
+@*
+    Create-account screen (REQ-UI-002). Name/email/password/confirm with an account-type
+    segmented selector (Creator vs Admin-Operator). Client-side validation keeps submit
+    disabled until valid (password strength + confirm match); the AppManager child-app API
+    provisions the account, a duplicate email surfaces as a Danger Alert, and the chosen
+    account type drives the default landing (BRD-84). No local password store (BRD-57).
+*@
+
+<PageTitle>TrStudio — Create account</PageTitle>
+
+<Card Class="auth-card" data-testid="register-card">
+    <div class="auth-brand">
+        <div class="auth-brand-logo shell-logo brand-gradient">TR</div>
+        <div>
+            <h1 class="auth-brand-name">Create your TrStudio account</h1>
+            <div class="auth-brand-tag">Avatar-led AI image &amp; video studio</div>
+        </div>
+    </div>
+
+    @if (objError is not null)
+    {
+        <div data-testid="register-error">
+            <Alert Variant="AlertVariant.Danger" AccentBorder="true" Class="mb-4">
+                <LucideIcon Name="alert-circle" Size="16" />
+                <AlertTitle>Could not create account</AlertTitle>
+                <AlertDescription>@objError</AlertDescription>
+            </Alert>
+        </div>
+    }
+
+    <div class="auth-field">
+        <Field IsInvalid="@(objSubmitted && !IsNameValid)">
+            <FieldLabel><Label For="name">Full name</Label></FieldLabel>
+            <FieldContent>
+                <Input Id="name" @bind-Value="objName" Placeholder="Your full name" />
+                @if (objSubmitted && !IsNameValid)
+                {
+                    <FieldError>Please enter your name.</FieldError>
+                }
+            </FieldContent>
+        </Field>
+    </div>
+
+    <div class="auth-field">
+        <Field IsInvalid="@(objSubmitted && !IsEmailValid)">
+            <FieldLabel><Label For="email">Email</Label></FieldLabel>
+            <FieldContent>
+                <Input Id="email" Type="InputType.Email" @bind-Value="objEmail" Placeholder="you@studio.com" />
+                @if (objSubmitted && !IsEmailValid)
+                {
+                    <FieldError>Enter a valid email address.</FieldError>
+                }
+            </FieldContent>
+        </Field>
+    </div>
+
+    <div class="auth-field">
+        <Field IsInvalid="@(objSubmitted && !IsPasswordValid)">
+            <FieldLabel><Label For="pwd">Password</Label></FieldLabel>
+            <FieldContent>
+                <Input Id="pwd" Type="InputType.Password" @bind-Value="objPassword" Placeholder="••••••••" />
+                @if (objSubmitted && !IsPasswordValid)
+                {
+                    <FieldError>At least 12 characters with a number and a symbol.</FieldError>
+                }
+                else
+                {
+                    <div class="auth-hint">At least 12 characters with a number and a symbol.</div>
+                }
+            </FieldContent>
+        </Field>
+    </div>
+
+    <div class="auth-field">
+        <Field IsInvalid="@(objSubmitted && !IsConfirmValid)">
+            <FieldLabel><Label For="pwd2">Confirm password</Label></FieldLabel>
+            <FieldContent>
+                <Input Id="pwd2" Type="InputType.Password" @bind-Value="objConfirm" Placeholder="••••••••" />
+                @if (objSubmitted && !IsConfirmValid)
+                {
+                    <FieldError>Passwords do not match.</FieldError>
+                }
+            </FieldContent>
+        </Field>
+    </div>
+
+    <div class="auth-field">
+        <Label>Account type</Label>
+        <div class="flex-row" role="group" aria-label="Account type" style="margin-top:4px" data-testid="account-type">
+            <Button Class="grow" Variant="@(objIsAdmin ? ButtonVariant.Outline : ButtonVariant.Default)"
+                    OnClick="@(() => objIsAdmin = false)" data-testid="type-creator">Creator</Button>
+            <Button Class="grow" Variant="@(objIsAdmin ? ButtonVariant.Default : ButtonVariant.Outline)"
+                    OnClick="@(() => objIsAdmin = true)" data-testid="type-admin">Admin (Operator)</Button>
+        </div>
+        <div class="auth-hint">
+            Creators make avatars, images, video &amp; voice. Admins also manage models, providers &amp; spend.
+        </div>
+    </div>
+
+    <Button Class="auth-submit" Type="ButtonType.Submit" OnClick="HandleCreateAsync"
+            Disabled="@(objBusy || !IsFormValid)" data-testid="create-btn">
+        @if (objBusy)
+        {
+            <Spinner Size="SpinnerSize.Small" Class="mr-2" />
+            <span>Creating account…</span>
+        }
+        else
+        {
+            <LucideIcon Name="user-plus" Size="14" />
+            <span>Create account</span>
+        }
+    </Button>
+
+    <div class="auth-divline">AppManager</div>
+    <div class="auth-note">
+        Your account is provisioned via the AppManager child-app API — identity, licensing and billing
+        live there. TrStudio keeps only your userId.
+    </div>
+
+    <div class="auth-switch">Already have an account? <a href="/login">Sign in</a></div>
+</Card>
+
+@code {
+    private string objName = string.Empty;
+    private string objEmail = string.Empty;
+    private string objPassword = string.Empty;
+    private string objConfirm = string.Empty;
+    private bool objIsAdmin;
+    private bool objSubmitted;
+    private bool objBusy;
+    private string? objError;
+
+    private bool IsNameValid => !string.IsNullOrWhiteSpace(objName);
+
+    private bool IsEmailValid =>
+        !string.IsNullOrWhiteSpace(objEmail)
+        && objEmail.Contains('@', StringComparison.Ordinal)
+        && objEmail.IndexOf('.', objEmail.IndexOf('@', StringComparison.Ordinal)) > 0;
+
+    /// <summary>Password strength: at least 12 chars with a digit and a non-alphanumeric symbol.</summary>
+    private bool IsPasswordValid =>
+        objPassword.Length >= 12
+        && objPassword.Any(char.IsDigit)
+        && objPassword.Any(aChar => !char.IsLetterOrDigit(aChar));
+
+    private bool IsConfirmValid => !string.IsNullOrEmpty(objConfirm) && objConfirm == objPassword;
+
+    private bool IsFormValid => IsNameValid && IsEmailValid && IsPasswordValid && IsConfirmValid;
+
+    /// <summary>Validates, provisions the account via AppManager and routes by account type.</summary>
+    private async Task HandleCreateAsync()
+    {
+        objSubmitted = true;
+        objError = null;
+        if (!IsFormValid)
+        {
+            return;
+        }
+
+        objBusy = true;
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vRequest = new RegisterRequest
+            {
+                Name = objName,
+                Email = objEmail,
+                Password = objPassword,
+                AccountType = objIsAdmin ? "AdminOperator" : "Creator"
+            };
+            var vResponse = await vClient.PostAsJsonAsync(ApiRoutes.Auth + "/register", vRequest);
+
+            if (vResponse.IsSuccessStatusCode)
+            {
+                var vSession = await vResponse.Content.ReadFromJsonAsync<LoginResponse>();
+                if (vSession is not null)
+                {
+                    // Persist the session BEFORE navigating so the next circuit's API calls carry it.
+                    await AuthSession.SetAsync(vSession);
+                }
+
+                Navigation.NavigateTo(ResolveLanding(vSession));
+                return;
+            }
+
+            objError = await ReadErrorAsync(vResponse);
+        }
+        catch (Exception vException)
+        {
+            objError = $"Could not reach the registration service. {vException.Message}";
+        }
+        finally
+        {
+            objBusy = false;
+        }
+    }
+
+    /// <summary>Resolves the landing path from the session, falling back to the chosen account type.</summary>
+    private string ResolveLanding(LoginResponse? aSession)
+    {
+        if (aSession is not null && !string.IsNullOrWhiteSpace(aSession.DefaultLandingPath))
+        {
+            return aSession.DefaultLandingPath;
+        }
+
+        return objIsAdmin ? "/admin/setup/hardware" : "/avatar";
+    }
+
+    private static async Task<string> ReadErrorAsync(HttpResponseMessage aResponse)
+    {
+        try
+        {
+            var vProblem = await aResponse.Content.ReadFromJsonAsync<ProblemLike>();
+            if (string.Equals(vProblem?.Title, "EMAIL_EXISTS", StringComparison.OrdinalIgnoreCase))
+            {
+                return "An account with this email already exists. Try signing in instead.";
+            }
+
+            if (!string.IsNullOrWhiteSpace(vProblem?.Detail))
+            {
+                return vProblem.Detail!;
+            }
+        }
+        catch
+        {
+            // Non-JSON body — fall through to a generic message.
+        }
+
+        return "Registration failed. Please try again.";
+    }
+
+    private sealed class ProblemLike
+    {
+        public string? Title { get; set; }
+        public string? Detail { get; set; }
+    }
+}

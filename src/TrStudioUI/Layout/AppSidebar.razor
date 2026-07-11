@@ -1,0 +1,117 @@
+@implements IDisposable
+@inject AppShellNavigation Shell
+@inject NavigationManager Navigation
+
+@*
+    Shared collapsible sidebar (REQ-UI-005 / REQ-UI-080): brand header, the active surface's nav
+    groups (LucideIcon + label, gradient active pill), and — for an Owner (the only role with both
+    surfaces) — a footer control that switches between the creator and management surfaces in-app.
+    The active surface comes from AppShellNavigation (the signed-in role), so one component renders
+    the creator studios, the management surface, or both with a switch.
+*@
+
+<Sidebar Collapsible="true">
+    <SidebarHeader>
+        <SidebarHeaderContent>
+            <div class="shell-logo brand-gradient">TR</div>
+            <SidebarHeaderInfo>
+                <span class="truncate font-semibold">
+                    @Shell.Current.AppName
+                    @if (!string.IsNullOrEmpty(Shell.Current.AppBadge))
+                    {
+                        <Badge Variant="BadgeVariant.Outline" Class="text-xs">@Shell.Current.AppBadge</Badge>
+                    }
+                </span>
+            </SidebarHeaderInfo>
+        </SidebarHeaderContent>
+    </SidebarHeader>
+    <SidebarContent>
+        @foreach (var vGroup in Shell.Current.Groups)
+        {
+            <SidebarGroup>
+                <SidebarGroupLabel>@vGroup.Label</SidebarGroupLabel>
+                <SidebarGroupContent>
+                    <SidebarMenu>
+                        @foreach (var vItem in vGroup.Items)
+                        {
+                            <SidebarMenuItem>
+                                <SidebarMenuButton Href="@vItem.Href"
+                                                   Match="NavLinkMatch.All"
+                                                   Tooltip="@vItem.Label"
+                                                   IsActive="@(vItem == objActiveItem)">
+                                    <LucideIcon Name="@vItem.Icon" Size="16" />
+                                    <span>@vItem.Label</span>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        }
+                    </SidebarMenu>
+                </SidebarGroupContent>
+            </SidebarGroup>
+        }
+    </SidebarContent>
+    @if (Shell.CanSwitchSurface)
+    {
+        <SidebarFooter>
+            <Button Variant="ButtonVariant.Ghost" Class="w-full justify-start"
+                    OnClick="SwitchSurface" data-testid="surface-switch">
+                <LucideIcon Name="arrow-left-right" Size="15" />
+                <span>@Shell.SwitchLabel</span>
+            </Button>
+        </SidebarFooter>
+    }
+</Sidebar>
+
+@code {
+    private AppNavItem? objActiveItem;
+
+    /// <inheritdoc />
+    protected override void OnInitialized()
+    {
+        UpdateActiveItem();
+        Shell.Changed += HandleShellChanged;
+        Navigation.LocationChanged += HandleLocationChanged;
+    }
+
+    /// <summary>Ensures the role/surface is resolved once the circuit is interactive.</summary>
+    protected override async Task OnAfterRenderAsync(bool aFirstRender)
+    {
+        if (aFirstRender)
+        {
+            await Shell.InitializeAsync(Navigation.ToBaseRelativePath(Navigation.Uri));
+        }
+    }
+
+    /// <summary>Switches the active surface (Owner only) and lands on that surface's default route.</summary>
+    private void SwitchSurface()
+    {
+        Shell.SwitchSurface();
+        Navigation.NavigateTo(Shell.CurrentLandingPath);
+    }
+
+    /// <summary>Re-renders when the resolved role or active surface changes.</summary>
+    private void HandleShellChanged()
+    {
+        UpdateActiveItem();
+        InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>Recomputes the active nav item when the route changes.</summary>
+    private void HandleLocationChanged(object? aSender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs aArgs)
+    {
+        UpdateActiveItem();
+        InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>Resolves the active item for the active surface from the current route.</summary>
+    private void UpdateActiveItem()
+    {
+        objActiveItem = NavRouteMatcher.FindActive(Shell.Current, Navigation.ToBaseRelativePath(Navigation.Uri));
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Shell.Changed -= HandleShellChanged;
+        Navigation.LocationChanged -= HandleLocationChanged;
+    }
+}

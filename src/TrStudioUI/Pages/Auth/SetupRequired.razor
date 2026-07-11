@@ -1,0 +1,106 @@
+@page "/setup-required"
+@layout TrStudioUI.Layout.EmptyLayout
+@inject NavigationManager Navigation
+@inject IHttpClientFactory HttpClientFactory
+@inject ToastService ToastService
+
+@*
+    First-run gate (REQ-UI-004, BRD-85). Shown to creators when no model source/model is
+    configured yet. "Sign in as admin" routes to /login; "Check again" re-evaluates the
+    setup gate and forwards to the studio once setup completes, otherwise keeps waiting.
+    No sidebar — rendered on the bare EmptyLayout.
+*@
+
+<PageTitle>TrStudio — Setup required</PageTitle>
+
+<Card Class="gate-card" data-testid="gate-card">
+    <div class="gate-logo shell-logo brand-gradient">TR</div>
+
+    <div class="gate-illus brand-gradient">
+        <span class="gate-ghost"><LucideIcon Name="user" Size="26" /></span>
+        <LucideIcon Name="pencil" Size="30" />
+        <LucideIcon Name="video" Size="30" />
+    </div>
+
+    <Badge Variant="BadgeVariant.Outline" Class="mb-3">
+        <LucideIcon Name="loader" Size="12" Class="mr-1" />
+        Waiting for admin setup
+    </Badge>
+    <h1 class="gate-headline">TrStudio isn't set up yet</h1>
+    <p class="gate-copy">
+        No model sources or models are configured on this install, so the studios can't generate
+        anything yet. Ask your admin to complete setup in the management surface — or sign in with an
+        admin account to do it yourself.
+    </p>
+
+    <div class="gate-btns">
+        <Button Href="/login" data-testid="signin-admin">
+            <LucideIcon Name="log-in" Size="14" />
+            Sign in as admin
+        </Button>
+        <Button Variant="ButtonVariant.Outline" OnClick="CheckAgainAsync"
+                Disabled="@objBusy" data-testid="check-again">
+            @if (objBusy)
+            {
+                <Spinner Size="SpinnerSize.Small" Class="mr-2" />
+                <span>Checking…</span>
+            }
+            else
+            {
+                <LucideIcon Name="refresh-cw" Size="14" />
+                <span>Check again</span>
+            }
+        </Button>
+    </div>
+
+    <div class="gate-steps">
+        <div class="gate-cap">What your admin will do</div>
+        <div class="gate-step">
+            <span class="gate-step-n">1</span>
+            Enable a model source (local GPU, RunPod or a closed API) in the management surface.
+        </div>
+        <div class="gate-step">
+            <span class="gate-step-n">2</span>
+            Install or connect at least one model on that source.
+        </div>
+        <div class="gate-step">
+            <span class="gate-step-n">3</span>
+            The model appears as a registry row — studios unlock automatically for creators.
+        </div>
+    </div>
+</Card>
+
+@code {
+    private bool objBusy;
+
+    /// <summary>Re-evaluates the setup gate and forwards to the studio once setup completes.</summary>
+    private async Task CheckAgainAsync()
+    {
+        objBusy = true;
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vResponse = await vClient.GetAsync(ApiRoutes.SetupGate);
+            if (vResponse.IsSuccessStatusCode)
+            {
+                var vGate = await vResponse.Content.ReadFromJsonAsync<SetupGateResponse>();
+                if (vGate is not null && vGate.SetupComplete)
+                {
+                    var vTarget = string.IsNullOrWhiteSpace(vGate.RedirectPath) ? "/avatar" : vGate.RedirectPath;
+                    Navigation.NavigateTo(vTarget, forceLoad: true);
+                    return;
+                }
+            }
+
+            ToastService.Show("Still waiting — no model is ready on this install yet.", "Setup incomplete");
+        }
+        catch
+        {
+            ToastService.Error("Couldn't reach the setup service. Try again shortly.", "Check failed");
+        }
+        finally
+        {
+            objBusy = false;
+        }
+    }
+}

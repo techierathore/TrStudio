@@ -1,0 +1,618 @@
+@page "/avatar"
+@inject IHttpClientFactory HttpClientFactory
+@inject ToastService ToastService
+@inject IAuthSession AuthSession
+@inject NavigationManager Navigation
+
+@*
+    Avatar Studio (REQ-UI-010) — the flagship creator surface. A three-column studio: (left) the
+    identity-locked character picker + a preset-voice picker with an EN/HI language toggle; (centre)
+    the script editor with a TechieRag script-assist button and a talking-head preview player that
+    shows render Progress + eta; (right) the Fast / High / Premium render-tier RadioGroup with per-tier
+    cost/eta and a HeyGen Badge on Premium, a closed-API routing Alert whenever a cloud tier is picked,
+    a pre-run cost estimate with an over-cap warning, and captions Switch + aspect Select + Export MP4.
+
+    Data follows the enrich-or-seed pattern: the character list enriches from the Phase-5
+    /api/v1/characters endpoint when it is live and the bearer token is hydrated, otherwise a
+    representative seed keeps the studio demonstrable. The render itself rides the shared job spine
+    (POST /api/v1/jobs, task = LipSync); a Blocked result surfaces a safety Alert (SAFE-01..06).
+*@
+
+<PageTitle>TrStudio — Avatar Studio</PageTitle>
+
+<h1 class="page-title">Avatar Studio</h1>
+<p class="page-sub">Pick a character and voice, write your script, and render a talking-head clip.</p>
+
+<div class="studio" data-testid="avatar-studio">
+
+    @* ---- LEFT: character + voice ---- *@
+    <div class="studio-col">
+        <Card>
+            <h3 class="card-h3">Character</h3>
+            @if (objLoadingCharacters)
+            {
+                <div class="flex-row" style="gap:12px;align-items:center">
+                    <Skeleton Shape="SkeletonShape.Rectangular" Class="avatar-thumb" />
+                    <div style="flex:1">
+                        <Skeleton Class="h-4 w-32 mb-2" />
+                        <Skeleton Class="h-3 w-24" />
+                    </div>
+                </div>
+            }
+            else if (SelectedCharacter is not null)
+            {
+                <div class="flex-row" style="gap:12px;align-items:flex-start" data-testid="picked-character">
+                    <div class="avatar-thumb @SelectedCharacter.FaceClass">@SelectedCharacter.Initial</div>
+                    <div style="flex:1;min-width:0">
+                        <div style="font-weight:600">@SelectedCharacter.Name</div>
+                        <div class="muted-sm">Identity locked · seed @SelectedCharacter.Seed</div>
+                        <div style="margin-top:5px">
+                            @if (SelectedCharacter.Photoreal)
+                            {
+                                <Badge Variant="BadgeVariant.Outline">Photoreal</Badge>
+                            }
+                            else
+                            {
+                                <Badge Variant="BadgeVariant.Secondary">Stylized</Badge>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <Button Variant="ButtonVariant.Outline" Class="w-full mt-3" OnClick="GoToCharacters" data-testid="change-character">
+                    <LucideIcon Name="users" Size="14" />
+                    <span>Change character</span>
+                </Button>
+            }
+            else
+            {
+                <div class="avatar-empty" data-testid="character-empty">
+                    <LucideIcon Name="user-round" Size="24" />
+                    <div class="muted-sm" style="margin-top:6px">No character selected yet.</div>
+                </div>
+                <Button Class="w-full mt-3" OnClick="GoToCharacters" data-testid="new-character-cta">
+                    <LucideIcon Name="plus" Size="14" />
+                    <span>New Character</span>
+                </Button>
+            }
+        </Card>
+
+        <Card>
+            <h3 class="card-h3">Voice</h3>
+            <label class="param-label">Preset voice</label>
+            <div data-testid="voice-select">
+                <Select @bind-Value="objVoiceId" TValue="string" Class="w-full">
+                    <SelectTrigger><SelectValue Placeholder="Select a voice" /></SelectTrigger>
+                    <SelectContent>
+                        @foreach (var vVoice in objVoices)
+                        {
+                            <SelectItem Value="@vVoice.Key" Text="@vVoice.Value" TValue="string">@vVoice.Value</SelectItem>
+                        }
+                    </SelectContent>
+                </Select>
+            </div>
+            <div class="flex-between" style="margin-top:10px">
+                <label class="param-label">Language</label>
+                <div class="flex-row" style="gap:6px" data-testid="language-toggle">
+                    @foreach (var vLang in objLanguages)
+                    {
+                        <Button Size="ButtonSize.Small"
+                                Variant="@(vLang == objLanguage ? ButtonVariant.Default : ButtonVariant.Outline)"
+                                OnClick="@(() => objLanguage = vLang)">@vLang</Button>
+                    }
+                </div>
+            </div>
+            <Button Variant="ButtonVariant.Outline" Class="w-full mt-3" OnClick="GenerateVoiceAsync" data-testid="generate-voice">
+                <LucideIcon Name="mic" Size="14" />
+                <span>Generate voice</span>
+            </Button>
+        </Card>
+    </div>
+
+    @* ---- CENTER: script + preview ---- *@
+    <div class="studio-col">
+        <Card>
+            <h3 class="card-h3">Script</h3>
+            <Textarea @bind-Value="objScript" Placeholder="Write the narration for your talking-head clip…" MaxLength="2000" data-testid="script-text" />
+            <div class="flex-between" style="margin-top:8px">
+                <span class="muted-sm">~@EstimatedSeconds sec · @WordCount words</span>
+                <Button Size="ButtonSize.Small" Variant="ButtonVariant.Outline" OnClick="ScriptAssistAsync" data-testid="script-assist">
+                    <LucideIcon Name="sparkles" Size="13" />
+                    <span>Script-assist (TechieRag)</span>
+                </Button>
+            </div>
+        </Card>
+
+        <Card>
+            <h3 class="card-h3">Preview</h3>
+            <div class="avatar-preview" data-testid="avatar-preview">
+                <div class="avatar-playbtn">
+                    <LucideIcon Name="@(objHasClip ? "play" : "clapperboard")" Size="20" />
+                </div>
+            </div>
+            @if (objRendering)
+            {
+                <div style="margin-top:12px" data-testid="render-progress">
+                    <div class="flex-between">
+                        <span class="muted-sm">Rendering — lip-sync pass</span>
+                        <span class="muted-sm">@objProgress% · eta @RenderEta</span>
+                    </div>
+                    <Progress Value="@objProgress" Class="mt-2" />
+                </div>
+            }
+            <div class="muted-sm" style="margin-top:8px">
+                Model: @SelectedTier.Model · driver: @(SelectedCharacter?.Name ?? "no character") reference set
+            </div>
+        </Card>
+    </div>
+
+    @* ---- RIGHT: tier + cost + export ---- *@
+    <div class="studio-col">
+        <Card>
+            <h3 class="card-h3">Render tier</h3>
+            <div data-testid="tier-group">
+                <RadioGroup @bind-Value="objTier" TValue="string" Class="grid gap-2">
+                    @foreach (var vTier in objTiers)
+                    {
+                        <label class="tier-option @(vTier.Key == objTier ? "is-sel" : "")" for="@($"tier-{vTier.Key}")">
+                            <RadioGroupItem Value="@vTier.Key" Id="@($"tier-{vTier.Key}")" TValue="string" />
+                            <div style="flex:1;min-width:0">
+                                <div class="flex-between">
+                                    <strong>@vTier.Name</strong>
+                                    @if (vTier.HeyGen)
+                                    {
+                                        <span data-testid="tier-heygen-badge"><Badge>HeyGen</Badge></span>
+                                    }
+                                    else
+                                    {
+                                        <span class="muted-sm">@FormatCost(vTier.Cost) · @vTier.Eta</span>
+                                    }
+                                </div>
+                                <div class="muted-sm">@vTier.Detail</div>
+                                @if (vTier.HeyGen)
+                                {
+                                    <div class="muted-sm">@FormatCost(vTier.Cost) · @vTier.Eta</div>
+                                }
+                            </div>
+                        </label>
+                    }
+                </RadioGroup>
+            </div>
+        </Card>
+
+        @if (SelectedTier.CloudRouted)
+        {
+            <div data-testid="routing-alert">
+                <Alert Variant="AlertVariant.Info" AccentBorder="true">
+                    <LucideIcon Name="cloud" Size="16" />
+                    <AlertTitle>Routed to @SelectedTier.Provider@(SelectedTier.HeyGen ? " (closed API)" : " (serverless GPU)")</AlertTitle>
+                    <AlertDescription>
+                        Output is billed to your monthly cap; provenance is stamped on export.
+                    </AlertDescription>
+                </Alert>
+            </div>
+        }
+
+        <Card>
+            <h3 class="card-h3">Cost estimate</h3>
+            <div data-testid="cost-estimate">
+                <div class="cost-row"><span class="muted-sm">Render (@SelectedTier.Name)</span><span>@FormatCost(SelectedTier.Cost)</span></div>
+                <div class="cost-row"><span class="muted-sm">Voice synthesis</span><span>@FormatCost(VoiceCost)</span></div>
+                <div class="cost-row"><span class="muted-sm">Captions</span><span>@FormatCost(0)</span></div>
+                <div class="cost-row cost-total"><strong>Estimated total</strong><strong>@FormatCost(EstimatedTotal)</strong></div>
+            </div>
+            <div style="margin-top:10px">
+                <div class="flex-between">
+                    <span class="muted-sm">Monthly cap</span>
+                    <span class="muted-sm">@FormatCost(objCapUsed) / @FormatCost(objCapLimit)</span>
+                </div>
+                <Progress Value="@CapPercent" Class="mt-2" />
+            </div>
+            @if (OverCap)
+            {
+                <div data-testid="overcap-alert" style="margin-top:10px">
+                    <Alert Variant="AlertVariant.Danger" AccentBorder="true">
+                        <LucideIcon Name="circle-alert" Size="16" />
+                        <AlertTitle>Over monthly cap</AlertTitle>
+                        <AlertDescription>This job needs @FormatCost(EstimatedTotal) but only @FormatCost(Headroom) of headroom remains.</AlertDescription>
+                    </Alert>
+                </div>
+            }
+            else if (NearCap)
+            {
+                <div data-testid="nearcap-alert" style="margin-top:10px">
+                    <Alert Variant="AlertVariant.Warning" AccentBorder="true">
+                        <AlertTitle>Approaching cap</AlertTitle>
+                        <AlertDescription>This job leaves @FormatCost(Headroom - EstimatedTotal) of headroom.</AlertDescription>
+                    </Alert>
+                </div>
+            }
+            @if (objSafetyBlocked)
+            {
+                <div data-testid="safety-alert" style="margin-top:10px">
+                    <Alert Variant="AlertVariant.Danger" AccentBorder="true">
+                        <LucideIcon Name="shield-alert" Size="16" />
+                        <AlertTitle>Blocked by safety policy</AlertTitle>
+                        <AlertDescription>
+                            This render was refused by a non-disableable safety floor (SAFE-01..06). Adjust the
+                            character or script and try again.
+                        </AlertDescription>
+                    </Alert>
+                </div>
+            }
+            <Button Class="w-full mt-3" OnClick="RenderAsync" Disabled="@(objRendering || OverCap)" data-testid="render-btn">
+                @if (objRendering)
+                {
+                    <Spinner Size="SpinnerSize.Small" Class="mr-2" />
+                    <span>Rendering…</span>
+                }
+                else
+                {
+                    <LucideIcon Name="play" Size="14" />
+                    <span>Render</span>
+                }
+            </Button>
+        </Card>
+
+        <Card>
+            <h3 class="card-h3">Captions &amp; export</h3>
+            <div class="flex-between" style="margin-bottom:10px">
+                <div>
+                    <div class="param-label">Burn-in captions</div>
+                    <div class="muted-sm">EN + HI</div>
+                </div>
+                <div data-testid="captions-switch">
+                    <Switch @key="objCaptions" @bind-Checked="objCaptions" AriaLabel="Burn-in captions" />
+                </div>
+            </div>
+            <label class="param-label">Aspect ratio</label>
+            <div data-testid="aspect-select">
+                <Select @bind-Value="objAspect" TValue="string" Class="w-full">
+                    <SelectTrigger><SelectValue Placeholder="Aspect ratio" /></SelectTrigger>
+                    <SelectContent>
+                        @foreach (var vAspect in objAspects)
+                        {
+                            <SelectItem Value="@vAspect.Key" Text="@vAspect.Value" TValue="string">@vAspect.Value</SelectItem>
+                        }
+                    </SelectContent>
+                </Select>
+            </div>
+            <Button Variant="ButtonVariant.Outline" Class="w-full mt-3" OnClick="ExportAsync" Disabled="@(!objHasClip)" data-testid="export-mp4">
+                <LucideIcon Name="download" Size="14" />
+                <span>Export MP4</span>
+            </Button>
+        </Card>
+    </div>
+</div>
+
+@code {
+    /// <summary>The Phase-5 characters route (enrich-or-seed; may not be live yet).</summary>
+    private const string CharactersApiRoute = "/api/v1/characters";
+
+    private readonly Dictionary<string, string> objVoices = new()
+    {
+        ["aanya-hi"] = "Aanya (Hindi) — warm",
+        ["rohan-hi"] = "Rohan (Hindi) — narration",
+        ["maya-en"] = "Maya (English IN) — clear",
+        ["kabir-en"] = "Kabir (English IN) — deep",
+    };
+    private string objVoiceId = "maya-en";
+
+    private readonly string[] objLanguages = { "EN", "HI" };
+    private string objLanguage = "EN";
+
+    private readonly Dictionary<string, string> objAspects = new()
+    {
+        ["9:16"] = "9:16 — Reels / Shorts",
+        ["1:1"] = "1:1 — Square",
+        ["16:9"] = "16:9 — YouTube",
+    };
+    private string objAspect = "9:16";
+
+    private readonly List<TierInfo> objTiers = new()
+    {
+        new TierInfo("Fast", "Fast", "Local Mac (MPS)", "MuseTalk", 0.00m, "~1 min", "Local Mac (MPS) · MuseTalk", GenerationTier.Fast, false, false),
+        new TierInfo("High", "High", "RunPod A100", "SadTalker HD", 0.34m, "~2 min", "RunPod A100 · SadTalker HD", GenerationTier.High, true, false),
+        new TierInfo("Premium", "Premium", "HeyGen", "HeyGen Avatar", 0.90m, "~90 s", "Closed API · studio quality", GenerationTier.Premium, true, true),
+    };
+    private string objTier = "Premium";
+
+    private const decimal VoiceCost = 0.04m;
+    private readonly decimal objCapUsed = 41.20m;
+    private readonly decimal objCapLimit = 50.00m;
+
+    private List<CharacterSummary> objCharacters = SeedCharacters();
+    private string? objCharacterId;
+    private bool objLoadingCharacters = true;
+
+    private string objScript = "Namaste! This Diwali, light up your home with the all-new Lumina LED range — brighter, smarter, and 40% more efficient. Available now at every Lumina store and online.";
+    private bool objCaptions = true;
+
+    private bool objRendering;
+    private int objProgress;
+    private bool objHasClip;
+    private bool objSafetyBlocked;
+
+    /// <summary>The character currently driving the avatar, or null before any is selected.</summary>
+    private CharacterSummary? SelectedCharacter =>
+        objCharacters.FirstOrDefault(aChar => aChar.Id == objCharacterId);
+
+    /// <summary>The currently selected render tier's metadata.</summary>
+    private TierInfo SelectedTier =>
+        objTiers.FirstOrDefault(aTier => aTier.Key == objTier) ?? objTiers[0];
+
+    /// <summary>Rough word count of the current script.</summary>
+    private int WordCount =>
+        objScript.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
+
+    /// <summary>Rough narration length in seconds (≈ 2.7 words/second).</summary>
+    private int EstimatedSeconds => (int)Math.Ceiling(WordCount / 2.7);
+
+    /// <summary>The pre-run cost estimate: render tier + voice synthesis (captions are free).</summary>
+    private decimal EstimatedTotal => SelectedTier.Cost + VoiceCost;
+
+    /// <summary>Remaining monthly-cap headroom before this job.</summary>
+    private decimal Headroom => objCapLimit - objCapUsed;
+
+    /// <summary>Whether this job would exceed the monthly cap.</summary>
+    private bool OverCap => EstimatedTotal > Headroom;
+
+    /// <summary>Whether this job leaves less than $10 of headroom (soft warning).</summary>
+    private bool NearCap => !OverCap && (Headroom - EstimatedTotal) < 10m;
+
+    /// <summary>Monthly-cap consumption as a percentage for the Progress bar.</summary>
+    private double CapPercent => (double)(objCapUsed / objCapLimit) * 100;
+
+    /// <summary>A simple eta string derived from the render progress.</summary>
+    private string RenderEta => objProgress >= 100 ? "0:00" : $"0:{Math.Max(1, (100 - objProgress) / 2):00}";
+
+    /// <summary>
+    /// Enriches the character list from the Phase-5 endpoint AFTER the first interactive render — once
+    /// JS interop is available and <see cref="IAuthSession"/> can hydrate the bearer token. The seed
+    /// list already shows, so the studio renders regardless of whether the endpoint is live yet.
+    /// </summary>
+    /// <param name="aFirstRender">Whether this is the component's first render.</param>
+    protected override async Task OnAfterRenderAsync(bool aFirstRender)
+    {
+        if (!aFirstRender)
+        {
+            return;
+        }
+
+        objCharacterId ??= objCharacters.FirstOrDefault()?.Id;
+
+        // Send-to-studio (REQ-UI-082): pre-fill the script when Prompt Studio routes here with ?prompt=…
+        var vPrompt = PromptStudioQuery.ReadPrompt(Navigation.Uri);
+        if (vPrompt is not null)
+        {
+            objScript = vPrompt;
+        }
+
+        var vHasSession = await AuthSession.EnsureLoadedAsync();
+        await TryEnrichCharactersAsync(vHasSession);
+        objLoadingCharacters = false;
+        StateHasChanged();
+    }
+
+    /// <summary>Replaces the seed list only when the authenticated characters endpoint returns rows.</summary>
+    /// <param name="aHasSession">Whether a signed-in session is present.</param>
+    private async Task TryEnrichCharactersAsync(bool aHasSession)
+    {
+        if (!aHasSession)
+        {
+            return;
+        }
+
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vCharacters = await vClient.GetFromJsonAsync<List<CharacterSummary>>(CharactersApiRoute);
+            if (vCharacters is { Count: > 0 })
+            {
+                objCharacters = vCharacters;
+                if (objCharacters.All(aChar => aChar.Id != objCharacterId))
+                {
+                    objCharacterId = objCharacters[0].Id;
+                }
+            }
+        }
+        catch
+        {
+            // Endpoint not live / unreachable — keep the representative seed (enrich-or-seed).
+        }
+    }
+
+    /// <summary>Navigates to the character library.</summary>
+    private void GoToCharacters() => Navigation.NavigateTo("/avatar/characters");
+
+    /// <summary>Best-effort voice-preview run over the voice vertical; surfaces a toast either way.</summary>
+    private async Task GenerateVoiceAsync()
+    {
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            await vClient.PostAsJsonAsync($"{ApiRoutes.Voice}/synthesize", new VoiceSynthesizeRequest
+            {
+                Text = objScript,
+                VoiceId = objVoiceId,
+                Language = objLanguage.ToLowerInvariant(),
+            });
+        }
+        catch
+        {
+            // Voice endpoint still forming — the preview toast keeps the flow demonstrable.
+        }
+
+        ToastService.Success($"Voice preview queued — {objVoices.GetValueOrDefault(objVoiceId, objVoiceId)}.", "Voice");
+    }
+
+    /// <summary>Best-effort TechieRag script-assist call; reports the tightened hook via a toast.</summary>
+    private async Task ScriptAssistAsync()
+    {
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            await vClient.PostAsJsonAsync($"{ApiRoutes.Rag}/script", new ScriptGenerationRequest
+            {
+                Brief = objScript,
+                Language = objLanguage.ToLowerInvariant(),
+                Tone = "tighten-hook",
+            });
+        }
+        catch
+        {
+            // RAG endpoint still forming — keep the studio usable.
+        }
+
+        ToastService.Show("Script-assist tightened your opening hook.", "TechieRag");
+    }
+
+    /// <summary>
+    /// Runs a render pass: animates Progress, submits a lip-sync job through the shared spine, and
+    /// surfaces a safety Alert if the job comes back Blocked (SAFE-01..06). On success the preview
+    /// becomes playable.
+    /// </summary>
+    private async Task RenderAsync()
+    {
+        if (SelectedCharacter is null)
+        {
+            ToastService.Error("Select a character before rendering.", "No character");
+            return;
+        }
+
+        objRendering = true;
+        objSafetyBlocked = false;
+        objHasClip = false;
+        objProgress = 0;
+        StateHasChanged();
+
+        for (var vStep = 1; vStep <= 5; vStep++)
+        {
+            objProgress = vStep * 20;
+            StateHasChanged();
+            await Task.Delay(150);
+        }
+
+        var vBlocked = await TrySubmitRenderAsync();
+
+        objRendering = false;
+        objProgress = 100;
+
+        if (vBlocked)
+        {
+            objSafetyBlocked = true;
+            ToastService.Error("Render blocked by a safety floor.", "Blocked");
+            return;
+        }
+
+        objHasClip = true;
+        ToastService.Success($"Talking-head clip rendered on {SelectedTier.Name} tier.", "Rendered");
+    }
+
+    /// <summary>Best-effort spine round-trip; returns true when the job came back Blocked.</summary>
+    private async Task<bool> TrySubmitRenderAsync()
+    {
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vRequest = new JobSubmitRequest
+            {
+                ModelId = SelectedTier.HeyGen ? "heygen-avatar" : "musetalk-local",
+                Task = GenerationTaskType.LipSync,
+                Tier = SelectedTier.Tier,
+                ParamsJson = System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    characterId = SelectedCharacter?.Id,
+                    voiceId = objVoiceId,
+                    language = objLanguage,
+                    script = objScript,
+                    captions = objCaptions,
+                    aspect = objAspect
+                }),
+                Seed = SelectedCharacter?.Seed
+            };
+
+            var vResponse = await vClient.PostAsJsonAsync(ApiRoutes.Jobs, vRequest);
+            if (!vResponse.IsSuccessStatusCode)
+            {
+                return false;
+            }
+
+            var vSubmit = await vResponse.Content.ReadFromJsonAsync<JobSubmitResponse>();
+            if (vSubmit is null)
+            {
+                return false;
+            }
+
+            for (var vPoll = 0; vPoll < 8; vPoll++)
+            {
+                var vStatus = await vClient.GetFromJsonAsync<JobStatusResponse>($"{ApiRoutes.Jobs}/{vSubmit.JobId}");
+                if (vStatus is not null && vStatus.State is JobState.Succeeded or JobState.Failed or JobState.Blocked)
+                {
+                    return vStatus.State == JobState.Blocked;
+                }
+
+                await Task.Delay(200);
+            }
+        }
+        catch
+        {
+            // Avatar job path still forming / API down — the preview stands in, no safety block.
+        }
+
+        return false;
+    }
+
+    /// <summary>Fires the export action for the rendered clip.</summary>
+    private Task ExportAsync()
+    {
+        var vLabel = objAspects.GetValueOrDefault(objAspect, objAspect);
+        var vCaps = objCaptions ? " · burned-in captions" : string.Empty;
+        ToastService.Success($"Exported MP4 ({vLabel}){vCaps}.", "Export");
+        return Task.CompletedTask;
+    }
+
+    private static string FormatCost(decimal aValue) => $"${aValue:0.00}";
+
+    /// <summary>Representative identity-locked characters (used until the endpoint is live).</summary>
+    private static List<CharacterSummary> SeedCharacters() => new()
+    {
+        new CharacterSummary { Id = "aarav", Name = "Aarav Mehta", Initial = "AM", Seed = 48213, RefCount = 6, Photoreal = true, FaceClass = "char-face-a" },
+        new CharacterSummary { Id = "priya", Name = "Priya Kapoor", Initial = "PK", Seed = 91002, RefCount = 8, Photoreal = true, FaceClass = "char-face-b" },
+        new CharacterSummary { Id = "nova", Name = "Nova (mascot)", Initial = "NL", Seed = 33871, RefCount = 5, Photoreal = false, FaceClass = "char-face-c" },
+    };
+
+    /// <summary>A render-tier row: cost, eta, provider, closed-API/HeyGen flags and the spine enum.</summary>
+    /// <param name="Key">Stable tier key (matches the RadioGroup value).</param>
+    /// <param name="Name">Display name.</param>
+    /// <param name="Provider">Provider shown in the routing Alert.</param>
+    /// <param name="Model">Underlying model shown in the preview caption.</param>
+    /// <param name="Cost">Estimated per-render cost.</param>
+    /// <param name="Eta">Human eta string.</param>
+    /// <param name="Detail">One-line tier detail.</param>
+    /// <param name="Tier">The spine execution tier enum.</param>
+    /// <param name="CloudRouted">Whether the tier routes to the cloud (shows the routing Alert).</param>
+    /// <param name="HeyGen">Whether the tier is the HeyGen closed API (shows the badge).</param>
+    private sealed record TierInfo(
+        string Key,
+        string Name,
+        string Provider,
+        string Model,
+        decimal Cost,
+        string Eta,
+        string Detail,
+        GenerationTier Tier,
+        bool CloudRouted,
+        bool HeyGen);
+
+    /// <summary>A picker-facing character summary (mirrors the character-library shape).</summary>
+    private sealed class CharacterSummary
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Initial { get; set; } = string.Empty;
+        public long Seed { get; set; }
+        public int RefCount { get; set; }
+        public bool Photoreal { get; set; }
+        public string FaceClass { get; set; } = "char-face-a";
+    }
+}

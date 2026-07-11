@@ -1,0 +1,5 @@
+/* TrStudio host base overrides — EMPTY on purpose (REQ-UI-005).
+   Shared base styles (brand-gradient utility, gradient Button/nav overrides,
+   shell chrome, #blazor-error-ui) live in the TrStudioUI RCL:
+   _content/TrStudioUI/styles/base.css (loaded just before this file).
+   Add TrStudio-specific style overrides here only if this app must diverge. */

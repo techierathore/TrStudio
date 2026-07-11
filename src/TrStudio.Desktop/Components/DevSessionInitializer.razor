@@ -1,0 +1,32 @@
+@inject NavigationManager Navigation
+
+@*
+    Non-visual root helper (DEBUG only). When the desktop app was launched with a requested dev role
+    (TrStudioDevRole env var), MauiProgram has already pre-seeded that role's session synchronously
+    (before this first render) and recorded the target route in DesktopDevSession.RequestedNavPath.
+    This helper performs the single client-side navigation to that route — a pure SPA nav, NO page
+    reload — so the role-based shell (already initialised on the correct role) lands there cleanly.
+    Inert in Release and when no role was requested (the manual /dev/desktop picker is used instead).
+*@
+
+@code {
+    /// <inheritdoc />
+    protected override async Task OnAfterRenderAsync(bool aFirstRender)
+    {
+        if (!aFirstRender || !DesktopDevSession.IsEnabled)
+        {
+            return;
+        }
+
+        var vPath = DesktopDevSession.RequestedNavPath;
+        if (string.IsNullOrWhiteSpace(vPath))
+        {
+            return;
+        }
+
+        // Consume once, then let the shell settle before the client-side navigation.
+        DesktopDevSession.RequestedNavPath = null;
+        await Task.Yield();
+        Navigation.NavigateTo(vPath, forceLoad: false);
+    }
+}

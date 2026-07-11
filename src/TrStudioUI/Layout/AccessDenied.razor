@@ -1,0 +1,33 @@
+@inject NavigationManager Navigation
+
+@*
+    In-app authorization bounce (REQ-FN-072): rendered by the shell in place of a management
+    (/admin/*) page when the signed-in user's role is not management-entitled, so the page's
+    component never mounts and its admin API call is never made from here. The API still enforces
+    the admin policy server-side; this is the client-side denial the creator sees instead of the page.
+*@
+
+<div class="stack" style="max-width:640px" data-testid="access-denied">
+    <Alert Variant="AlertVariant.Danger" AccentBorder="true">
+        <LucideIcon Name="shield-x" Size="16" />
+        <AlertTitle>Access denied</AlertTitle>
+        <AlertDescription>
+            The management surface is available to Operator and Owner accounts only. Your account
+            does not have management access.
+        </AlertDescription>
+    </Alert>
+    <div>
+        <Button Variant="ButtonVariant.Outline" OnClick="GoHome">
+            <LucideIcon Name="arrow-left" Size="14" />
+            Back to my studios
+        </Button>
+    </div>
+</div>
+
+@code {
+    /// <summary>Returns the user to the creator studios landing.</summary>
+    private void GoHome()
+    {
+        Navigation.NavigateTo(TrStudioUI.Navigation.TrStudioNavSets.CreatorLandingPath);
+    }
+}

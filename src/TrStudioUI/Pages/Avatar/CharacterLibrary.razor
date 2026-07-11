@@ -1,0 +1,430 @@
+@page "/avatar/characters"
+@inject IHttpClientFactory HttpClientFactory
+@inject ToastService ToastService
+@inject IAuthSession AuthSession
+
+@*
+    Character Library (REQ-UI-011). A grid of reusable, identity-locked characters (reference set +
+    seed/embedding), each a Card carrying an Avatar, a realism Badge (Photoreal / Stylized) and its
+    seed/ref counts. A search box filters the grid; "New Character" opens a create/edit Dialog
+    (image-gen prompt, realism RadioGroup, seed lock + LoRA lock); clicking a card opens the
+    character-bible Sheet (TechieRag persona notes, per character). The grid enriches from the Phase-5
+    /api/v1/characters endpoint when it is live, otherwise a representative seed keeps the page
+    demonstrable (enrich-or-seed); skeleton cards show while the first load is in flight.
+*@
+
+<PageTitle>TrStudio — Characters</PageTitle>
+
+<div class="chars-page">
+<div class="flex-between" style="align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+    <div>
+        <h1 class="page-title">Character Library</h1>
+        <p class="page-sub" style="margin-bottom:0">Reusable, identity-locked characters (reference set + seed / embedding).</p>
+    </div>
+    <div class="flex-row" style="gap:10px;align-items:center">
+        <div class="char-search">
+            <LucideIcon Name="search" Size="15" />
+            <Input @bind-Value="objSearch" Placeholder="Search characters…" data-testid="character-search" />
+        </div>
+        <Button OnClick="OpenCreate" data-testid="new-character-btn">
+            <LucideIcon Name="plus" Size="14" />
+            <span>New Character</span>
+        </Button>
+    </div>
+</div>
+
+@if (objLoading)
+{
+    <div class="char-grid" data-testid="char-skeletons">
+        @for (var vIndex = 0; vIndex < 6; vIndex++)
+        {
+            <Card Class="char-card">
+                <Skeleton Class="char-face" />
+                <Skeleton Class="h-4 w-24 mt-3" />
+                <Skeleton Class="h-3 w-16 mt-2" />
+            </Card>
+        }
+    </div>
+}
+else if (FilteredCharacters.Count == 0)
+{
+    <div data-testid="char-empty">
+    <Card Class="char-empty">
+        <div class="char-empty-icon"><LucideIcon Name="user-round" Size="22" /></div>
+        <div style="font-weight:600">
+            @(string.IsNullOrWhiteSpace(objSearch) ? "No characters yet" : $"No characters match “{objSearch}”")
+        </div>
+        <div class="muted-sm" style="margin:4px 0 12px">Create an identity-locked character to reuse across every studio.</div>
+        <Button OnClick="OpenCreate" data-testid="empty-create-btn">
+            <LucideIcon Name="plus" Size="14" />
+            <span>Create a character</span>
+        </Button>
+    </Card>
+    </div>
+}
+else
+{
+    <div class="char-grid" data-testid="char-grid">
+        @foreach (var vChar in FilteredCharacters)
+        {
+            <div class="char-card" data-testid="char-card" @key="vChar.Id" @onclick="@(() => OpenBibleAsync(vChar))">
+                <Card>
+                    <div class="char-face @vChar.FaceClass">@vChar.Initial</div>
+                    <div style="margin-top:10px;font-weight:600">@vChar.Name</div>
+                    <div class="muted-sm">seed @vChar.Seed · @vChar.RefCount refs@(vChar.HasLora ? " · LoRA" : "")</div>
+                    <div style="margin-top:6px">
+                        @if (vChar.Photoreal)
+                        {
+                            <Badge Variant="BadgeVariant.Outline">Photoreal</Badge>
+                        }
+                        else
+                        {
+                            <Badge Variant="BadgeVariant.Secondary">Stylized</Badge>
+                        }
+                    </div>
+                </Card>
+            </div>
+        }
+    </div>
+}
+
+</div>
+
+@*
+    Mobile reflow (REQ-UI-011). At 390px the header's search box + "New Character" button group and the
+    character Card grid (.char-grid) pushed the page body past the viewport (~441px). At ≤430px the grid
+    collapses to a single column, the header's action group wraps (search + button stack under the title),
+    the search box goes full-width, and the page's direct children may shrink (min-width:0). Desktop is
+    unchanged — every rule is min-width:0 (desktop-safe) or inside the ≤430px block.
+*@
+<style>
+    .chars-page > * {
+        min-width: 0;
+    }
+
+    @@media (max-width: 430px) {
+        .chars-page .char-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .chars-page .flex-between > .flex-row {
+            flex-wrap: wrap;
+        }
+
+        .chars-page .char-search {
+            width: 100%;
+        }
+    }
+</style>
+
+@* ---- Create / edit character dialog ---- *@
+<Dialog @bind-Open="objCreateOpen">
+    <DialogContent>
+        <DialogHeader>
+            <DialogTitle>New Character</DialogTitle>
+            <DialogDescription>Generate a face from a prompt, then lock its identity (seed + reference set).</DialogDescription>
+        </DialogHeader>
+
+        <div style="padding:8px 0" data-testid="create-dialog">
+            <label class="param-label">Image-gen prompt</label>
+            <Textarea @bind-Value="objDraftPrompt" Placeholder="Describe the character's face and style…" data-testid="draft-prompt" />
+
+            <label class="param-label" style="margin-top:12px">Realism</label>
+            <div data-testid="realism-group">
+                <RadioGroup @bind-Value="objDraftRealism" TValue="string" Class="flex gap-2">
+                    <label class="char-realism @(objDraftRealism == "photoreal" ? "is-sel" : "")" for="realism-photoreal">
+                        <RadioGroupItem Value="@("photoreal")" Id="realism-photoreal" TValue="string" />
+                        <span>Photoreal</span>
+                    </label>
+                    <label class="char-realism @(objDraftRealism == "stylized" ? "is-sel" : "")" for="realism-stylized">
+                        <RadioGroupItem Value="@("stylized")" Id="realism-stylized" TValue="string" />
+                        <span>Stylized</span>
+                    </label>
+                </RadioGroup>
+            </div>
+
+            <div class="flex-row" style="gap:12px;margin-top:12px">
+                <div style="flex:1">
+                    <label class="param-label">Seed lock</label>
+                    <Input @bind-Value="objDraftSeed" Placeholder="Random when empty" data-testid="draft-seed" />
+                </div>
+                <div style="flex:1">
+                    <label class="param-label">LoRA</label>
+                    <Select @bind-Value="objDraftLora" TValue="string" Class="w-full">
+                        <SelectTrigger><SelectValue Placeholder="None" /></SelectTrigger>
+                        <SelectContent>
+                            @foreach (var vLora in objLoras)
+                            {
+                                <SelectItem Value="@vLora" Text="@vLora" TValue="string">@vLora</SelectItem>
+                            }
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+        </div>
+
+        <DialogFooter>
+            <DialogClose AsChild>
+                <Button Variant="ButtonVariant.Outline">Cancel</Button>
+            </DialogClose>
+            <Button OnClick="SaveCharacterAsync" data-testid="save-character-btn">
+                <LucideIcon Name="check" Size="14" />
+                <span>Create character</span>
+            </Button>
+        </DialogFooter>
+    </DialogContent>
+</Dialog>
+
+@* ---- Character-bible sheet (TechieRag persona notes, per character) ---- *@
+<Sheet @bind-Open="objBibleOpen">
+    <SheetContent>
+        <SheetHeader>
+            <SheetTitle>Character Bible</SheetTitle>
+            <SheetDescription>Persona notes (TechieRag / PgVector) used by script-assist.</SheetDescription>
+        </SheetHeader>
+        @if (objBibleChar is not null)
+        {
+            <div style="padding:14px 0;display:grid;gap:12px" data-testid="bible-sheet">
+                <div class="flex-row" style="gap:10px;align-items:center">
+                    <div class="char-face @objBibleChar.FaceClass" style="width:40px;height:40px;aspect-ratio:auto;font-size:14px">@objBibleChar.Initial</div>
+                    <div>
+                        <div style="font-weight:600">@objBibleChar.Name</div>
+                        <div class="muted-sm">seed @objBibleChar.Seed · @objBibleChar.RefCount refs</div>
+                    </div>
+                </div>
+                @if (objBibleLoading)
+                {
+                    <Card data-testid="bible-loading">
+                        <Skeleton Class="h-4 w-32 mb-2" />
+                        <Skeleton Class="h-3 w-full" />
+                    </Card>
+                }
+                else if (objBibleEntries.Count == 0)
+                {
+                    <Card Class="emptystate" data-testid="bible-empty">
+                        <div class="muted-sm">No bible entries yet for @objBibleChar.Name. Add persona notes (voice &amp; tone, wording rules) to guide script-assist.</div>
+                    </Card>
+                }
+                else
+                {
+                    @foreach (var vEntry in objBibleEntries)
+                    {
+                        <Card @key="vEntry.EntryId" data-testid="bible-entry">
+                            <h3 class="card-h3">@vEntry.Title</h3>
+                            <div class="muted-sm">@vEntry.Content</div>
+                        </Card>
+                    }
+                }
+                <Card>
+                    <h3 class="card-h3">Reference embeddings</h3>
+                    <div class="muted-sm">@objBibleChar.RefCount reference images@(objBibleChar.HasLora ? " · 1 LoRA" : "") · indexed for retrieval</div>
+                </Card>
+            </div>
+        }
+        <SheetFooter>
+            <SheetClose AsChild>
+                <Button Variant="ButtonVariant.Outline">Close</Button>
+            </SheetClose>
+        </SheetFooter>
+    </SheetContent>
+</Sheet>
+
+@code {
+    /// <summary>The Phase-5 characters route (enrich-or-seed; may not be live yet).</summary>
+    private const string CharactersApiRoute = "/api/v1/characters";
+
+    private readonly string[] objLoras = { "None", "priya_v2.safetensors", "aarav_hd.safetensors" };
+
+    private List<CharacterCard> objCharacters = SeedCharacters();
+    private bool objLoading = true;
+    private string objSearch = string.Empty;
+
+    private bool objCreateOpen;
+    private bool objBibleOpen;
+    private CharacterCard? objBibleChar;
+    private bool objBibleLoading;
+    private List<CharacterBibleEntryResponse> objBibleEntries = new();
+
+    private string objDraftPrompt = string.Empty;
+    private string objDraftRealism = "photoreal";
+    private string objDraftSeed = string.Empty;
+    private string objDraftLora = "None";
+
+    /// <summary>The characters matching the current search box, in load order.</summary>
+    private List<CharacterCard> FilteredCharacters =>
+        string.IsNullOrWhiteSpace(objSearch)
+            ? objCharacters
+            : objCharacters
+                .Where(aChar => aChar.Name.Contains(objSearch.Trim(), StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+    /// <summary>
+    /// Enriches the grid from the Phase-5 endpoint AFTER the first interactive render — once JS interop
+    /// is available and <see cref="IAuthSession"/> can hydrate the bearer token. The seed grid already
+    /// shows, so the page renders regardless of whether the endpoint is live yet.
+    /// </summary>
+    /// <param name="aFirstRender">Whether this is the component's first render.</param>
+    protected override async Task OnAfterRenderAsync(bool aFirstRender)
+    {
+        if (!aFirstRender)
+        {
+            return;
+        }
+
+        var vHasSession = await AuthSession.EnsureLoadedAsync();
+        await TryEnrichCharactersAsync(vHasSession);
+        objLoading = false;
+        StateHasChanged();
+    }
+
+    /// <summary>Replaces the seed grid only when the authenticated characters endpoint returns rows.</summary>
+    /// <param name="aHasSession">Whether a signed-in session is present.</param>
+    private async Task TryEnrichCharactersAsync(bool aHasSession)
+    {
+        if (!aHasSession)
+        {
+            return;
+        }
+
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vCharacters = await vClient.GetFromJsonAsync<List<CharacterCard>>(CharactersApiRoute);
+            if (vCharacters is { Count: > 0 })
+            {
+                objCharacters = vCharacters;
+            }
+        }
+        catch
+        {
+            // Endpoint not live / unreachable — keep the representative seed (enrich-or-seed).
+        }
+    }
+
+    /// <summary>Opens the create dialog with a fresh draft.</summary>
+    private void OpenCreate()
+    {
+        objDraftPrompt = string.Empty;
+        objDraftRealism = "photoreal";
+        objDraftSeed = string.Empty;
+        objDraftLora = "None";
+        objCreateOpen = true;
+    }
+
+    /// <summary>
+    /// Opens the character-bible sheet and fetches the character's persisted bible entries from
+    /// <c>GET /api/v1/characters/{id}/bible</c> (RAG-004). The sheet renders the returned entries and
+    /// degrades cleanly to a "no bible yet" state when the fetch fails, the id is a non-Guid seed, or
+    /// the character has no entries.
+    /// </summary>
+    /// <param name="aChar">The character whose bible to open.</param>
+    private async Task OpenBibleAsync(CharacterCard aChar)
+    {
+        objBibleChar = aChar;
+        objBibleEntries = new List<CharacterBibleEntryResponse>();
+        objBibleLoading = true;
+        objBibleOpen = true;
+        StateHasChanged();
+
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vEntries = await vClient.GetFromJsonAsync<List<CharacterBibleEntryResponse>>($"{CharactersApiRoute}/{aChar.Id}/bible");
+            if (vEntries is not null)
+            {
+                objBibleEntries = vEntries;
+            }
+        }
+        catch
+        {
+            // Endpoint not live / non-Guid seed id / unreachable — degrade to the empty bible state.
+        }
+
+        objBibleLoading = false;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Persists the drafted character with a locked identity + realism flag: best-effort POST to the
+    /// Phase-5 endpoint, then optimistically prepends it to the grid so the page stays responsive even
+    /// while the endpoint is still forming (enrich-or-seed).
+    /// </summary>
+    private async Task SaveCharacterAsync()
+    {
+        if (string.IsNullOrWhiteSpace(objDraftPrompt))
+        {
+            ToastService.Error("Enter an image-gen prompt for the character.", "Prompt required");
+            return;
+        }
+
+        var vSeed = long.TryParse(objDraftSeed, out var vParsed) ? vParsed : Random.Shared.Next(10000, 99999);
+        var vHasLora = !string.Equals(objDraftLora, "None", StringComparison.OrdinalIgnoreCase);
+        var vNew = new CharacterCard
+        {
+            Id = Guid.NewGuid().ToString("N")[..8],
+            Name = DeriveName(objDraftPrompt),
+            Initial = "NC",
+            Seed = vSeed,
+            RefCount = 1,
+            Photoreal = objDraftRealism == "photoreal",
+            HasLora = vHasLora,
+            FaceClass = "char-face-a"
+        };
+
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            // Body matches CharacterUpsertRequest: name is required; realism is the numeric
+            // CharacterRealism enum (Photoreal=0, Stylized=1); loraRef/description are the contract names.
+            await vClient.PostAsJsonAsync(CharactersApiRoute, new
+            {
+                name = vNew.Name,
+                description = objDraftPrompt,
+                realism = objDraftRealism == "photoreal" ? 0 : 1,
+                seed = vSeed,
+                loraRef = vHasLora ? objDraftLora : null,
+                isAdult = true
+            });
+        }
+        catch
+        {
+            // Endpoint still forming — the optimistic insert keeps the identity locked client-side.
+        }
+
+        objCharacters = objCharacters.Prepend(vNew).ToList();
+        objCreateOpen = false;
+        ToastService.Success($"Character created — identity locked at seed {vSeed}.", "Character");
+    }
+
+    /// <summary>Derives a short display name from the opening words of the prompt.</summary>
+    /// <param name="aPrompt">The image-gen prompt.</param>
+    private static string DeriveName(string aPrompt)
+    {
+        var vWords = aPrompt.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var vTake = string.Join(' ', vWords.Take(3));
+        return string.IsNullOrWhiteSpace(vTake) ? "New character" : vTake;
+    }
+
+    /// <summary>Representative identity-locked characters (used until the endpoint is live).</summary>
+    private static List<CharacterCard> SeedCharacters() => new()
+    {
+        new CharacterCard { Id = "aarav", Name = "Aarav Mehta", Initial = "AM", Seed = 48213, RefCount = 6, Photoreal = true, HasLora = false, FaceClass = "char-face-a" },
+        new CharacterCard { Id = "priya", Name = "Priya Kapoor", Initial = "PK", Seed = 91002, RefCount = 8, Photoreal = true, HasLora = true, FaceClass = "char-face-b" },
+        new CharacterCard { Id = "nova", Name = "Nova (mascot)", Initial = "NL", Seed = 33871, RefCount = 5, Photoreal = false, HasLora = false, FaceClass = "char-face-c" },
+        new CharacterCard { Id = "rina", Name = "Dr. Rina Shah", Initial = "DR", Seed = 11247, RefCount = 7, Photoreal = true, HasLora = false, FaceClass = "char-face-a" },
+        new CharacterCard { Id = "kabir", Name = "Kabir Singh", Initial = "KS", Seed = 70559, RefCount = 4, Photoreal = true, HasLora = false, FaceClass = "char-face-b" },
+    };
+
+    /// <summary>A library-facing character with its locked identity, realism flag and reference counts.</summary>
+    private sealed class CharacterCard
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Initial { get; set; } = string.Empty;
+        public long Seed { get; set; }
+        public int RefCount { get; set; }
+        public bool Photoreal { get; set; }
+        public bool HasLora { get; set; }
+        public string FaceClass { get; set; } = "char-face-a";
+    }
+}

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TrStudio — Setup required</title>
+<style>
+:root{
+  --bg:#f6f6fa;--card:#ffffff;--border:#e5e5ef;--ink:#17171f;--muted:#6f6f83;
+  --primary:#17171f;--primary-fg:#fafafa;
+  --brand:#7c3aed;--brand-2:#c026d3;--brand-soft:#f1ecfe;--brand-bd:#ddd0fb;--brand-ink:#5b21b6;
+  --ok:#16a34a;--ok-bg:#f0fdf4;--ok-ink:#166534;--ok-bd:#bbf7d0;
+  --warn:#d97706;--warn-bg:#fffbeb;--warn-ink:#92400e;--warn-bd:#fde68a;
+  --danger:#dc2626;--danger-bg:#fef2f2;--danger-ink:#991b1b;--danger-bd:#fecaca;
+  --hover:#f0f0f7;--active:#e5e5ef;--chip:#f0f0f7;--sel:#f1ecfe;
+  --skel-a:#f0f0f7;--skel-b:#e5e5ef;--thumb-a:#e5e5ef;--thumb-b:#d6d6e4;
+  --sidebar:#f9f9fd;--shadow:0 1px 2px rgba(23,23,31,.05),0 1px 3px rgba(23,23,31,.07);
+  --glow:0 4px 14px rgba(124,58,237,.16);
+  --wash:radial-gradient(1100px 480px at 82% -12%,rgba(124,58,237,.05),transparent);
+  --radius:12px;
+  --sans:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+html.dark{
+  --bg:#0b0b12;--card:#14141d;--border:#262636;--ink:#f2f2f8;--muted:#9d9db0;
+  --primary:#f2f2f8;--primary-fg:#14141d;
+  --brand:#8b5cf6;--brand-2:#d946ef;--brand-soft:#251b52;--brand-bd:#4c3ba8;--brand-ink:#c4b5fd;
+  --ok:#4ade80;--ok-bg:#0a2e1a;--ok-ink:#86efac;--ok-bd:#1d6a3c;
+  --warn:#fbbf24;--warn-bg:#33210a;--warn-ink:#fcd34d;--warn-bd:#92400e;
+  --danger:#f87171;--danger-bg:#391111;--danger-ink:#fca5a5;--danger-bd:#7f1d1d;
+  --hover:#1c1c28;--active:#262636;--chip:#1c1c28;--sel:#251b52;
+  --skel-a:#1c1c28;--skel-b:#262636;--thumb-a:#20202e;--thumb-b:#2b2b3d;
+  --sidebar:#0e0e16;--shadow:0 1px 2px rgba(0,0,0,.45);
+  --glow:0 4px 22px rgba(139,92,246,.38);
+  --wash:radial-gradient(1100px 480px at 82% -12%,rgba(139,92,246,.10),transparent);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);background:var(--wash),var(--bg);color:var(--ink);font-size:14px;-webkit-font-smoothing:antialiased}
+.logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;flex:none}
+.iconbtn{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+.iconbtn:hover{background:var(--hover)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;box-shadow:var(--glow);border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:550;cursor:pointer;font-family:inherit;text-decoration:none}
+.btn:hover{opacity:.92}
+.btn.brand{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;box-shadow:var(--glow)}
+.btn.outline{background:transparent;color:var(--ink);border:1px solid var(--border)}.btn.outline:hover{background:var(--hover);opacity:1}
+.muted{color:var(--muted)}
+.badge{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:999px;padding:2px 10px;font-size:11.5px;background:var(--chip);font-weight:500}
+.badge.warn{background:var(--warn-bg);color:var(--warn-ink);border-color:var(--warn-bd)}
+.dot{width:7px;height:7px;border-radius:999px;background:var(--muted);flex:none}
+.dot.warn{background:var(--warn)}
+/* ---- setup-required page (BRD-85 creator first-run gate) ---- */
+.authwrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+  background:radial-gradient(900px 480px at 50% -10%,var(--brand-soft),transparent 65%),
+             radial-gradient(700px 420px at 100% 100%,var(--brand-soft),transparent 70%),var(--bg)}
+.gatecard{width:100%;max-width:460px;padding:28px 26px 24px;text-align:center}
+.gatecard .logo{width:46px;height:46px;border-radius:13px;font-size:18px;margin:0 auto 16px}
+.illus{height:132px;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#d946ef);color:#fff;display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:18px}
+.illus .ghosthead{width:52px;height:52px;border-radius:999px;background:linear-gradient(135deg,#f59e0b,#f43f5e);display:flex;align-items:center;justify-content:center}
+.headline{font-size:20px;font-weight:700;letter-spacing:-.3px;margin:0 0 6px}
+.gatecopy{color:var(--muted);font-size:13px;line-height:1.55;margin:0 0 18px}
+.gatebtns{display:flex;gap:10px;justify-content:center;margin-bottom:18px}
+.steps{border-top:1px solid var(--border);padding-top:14px;text-align:left}
+.steps .st{display:flex;gap:10px;align-items:flex-start;padding:5px 0;color:var(--muted);font-size:12.5px;line-height:1.45}
+.steps .n{width:18px;height:18px;border-radius:999px;background:var(--chip);border:1px solid var(--border);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:650;flex:none;margin-top:1px}
+.steps .cap{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:600;margin-bottom:4px}
+</style>
+</head>
+<body>
+<button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode" style="position:fixed;top:14px;right:14px;z-index:60"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
+<div class="authwrap">
+  <div class="card gatecard">
+    <div class="logo">TR</div>
+
+    <div class="illus">
+      <span class="ghosthead"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>
+    </div>
+
+    <span class="badge warn" style="margin-bottom:10px"><span class="dot warn"></span>Waiting for admin setup</span>
+    <h1 class="headline">TrStudio isn't set up yet</h1>
+    <p class="gatecopy">No model sources or models are configured on this install, so the studios can't generate anything yet. Ask your admin to complete setup in TrStudioAdmin — or sign in with an admin account to do it yourself.</p>
+
+    <div class="gatebtns">
+      <a class="btn brand" href="login.html">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>
+        Sign in as admin
+      </a>
+      <button class="btn outline" type="button" data-act>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        Check again
+      </button>
+    </div>
+
+    <div class="steps">
+      <div class="cap">What your admin will do</div>
+      <div class="st"><span class="n">1</span>Enable a model source (local GPU, RunPod or a closed API) in TrStudioAdmin.</div>
+      <div class="st"><span class="n">2</span>Install or connect at least one model on that source.</div>
+      <div class="st"><span class="n">3</span>The model appears as a registry row — studios unlock automatically for creators.</div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var KEY='trstudio-mock-theme';
+  var SUN='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+  var MOON='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg>';
+  function apply(t){
+    document.documentElement.classList.toggle('dark',t==='dark');
+    var b=document.getElementById('themeBtn');
+    if(b)b.innerHTML=t==='dark'?SUN:MOON;
+  }
+  var s=null;try{s=localStorage.getItem(KEY);}catch(e){}
+  apply(s==='light'?'light':'dark');
+  document.addEventListener('click',function(e){
+    var tb=e.target.closest&&e.target.closest('#themeBtn');
+    if(tb){var n=document.documentElement.classList.contains('dark')?'light':'dark';
+      try{localStorage.setItem(KEY,n);}catch(e2){}apply(n);return;}
+    var sg=e.target.closest&&e.target.closest('.seg button,.tabbtn');
+    if(sg&&sg.parentElement){Array.prototype.forEach.call(sg.parentElement.querySelectorAll('button,.tabbtn'),function(x){x.classList.remove('active');});sg.classList.add('active');}
+    var ib=e.target.closest&&e.target.closest('[data-act]');
+    if(ib&&!ib.disabled){ib.disabled=true;ib.style.opacity=.7;ib.textContent='Working…';setTimeout(function(){ib.textContent='Done ✓';},700);}
+  });
+})();
+</script>
+</body>
+</html>

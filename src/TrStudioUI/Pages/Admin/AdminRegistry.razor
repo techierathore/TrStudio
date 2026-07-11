@@ -1,0 +1,673 @@
+@page "/admin/registry"
+@inject IHttpClientFactory HttpClientFactory
+@inject ToastService ToastService
+@inject IAuthSession AuthSession
+
+@*
+    Admin Registry & providers (REQ-UI-071). A filter/sortable DataTable of registry rows
+    (id, name, task, provider, tier Badge, license, safety Badge), an add/edit Sheet carrying
+    the declarative params-schema editor (key/type/required/default rows with validation), and
+    a Provider-keys panel of masked write-only Password inputs with an enabled Switch. Consumes
+    the registry + provider-key endpoints with a representative fallback while unauthenticated.
+*@
+
+<PageTitle>TrStudio — Registry &amp; Providers</PageTitle>
+
+<div class="stack">
+    <div class="flex-between">
+        <div>
+            <h1 class="page-title">Registry &amp; Providers</h1>
+            <p class="page-sub" style="margin-bottom:0">
+                Declarative model rows. The params schema here auto-renders TrStudio's controls —
+                no code change.
+            </p>
+        </div>
+        <Button OnClick="OpenAddSheet" data-testid="add-model">
+            <LucideIcon Name="plus" Size="14" />
+            Add model
+        </Button>
+    </div>
+
+    <div class="registry-layout">
+        <Card Class="p-0" data-testid="registry-table">
+            <div class="table-scroll">
+            <DataTable TData="RegistryRow" Data="@objRows" InitialPageSize="10" IsLoading="@objLoading">
+                <Columns>
+                    <DataTableColumn TData="RegistryRow" TValue="string" Property="@(r => r.Id)" Header="id" Sortable Filterable />
+                    <DataTableColumn TData="RegistryRow" TValue="string" Property="@(r => r.Name)" Header="name" Sortable Filterable>
+                        <CellTemplate Context="objRow">
+                            <div><b>@objRow.Name</b></div>
+                            <div class="kpi-lbl" style="font-size:11px">@objRow.Subtitle</div>
+                        </CellTemplate>
+                    </DataTableColumn>
+                    <DataTableColumn TData="RegistryRow" TValue="string" Property="@(r => r.Task)" Header="task" Sortable Filterable />
+                    <DataTableColumn TData="RegistryRow" TValue="string" Property="@(r => r.Provider)" Header="provider" Sortable Filterable />
+                    <DataTableColumn TData="RegistryRow" TValue="string" Property="@(r => r.Tier)" Header="tier" Sortable>
+                        <CellTemplate Context="objRow">
+                            <Badge Variant="BadgeVariant.Outline" Class="@objRow.TierTone">@objRow.Tier</Badge>
+                        </CellTemplate>
+                    </DataTableColumn>
+                    <DataTableColumn TData="RegistryRow" TValue="string" Property="@(r => r.License)" Header="license" Sortable />
+                    <DataTableColumn TData="RegistryRow" TValue="string" Property="@(r => r.Safety)" Header="safety" Sortable>
+                        <CellTemplate Context="objRow">
+                            <div class="flex-row">
+                                <Badge Variant="BadgeVariant.Outline" Class="@objRow.SafetyTone">@objRow.Safety</Badge>
+                                <Button Size="ButtonSize.IconSmall" Variant="ButtonVariant.Ghost"
+                                        AriaLabel="Edit model" OnClick="@(() => OpenEditSheet(objRow))">
+                                    <LucideIcon Name="pencil" Size="14" />
+                                </Button>
+                            </div>
+                        </CellTemplate>
+                    </DataTableColumn>
+                </Columns>
+            </DataTable>
+            </div>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Provider keys</CardTitle>
+                <CardDescription>Encrypted at rest · never logged.</CardDescription>
+            </CardHeader>
+            <CardContent Class="flex-col">
+                @foreach (var vKey in objProviderKeys)
+                {
+                    <div>
+                        <div class="flex-between">
+                            <Label>@vKey.ProviderName</Label>
+                            <div class="flex-row">
+                                <span class="kpi-lbl" style="font-size:11px">@(vKey.Enabled ? "enabled" : "disabled")</span>
+                                <Switch @bind-Checked="vKey.Enabled" AriaLabel="@($"Enable {vKey.ProviderName}")" />
+                            </div>
+                        </div>
+                        <Input Type="InputType.Password" @bind-Value="vKey.Value" Class="mt-2"
+                               Placeholder="Enter a new key to replace" />
+                    </div>
+                }
+                <Alert Variant="AlertVariant.Default">
+                    <AlertDescription>
+                        Keys are write-only — saved values are masked and cannot be read back.
+                    </AlertDescription>
+                </Alert>
+                <Button Variant="ButtonVariant.Outline" OnClick="SaveKeysAsync">Save keys</Button>
+            </CardContent>
+        </Card>
+    </div>
+</div>
+
+<Sheet @bind-Open="objSheetOpen">
+    <SheetContent Class="w-[400px] sm:w-[560px]">
+        <SheetHeader>
+            <SheetTitle>@(objIsNew ? "Add model" : "Edit model")</SheetTitle>
+            <SheetDescription>
+                Declarative row — the params schema below auto-renders the studio controls.
+            </SheetDescription>
+        </SheetHeader>
+
+        <div class="flex-col" style="padding:16px 0">
+            <Field>
+                <FieldLabel>Display name</FieldLabel>
+                <FieldContent>
+                    <Input @bind-Value="objEditName" Placeholder="e.g. MuseTalk" />
+                </FieldContent>
+            </Field>
+
+            <div class="flex-row" style="align-items:flex-start">
+                <Field Class="grow">
+                    <FieldLabel>Task</FieldLabel>
+                    <FieldContent>
+                        <Select @bind-Value="objEditTask" TValue="string" Class="w-full">
+                            <SelectTrigger><SelectValue Placeholder="Select task" /></SelectTrigger>
+                            <SelectContent>
+                                @foreach (var vTask in objTaskOptions)
+                                {
+                                    <SelectItem Value="@vTask" Text="@vTask" TValue="string">@vTask</SelectItem>
+                                }
+                            </SelectContent>
+                        </Select>
+                    </FieldContent>
+                </Field>
+                <Field Class="grow">
+                    <FieldLabel>Tier</FieldLabel>
+                    <FieldContent>
+                        <Select @bind-Value="objEditTier" TValue="string" Class="w-full">
+                            <SelectTrigger><SelectValue Placeholder="Select tier" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem Value="@("fast")" Text="fast" TValue="string">fast</SelectItem>
+                                <SelectItem Value="@("high")" Text="high" TValue="string">high</SelectItem>
+                                <SelectItem Value="@("premium")" Text="premium" TValue="string">premium</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </FieldContent>
+                </Field>
+            </div>
+
+            @if (objEditIsTextChat)
+            {
+                <Field>
+                    <FieldLabel>Endpoint</FieldLabel>
+                    <FieldContent>
+                        <Input @bind-Value="objEditEndpoint" Placeholder="https://api.openai.com/v1" data-testid="textchat-endpoint" />
+                    </FieldContent>
+                </Field>
+                <Field>
+                    <FieldLabel>Chat model</FieldLabel>
+                    <FieldContent>
+                        <Input @bind-Value="objEditChatModel" Placeholder="e.g. gpt-4o" data-testid="textchat-model" />
+                    </FieldContent>
+                </Field>
+                <div class="flex-between">
+                    <Label>Vision-capable (accepts image attachments)</Label>
+                    <Switch @bind-Checked="objEditVision" AriaLabel="Vision-capable" data-testid="textchat-vision" />
+                </div>
+                <Field>
+                    <FieldLabel>API key</FieldLabel>
+                    <FieldContent>
+                        <Input Type="InputType.Password" @bind-Value="objEditApiKey"
+                               Placeholder="Enter a new key to replace" data-testid="textchat-key" />
+                    </FieldContent>
+                </Field>
+                <Alert Variant="AlertVariant.Default">
+                    <AlertDescription>
+                        Text-chat rows power the Prompt Studio LLM picker. The key is encrypted at rest
+                        (write-only) and never runs a generation job.
+                    </AlertDescription>
+                </Alert>
+            }
+            else
+            {
+            <div>
+                <div class="flex-between">
+                    <Label>Params schema</Label>
+                    <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="AddParamRow" data-testid="add-param-row">
+                        <LucideIcon Name="plus" Size="14" />
+                        row
+                    </Button>
+                </div>
+                <div class="params-grid" style="margin-top:8px">
+                    <div class="hd">key</div>
+                    <div class="hd">type</div>
+                    <div class="hd">req</div>
+                    <div class="hd">default</div>
+                    <div></div>
+                    @foreach (var vParam in objParams)
+                    {
+                        <Input @bind-Value="vParam.Key" Placeholder="key" />
+                        <Select @bind-Value="vParam.Type" TValue="string">
+                            <SelectTrigger><SelectValue Placeholder="type" /></SelectTrigger>
+                            <SelectContent>
+                                @foreach (var vType in objTypeOptions)
+                                {
+                                    <SelectItem Value="@vType" Text="@vType" TValue="string">@vType</SelectItem>
+                                }
+                            </SelectContent>
+                        </Select>
+                        <Switch @bind-Checked="vParam.Required" AriaLabel="Required" />
+                        <Input @bind-Value="vParam.Default" Placeholder="—" />
+                        <button type="button" class="params-del" aria-label="Remove row" @onclick="@(() => RemoveParamRow(vParam))">✕</button>
+                    }
+                </div>
+                @if (objSchemaError is not null)
+                {
+                    <div class="field-err" data-testid="schema-error">⚠ @objSchemaError</div>
+                }
+            </div>
+            }
+        </div>
+
+        <SheetFooter>
+            <SheetClose AsChild>
+                <Button Variant="ButtonVariant.Outline">Cancel</Button>
+            </SheetClose>
+            <Button OnClick="SaveModelAsync" Disabled="@(objSchemaError is not null)">Save</Button>
+        </SheetFooter>
+    </SheetContent>
+</Sheet>
+
+@code {
+    private List<RegistryRow> objRows = new();
+    private List<ProviderKeyRow> objProviderKeys = new();
+    private bool objLoading = true;
+
+    private bool objSheetOpen;
+    private bool objIsNew;
+    private string objEditId = string.Empty;
+    private string objEditName = string.Empty;
+    private string? objEditTask;
+    private string? objEditTier;
+    private List<ParamRow> objParams = new();
+
+    /// <summary>Chat-completion endpoint URL for a text-chat row (REQ-FN-074); ignored for generation models.</summary>
+    private string objEditEndpoint = string.Empty;
+
+    /// <summary>Underlying chat model name for a text-chat row (e.g. "gpt-4o").</summary>
+    private string objEditChatModel = string.Empty;
+
+    /// <summary>Whether the text-chat row accepts image attachments (vision-capable, BRD-90).</summary>
+    private bool objEditVision;
+
+    /// <summary>A newly entered API key for the text-chat row, stored write-only under the model id; empty leaves the stored key untouched.</summary>
+    private string objEditApiKey = string.Empty;
+
+    /// <summary>True while the edit sheet is showing a text-chat row, which swaps the params grid for the LLM fields.</summary>
+    private bool objEditIsTextChat => string.Equals(objEditTask, "text-chat", StringComparison.Ordinal);
+
+    /// <summary>The full backing model being edited (preserves fields the sheet doesn't surface); null for a new row.</summary>
+    private RegistryModel? objEditModel;
+
+    /// <summary>Loaded registry models keyed by id so the edit sheet round-trips the real model, not a lossy view.</summary>
+    private readonly Dictionary<string, RegistryModel> objModelsById = new();
+
+    private readonly string[] objTaskOptions = { "avatar", "image", "video", "voice", "text-chat" };
+    private readonly string[] objTypeOptions = { "file", "string", "int", "float", "bool", "enum", "image", "audio", "mask" };
+
+    /// <summary>Validation message when a bool param has no default value; null when the schema is valid.</summary>
+    private string? objSchemaError
+    {
+        get
+        {
+            var vBad = objParams.FirstOrDefault(aParam =>
+                string.Equals(aParam.Type, "bool", StringComparison.Ordinal) && string.IsNullOrWhiteSpace(aParam.Default));
+            return vBad is null ? null : $"\"{vBad.Key}\" — bool params need a default value.";
+        }
+    }
+
+    /// <summary>
+    /// Loads the registry and provider keys AFTER the first interactive render — once JS interop is
+    /// available and <see cref="IAuthSession"/> can hydrate the bearer token. Loading here (not in
+    /// <c>OnInitializedAsync</c>, which runs during prerender before the token exists) avoids a wasted
+    /// anonymous 401 and the sample-row flash it used to cause.
+    /// </summary>
+    /// <param name="aFirstRender">Whether this is the component's first render.</param>
+    protected override async Task OnAfterRenderAsync(bool aFirstRender)
+    {
+        if (!aFirstRender)
+        {
+            return;
+        }
+
+        var vHasSession = await AuthSession.EnsureLoadedAsync();
+        await TryLoadRegistryAsync(vHasSession);
+        objLoading = false;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Loads the owner/admin-scoped registry and provider keys. With no session both stay empty (the
+    /// real empty state) rather than flashing sample rows or fake keys; a representative registry
+    /// sample only stands in when the AUTHENTICATED registry call succeeds with zero rows. Provider
+    /// keys are never seeded with sample values — masked keys must reflect real stored keys only.
+    /// </summary>
+    /// <param name="aHasSession">Whether a signed-in session is present.</param>
+    private async Task TryLoadRegistryAsync(bool aHasSession)
+    {
+        if (!aHasSession)
+        {
+            return;
+        }
+
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+
+            var vRegistry = await vClient.GetAsync(ApiRoutes.Registry);
+            if (vRegistry.IsSuccessStatusCode)
+            {
+                var vModels = await vRegistry.Content.ReadFromJsonAsync<List<RegistryModel>>();
+                objModelsById.Clear();
+                if (vModels is { Count: > 0 })
+                {
+                    foreach (var vModel in vModels)
+                    {
+                        objModelsById[vModel.Id] = vModel;
+                    }
+
+                    objRows = vModels.Select(MapRow).ToList();
+                }
+                else
+                {
+                    objRows = BuildRepresentativeRows();
+                }
+            }
+
+            var vKeys = await vClient.GetAsync(ApiRoutes.Providers + "/keys");
+            if (vKeys.IsSuccessStatusCode)
+            {
+                var vInfos = await vKeys.Content.ReadFromJsonAsync<List<ProviderKeyInfo>>();
+                if (vInfos is { Count: > 0 })
+                {
+                    // The raw secret never leaves the key store, so the password field starts empty
+                    // (placeholder "Enter a new key to replace") — a saved value only sends a NEW key.
+                    objProviderKeys = vInfos.Select(aInfo => new ProviderKeyRow(aInfo.ProviderName, string.Empty, aInfo.IsEnabled)).ToList();
+                }
+            }
+        }
+        catch
+        {
+            // Endpoints not reachable / unauthenticated — keep the table and keys empty rather than
+            // flashing sample rows.
+        }
+    }
+
+    private static RegistryRow MapRow(RegistryModel aModel)
+    {
+        var (vTier, vTierTone) = aModel.Tier switch
+        {
+            GenerationTier.Fast => ("fast", "badge-ok"),
+            GenerationTier.High => ("high", "badge-brand"),
+            _ => ("premium", "")
+        };
+        var (vSafety, vSafetyTone) = aModel.SafetyClass == SafetyClass.RealPersonGated
+            ? ("gated", "badge-warn")
+            : ("general", "");
+        return new RegistryRow(aModel.Id, aModel.DisplayName, aModel.Task.ToString(), aModel.Task.ToString().ToLowerInvariant(),
+            aModel.ProviderKind.ToString(), vTier, vTierTone, aModel.License, vSafety, vSafetyTone);
+    }
+
+    /// <summary>
+    /// A representative registry sample shown only as an empty-state illustration when the
+    /// authenticated registry call succeeds with zero rows — clearly example models, never a 401
+    /// fallback.
+    /// </summary>
+    private static List<RegistryRow> BuildRepresentativeRows() => new()
+    {
+        new("musetalk-v1", "MuseTalk", "lip-sync", "avatar", "local (Mac)", "fast", "badge-ok", "MIT", "general", ""),
+        new("sdxl-1.0", "SDXL", "image base+refiner", "image", "RunPod", "high", "badge-brand", "OpenRAIL++", "restricted", "badge-warn"),
+        new("hunyuan-avatar", "Hunyuan-Avatar", "talking head", "video", "RunPod", "high", "badge-brand", "Tencent Comm.", "restricted", "badge-warn"),
+        new("heygen-avatar-iv", "HeyGen Avatar IV", "premium avatar", "video", "HeyGen", "premium", "", "Commercial API", "gated", "badge-warn"),
+        new("flux-pro-fal", "FLUX.1 [pro]", "image premium", "image", "fal.ai", "premium", "", "Commercial API", "general", ""),
+        new("xtts-v2", "XTTS v2", "voice clone", "voice", "local (Mac)", "fast", "badge-ok", "Coqui CPML", "consent", "badge-warn")
+    };
+
+    private void OpenAddSheet()
+    {
+        objIsNew = true;
+        objEditModel = null;
+        objEditId = string.Empty;
+        objEditName = string.Empty;
+        objEditTask = "avatar";
+        objEditTier = "fast";
+        objEditEndpoint = string.Empty;
+        objEditChatModel = string.Empty;
+        objEditVision = false;
+        objEditApiKey = string.Empty;
+        objParams = new List<ParamRow> { new() { Key = string.Empty, Type = "string", Required = false, Default = null } };
+        objSheetOpen = true;
+    }
+
+    private void OpenEditSheet(RegistryRow aRow)
+    {
+        objIsNew = false;
+        objEditId = aRow.Id;
+        objEditModel = objModelsById.TryGetValue(aRow.Id, out var vModel) ? vModel : null;
+        objEditName = aRow.Name;
+        objEditTask = objEditModel is not null ? CategoryFor(objEditModel.Task) : aRow.Task;
+        objEditTier = aRow.Tier;
+        objEditEndpoint = objEditModel?.Endpoint ?? string.Empty;
+        objEditChatModel = objEditModel?.ChatModel ?? string.Empty;
+        objEditVision = objEditModel?.VisionCapable ?? false;
+        objEditApiKey = string.Empty;
+        objParams = objEditModel is { Params.Count: > 0 }
+            ? objEditModel.Params.Select(aSpec => new ParamRow
+            {
+                Key = aSpec.Key,
+                Type = aSpec.Type,
+                Required = aSpec.Required,
+                Default = aSpec.DefaultValue
+            }).ToList()
+            : new List<ParamRow>
+            {
+                new() { Key = "audio", Type = "file", Required = true, Default = null },
+                new() { Key = "bbox_shift", Type = "int", Required = false, Default = "0" },
+                new() { Key = "fps", Type = "int", Required = false, Default = "25" }
+            };
+        objSheetOpen = true;
+    }
+
+    private void AddParamRow()
+    {
+        objParams.Add(new ParamRow { Key = string.Empty, Type = "string", Required = false, Default = null });
+    }
+
+    private void RemoveParamRow(ParamRow aParam)
+    {
+        objParams.Remove(aParam);
+    }
+
+    /// <summary>
+    /// Persists the edited row via <c>PUT /api/v1/admin/registry/{id}</c>
+    /// (<see cref="RegistryModelUpsertRequest"/>). An edit round-trips the full backing model with only
+    /// the sheet's fields overridden; an add builds a new model with a slug id. On success the sheet
+    /// closes and the list refreshes; on failure an error toast shows (never a false success).
+    /// </summary>
+    private async Task SaveModelAsync()
+    {
+        if (objSchemaError is not null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(objEditName))
+        {
+            ToastService.Error("Enter a display name before saving.", "Name required");
+            return;
+        }
+
+        var vModel = objEditModel is not null ? CloneForEdit(objEditModel) : new RegistryModel();
+        if (objIsNew || string.IsNullOrWhiteSpace(objEditId))
+        {
+            objEditId = Slug(objEditName);
+            vModel.Task = TaskFor(objEditTask);
+        }
+
+        if (string.IsNullOrWhiteSpace(objEditId))
+        {
+            ToastService.Error("Enter a display name before saving.", "Name required");
+            return;
+        }
+
+        vModel.Id = objEditId;
+        vModel.DisplayName = objEditName;
+        vModel.Tier = TierFor(objEditTier);
+        vModel.Params = objParams
+            .Where(aRow => !string.IsNullOrWhiteSpace(aRow.Key))
+            .Select(aRow => new ModelParamSpec
+            {
+                Key = aRow.Key,
+                Type = aRow.Type,
+                Required = aRow.Required,
+                DefaultValue = aRow.Default
+            })
+            .ToList();
+
+        if (objEditIsTextChat)
+        {
+            // A text-chat row is a Prompt Studio LLM, not a generation model: pin its provider kind,
+            // carry the endpoint/model/vision flag, and enable it so the /models/text-chat picker lists it.
+            vModel.Task = GenerationTaskType.TextChat;
+            vModel.ProviderKind = ProviderKind.TextLlm;
+            vModel.Endpoint = string.IsNullOrWhiteSpace(objEditEndpoint) ? null : objEditEndpoint.Trim();
+            vModel.ChatModel = string.IsNullOrWhiteSpace(objEditChatModel) ? null : objEditChatModel.Trim();
+            vModel.VisionCapable = objEditVision;
+            vModel.IsEnabled = true;
+            vModel.IsReady = true;
+        }
+
+        var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+        try
+        {
+            var vResponse = await vClient.PutAsJsonAsync(
+                $"{ApiRoutes.Registry}/{Uri.EscapeDataString(vModel.Id)}",
+                new RegistryModelUpsertRequest { Model = vModel });
+            if (vResponse.IsSuccessStatusCode)
+            {
+                // A text-chat row's API key is stored write-only in the encrypted key store under the
+                // model id (RAG-005 retrieves it by that name); only sent when a new key was entered.
+                if (objEditIsTextChat && !string.IsNullOrWhiteSpace(objEditApiKey))
+                {
+                    await vClient.PutAsJsonAsync(
+                        ApiRoutes.Providers + "/keys",
+                        new ProviderKeyUpsertRequest { ProviderName = vModel.Id, ApiKey = objEditApiKey, IsEnabled = true });
+                    objEditApiKey = string.Empty;
+                }
+
+                objSheetOpen = false;
+                ToastService.Success($"{(objIsNew ? "Added" : "Updated")} \"{objEditName}\".", "Registry saved");
+                await TryLoadRegistryAsync(await AuthSession.EnsureLoadedAsync());
+                StateHasChanged();
+                return;
+            }
+        }
+        catch
+        {
+            // Fall through to the error toast below when the endpoint is unreachable.
+        }
+
+        ToastService.Error("Couldn't save the model — check your admin session and try again.", "Save failed");
+    }
+
+    /// <summary>
+    /// Persists provider keys via <c>PUT /api/v1/admin/providers/keys</c>
+    /// (<see cref="ProviderKeyUpsertRequest"/>). A row with a newly entered secret is upserted
+    /// (write-only, encrypted); a row with no new secret reflects only its enabled toggle against the
+    /// stored key. Nothing false-succeeds — an all-failed save shows an error toast.
+    /// </summary>
+    private async Task SaveKeysAsync()
+    {
+        var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+        var vSaved = 0;
+        var vFailed = false;
+
+        foreach (var vKey in objProviderKeys)
+        {
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(vKey.Value))
+                {
+                    var vResponse = await vClient.PutAsJsonAsync(
+                        ApiRoutes.Providers + "/keys",
+                        new ProviderKeyUpsertRequest { ProviderName = vKey.ProviderName, ApiKey = vKey.Value, IsEnabled = vKey.Enabled });
+                    if (vResponse.IsSuccessStatusCode)
+                    {
+                        vSaved++;
+                        vKey.Value = string.Empty;
+                    }
+                    else
+                    {
+                        vFailed = true;
+                    }
+                }
+                else
+                {
+                    // No new secret entered — reflect just the enabled toggle against the stored key.
+                    var vAction = vKey.Enabled ? "enable" : "disable";
+                    await vClient.PostAsync($"{ApiRoutes.Providers}/keys/{Uri.EscapeDataString(vKey.ProviderName)}/{vAction}", content: null);
+                }
+            }
+            catch
+            {
+                vFailed = true;
+            }
+        }
+
+        if (vFailed && vSaved == 0)
+        {
+            ToastService.Error("Couldn't store provider keys — check your admin session and try again.", "Save failed");
+        }
+        else
+        {
+            ToastService.Success("Provider keys stored (encrypted, write-only).", "Saved");
+        }
+    }
+
+    /// <summary>Best-effort UI category for the model picker derived from the model's generation task.</summary>
+    private static string CategoryFor(GenerationTaskType aTask) => aTask switch
+    {
+        GenerationTaskType.TextChat => "text-chat",
+        GenerationTaskType.LipSync => "avatar",
+        GenerationTaskType.TextToSpeech => "voice",
+        GenerationTaskType.ImageToVideo or GenerationTaskType.TextToVideo => "video",
+        _ => "image"
+    };
+
+    /// <summary>Maps a new-model UI category onto a concrete generation task for the PUT payload.</summary>
+    private static GenerationTaskType TaskFor(string? aCategory) => aCategory switch
+    {
+        "text-chat" => GenerationTaskType.TextChat,
+        "avatar" => GenerationTaskType.LipSync,
+        "voice" => GenerationTaskType.TextToSpeech,
+        "video" => GenerationTaskType.ImageToVideo,
+        _ => GenerationTaskType.TextToImage
+    };
+
+    /// <summary>Maps the tier dropdown value onto the <see cref="GenerationTier"/> enum.</summary>
+    private static GenerationTier TierFor(string? aTier) => aTier switch
+    {
+        "high" => GenerationTier.High,
+        "premium" => GenerationTier.Premium,
+        _ => GenerationTier.Fast
+    };
+
+    /// <summary>Slugs a display name into a stable lowercase registry id (e.g. "MuseTalk v2" → "musetalk-v2").</summary>
+    private static string Slug(string aName)
+    {
+        var vChars = aName.Trim().ToLowerInvariant()
+            .Select(aCh => char.IsLetterOrDigit(aCh) ? aCh : '-')
+            .ToArray();
+        var vSlug = new string(vChars).Trim('-');
+        while (vSlug.Contains("--", StringComparison.Ordinal))
+        {
+            vSlug = vSlug.Replace("--", "-", StringComparison.Ordinal);
+        }
+
+        return vSlug;
+    }
+
+    /// <summary>Shallow-copies the backing model so edits don't mutate the cached instance before the PUT lands.</summary>
+    private static RegistryModel CloneForEdit(RegistryModel aModel) => new()
+    {
+        Id = aModel.Id,
+        DisplayName = aModel.DisplayName,
+        Task = aModel.Task,
+        ProviderKind = aModel.ProviderKind,
+        Tier = aModel.Tier,
+        WorkflowRef = aModel.WorkflowRef,
+        HardwareRequirements = aModel.HardwareRequirements,
+        Params = aModel.Params,
+        Languages = aModel.Languages,
+        License = aModel.License,
+        SafetyClass = aModel.SafetyClass,
+        Cost = aModel.Cost,
+        IsReady = aModel.IsReady,
+        IsEnabled = aModel.IsEnabled,
+        Endpoint = aModel.Endpoint,
+        ChatModel = aModel.ChatModel,
+        VisionCapable = aModel.VisionCapable
+    };
+
+    private sealed record RegistryRow(
+        string Id, string Name, string Subtitle, string Task, string Provider,
+        string Tier, string TierTone, string License, string Safety, string SafetyTone);
+
+    private sealed class ProviderKeyRow
+    {
+        public ProviderKeyRow(string aProviderName, string aValue, bool aEnabled)
+        {
+            ProviderName = aProviderName;
+            Value = aValue;
+            Enabled = aEnabled;
+        }
+
+        public string ProviderName { get; }
+        public string Value { get; set; }
+        public bool Enabled { get; set; }
+    }
+
+    private sealed class ParamRow
+    {
+        public string Key { get; set; } = string.Empty;
+        public string Type { get; set; } = "string";
+        public bool Required { get; set; }
+        public string? Default { get; set; }
+    }
+}

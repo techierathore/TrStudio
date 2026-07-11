@@ -1,0 +1,81 @@
+{
+  "serverGate": {
+    "creatorAdminApiStatus": 403,
+    "operatorAdminApiStatus": 200,
+    "ownerMeStatus": 200,
+    "ownerMeRole": 0
+  },
+  "Creator": {
+    "landUrl": "http://172.18.144.1:5099/avatar",
+    "groups": [
+      "Studios",
+      "Workspace"
+    ],
+    "hasStudios": true,
+    "hasMgmtNav": false,
+    "deniedVisible": true,
+    "registryTableShown": false,
+    "api": []
+  },
+  "Operator": {
+    "landUrl": "http://172.18.144.1:5099/admin/ops",
+    "hasMgmtNav": true,
+    "hasStudios": false,
+    "screens": {
+      "registry": {
+        "route": "/admin/registry",
+        "h1": "Registry & Providers",
+        "denied": false,
+        "apiCalls": []
+      },
+      "ops": {
+        "route": "/admin/ops",
+        "h1": "RunPod & Ops",
+        "denied": false,
+        "apiCalls": []
+      },
+      "sources": {
+        "route": "/admin/sources",
+        "h1": "Model Sources",
+        "denied": false,
+        "apiCalls": []
+      },
+      "models": {
+        "route": "/admin/models",
+        "h1": "Model Library",
+        "denied": false,
+        "apiCalls": []
+      },
+      "hardware": {
+        "route": "/admin/setup/hardware",
+        "h1": "Hardware & Setup",
+        "denied": false,
+        "apiCalls": []
+      },
+      "comfy": {
+        "route": "/admin/comfy/import",
+        "h1": "ComfyUI Import & Debug",
+        "denied": false,
+        "apiCalls": []
+      },
+      "policy": {
+        "route": "/admin/policy",
+        "h1": "Content Policy",
+        "denied": false,
+        "apiCalls": []
+      }
+    }
+  },
+  "Owner": {
+    "landUrl": "http://172.18.144.1:5099/avatar",
+    "hasStudios": true,
+    "switchVisible": true,
+    "switchLabelBefore": "Switch to Management",
+    "afterUrl": "http://172.18.144.1:5099/admin/ops",
+    "hasMgmtNavAfter": true,
+    "regShown": true,
+    "ownerAdminApi": [],
+    "backUrl": "http://172.18.144.1:5099/avatar",
+    "studiosBack": true
+  }
+}

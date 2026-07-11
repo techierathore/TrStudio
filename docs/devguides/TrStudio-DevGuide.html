@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TrStudio — Developer Guide (Screen-by-Screen Code Map) · Index</title>
+<script>
+/* Resolve the theme BEFORE first paint (no flash). Saved choice wins; otherwise
+   pick by time of day — light 07:00–19:00 local, softened dark at night. */
+(function(){
+  try{
+    var t = localStorage.getItem('tf-theme');
+    if(t!=='light' && t!=='dark'){ var h = new Date().getHours(); t = (h>=7 && h<19) ? 'light' : 'dark'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){ document.documentElement.setAttribute('data-theme','light'); }
+})();
+</script>
+<style>
+/* LIGHT is the default theme — a warm off-white, easy on the eyes (never bright white). */
+:root{
+  --bg:#f4f1e9; --panel:#efe9db; --panel2:#e7e0cd; --line:#d8cfb6;
+  --ink:#2e2a22; --muted:#6f6857; --accent:#2f6f9f; --accent2:#3f7d54;
+  --warn:#9a6b15; --danger:#b03a52; --ok:#3f7d54;
+  --code-bg:#ece5d3; --code-ink:#332f26; --row-alt:#eae2cf;
+  --h3:#3a352b; --h4:#2f6f9f; --quote:#4a4537; --cta-bg:#e6eef5;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+/* DARK — softened near-black (warmer / less harsh than pure #0f1115). */
+html[data-theme="dark"]{
+  --bg:#11141a; --panel:#171b23; --panel2:#1e2430; --line:#2b3240;
+  --ink:#dfe3ea; --muted:#99a2b1; --accent:#7cc4ff; --accent2:#a6e3a1;
+  --warn:#f9c74f; --danger:#f38ba8; --ok:#a6e3a1;
+  --code-bg:#0c1016; --code-ink:#d8dde8; --row-alt:#141821;
+  --h3:#cfd5e3; --h4:#7cc4ff; --quote:#cfd5e3; --cta-bg:#0d2030;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;font-size:15px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono);font-size:13px;background:var(--code-bg);color:var(--code-ink);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+pre{font-family:var(--mono);font-size:12.5px;background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:auto;color:var(--code-ink);position:relative}
+pre code{background:none;border:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:11px;font-family:var(--sans);cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+/* floating light/dark toggle (top-right) */
+.theme-toggle{position:fixed;top:12px;right:14px;z-index:10000;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:12.5px;font-family:var(--sans);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.theme-toggle:hover{color:var(--accent);border-color:var(--accent)}
+
+.layout{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.layout.no-toc{grid-template-columns:1fr}
+nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid var(--line);background:var(--panel);padding:18px 14px}
+nav.side h1{font-size:14px;margin:0 0 4px;letter-spacing:.5px;color:var(--ink)}
+nav.side .sub{font-size:11.5px;color:var(--muted);margin-bottom:14px}
+nav.side ol,nav.side ul{list-style:none;padding:0;margin:0}
+nav.side li{font-size:13px;margin:2px 0}
+nav.side li a{display:block;padding:5px 8px;color:var(--ink);border-radius:6px}
+nav.side li a:hover{background:var(--panel2);text-decoration:none}
+nav.side li.h3 a{padding-left:22px;font-size:12.5px;color:var(--h3)}
+nav.side .group{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin:14px 8px 4px}
+
+main{padding:28px 40px 80px;max-width:1100px}
+.layout.no-toc main{margin:0 auto}
+
+h1{font-size:28px;margin:0 0 6px}
+h2{font-size:22px;margin:32px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+h3{font-size:17px;margin:22px 0 6px;color:var(--h3);scroll-margin-top:16px}
+h4{font-size:14px;margin:14px 0 4px;color:var(--h4);scroll-margin-top:16px}
+.subtitle{color:var(--muted);font-size:14px;margin-top:-4px;margin-bottom:18px}
+p{margin:6px 0 10px}
+blockquote{border-left:3px solid var(--accent);background:var(--panel);margin:8px 0;padding:8px 14px;color:var(--quote)}
+ul,ol{padding-left:22px}
+li{margin:2px 0}
+
+table{border-collapse:collapse;width:100%;font-size:13.5px;margin:8px 0}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2);color:var(--h3);font-weight:600}
+tr:nth-child(even) td{background:var(--row-alt)}
+
+hr{border:none;border-top:1px solid var(--line);margin:24px 0}
+.anchor-link{color:var(--muted);font-weight:400;font-size:0.85em;margin-left:8px;opacity:0;transition:opacity .15s;text-decoration:none}
+h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
+
+/* inline TOC at top of main content */
+.toc-inline{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 16px;margin:14px 0 24px}
+.toc-inline > div{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.toc-inline ol,.toc-inline ul{margin:4px 0;padding-left:18px}
+.toc-inline li{font-size:13px;margin:1px 0}
+.toc-inline a{color:var(--h3)}
+
+/* mermaid diagram wrapper + toolbar */
+.diagram{position:relative;border:1px solid var(--line);border-radius:8px;background:var(--code-bg);margin:14px 0;overflow:hidden}
+.diagram .mermaid{padding:14px;margin:0;background:transparent;border:none;overflow:auto}
+.diagram .dt{display:flex;gap:6px;justify-content:flex-end;padding:6px 8px;background:var(--row-alt);border-bottom:1px solid var(--line)}
+.diagram .dt button{background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:3px 10px;font-size:12px;font-family:var(--sans);cursor:pointer;min-width:30px}
+.diagram .dt button:hover{color:var(--accent);border-color:var(--accent)}
+.diagram .dt .zlabel{padding:3px 6px;font-size:11px;color:var(--muted);font-family:var(--mono);align-self:center}
+.diagram.fs{position:fixed;inset:0;z-index:9999;border-radius:0;border:none}
+.diagram.fs .mermaid{height:calc(100vh - 40px);display:flex;align-items:center;justify-content:center}
+
+@media(max-width:900px){.layout{grid-template-columns:1fr}nav.side{position:static;height:auto}}
+</style>
+</head>
+<body>
+<button id="themeToggle" class="theme-toggle" title="Toggle light / dark">☾ Dark</button>
+<div class="layout no-toc">
+  <main>
+    <h1>TrStudio — Developer Guide (Screen-by-Screen Code Map) · Index</h1>
+
+    <blockquote>
+      <p>✅ <strong>Runtime-verified 2026-07-05 (unified role-based app)</strong> — after the 2026-07-05 consolidation (BRD-86 / ADR-012: the two apps became ONE role-gated <code>TrStudio</code> app; <code>TrStudioAdmin</code> retired), the app was re-exercised as Creator, Operator, and Owner via the <code>/dev/session</code> seam on the single app (:5099) and, for the new <strong>MAUI desktop head</strong> (<code>TrStudio.Desktop</code>), via a FlaUI native-window smoke on <strong>Windows</strong> (Mac Catalyst builds but is unverified — no Mac in this env). Live evidence: Creator → studios only + <code>/admin/*</code> → in-app AccessDenied + admin API 403; Operator → 7 management screens render, API 200; Owner → both surfaces + in-app switch. Screenshots in <code>docs/screenshots/TrStudio/</code>. The 9 FE↔API route/visual defects noted below were caught + fixed on 2026-07-04 and remain fixed through the consolidation.</p>
+      <p>ℹ️ <strong>This is an <code>--update</code> realignment</strong>: the per-screen control/data-lineage bodies are unchanged by the consolidation (same endpoints/services/repos); what changed is the <strong>hosting</strong> (management screens moved <code>TrStudioAdmin/Components/Pages/</code> → <code>src/TrStudioUI/Pages/Admin/</code>), the <strong>role-gated shell</strong>, and <strong>landing</strong>.</p>
+      <p>✅ <strong><code>*verify all</code> (2026-07-06) + <code>*fix-issues</code> (2026-07-07) — RESOLVED.</strong> The verify pass found 4 screens that didn't reflow at 390px (clipped controls, dead space): Character library, Prompt/script library, Account &amp; spend, Model sources. <code>*fix-issues</code> fixed all 4 with page-scoped <code>@media(≤430px)</code> single-column collapse + header wrapping + a <strong>systemic shell fix</strong> (the SidebarInset content column + <code>.table-scroll</code> now carry <code>min-width:0</code>, so wide content scrolls internally instead of inflating the layout). Re-smoked @390px: Character/Library <code>documentElement.scrollWidth==body==390</code>; Account/Sources controls all render &amp; fit (<code>documentElement.scrollWidth==390</code>, no page scrollbar) with their wide DataTable scrolling internally (a minor DataTable inner-width trait logged as TrBlazeUI <strong>TR-010</strong>). All 4 back to <code>Verified</code>. Screenshots <code>test-results/verify-ui/refix-*.png</code>.</p>
+    </blockquote>
+
+    <blockquote>
+      <p><strong>Purpose — the document a HUMAN developer uses to trace any screen, control, or number on the page down to the database, to find/fix a bug or verify AI-generated code.</strong> The BRD says <em>what</em> the app does, the Architecture <em>how the system is shaped</em>; this guide says exactly which files produce each screen — Razor page → control → client service → API endpoint → engine service → repository → SQL/table — per user role. It documents the <strong>as-built code</strong>; regenerate with <code>*devguide TrStudio</code> after code changes.</p>
+    </blockquote>
+
+    <p>This is a <strong>split</strong> guide (2 roles, 23 distinct screens → split per the devguide §3 threshold). Open the role file you need:</p>
+
+    <div class="toc-inline">
+      <div>Contents</div>
+      <ol>
+        <li><a href="#running-the-solution-start-here">Running the solution (start here)</a></li>
+        <li><a href="#roles-and-menu-map">Roles and menu map</a></li>
+        <li><a href="#architecture-cheat-sheet">Architecture cheat-sheet</a></li>
+        <li><a href="#screen-inventory">Screen inventory</a></li>
+        <li><a href="#defects-surfaced-while-mapping-logged-to-docs-trstudio-checklist-md">Defects surfaced while mapping (logged to <code>docs/TrStudio-Checklist.md</code>)</a></li>
+        <li><a href="#how-to-fix-a-bug-with-this-guide">How to fix a bug with this guide</a></li>
+      </ol>
+    </div>
+
+    <h2 id="running-the-solution-start-here">Running the solution (start here)<a class="anchor-link" href="#running-the-solution-start-here">#</a></h2>
+    <p><code>TrStudio.slnx</code> is a <strong>7-project</strong> solution in which <code>TrStudioAdmin</code> is <strong>RETIRED</strong> (merged into the unified <code>TrStudio</code> app on 2026-07-05, ADR-012; removed from the solution) and <code>TrStudio.Desktop</code> (a MAUI Blazor Hybrid desktop head) is <strong>NEW</strong>. Running the <strong>web</strong> app means starting <strong><code>TrStudioApi</code> + <code>TrStudio</code> together</strong> (API first), with the two Docker dependency containers already up; for the <strong>desktop</strong> app, start <strong><code>TrStudioApi</code> + <code>TrStudio.Desktop</code></strong> instead. The remaining projects are libraries — do <strong>not</strong> set them to start. Full step-by-step (Visual Studio multiple-startup config + CLI) is in <strong><a href="../TrStudio-UsageGuide.md#which-projects-to-run-this-is-a-multi-project-solution">docs/TrStudio-UsageGuide.md → "Which projects to run" / "How to run"</a></strong>. Quick reference:</p>
+
+    <table>
+      <thead>
+        <tr><th>Project</th><th>Start?</th><th>URL / role</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>src/TrStudioApi</code></td><td>✅ <strong>Startup (first)</strong></td><td>http://localhost:5102 — Web API, DbUp migrations, Hangfire</td></tr>
+        <tr><td><code>src/TrStudio</code></td><td>✅ <strong>Startup</strong></td><td>http://localhost:5099 — the <strong>ONE unified role-based</strong> Blazor Web app (creator studios + role-gated management surface)</td></tr>
+        <tr><td><code>src/TrStudio.Desktop</code></td><td>✅ <strong>Startup — for the DESKTOP app</strong> (instead of <code>src/TrStudio</code>)</td><td>MAUI Blazor Hybrid <strong>desktop</strong> head (Windows + macOS), hosts the same unified app</td></tr>
+        <tr><td><code>src/TrStudioAdmin</code></td><td>❌ <strong>RETIRED</strong></td><td>merged into <code>TrStudio</code> 2026-07-05 (ADR-012); removed from the solution, not a startup project (old :5098 host gone)</td></tr>
+        <tr><td><code>src/TrStudio.Engine</code>, <code>src/TrStudio.Models</code>, <code>src/TrStudioUI</code>, <code>src/TrStudioDb</code></td><td>❌ libraries</td><td>— (<code>TrStudioUI</code> RCL now hosts <strong>all</strong> screens, incl. management under <code>Pages/Admin/</code>)</td></tr>
+      </tbody>
+    </table>
+
+    <ul>
+      <li><strong>Dependencies (Docker):</strong> <code>docker start WinPgVectorDb appmanager-api</code> → <code>docker ps</code> (both <strong>Up</strong>) <strong>before</strong> launching. Postgres (<code>:5432</code>) and AppManager (<code>:5101</code>) both run as containers; a down container is the usual cause of "can't connect"/"Docker" errors at startup.</li>
+      <li><strong>Visual Studio:</strong> right-click solution → <em>Configure Startup Projects…</em> → <em>Multiple</em> → Start = <strong><code>TrStudioApi</code> + <code>TrStudio</code></strong> (API at the top), everything else = None → F5. Wait for the API console <code>Now listening on: http://localhost:5102</code>. (For the desktop app, start <strong><code>TrStudioApi</code> + <code>TrStudio.Desktop</code></strong> instead.)</li>
+      <li>The <strong>web</strong> delivery (<code>src/TrStudio</code>) is Blazor Web (<code>net10.0</code>) — open http://localhost:5099 in the browser (or <code>:5099/dev/session</code>). The <strong>desktop</strong> delivery (<code>src/TrStudio.Desktop</code>) is a MAUI Blazor Hybrid desktop head (Windows + macOS); MAUI heads are no longer deferred.</li>
+    </ul>
+
+    <h2 id="roles-and-menu-map">Roles and menu map<a class="anchor-link" href="#roles-and-menu-map">#</a></h2>
+    <table>
+      <thead>
+        <tr><th>Role</th><th>Test user (see UsageGuide)</th><th>Authorization (as-built)</th><th>App / surface</th><th>Detail file</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Creator</strong> (standard + Premium)</td><td>user 2 <code>creator@trstudio.test</code> / user 4 <code>premium@…</code></td><td>AppManager JWT + per-handler <code>ResolveUserId</code> owner filter; endpoints use the app fallback auth policy (few declarative <code>.RequireAuthorization()</code>); client shell shows the Creator surface only (<code>/admin/*</code> → AccessDenied)</td><td>The ONE <code>TrStudio</code> app (<code>:5099</code>) — <strong>Creator surface</strong>; screens in the shared RCL <code>src/TrStudioUI/Pages/</code></td><td><a href="./TrStudio-DevGuide-Creator.md">TrStudio-DevGuide-Creator.md</a></td></tr>
+        <tr><td><strong>Operator / Admin</strong></td><td>user 3 <code>admin@trstudio.test</code></td><td>client gate: <code>AppShellNavigation.IsRouteAllowed</code> → <code>AccessDenied</code> for non-management roles; server gate: <code>SpineModule.AdminOnlyPolicy</code> = role Owner/Operator (<code>SpineModule.cs:67-70</code>), enforced in-handler</td><td>The ONE <code>TrStudio</code> app (<code>:5099</code>) — <strong>Management surface (role-gated)</strong>; screens now in the shared RCL <code>src/TrStudioUI/Pages/Admin/</code></td><td><a href="./TrStudio-DevGuide-Operator.md">TrStudio-DevGuide-Operator.md</a></td></tr>
+        <tr><td><strong>Owner / Superadmin</strong></td><td>user 1 <code>admin@appmanager.local</code></td><td>union of both (Creator + Operator)</td><td>The ONE <code>TrStudio</code> app — lands on the <strong>Creator surface</strong>, switches to the <strong>Management surface</strong> via the in-app sidebar-footer control</td><td>Creator + Operator files above</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Landing-truth (read from code, not inferred — re-read 2026-07-05 after the consolidation):</strong></p>
+    <ul>
+      <li><strong>Creator</strong> lands on <code>/avatar</code> after login (<code>Login.razor:153-166</code> → <code>ResolveLanding</code>, + setup-gate <code>IdentityEndpoints.cs:313-322</code>).</li>
+      <li><strong>Operator</strong> lands on <code>/admin/ops</code> — <strong>now code-backed</strong> in the unified app (the old two-app "not code-backed" note is superseded): <code>AppShellNavigation.ResolveDefaultSurface</code> selects the Management surface for an Operator (<code>AppShellNavigation.cs:98-106</code>), <code>TrStudioNavSets.ManagementLandingPath = "/admin/ops"</code> (<code>TrStudioNavSets.cs:14</code>), and the post-login redirect routes Operator→<code>/admin/ops</code> else <code>/avatar</code> (<code>Login.razor:165</code>; dev seam identical <code>DevSession.razor:117-118</code>). Confirmed live (<code>.smoke/results.json</code> Operator <code>landUrl …/admin/ops</code>).</li>
+      <li><strong>Owner</strong> lands on <code>/avatar</code> (Creator surface) and switches to Management in-app via the sidebar footer (<code>AppSidebar.razor:85-89</code> → <code>AppShellNavigation.cs:63-66</code>, target <code>/admin/ops</code>). The dev-session seam resolves the authoritative role via <code>GET /api/v1/auth/me</code> (<code>DevSession.razor</code>).</li>
+    </ul>
+
+    <h2 id="architecture-cheat-sheet">Architecture cheat-sheet<a class="anchor-link" href="#architecture-cheat-sheet">#</a></h2>
+    <table>
+      <thead>
+        <tr><th>Layer</th><th>Project / folder</th><th>What lives here</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>UI (Blazor) — shared RCL (ALL screens)</td><td><code>src/TrStudioUI/</code> (RCL)</td><td><code>Pages/</code> (creator screens) + <code>Pages/Admin/</code> (the 7 management screens, moved here 2026-07-05), <code>Navigation/AppShellNavigation.cs</code> (role-based surface selection), <code>Layout/AppSidebar.razor</code>, <code>MainLayout.razor</code>, <code>Layout/AccessDenied.razor</code>, <code>ThemeToggle.razor</code>, plus the <code>IAuthSession</code>/<code>AuthSessionState</code> contracts (<code>Auth/</code>) — hosted by the <code>src/TrStudio</code> web app AND the <code>src/TrStudio.Desktop</code> MAUI head</td></tr>
+        <tr><td>Hosts</td><td><code>src/TrStudio</code> (Web) · <code>src/TrStudio.Desktop</code> (MAUI Win/Mac)</td><td>Web host: role-based DI + Server auth impls (<code>src/TrStudio/Auth/</code>, ProtectedSessionStorage). Desktop host: <code>MauiAuthSession</code> (SecureStorage) + BlazorWebView over the same RCL</td></tr>
+        <tr><td>HTTP API</td><td><code>src/TrStudioApi/Endpoints/</code> (+ <code>Hubs/</code> SignalR)</td><td>Minimal-API endpoint groups (<code>/api/v1/*</code>); the Razor pages call these via typed HttpClient services</td></tr>
+        <tr><td>App / domain services</td><td><code>src/TrStudio.Engine/Domain/&lt;Area&gt;/</code></td><td>Business logic per area (Image, Avatar, Voice, Video, Characters, Jobs, Compare, Registry, Safety, Cost, RunPod, Comfy, Setup, …)</td></tr>
+        <tr><td>Providers / workers</td><td><code>src/TrStudio.Engine/Providers/</code>, <code>Workers/</code></td><td><code>IGenerationProvider</code> implementations; Hangfire workers</td></tr>
+        <tr><td>Data access</td><td><code>src/TrStudio.Engine/Infrastructure/Data/</code> (+ per-area)</td><td><strong>Dapper repositories</strong> — parameterized SQL literals (PascalCase identifiers quoted). <strong>No EF Core, no stored procs.</strong></td></tr>
+        <tr><td>Database</td><td><code>src/TrStudioDb/Scripts/*.sql</code></td><td>DbUp migrations (tables + dev seeds); run automatically on API startup</td></tr>
+      </tbody>
+    </table>
+
+    <ul>
+      <li><strong>How a screen gets its data:</strong> Razor page → injected typed <strong>HttpClient service</strong> → <strong><code>/api/v1/*</code> endpoint</strong> (<code>src/TrStudioApi/Endpoints/</code>) → <strong>engine service</strong> (<code>Engine/Domain/&lt;Area&gt;/</code>) → <strong>Dapper repository</strong> → <strong>SQL against a table</strong> (defined in <code>src/TrStudioDb/Scripts/</code>). The "Stored proc / Query" lineage column names the repository method + its SQL/table, since there are no procs.</li>
+      <li><strong>Auth model:</strong> every user-scoped handler resolves the AppManager <code>userId</code> and applies the owner filter server-side (BRD-81); admin endpoints require the Owner/Operator role policy.</li>
+    </ul>
+
+    <h2 id="screen-inventory">Screen inventory<a class="anchor-link" href="#screen-inventory">#</a></h2>
+    <ul>
+      <li><strong>Creator (16 screens):</strong> Login, Register, Forgot-password, Setup-required, Home, Avatar studio (flagship), Character library, Image studio, Voice studio, Video studio, <strong>Prompt studio</strong> (<code>/prompt-studio</code>, Phase 10 — added + runtime-verified 2026-07-07), Gallery, Projects, Comparison, Library, Account — see <a href="./TrStudio-DevGuide-Creator.md">Creator file</a>.</li>
+      <li><strong>Operator / Management surface (7 screens, role-gated within the one app):</strong> Hardware &amp; Guided setup (dual route), Model sources, Model library, Registry &amp; providers, RunPod &amp; Ops, ComfyUI import &amp; debug (dual route), Content policy / NSFW — now in <code>src/TrStudioUI/Pages/Admin/</code> — see <a href="./TrStudio-DevGuide-Operator.md">Operator file</a>.</li>
+    </ul>
+
+    <h2 id="defects-surfaced-while-mapping-logged-to-docs-trstudio-checklist-md">Defects surfaced while mapping (logged to <code>docs/TrStudio-Checklist.md</code>)<a class="anchor-link" href="#defects-surfaced-while-mapping-logged-to-docs-trstudio-checklist-md">#</a></h2>
+    <p>The DevGuide's static map + runtime OBSERVE caught a cluster of <strong>FE↔API wiring defects</strong> — client calls a route the API doesn't expose, or a save handler that's toast-only, swallowed by try/catch so the screen still demos on seed data (which is why they passed visual verification). <strong>✅ ALL 9 FIXED + RE-VERIFIED LIVE 2026-07-04</strong> (<code>*fix-issues</code>) — each row is back to <code>Verified</code>; the table below is the record of what was caught and closed:</p>
+
+    <table>
+      <thead>
+        <tr><th>#</th><th>REQ</th><th>Defect (file:line)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>UI-071</td><td><code>SaveModelAsync</code>/<code>SaveKeysAsync</code> toast-only — zero persistence (<code>AdminRegistry.razor:346-362</code>)</td></tr>
+        <tr><td>2</td><td>UI-072</td><td>ComfyUI FE routes <code>/status,/run,/install</code> ≠ BE <code>/debug,/dependencies,/smoke,/go-live</code> (<code>AdminComfy.razor:296-298</code>)</td></tr>
+        <tr><td>3</td><td>UI-070</td><td>Guided-setup stepper <code>RunStepAsync</code> toast-only — doesn't call <code>POST /admin/setup/steps/{key}/run</code></td></tr>
+        <tr><td>4</td><td>UI-010</td><td>Avatar voice-preview → <code>/api/v1/voice</code> root (misses <code>/synthesize</code>); script-assist → non-existent <code>/rag/script-assist</code></td></tr>
+        <tr><td>5</td><td>UI-040</td><td>Video timeline Edit → <code>/api/v1/avatar/edit</code> instead of <code>/api/v1/video/edit</code> (<code>VideoStudio.razor:535</code>)</td></tr>
+        <tr><td>6</td><td>UI-030</td><td>Voice <code>VoiceApiRoute="/api/v1/voice"</code> → <code>/presets</code> &amp; root-POST miss <code>/preset-voices</code> &amp; <code>/synthesize</code></td></tr>
+        <tr><td>7</td><td>UI-053</td><td>Library preset-type <code>style</code>/<code>voice</code> ≠ API <code>style-preset</code>/<code>voice-preset</code> → 400 (remark)</td></tr>
+        <tr><td>8</td><td>UI-011</td><td>Character-bible Sheet renders static copy — never calls <code>GET /characters/{id}/bible</code> (remark)</td></tr>
+        <tr><td>9</td><td>UI-073</td><td><strong>Runtime (OBSERVE):</strong> <code>/admin/ops</code> doesn't reflow at 390px — 823px horizontal overflow, text clipped (<code>⚠ visual:</code>)</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>9 defects caught (8 static FE↔API wiring + 1 runtime visual), all FIXED + re-verified live 2026-07-04</strong> — each fixed call now lands on the API request log (200/201; registry edit persists on reload; comfy <code>/status</code> probe removed; admin-ops <code>scrollWidth==390</code>). Only residual: <code>/video/edit</code> returns a clean 404 until a real source clip exists (placeholder-timeline limitation — the route is now correct). Core flows (job spine, tier routing, safety floors, per-user isolation, image ops, provenance, consent gate) were never affected. All nine <code>REQ-UI-*</code> rows are <code>Verified</code> in <code>docs/TrStudio-Checklist.md</code>.</p>
+
+    <h2 id="how-to-fix-a-bug-with-this-guide">How to fix a bug with this guide<a class="anchor-link" href="#how-to-fix-a-bug-with-this-guide">#</a></h2>
+    <ol>
+      <li>Reproduce; note the <strong>screen</strong> and <strong>control</strong>.</li>
+      <li>Open the role file, find the screen, find the control in its <strong>Data lineage</strong> table.</li>
+      <li>Walk the lineage top-down: Razor → client service → API endpoint → engine service → repository → SQL. The bug is in one of those hops.</li>
+      <li>If a value is <em>calculated</em>, the row names the calculator method.</li>
+      <li>After fixing, re-run the screen's walkthrough in <code>docs/TrStudio-UsageGuide.md</code>, then re-run <code>*devguide TrStudio --update</code>.</li>
+    </ol>
+
+    <hr>
+    <p><em>Generated by <code>*devguide TrStudio</code> · reflects code as built · realigned 2026-07-05 for the one-app role-based consolidation (BRD-86 / ADR-012) + MAUI desktop head. Regenerate after code changes.</em></p>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+<script>
+// Light/dark toggle. The initial theme was already applied flash-free by the
+// <head> script (saved choice, else time-of-day). Clicking flips it, saves the
+// choice, and reloads so Mermaid re-renders in the matching theme.
+(function(){
+  var btn = document.getElementById('themeToggle');
+  if(!btn) return;
+  var relabel = function(){
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    btn.textContent = dark ? '☀ Light' : '☾ Dark';
+  };
+  relabel();
+  btn.addEventListener('click', function(){
+    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    try{ localStorage.setItem('tf-theme', next); }catch(e){}
+    location.reload();
+  });
+})();
+
+// Copy buttons on every code <pre> — but NEVER on a `pre.mermaid`:
+// mermaid reads the <pre>'s textContent as the diagram source, so a button
+// appended here glues "copy" onto the last line and breaks the parse
+// (flowcharts → "Syntax error"; sequence diagrams silently absorb it).
+// Mermaid blocks get copy/export from their own .diagram toolbar instead.
+document.querySelectorAll('pre:not(.mermaid)').forEach(pre => {
+  const btn = document.createElement('button');
+  btn.className = 'copy';
+  btn.textContent = 'copy';
+  btn.addEventListener('click', () => {
+    const text = pre.querySelector('code') ? pre.querySelector('code').innerText : pre.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'copied';
+      setTimeout(() => { btn.textContent = 'copy'; }, 1200);
+    });
+  });
+  pre.appendChild(btn);
+});
+
+// Mermaid init — theme follows the resolved light/dark theme
+if (window.mermaid) {
+  var mermaidTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default';
+  mermaid.initialize({ startOnLoad: true, theme: mermaidTheme, securityLevel: 'loose' });
+}
+
+// Mermaid toolbar wiring — run after mermaid renders
+function wireMermaidToolbars() {
+  document.querySelectorAll('.diagram').forEach(dia => {
+    if (dia.dataset.wired) return;
+    const merm = dia.querySelector('.mermaid');
+    const svg = merm && merm.querySelector('svg');
+    if (!svg) return;
+    dia.dataset.wired = '1';
+    let scale = 1;
+    const label = dia.querySelector('.zlabel');
+    const apply = () => {
+      svg.style.transform = `scale(${scale})`;
+      svg.style.transformOrigin = 'top left';
+      if (label) label.textContent = Math.round(scale * 100) + '%';
+    };
+    const setScale = (s) => { scale = Math.max(0.25, Math.min(4, s)); apply(); };
+    dia.querySelector('[data-zin]').onclick = () => setScale(scale * 1.2);
+    dia.querySelector('[data-zout]').onclick = () => setScale(scale / 1.2);
+    dia.querySelector('[data-fit]').onclick = () => {
+      svg.style.transform = '';
+      svg.removeAttribute('width');
+      svg.style.maxWidth = '100%';
+      svg.style.height = 'auto';
+      scale = 1;
+      if (label) label.textContent = 'Fit';
+    };
+    dia.querySelector('[data-one]').onclick = () => {
+      svg.style.transform = '';
+      svg.style.maxWidth = 'none';
+      svg.style.width = '';
+      svg.style.height = '';
+      scale = 1;
+      if (label) label.textContent = '100%';
+    };
+    dia.querySelector('[data-fs]').onclick = () => {
+      dia.classList.toggle('fs');
+      if (dia.classList.contains('fs')) {
+        document.addEventListener('keydown', escFs);
+      } else {
+        document.removeEventListener('keydown', escFs);
+      }
+    };
+    function escFs(e) { if (e.key === 'Escape') { dia.classList.remove('fs'); document.removeEventListener('keydown', escFs); } }
+    dia.querySelector('[data-pop]').onclick = () => openInNewTab(svg);
+    // Ctrl+wheel zoom
+    merm.addEventListener('wheel', (e) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      setScale(scale * (e.deltaY < 0 ? 1.1 : 1/1.1));
+    }, { passive: false });
+  });
+}
+
+function openInNewTab(svg) {
+  const svgSource = new XMLSerializer().serializeToString(svg);
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Diagram</title>
+<style>
+  html,body{margin:0;height:100%;background:#0f1115;color:#e6e8ee;font-family:system-ui,sans-serif}
+  .bar{position:fixed;top:0;left:0;right:0;padding:8px 12px;background:#161a22;border-bottom:1px solid #2a3142;display:flex;gap:8px;z-index:10}
+  .bar button{background:#1c2230;color:#9aa3b2;border:1px solid #2a3142;border-radius:6px;padding:5px 12px;font-size:13px;cursor:pointer}
+  .bar button:hover{color:#7cc4ff;border-color:#7cc4ff}
+  .bar .hint{margin-left:auto;color:#9aa3b2;font-size:11.5px;align-self:center}
+  #stage{position:absolute;top:42px;bottom:0;left:0;right:0;overflow:hidden}
+  #stage svg{width:100%;height:100%}
+</style>
+</head><body>
+<div class="bar">
+  <button onclick="zpz.zoomIn()">+</button>
+  <button onclick="zpz.zoomOut()">−</button>
+  <button onclick="zpz.fit();zpz.center()">Fit</button>
+  <button onclick="zpz.resetZoom();zpz.center()">1:1</button>
+  <button onclick="window.print()">Print</button>
+  <button onclick="dlPng()">PNG</button>
+  <button onclick="dlSvg()">SVG</button>
+  <span class="hint">Drag to pan · Ctrl+wheel to zoom · + / − keys</span>
+</div>
+<div id="stage">${svgSource}</div>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"><\/script>
+<script>
+  const el = document.querySelector('#stage svg');
+  const zpz = svgPanZoom(el, { zoomScaleSensitivity: .3, minZoom: .2, maxZoom: 10, controlIconsEnabled: false, fit: true, center: true });
+  document.addEventListener('keydown', e => {
+    if (e.key === '+' || e.key === '=') zpz.zoomIn();
+    if (e.key === '-' || e.key === '_') zpz.zoomOut();
+    if (e.key === '0') { zpz.resetZoom(); zpz.center(); }
+  });
+  function dlSvg() {
+    const blob = new Blob([new XMLSerializer().serializeToString(el)], { type: 'image/svg+xml' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'diagram.svg'; a.click();
+  }
+  function dlPng() {
+    const src = new XMLSerializer().serializeToString(el);
+    const img = new Image();
+    const url = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(src)));
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = el.clientWidth * 2; c.height = el.clientHeight * 2;
+      const ctx = c.getContext('2d'); ctx.scale(2,2); ctx.drawImage(img, 0, 0);
+      c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'diagram.png'; a.click(); });
+    };
+    img.src = url;
+  }
+<\/script>
+</body></html>`;
+  const w = window.open();
+  w.document.write(html);
+  w.document.close();
+}
+
+// Run wiring after mermaid finishes (it renders async)
+if (window.mermaid) {
+  setTimeout(wireMermaidToolbars, 400);
+  setTimeout(wireMermaidToolbars, 1200);  // safety re-run for slow renders
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TrStudio Dev Guide — Operator</title>
+<script>
+/* Resolve the theme BEFORE first paint (no flash). Saved choice wins; otherwise
+   pick by time of day — light 07:00–19:00 local, softened dark at night. */
+(function(){
+  try{
+    var t = localStorage.getItem('tf-theme');
+    if(t!=='light' && t!=='dark'){ var h = new Date().getHours(); t = (h>=7 && h<19) ? 'light' : 'dark'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){ document.documentElement.setAttribute('data-theme','light'); }
+})();
+</script>
+<style>
+/* LIGHT is the default theme — a warm off-white, easy on the eyes (never bright white). */
+:root{
+  --bg:#f4f1e9; --panel:#efe9db; --panel2:#e7e0cd; --line:#d8cfb6;
+  --ink:#2e2a22; --muted:#6f6857; --accent:#2f6f9f; --accent2:#3f7d54;
+  --warn:#9a6b15; --danger:#b03a52; --ok:#3f7d54;
+  --code-bg:#ece5d3; --code-ink:#332f26; --row-alt:#eae2cf;
+  --h3:#3a352b; --h4:#2f6f9f; --quote:#4a4537; --cta-bg:#e6eef5;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+/* DARK — softened near-black (warmer / less harsh than pure #0f1115). */
+html[data-theme="dark"]{
+  --bg:#11141a; --panel:#171b23; --panel2:#1e2430; --line:#2b3240;
+  --ink:#dfe3ea; --muted:#99a2b1; --accent:#7cc4ff; --accent2:#a6e3a1;
+  --warn:#f9c74f; --danger:#f38ba8; --ok:#a6e3a1;
+  --code-bg:#0c1016; --code-ink:#d8dde8; --row-alt:#141821;
+  --h3:#cfd5e3; --h4:#7cc4ff; --quote:#cfd5e3; --cta-bg:#0d2030;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;font-size:15px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono);font-size:13px;background:var(--code-bg);color:var(--code-ink);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+pre{font-family:var(--mono);font-size:12.5px;background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:auto;color:var(--code-ink);position:relative}
+pre code{background:none;border:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:11px;font-family:var(--sans);cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+/* floating light/dark toggle (top-right) */
+.theme-toggle{position:fixed;top:12px;right:14px;z-index:10000;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:12.5px;font-family:var(--sans);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.theme-toggle:hover{color:var(--accent);border-color:var(--accent)}
+
+.layout{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.layout.no-toc{grid-template-columns:1fr}
+nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid var(--line);background:var(--panel);padding:18px 14px}
+nav.side h1{font-size:14px;margin:0 0 4px;letter-spacing:.5px;color:var(--ink)}
+nav.side .sub{font-size:11.5px;color:var(--muted);margin-bottom:14px}
+nav.side ol,nav.side ul{list-style:none;padding:0;margin:0}
+nav.side li{font-size:13px;margin:2px 0}
+nav.side li a{display:block;padding:5px 8px;color:var(--ink);border-radius:6px}
+nav.side li a:hover{background:var(--panel2);text-decoration:none}
+nav.side li.h3 a{padding-left:22px;font-size:12.5px;color:var(--h3)}
+nav.side .group{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin:14px 8px 4px}
+
+main{padding:28px 40px 80px;max-width:1100px}
+.layout.no-toc main{margin:0 auto}
+
+h1{font-size:28px;margin:0 0 6px}
+h2{font-size:22px;margin:32px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+h3{font-size:17px;margin:22px 0 6px;color:var(--h3);scroll-margin-top:16px}
+h4{font-size:14px;margin:14px 0 4px;color:var(--h4);scroll-margin-top:16px}
+.subtitle{color:var(--muted);font-size:14px;margin-top:-4px;margin-bottom:18px}
+p{margin:6px 0 10px}
+blockquote{border-left:3px solid var(--accent);background:var(--panel);margin:8px 0;padding:8px 14px;color:var(--quote)}
+ul,ol{padding-left:22px}
+li{margin:2px 0}
+
+table{border-collapse:collapse;width:100%;font-size:13.5px;margin:8px 0}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2);color:var(--h3);font-weight:600}
+tr:nth-child(even) td{background:var(--row-alt)}
+
+hr{border:none;border-top:1px solid var(--line);margin:24px 0}
+.anchor-link{color:var(--muted);font-weight:400;font-size:0.85em;margin-left:8px;opacity:0;transition:opacity .15s;text-decoration:none}
+h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
+
+/* inline TOC at top of main content */
+.toc-inline{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 16px;margin:14px 0 24px}
+.toc-inline > div{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.toc-inline ol,.toc-inline ul{margin:4px 0;padding-left:18px}
+.toc-inline li{font-size:13px;margin:1px 0}
+.toc-inline a{color:var(--h3)}
+
+/* mermaid diagram wrapper + toolbar */
+.diagram{position:relative;border:1px solid var(--line);border-radius:8px;background:var(--code-bg);margin:14px 0;overflow:hidden}
+.diagram .mermaid{padding:14px;margin:0;background:transparent;border:none;overflow:auto}
+.diagram .dt{display:flex;gap:6px;justify-content:flex-end;padding:6px 8px;background:var(--row-alt);border-bottom:1px solid var(--line)}
+.diagram .dt button{background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:3px 10px;font-size:12px;font-family:var(--sans);cursor:pointer;min-width:30px}
+.diagram .dt button:hover{color:var(--accent);border-color:var(--accent)}
+.diagram .dt .zlabel{padding:3px 6px;font-size:11px;color:var(--muted);font-family:var(--mono);align-self:center}
+.diagram.fs{position:fixed;inset:0;z-index:9999;border-radius:0;border:none}
+.diagram.fs .mermaid{height:calc(100vh - 40px);display:flex;align-items:center;justify-content:center}
+
+@media(max-width:900px){.layout{grid-template-columns:1fr}nav.side{position:static;height:auto}}
+</style>
+</head>
+<body>
+<button id="themeToggle" class="theme-toggle" title="Toggle light / dark">☾ Dark</button>
+<div class="layout no-toc">
+  <main>
+    <h1>TrStudio Dev Guide — Operator</h1>
+    <div class="subtitle">Management-surface screen-by-screen code map · one unified TrStudio app (role-gated to Operator/Owner)</div>
+<div class="toc-inline">
+  <div>Contents</div>
+  <ol>
+    <li><a href="#pointer">§1 pointer</a>
+    </li>
+    <li><a href="#operator-management-surface">Operator — the management surface of one app (role-gated)</a>
+    </li>
+    <li><a href="#screen-by-screen-code-map">Screen-by-screen code map</a>
+      <ul>
+        <li><a href="#operator-hardware-setup-hardware-readiness-guided-setup-wizard">Operator · Hardware &amp; Setup (Hardware &amp; readiness + Guided setup wizard)</a></li>
+        <li><a href="#operator-model-sources">Operator · Model Sources</a></li>
+        <li><a href="#operator-model-library">Operator · Model Library</a></li>
+        <li><a href="#operator-registry-providers">Operator · Registry &amp; Providers</a></li>
+        <li><a href="#operator-runpod-ops">Operator · RunPod &amp; Ops</a></li>
+        <li><a href="#operator-comfyui-import-debug">Operator · ComfyUI Import &amp; Debug</a></li>
+        <li><a href="#operator-content-policy">Operator · Content Policy</a></li>
+      </ul>
+    </li>
+    <li><a href="#defects-found">DEFECTS FOUND</a>
+    </li>
+    <li><a href="#unresolved-todo-hops">Unresolved / TODO hops</a>
+    </li>
+  </ol>
+</div>
+<blockquote><p>✅ <strong>Runtime-verified 2026-07-05</strong> — exercised as Operator/Owner via <code>/dev/session</code> (unified role-based app; management surface role-gated). Post-consolidation (BRD-86 / ADR-012 supersedes ADR-001): the two apps are now ONE <code>TrStudio</code> app and the 7 management screens moved from the retired <code>TrStudioAdmin</code> project into <code>src/TrStudioUI/Pages/Admin/</code> — their <code>/admin/*</code> routes and API client calls are unchanged; only the Razor file path and the access model changed (now role-gated within the one app, not a separate binary). Fresh per-role live smoke (<code>.smoke/results.json</code>, <code>.smoke/shots/</code>) confirms: Operator lands on <code>/admin/ops</code>, <code>hasMgmtNav</code> true, all 7 screens render their correct <code>h1</code> with none denied, and admin API calls return 200; a Creator reaching <code>/admin/*</code> is bounced to <code>AccessDenied</code> (client) and the API returns 403 (server). Screenshots below are the 2026-07-05 Operator shots (<code>docs/screenshots/TrStudio/operator-*.png</code>).</p></blockquote>
+<h2 id="pointer">§1 pointer<a class="anchor-link" href="#pointer">#</a></h2>
+<p>Management-surface screens of the <strong>one unified <code>TrStudio</code> app</strong> (role-gated to Operator/Owner; formerly the separate <code>TrStudioAdmin</code> app, now retired). Index: <a href="./TrStudio-DevGuide.html">TrStudio-DevGuide.md</a>.</p>
+<h2 id="operator-management-surface">Operator — the management surface of one app (role-gated)<a class="anchor-link" href="#operator-management-surface">#</a></h2>
+<p>Post-consolidation (BRD-86, ADR-012 supersedes ADR-001) there is <strong>one <code>TrStudio</code> app</strong> with two navigation surfaces — the <em>creator studios</em> and the <em>management surface</em> — and <code>AppShellNavigation</code> picks the active one from the signed-in user's role (<code>src/TrStudioUI/Navigation/AppShellNavigation.cs:19-60</code>). The 7 management screens live under the role-gated <code>/admin/*</code> routes and their Razor files now sit in <code>src/TrStudioUI/Pages/Admin/</code> (the <code>TrStudioAdmin</code> project is deleted). Access is <strong>Operator or Owner only</strong> (<code>CanAccessManagement =&gt; Role is UserRole.Owner or UserRole.Operator</code>, <code>AppShellNavigation.cs:53</code>); a Creator is bounced in-app to <code>src/TrStudioUI/Layout/AccessDenied.razor</code>.</p>
+<p>The management sidebar is built by <code>TrStudioNavSets.CreateManagementNavigation(...)</code> (<code>src/TrStudioUI/Navigation/TrStudioNavSets.cs:49-72</code>) and selected by role in the shared shell (<code>MainLayout.razor</code> → <code>AppShellNavigation</code>, no separate admin host). Three groups:</p>
+<div style="overflow-x:auto"><table><thead><tr><th>Group</th><th>Sidebar item</th><th>Route</th><th>Razor file</th><th>Cite</th></tr></thead><tbody><tr><td>Environment</td><td>Hardware &amp; Setup</td><td><code>/admin/setup/hardware</code> (+ active alias <code>/admin/setup</code>)</td><td><code>src/TrStudioUI/Pages/Admin/AdminHardware.razor</code></td><td><code>TrStudioNavSets.cs:55</code></td></tr><tr><td>Environment</td><td>RunPod &amp; Ops</td><td><code>/admin/ops</code></td><td><code>src/TrStudioUI/Pages/Admin/AdminOps.razor</code></td><td><code>TrStudioNavSets.cs:56</code></td></tr><tr><td>Models</td><td>Model Sources</td><td><code>/admin/sources</code></td><td><code>src/TrStudioUI/Pages/Admin/AdminSources.razor</code></td><td><code>TrStudioNavSets.cs:60</code></td></tr><tr><td>Models</td><td>Model Library</td><td><code>/admin/models</code></td><td><code>src/TrStudioUI/Pages/Admin/AdminModels.razor</code></td><td><code>TrStudioNavSets.cs:61</code></td></tr><tr><td>Models</td><td>Registry &amp; Providers</td><td><code>/admin/registry</code></td><td><code>src/TrStudioUI/Pages/Admin/AdminRegistry.razor</code></td><td><code>TrStudioNavSets.cs:62</code></td></tr><tr><td>Models</td><td>ComfyUI Import</td><td><code>/admin/comfy/import</code> (+ second <code>@page /admin/comfy/debug</code>)</td><td><code>src/TrStudioUI/Pages/Admin/AdminComfy.razor</code></td><td><code>TrStudioNavSets.cs:63</code></td></tr><tr><td>Governance</td><td>Content Policy</td><td><code>/admin/policy</code></td><td><code>src/TrStudioUI/Pages/Admin/AdminPolicy.razor</code></td><td><code>TrStudioNavSets.cs:67</code></td></tr></tbody></table></div>
+<p>Owner (the only role with both surfaces) gets an in-app <strong>"Switch to Management" / "Switch to Creator studio"</strong> control (<code>AppShellNavigation.SwitchSurface</code>, <code>:69-70,112-121</code>; sidebar button <code>AppSidebar.razor:88</code>) instead of a cross-app link.</p>
+<p><strong>Landing-truth (re-read from routing code — CORRECTED).</strong> In the unified app the Operator <strong>does land on <code>/admin/ops</code></strong> — the old "not code-backed" note is now stale. <code>AppShellNavigation.ResolveDefaultSurface</code> selects the Management surface for an Operator (<code>Role == UserRole.Operator ? AppSurface.Management : AppSurface.Creator</code>, <code>AppShellNavigation.cs:98-106</code>), and the management surface's default landing route is <code>/admin/ops</code> (<code>TrStudioNavSets.ManagementLandingPath = "/admin/ops"</code>, <code>TrStudioNavSets.cs:14</code>; surfaced via <code>AppShellNavigation.CurrentLandingPath</code>, <code>:62-66</code>). The post-login redirect itself resolves the same way: <code>Login.razor:165</code> returns <code>aSession.Role == UserRole.Operator ? "/admin/ops" : "/avatar"</code> (dev seam identical, <code>DevSession.razor:117-118</code>). The Phase-1 live smoke confirms it: <code>results.json</code> shows Operator <code>landUrl: http://…/admin/ops</code>. So the corrected statement is: <strong>an Operator signing into the unified app lands on the Ops dashboard <code>/admin/ops</code></strong> (Owner lands on <code>/avatar</code> and switches into management in-app; <code>results.json</code> Owner <code>landUrl: /avatar</code>, <code>afterUrl: /admin/ops</code>).</p>
+<p><strong>Authorization posture (read from code) — now a two-layer gate.</strong> The management screens are gated <strong>both client-side (new) and server-side (unchanged)</strong>:</p>
+<ul><li><strong>Client (in-app bounce, REQ-FN-072):</strong> <code>MainLayout</code> evaluates <code>AppShellNavigation.IsRouteAllowed(path)</code> on every navigation (<code>MainLayout.razor:133-136</code>); for an <code>/admin/*</code> route it denies unless the resolved role is management-entitled (<code>AppShellNavigation.cs:131-141</code>, <code>IsManagementPath</code> <code>:146-157</code>) and renders <code>AccessDenied.razor</code> in place of the page (<code>MainLayout.razor:43-45</code>) so the page component never mounts and its admin API call is never issued. A Creator sees "The management surface is available to Operator and Owner accounts only." (<code>AccessDenied.razor:14-17</code>).</li><li><strong>Server (API authority, unchanged):</strong> every admin endpoint is guarded by <code>SpineModule.AdminOnlyPolicy</code> (<code>= "AdminOnly"</code>, <code>src/TrStudio.Engine/DependencyInjection/SpineModule.cs:31</code>), which requires a <code>role</code> claim of <strong>Owner or Operator</strong> (<code>SpineModule.cs:67-70</code>); a Creator's call gets 403. Smoke <code>results.json</code> confirms both layers: Creator <code>deniedVisible: true</code> + <code>creatorAdminApiStatus: 403</code>; Operator <code>operatorAdminApiStatus: 200</code>, all 7 screens <code>denied: false</code>.</li></ul>
+<p>Each page still hydrates its bearer token via <code>IAuthSession</code> in <code>OnAfterRenderAsync</code> and falls back to an empty/representative state when unauthenticated. This gating applies to all 7 screens below (Content Policy's write is additionally owner-intent-gated in the UI). Per-screen authorization notes below list each screen's admin endpoints; those API guards are UNCHANGED by the consolidation.</p>
+<h2 id="screen-by-screen-code-map">Screen-by-screen code map<a class="anchor-link" href="#screen-by-screen-code-map">#</a></h2>
+<hr>
+<h3 id="operator-hardware-setup-hardware-readiness-guided-setup-wizard">Operator · Hardware &amp; Setup (Hardware &amp; readiness + Guided setup wizard)<a class="anchor-link" href="#operator-hardware-setup-hardware-readiness-guided-setup-wizard">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/admin/setup/hardware</code> and <code>/admin/setup</code> (one component, two <code>@page</code> directives — <code>AdminHardware.razor:1-2</code>)</li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/Admin/AdminHardware.razor</code></li><li><strong>Reached via:</strong> Environment → Hardware &amp; Setup; <strong>Log in as:</strong> Operator (or Owner via surface-switch) — a Creator is bounced to <code>AccessDenied</code> (client) and the API 403s (server)</li><li><strong>What this screen does:</strong> Shows live host readiness cards (GPU / unified memory / MPS-CoreML / disk) from the authenticated capability report, plus a static guided-setup stepper (ONNX, MuseTalk, isolated Python + ComfyUI, network volume) and a low-disk alert linking to the Model Library.</li><li><strong>Authorization:</strong> client <code>/admin/*</code> gate (Operator/Owner only, else <code>AccessDenied.razor</code>); server capability data via <code>ApiRoutes.Capabilities</code> group <code>.RequireAuthorization(SpineModule.AdminOnlyPolicy)</code> (<code>SetupEndpoints.cs:33-35</code>) — policy UNCHANGED by the consolidation</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-05 as Operator, unified role-gated app; desktop)</li></ul>
+<p><strong>Screenshot</strong></p>
+<p><img src="../screenshots/TrStudio/operator-hardware.png" alt="Hardware &amp; Setup — Operator (2026-07-05)" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["AdminHardware.razor"] --> C1["Capability readiness cards"]
+  C1 --> E1["GET /api/v1/admin/capabilities"]
+  E1 --> SV1["ICapabilityDetector.DetectAsync()"]
+  SV1 --> DB1[("host probe — no DB read")]
+  P --> C2["Guided-setup stepper"]
+  C2 --> SEED["SeedSteps() — static, no API call"]
+  P --> C3["Low-disk Warning Alert"]
+  C3 --> LINK["href /admin/models"]</pre>
+</div>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>Capability cards (×4)</td><td>Card + Badge + Progress</td><td>GPU / unified memory / MPS-CoreML / disk readiness</td><td>live <code>HostCapabilityReport</code> → <code>ApplyReport()</code></td></tr><tr><td>Capabilities-unavailable note</td><td>Card</td><td>Shown when no session / endpoint unreachable (no sample hardware)</td><td><code>objCapabilityCards.Count == 0</code> guard</td></tr><tr><td>Guided-setup stepper</td><td>Steps + Progress + Button</td><td>ONNX / MuseTalk / Python+ComfyUI / volume</td><td><code>SeedSteps()</code> static seed</td></tr><tr><td>"N of M complete" badge</td><td>Badge</td><td>Step completion count</td><td><code>objCompletedSteps</code> computed getter</td></tr><tr><td>Low-disk alert</td><td>Alert</td><td>Links to Model Library</td><td>static markup</td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method (file)</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>Capability cards</td><td><code>AdminHardware.razor:44-62</code></td><td><code>HttpClientFactory("TrStudioApi").GetAsync(ApiRoutes.Capabilities)</code> (<code>:178-189</code>)</td><td><code>GET /api/v1/admin/capabilities</code> → <code>GetCapabilitiesAsync</code> (<code>SetupEndpoints.cs:36,67</code>)</td><td><code>ICapabilityDetector.DetectAsync</code> (<code>Infrastructure/Capability/</code>)</td><td>host probe — <strong>no DB read</strong></td><td>renders (auth-gated; else "unavailable" note)</td><td>cards seed empty; hydrate after first render only with a session</td></tr><tr><td>Guided-setup stepper</td><td><code>AdminHardware.razor:91-113</code></td><td>none — <code>SeedSteps()</code> (<code>:216-225</code>)</td><td>—</td><td>—</td><td>—</td><td>renders (static)</td><td><code>RunStepAsync</code> (<code>:228</code>) is toast-only; real run "wires to /installs" per comment</td></tr><tr><td>Low-disk alert</td><td><code>AdminHardware.razor:117-126</code></td><td>—</td><td>—</td><td>—</td><td>—</td><td>renders (static)</td><td>link → <code>/admin/models</code></td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li>Cards hydrate only in <code>OnAfterRenderAsync</code> after <code>AuthSession.EnsureLoadedAsync()</code> — never during prerender — so an anonymous 401 never flashes a sample Mac profile (<code>:151-196</code>).</li><li>Disk-used % and low-disk flag: <code>vLowDisk = FreeDiskGb &lt; TotalDiskGb * 0.25</code> (<code>:201-204</code>).</li><li><code>objCompletedSteps</code> counts steps whose <code>DotClass == "done"</code> (<code>:134</code>).</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li>Guided-setup stepper is static scaffolding; <code>RunStepAsync</code> only toasts — it does not call the real setup endpoints (<code>ApiRoutes.Setup</code> <code>run</code>/<code>poll</code> exist at <code>SetupEndpoints.cs:42-44</code> but the page does not invoke them). Not a defect (comment marks it as pending wiring), but the step "Start/Logs/Verify" buttons do not drive <code>POST /api/v1/admin/setup/steps/{key}/run</code>.</li><li>Capability cards require a live host + admin session; on WSL/CI they render the "unavailable" note by design.</li></ul>
+<hr>
+<h3 id="operator-model-sources">Operator · Model Sources<a class="anchor-link" href="#operator-model-sources">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/admin/sources</code></li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/Admin/AdminSources.razor</code></li><li><strong>Reached via:</strong> Models → Model Sources; <strong>Log in as:</strong> Operator (or Owner via surface-switch) — Creator bounced to <code>AccessDenied</code> (client) + API 403 (server)</li><li><strong>What this screen does:</strong> Lists configured open-model sources (name, type, base URL, status, enabled Switch), with header search and an add/edit Sheet (name, type, base URL, write-only token, enabled) plus a Test-connection probe. An info Alert separates open-file Sources from closed generation Providers.</li><li><strong>Authorization:</strong> client <code>/admin/*</code> gate (Operator/Owner only); server <code>ApiRoutes.Sources</code> groups <code>.RequireAuthorization(SpineModule.AdminOnlyPolicy)</code> (list at <code>SetupEndpoints.cs:55-57</code>; CRUD + test at <code>Phase3Endpoints.cs:33-40</code>) — policy UNCHANGED</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-05 as Operator, unified role-gated app; desktop)</li></ul>
+<p><strong>Screenshot</strong></p>
+<p><img src="../screenshots/TrStudio/operator-sources.png" alt="Model Sources — Operator (2026-07-05)" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["AdminSources.razor"] --> C1["Sources DataTable"]
+  C1 --> E1["GET /api/v1/admin/sources"]
+  E1 --> R1["IModelSourceRepository.ListAsync()"]
+  R1 --> DB1[("ModelSource")]
+  P --> C2["Add/Edit Sheet · Save"]
+  C2 --> E2["POST/PUT /api/v1/admin/sources[/id]"]
+  E2 --> R2["IModelSourceRepository.UpsertAsync + IModelSourceTokenStore.SetTokenAsync"]
+  R2 --> DB1
+  P --> C3["Test connection"]
+  C3 --> E3["POST /api/v1/admin/sources/id/test-connection"]
+  E3 --> PROBE["HEAD/GET probe → persist Status"]
+  P --> C4["Enabled Switch"]
+  C4 --> E2</pre>
+</div>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>Sources table</td><td>DataTable</td><td>name/type/base-URL/status/enabled</td><td>live <code>List&lt;ModelSource&gt;</code> → <code>MapRow</code></td></tr><tr><td>Header search</td><td>Input</td><td>filter by name or base URL</td><td><code>FilteredSources</code> getter</td></tr><tr><td>Add/Edit Sheet</td><td>Sheet + Fields</td><td>upsert a source</td><td><code>SaveSourceAsync</code></td></tr><tr><td>API token field</td><td>Password Input</td><td>write-only token</td><td>never read back (<code>HasToken</code> only)</td></tr><tr><td>Test connection</td><td>Button</td><td>reachability → ok Badge / fail Alert</td><td><code>TestConnectionAsync</code></td></tr><tr><td>Enabled Switch</td><td>Switch</td><td>flip source on/off</td><td><code>ToggleEnabledAsync</code> (PUT)</td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method (file)</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>Sources table</td><td><code>AdminSources.razor:54-93</code></td><td><code>GetAsync(ApiRoutes.Sources)</code> (<code>:245</code>)</td><td><code>GET /api/v1/admin/sources</code> → <code>ListSourcesAsync</code> (<code>SetupEndpoints.cs:58,253</code>)</td><td><code>IModelSourceRepository.ListAsync</code> (<code>Infrastructure/ModelSources/ModelSourceRepository.cs</code>)</td><td><code>FROM "ModelSource"</code></td><td>renders</td><td>tokens never listed; representative sample only on authed zero-row (<code>:474</code>)</td></tr><tr><td>Save (add/edit)</td><td><code>AdminSources.razor:287-322</code></td><td><code>PostAsJsonAsync</code>/<code>PutAsJsonAsync(ApiRoutes.Sources[/id])</code> (<code>:302-304</code>)</td><td><code>POST/PUT /api/v1/admin/sources[/{id}]</code> → <code>CreateSourceAsync</code>/<code>UpdateSourceAsync</code> (<code>Phase3Endpoints.cs:37-38,76,112</code>)</td><td><code>UpsertAsync</code> + <code>IModelSourceTokenStore.SetTokenAsync</code></td><td><code>INTO "ModelSource"</code></td><td>renders (wired)</td><td>optimistic local fallback if endpoint unreachable</td></tr><tr><td>Enabled toggle</td><td><code>AdminSources.razor:325-349</code></td><td><code>PutAsJsonAsync(.../{id})</code> (<code>:341</code>)</td><td><code>PUT /api/v1/admin/sources/{id}</code> (<code>Phase3Endpoints.cs:38</code>)</td><td><code>UpsertAsync</code></td><td><code>"ModelSource"</code></td><td>renders (wired)</td><td>optimistic flip on failure</td></tr><tr><td>Test connection</td><td><code>AdminSources.razor:352-382</code></td><td><code>PostAsync(.../{id}/test-connection)</code> (<code>:366</code>)</td><td><code>POST /api/v1/admin/sources/{id}/test-connection</code> → <code>TestSourceConnectionAsync</code> (<code>Phase3Endpoints.cs:40,170</code>)</td><td>HEAD/GET probe, persists <code>Status</code></td><td><code>"ModelSource"</code></td><td>renders (wired)</td><td>"save the source first" guard when unsaved (<code>:356</code>)</td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li>Status tone/label derived by <code>ResolveStatus</code> (disabled/connected/unauthorized/unreachable/pending) (<code>:446-461</code>).</li><li>API token is write-only: <code>ApiToken = null</code> on toggle so a flip never resends a token (<code>:334</code>); a stored token renders only as <code>token: ••••••••••</code> (<code>:426</code>).</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li>All CRUD + test verbs ARE wired server-side (<code>Phase3Endpoints</code>), so this screen is fully live with an admin session; the razor's "while the write endpoint is wiring" comments are stale but harmless.</li></ul>
+<hr>
+<h3 id="operator-model-library">Operator · Model Library<a class="anchor-link" href="#operator-model-library">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/admin/models</code></li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/Admin/AdminModels.razor</code></li><li><strong>Reached via:</strong> Models → Model Library; <strong>Log in as:</strong> Operator (or Owner via surface-switch) — Creator bounced to <code>AccessDenied</code> (client) + API 403 (server)</li><li><strong>What this screen does:</strong> Browses installable open models (search + task Tabs + source Select) over a paged table, with one-click Install, a live resumable install queue (Progress + Pause/Resume/Cancel), a destination card and over-disk/registry hand-off Alerts. Browses ENABLED sources only.</li><li><strong>Authorization:</strong> client <code>/admin/*</code> gate (Operator/Owner only); server enabled-source list via <code>ApiRoutes.Sources</code> (admin, <code>SetupEndpoints.cs:55</code>); install queue via <code>ApiRoutes.Installs</code> group <code>.RequireAuthorization(SpineModule.AdminOnlyPolicy)</code> (<code>SetupEndpoints.cs:47-49</code>) — policy UNCHANGED</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-05 as Operator, unified role-gated app; desktop)</li></ul>
+<p><strong>Screenshot</strong></p>
+<p><img src="../screenshots/TrStudio/operator-models.png" alt="Model Library — Operator (2026-07-05)" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["AdminModels.razor"] --> C1["Catalog table (representative)"]
+  C1 --> SEED["BuildRepresentativeCatalog() — no browse endpoint"]
+  P --> C2["Enabled-source badge + Select"]
+  C2 --> E2["GET /api/v1/admin/sources"]
+  E2 --> R2["IModelSourceRepository.ListAsync()"]
+  R2 --> DB2[("ModelSource")]
+  P --> C3["Install button"]
+  C3 --> E3["POST /api/v1/admin/installs"]
+  E3 --> SV3["IModelInstallService.StartInstallAsync()"]
+  SV3 --> DB3[("ModelInstall")]
+  P --> C4["Install queue · Pause/Resume/Cancel"]
+  C4 --> E4["GET + POST /api/v1/admin/installs[/id/action]"]
+  E4 --> SV3</pre>
+</div>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>Catalog table</td><td>DataTable + custom pager</td><td>name/source/task/size/VRAM/license/action</td><td><code>BuildRepresentativeCatalog()</code> (no live browse endpoint)</td></tr><tr><td>Search / task Tabs / source Select</td><td>Input/Tabs/Select</td><td>filter catalog</td><td><code>FilteredCatalog</code> getter</td></tr><tr><td>Install button</td><td>Button</td><td>queue a resumable install</td><td><code>InstallAsync</code> (POST installs)</td></tr><tr><td>Install queue</td><td>Card + Progress</td><td>live download progress + controls</td><td>live <code>List&lt;ModelInstallItem&gt;</code> → <code>MapQueue</code></td></tr><tr><td>Pause/Resume/Cancel</td><td>Button</td><td>control an install</td><td><code>ControlInstallAsync</code></td></tr><tr><td>Destination + over-disk alert</td><td>Card + Alert</td><td>disk/volume guidance</td><td>static markup</td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method (file)</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>Catalog rows</td><td><code>AdminModels.razor:84-142</code></td><td><code>BuildRepresentativeCatalog()</code> (<code>:290,486</code>)</td><td>— (no source-browse endpoint)</td><td>—</td><td>—</td><td>renders-representative (no live catalog source)</td><td>comment confirms "browsable catalog is representative" (<code>:276-281</code>)</td></tr><tr><td>Enabled-source list/badge</td><td><code>AdminModels.razor:26-27,71-74</code></td><td><code>GetAsync(ApiRoutes.Sources)</code> (<code>:317</code>)</td><td><code>GET /api/v1/admin/sources</code> (<code>SetupEndpoints.cs:58</code>)</td><td><code>IModelSourceRepository.ListAsync</code></td><td><code>FROM "ModelSource"</code></td><td>renders</td><td>zero enabled → no-sources empty state (<code>:324,33</code>)</td></tr><tr><td>Install</td><td><code>AdminModels.razor:105,368-415</code></td><td><code>PostAsJsonAsync(ApiRoutes.Installs)</code> (<code>:380</code>)</td><td><code>POST /api/v1/admin/installs</code> → <code>StartInstallAsync</code> (<code>SetupEndpoints.cs:51,164</code>)</td><td><code>IModelInstallService.StartInstallAsync</code> (<code>Domain/Install/</code>) → <code>ModelInstallRepository</code></td><td><code>INTO "ModelInstall"</code></td><td>renders (wired)</td><td>optimistic queue entry on failure</td></tr><tr><td>Install queue</td><td><code>AdminModels.razor:145-194,340-347</code></td><td><code>GetAsync(ApiRoutes.Installs)</code> (<code>:340</code>)</td><td><code>GET /api/v1/admin/installs</code> → <code>ListInstallsAsync</code> (<code>SetupEndpoints.cs:50,152</code>)</td><td><code>IModelInstallService.ListAsync</code> → <code>ModelInstallRepository</code></td><td><code>FROM "ModelInstall"</code></td><td>renders (live-or-representative)</td><td>representative queue kept if endpoint unreachable</td></tr><tr><td>Pause/Resume/Cancel</td><td><code>AdminModels.razor:180-188,418-448</code></td><td><code>PostAsync(.../{id}/{action})</code> (<code>:423</code>)</td><td><code>POST /api/v1/admin/installs/{id}/{action}</code> → <code>ControlInstallAsync</code> (<code>SetupEndpoints.cs:52,200</code>)</td><td><code>Pause/Resume/CancelAsync</code> → <code>ModelInstallRepository</code></td><td><code>UPDATE "ModelInstall"</code></td><td>renders (wired)</td><td>optimistic state change on failure</td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li><code>Reference</code> for install parsed from the subtitle's first token (<code>:521</code>); page size 8, client-side pagination (<code>:244,256-258</code>).</li><li>Install destination heuristic: models &gt; 10 GB → RunPod network volume (destination card copy, <code>:196-206</code>).</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li>No live source-browse endpoint exists; the catalog table is always a representative sample. Install / queue / controls are live against <code>ModelInstall</code>. Not a defect (feature gap by design comment).</li></ul>
+<hr>
+<h3 id="operator-registry-providers">Operator · Registry &amp; Providers<a class="anchor-link" href="#operator-registry-providers">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/admin/registry</code></li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/Admin/AdminRegistry.razor</code></li><li><strong>Reached via:</strong> Models → Registry &amp; Providers; <strong>Log in as:</strong> Operator (or Owner via surface-switch) — Creator bounced to <code>AccessDenied</code> (client) + API 403 (server)</li><li><strong>What this screen does:</strong> A filter/sortable registry DataTable (id, name, task, provider, tier, license, safety), an add/edit Sheet with the <strong>declarative params-schema editor</strong> (key/type/required/default rows with bool-default validation), and a Provider-keys panel of <strong>masked, write-only</strong> Password inputs with an enabled Switch.</li><li><strong>Authorization:</strong> client <code>/admin/*</code> gate (Operator/Owner only); server <code>ApiRoutes.Registry</code> and <code>ApiRoutes.Providers</code> groups <code>.RequireAuthorization(SpineModule.AdminOnlyPolicy)</code> (<code>RegistryEndpoints.cs:34-35,47-49</code>) — policy UNCHANGED</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-05 as Operator, unified role-gated app; desktop)</li></ul>
+<p><strong>Screenshot</strong></p>
+<p><img src="../screenshots/TrStudio/operator-registry.png" alt="Registry &amp; Providers — Operator (2026-07-05)" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["AdminRegistry.razor"] --> C1["Registry DataTable"]
+  C1 --> E1["GET /api/v1/admin/registry"]
+  E1 --> R1["IRegistryRepository.ListAsync()"]
+  R1 --> DB1[("RegistryModel")]
+  P --> C2["Provider-keys panel (masked)"]
+  C2 --> E2["GET /api/v1/admin/providers/keys"]
+  E2 --> SV2["IKeyStore.ListMaskedAsync()"]
+  SV2 --> DB2[("ProviderKey")]
+  P --> C3["Params-schema editor · Save model"]
+  C3 --> TOAST["ToastService only — no PUT call"]
+  P --> C4["Save keys"]
+  C4 --> TOAST2["ToastService only — no PUT call"]</pre>
+</div>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>Registry table</td><td>DataTable (filter/sort)</td><td>model rows w/ tier + safety badges</td><td>live <code>List&lt;RegistryModel&gt;</code> → <code>MapRow</code></td></tr><tr><td>Add/Edit model Sheet</td><td>Sheet</td><td>edit display name / task / tier</td><td><code>OpenAddSheet</code> / <code>OpenEditSheet</code></td></tr><tr><td>Params-schema editor</td><td>key/type/req/default grid</td><td>declarative param rows</td><td><code>objParams</code> + <code>AddParamRow</code>/<code>RemoveParamRow</code></td></tr><tr><td>Schema validation</td><td>inline error</td><td>bool params need a default</td><td><code>objSchemaError</code> computed getter</td></tr><tr><td>Provider keys</td><td>masked Password + Switch</td><td>write-only key + enabled</td><td>live <code>List&lt;ProviderKeyInfo&gt;</code> → <code>ProviderKeyRow</code></td></tr><tr><td>Save model / Save keys</td><td>Button</td><td>persist</td><td><code>SaveModelAsync</code> / <code>SaveKeysAsync</code> — <strong>toast only</strong></td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method (file)</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>Registry table</td><td><code>AdminRegistry.razor:34-63</code></td><td><code>GetAsync(ApiRoutes.Registry)</code> (<code>:256</code>)</td><td><code>GET /api/v1/admin/registry</code> → <code>ListRegistryAsync</code> (<code>RegistryEndpoints.cs:38,68</code>)</td><td><code>IRegistryRepository.ListAsync</code> (<code>Infrastructure/Data/RegistryRepository.cs</code>)</td><td><code>FROM "RegistryModel"</code></td><td>renders</td><td>representative sample only on authed zero-row (<code>:300</code>)</td></tr><tr><td>Provider keys</td><td><code>AdminRegistry.razor:72-93</code></td><td><code>GetAsync(ApiRoutes.Providers + "/keys")</code> (<code>:263</code>)</td><td><code>GET /api/v1/admin/providers/keys</code> → <code>ListProviderKeysAsync</code> (<code>RegistryEndpoints.cs:51,129</code>)</td><td><code>IKeyStore.ListMaskedAsync</code> → <code>ProviderKeyRepository</code></td><td><code>FROM "ProviderKey"</code> (masked)</td><td>renders (live-only; never seeded)</td><td>keys empty if none stored — by design (<code>:238-242</code>)</td></tr><tr><td>Save model</td><td><code>AdminRegistry.razor:187,346-356</code></td><td><strong>none</strong> — <code>ToastService.Success</code> only</td><td><em>(unused)</em> <code>PUT /api/v1/admin/registry/{id}</code> exists (<code>RegistryEndpoints.cs:40,80</code>)</td><td><code>IRegistryRepository.UpsertAsync</code></td><td><code>INTO "RegistryModel"</code></td><td><strong>renders-empty (suspected defect)</strong> — shows success toast, never persists</td><td>see DEFECTS</td></tr><tr><td>Save keys</td><td><code>AdminRegistry.razor:92,358-362</code></td><td><strong>none</strong> — <code>ToastService.Success</code> only</td><td><em>(unused)</em> <code>PUT /api/v1/admin/providers/keys</code> exists (<code>RegistryEndpoints.cs:52,135</code>)</td><td><code>IKeyStore.StoreAsync</code></td><td><code>INTO "ProviderKey"</code></td><td><strong>renders-empty (suspected defect)</strong> — shows success toast, never persists</td><td>see DEFECTS</td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li>Params-schema editor is the declarative contract that "auto-renders TrStudio's controls — no code change" (page sub, <code>:20-23</code>). Type options: file/string/int/float/bool/enum/image/audio/mask (<code>:205</code>).</li><li>Schema validation: a <code>bool</code> param with a blank default blocks Save (<code>objSchemaError</code>, <code>:208-216</code>; Save disabled at <code>:187</code>).</li><li>Tier tone: fast=ok, high=brand, premium=neutral; safety: <code>RealPersonGated</code> → "gated"/warn (<code>:282-290</code>).</li><li>Provider keys are write-only: placeholder "Enter a new key to replace"; masked values cannot be read back (<code>:83-90</code>).</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li>Save model / Save keys are toast-only despite the backing PUT endpoints existing — confirmed defect (below). Editing a param row or a key and clicking Save gives a false success with no persistence.</li></ul>
+<hr>
+<h3 id="operator-runpod-ops">Operator · RunPod &amp; Ops<a class="anchor-link" href="#operator-runpod-ops">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/admin/ops</code> — <strong>the Operator's post-login landing</strong> (<code>TrStudioNavSets.ManagementLandingPath</code>, <code>TrStudioNavSets.cs:14</code>; <code>Login.razor:165</code>)</li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/Admin/AdminOps.razor</code></li><li><strong>Reached via:</strong> default Operator landing, or Environment → RunPod &amp; Ops; <strong>Log in as:</strong> Operator (or Owner via surface-switch) — Creator bounced to <code>AccessDenied</code> (client) + API 403 (server)</li><li><strong>What this screen does:</strong> Spend guardrail cards (RunPod GPU, closed APIs, total vs monthly cap) with a near-cap Alert, a RunPod control card (start/stop, auto-idle-stop Switch, cold-start Badge, clean "not configured" state), worker-health/queue-depth cards, and a filterable generation-log DataTable with one-click Reproduce.</li><li><strong>Authorization:</strong> client <code>/admin/*</code> gate (Operator/Owner only); server spend <code>ApiRoutes.Spend</code> + runpod <code>ApiRoutes.RunPod</code> groups <code>.RequireAuthorization(SpineModule.AdminOnlyPolicy)</code> (<code>Phase3Endpoints.cs:43-52</code>); generation log via <code>ApiRoutes.GenerationLog</code> (<code>SpineEndpoints.cs:50</code>) — policies UNCHANGED</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-05 as Operator landing, unified role-gated app; desktop). Historical: the prior 2026-07-04 @390px overflow (823px) was fixed by <code>.ops-page &gt; * { min-width:0 }</code> + a ≤430px single-column rule so the generation-log DataTable scrolls inside its own container.</li></ul>
+<p><strong>Screenshot</strong> (Operator landing shot — this is where an Operator arrives at sign-in)</p>
+<p><img src="../screenshots/TrStudio/operator-ops-landing.png" alt="RunPod &amp; Ops — Operator landing (2026-07-05)" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["AdminOps.razor"] --> C1["Spend guardrail cards"]
+  C1 --> E1["GET /api/v1/admin/spend"]
+  E1 --> SV1["ISpendLedger.GetSummaryAsync()"]
+  SV1 --> DB1[("SpendRecord")]
+  P --> C2["RunPod control card"]
+  C2 --> E2["GET + POST /api/v1/admin/runpod[/start|/stop]"]
+  E2 --> SV2["IRunPodOps.GetStatus/Start/Stop()"]
+  P --> C3["Generation log DataTable"]
+  C3 --> E3["GET /api/v1/generation-log"]
+  E3 --> R3["IGenerationLogRepository.ListAsync()"]
+  R3 --> DB3[("GenerationLog")]
+  P --> C4["Reproduce"]
+  C4 --> E4["POST /api/v1/generation-log/id/reproduce"]
+  E4 --> R3</pre>
+</div>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>Spend cards (×3)</td><td>Card + Progress + Badge</td><td>RunPod / closed-API / total vs cap</td><td>live <code>SpendSummary</code> (or representative)</td></tr><tr><td>Near-cap alert</td><td>Alert</td><td>shown at ≥80% (danger ≥95%)</td><td><code>objSpend.CapPct</code></td></tr><tr><td>RunPod control</td><td>Card + Switch + Buttons</td><td>start/stop, auto-idle, cold-start, unconfigured</td><td>live <code>RunPodView</code> (or representative)</td></tr><tr><td>Worker health</td><td>Card</td><td>status/workers/queue/latency</td><td><code>objWorkerActive/Max/QueueDepth</code> + static</td></tr><tr><td>Generation log</td><td>DataTable</td><td>user/model/params/cost/duration/outcome</td><td>live <code>PagedResult&lt;GenerationLogEntry&gt;</code> → <code>MapLog</code></td></tr><tr><td>Reproduce</td><td>Button</td><td>re-queue from log</td><td><code>ReproduceAsync</code></td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method (file)</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>Spend cards</td><td><code>AdminOps.razor:57-93</code></td><td><code>GetAsync("/api/v1/admin/spend")</code> (<code>:291</code>)</td><td><code>GET /api/v1/admin/spend</code> → <code>GetSpendAsync</code> (<code>Phase3Endpoints.cs:46,229</code>)</td><td><code>ISpendLedger.GetSummaryAsync</code> (<code>Domain/Cost/</code>) → <code>SpendRepository</code></td><td><code>FROM "SpendRecord"</code></td><td>renders (live-or-representative)</td><td>representative kept if cap ≤ 0 / unreachable (<code>:295,409</code>)</td></tr><tr><td>RunPod control</td><td><code>AdminOps.razor:97-161,385-407</code></td><td><code>GetAsync/PostAsync("/api/v1/admin/runpod[/action]")</code> (<code>:308,394</code>)</td><td>`GET/POST /api/v1/admin/runpod[/start</td><td>/stop]<code> → </code>GetRunPodStatus/Start/Stop<code> (</code>Phase3Endpoints.cs:52-54,238`)</td><td><code>IRunPodOps</code> (<code>Domain/RunPod/</code>)</td><td>RunPod API — no DB read</td><td>renders (live-or-representative)</td></tr><tr><td>Worker health</td><td><code>AdminOps.razor:164-192</code></td><td>enriched from <code>/api/v1/admin/runpod</code> view</td><td>(same as above)</td><td><code>IRunPodOps.GetStatusAsync</code></td><td>—</td><td>renders (partly static)</td><td>error-rate/cold-start/latency rows are static copy</td></tr><tr><td>Generation log</td><td><code>AdminOps.razor:195-223,329-348</code></td><td><code>GetAsync("{GenerationLog}?aPage=1&amp;aPageSize=25")</code> (<code>:331</code>)</td><td><code>GET /api/v1/generation-log</code> → <code>ListGenerationLogAsync</code> (<code>SpineEndpoints.cs:51,197</code>)</td><td><code>IGenerationLogRepository.ListAsync</code> (<code>Infrastructure/Data/GenerationLogRepository.cs</code>)</td><td><code>FROM "GenerationLog"</code></td><td>renders (live-or-representative)</td><td>representative sample on zero rows / error (<code>:335-346</code>)</td></tr><tr><td>Reproduce</td><td><code>AdminOps.razor:215,365-383</code></td><td><code>PostAsync("{GenerationLog}/{id}/reproduce")</code> (<code>:370</code>)</td><td><code>POST /api/v1/generation-log/{id}/reproduce</code> → <code>ReproduceFromLogAsync</code> (<code>SpineEndpoints.cs:52</code>)</td><td><code>IGenerationLogRepository</code></td><td><code>"GenerationLog"</code></td><td>renders (wired)</td><td>toast fallback if unreachable</td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li><code>CapPct = TotalSpend / MonthlyCap * 100</code> (<code>:490</code>); near-cap alert at ≥80%, danger styling ≥95% (<code>:25-28,88-89</code>).</li><li>Log params summarized to ≤40 chars, user id shortened to 12 chars (<code>:448-460</code>).</li><li>Monthly cap "spans all providers" (RunPod + closed APIs) — a single deployment-wide cap.</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li>RunPod cold-start / start-endpoint needs a configured RunPod API key + endpoint id; without it the card renders the "not configured" state — model/service-gated, NOT a defect.</li><li>Worker-health error-rate/cold-start/latency values are static illustration, not live metrics.</li></ul>
+<hr>
+<h3 id="operator-comfyui-import-debug">Operator · ComfyUI Import &amp; Debug<a class="anchor-link" href="#operator-comfyui-import-debug">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/admin/comfy/import</code> and <code>/admin/comfy/debug</code> (two <code>@page</code> directives, one component — <code>AdminComfy.razor:1-2</code>)</li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/Admin/AdminComfy.razor</code></li><li><strong>Reached via:</strong> Models → ComfyUI Import; <strong>Log in as:</strong> Operator (or Owner via surface-switch) — Creator bounced to <code>AccessDenied</code> (client) + API 403 (server)</li><li><strong>What this screen does:</strong> Import an API-format workflow (drop-zone or paste), parse it client-side into a nodes table, map each literal node input to a declarative registry param, smoke-test with a per-node run/debug panel (status list + WebSocket-preview placeholder + Progress + the exact <code>/prompt</code> JSON), surface a missing custom-node dependency with an Install action, then save the known-good graph as a registry model with a pinned version.</li><li><strong>Authorization:</strong> client <code>/admin/*</code> gate (Operator/Owner only); server <code>ApiRoutes.Comfy</code> (<code>/api/v1/admin/comfy</code>) group <code>.RequireAuthorization(SpineModule.AdminOnlyPolicy)</code> (<code>ComfyEndpoints.cs:31-33</code>) — policy UNCHANGED</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-05 as Operator, unified role-gated app; desktop)</li></ul>
+<p><strong>Screenshot</strong></p>
+<p><img src="../screenshots/TrStudio/operator-comfy.png" alt="ComfyUI Import — Operator (2026-07-05)" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["AdminComfy.razor"] --> C1["Import + Parse (client-side)"]
+  C1 --> PARSE["JsonDocument.Parse → nodes + mapping"]
+  P --> C2["Configured probe"]
+  C2 --> E2["GET /api/v1/admin/comfy/status — 404 (no BE route)"]
+  P --> C3["Run / debug"]
+  C3 --> E3["POST /api/v1/admin/comfy/run — 404 (no BE route)"]
+  E3 --> FALLBACK["representative per-node progression"]
+  P --> C4["Install missing node"]
+  C4 --> E4["POST /api/v1/admin/comfy/install — 404 (no BE route)"]
+  P --> C5["Save as model"]
+  C5 --> E5["POST /api/v1/admin/comfy/save-as-model"]
+  E5 --> SV5["IComfyPipelineService.SaveAsModelAsync()"]
+  SV5 --> DB5[("ComfyWorkflow / ComfyWorkflowVersion / RegistryModel")]</pre>
+</div>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>FileUpload drop-zone</td><td>FileUpload</td><td>load workflow_api.json</td><td><code>OnFilesChangedAsync</code> → <code>ParseWorkflow</code></td></tr><tr><td>Paste Textarea + Parse</td><td>Textarea + Button</td><td>parse pasted JSON</td><td><code>ParseWorkflow</code> (client-side)</td></tr><tr><td>Parsed nodes table</td><td>DataTable</td><td>id/class_type/status</td><td><code>objNodes</code> from parse</td></tr><tr><td>Input→param mapping</td><td>HTML table</td><td>key/type/req/default per literal input</td><td><code>objMapping</code> from parse</td></tr><tr><td>Run / debug panel</td><td>Button + Progress + status list</td><td>smoke-test, WS-preview placeholder</td><td><code>RunAsync</code></td></tr><tr><td>Exact JSON sent</td><td>code block</td><td>live <code>/prompt</code> preview</td><td><code>objExactJson</code> computed getter</td></tr><tr><td>Missing-dependency alert</td><td>Alert + Install</td><td>resolve custom node</td><td><code>InstallDependencyAsync</code></td></tr><tr><td>Save / version</td><td>Input + Select + Switch + Button</td><td>save known-good, version, pin</td><td><code>SaveAsModelAsync</code></td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method (file)</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>Parse workflow</td><td><code>AdminComfy.razor:49-53,383-449</code></td><td>client-side <code>JsonDocument.Parse</code> (<code>:399</code>)</td><td>— (no round-trip)</td><td>—</td><td>—</td><td>renders</td><td>invalid JSON → parse Alert always (<code>:444</code>)</td></tr><tr><td>Configured probe</td><td><code>AdminComfy.razor:163-176,325-349</code></td><td><code>GetAsync(ComfyStatusRoute="/status")</code> (<code>:296,338</code>)</td><td><strong>NO MATCH</strong> — BE has <code>debug/dependencies/smoke/go-live</code>, not <code>status</code> (<code>ComfyEndpoints.cs:36-57</code>)</td><td>—</td><td>—</td><td><strong>renders-empty (suspected defect)</strong> — probe always 404 → <code>objComfyConfigured=false</code></td><td>see DEFECTS</td></tr><tr><td>Run / debug</td><td><code>AdminComfy.razor:157,475-527</code></td><td><code>PostAsJsonAsync(ComfyRunRoute="/run")</code> (<code>:297,486</code>)</td><td><strong>NO MATCH</strong> — BE run-debug is <code>POST /debug</code> (<code>ComfyEndpoints.cs:42</code>)</td><td><em>(would be)</em> <code>IComfyPipelineService.BuildDebug</code></td><td>—</td><td><strong>renders-representative (suspected defect)</strong> — POST 404, always falls to local progression</td><td>see DEFECTS</td></tr><tr><td>Install missing node</td><td><code>AdminComfy.razor:215,530-547</code></td><td><code>PostAsJsonAsync(ComfyInstallRoute="/install")</code> (<code>:298,536</code>)</td><td><strong>NO MATCH</strong> — BE dependency scan is <code>POST /dependencies</code> (<code>ComfyEndpoints.cs:40</code>)</td><td><em>(would be)</em> <code>ScanDependencies</code></td><td>—</td><td><strong>renders-representative (suspected defect)</strong> — POST 404, resolves locally</td><td>see DEFECTS</td></tr><tr><td>Save as model</td><td><code>AdminComfy.razor:249,550-577</code></td><td><code>PostAsJsonAsync(ComfySaveRoute="/save-as-model")</code> (<code>:299,560</code>)</td><td><code>POST /api/v1/admin/comfy/save-as-model</code> → <code>SaveAsModelAsync</code> (<code>ComfyEndpoints.cs:44,108</code>)</td><td><code>IComfyPipelineService.SaveAsModelAsync</code> → <code>ComfyWorkflowRepository</code></td><td><code>INTO "ComfyWorkflow"</code>, <code>"ComfyWorkflowVersion"</code>, <code>"RegistryModel"</code></td><td>renders (route matches; toast even on failure)</td><td><strong>only</strong> the save route matches the BE</td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li>Parse is fully client-side (<code>ParseWorkflow</code>): array-valued inputs are wired links and skipped; scalar inputs become mapping rows typed string/int/float/bool (<code>InputType</code>, <code>:452-458</code>).</li><li>Smoke gate: a node whose <code>class_type</code> is not in <code>objBaseNodes</code> trips the missing-dependency path; <code>objKnownGood</code> set true only when all nodes pass (<code>:494-524</code>). Save button disabled unless <code>objKnownGood &amp;&amp; ModelName</code> present (<code>:250-251</code>).</li><li><code>objExactJson</code> rebuilds the <code>POST /prompt</code> body live from mapping rows, templating each mapped input as <code>{{paramKey}}</code> (<code>:583-607</code>).</li><li>Sandbox go-live gate (<code>POST /go-live</code>) is refused 409 unless the pinned version has a passing smoke (<code>ComfyEndpoints.cs:239-255</code>) — the UI's pin Switch + version Select feed this server rule.</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li><strong>Route reconciliation (confirmed defect, below):</strong> the page's <code>ComfyStatusRoute</code>/<code>ComfyRunRoute</code>/<code>ComfyInstallRoute</code> (<code>/status</code>,<code>/run</code>,<code>/install</code>) do not exist on the BE, which exposes <code>/debug</code>,<code>/dependencies</code>,<code>/smoke</code>,<code>/go-live</code>. Only <code>/save-as-model</code> lines up. This matches the PROJECT-STATUS note precisely.</li><li>A live ComfyUI smoke-run needs a reachable ComfyUI host (configured in Hardware &amp; Setup) — model/service-gated; the representative per-node progression stands in otherwise (NOT a defect).</li></ul>
+<hr>
+<h3 id="operator-content-policy">Operator · Content Policy<a class="anchor-link" href="#operator-content-policy">#</a></h3>
+<ul><li><strong>Route:</strong> <code>/admin/policy</code></li><li><strong>Razor file:</strong> <code>src/TrStudioUI/Pages/Admin/AdminPolicy.razor</code></li><li><strong>Reached via:</strong> Governance → Content Policy; <strong>Log in as:</strong> Operator/Owner to view the surface — the NSFW switch itself is <strong>owner-only, personal-mode only</strong> (a second, in-UI gate on top of the <code>/admin/*</code> Operator/Owner gate); a Creator is bounced to <code>AccessDenied</code> before the page</li><li><strong>What this screen does:</strong> A single content-policy surface: the <strong>SAFE-01..06 floors are always-on, rendered as a locked non-interactive list</strong>, and <strong>only the general SFW filter</strong> is owner-toggleable via the "Unrestricted (NSFW) mode" Switch — behind an explicit confirmation AlertDialog, off by default, for fully-synthetic adult (18+) personas, personal-mode only. In multi-user/SaaS mode the toggle is disabled and forced OFF.</li><li><strong>Authorization:</strong> client <code>/admin/*</code> gate (Operator/Owner only) + in-UI owner+personal-mode gate on the write; server <code>ApiRoutes.AdminPolicy</code> (<code>/api/v1/admin/policy</code>) group <code>.RequireAuthorization(SpineModule.AdminOnlyPolicy)</code>; <code>nsfw</code> GET/PUT (<code>SafetyEndpoints.cs:40-44</code>) — policy UNCHANGED</li><li><strong>Visual status:</strong> ✅ VISUAL-OK (runtime-confirmed 2026-07-05 as Operator, unified role-gated app; desktop)</li></ul>
+<p><strong>Screenshot</strong></p>
+<p><img src="../screenshots/TrStudio/operator-policy.png" alt="Content Policy — Operator (2026-07-05)" style="max-width:100%"></p>
+<p><strong>Screen flowchart</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">−</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">⛶</button>
+    <button data-pop title="Open in new tab">↗</button>
+  </div>
+  <pre class="mermaid">flowchart TD
+  P["AdminPolicy.razor"] --> C1["NSFW-mode Switch (owner-only)"]
+  C1 --> GATE["AlertDialog confirmation (enable only)"]
+  GATE --> E1["PUT /api/v1/admin/policy/nsfw"]
+  E1 --> SV1["ISafetyPolicyService.SetNsfwEnabledAsync()"]
+  SV1 --> DB1[("SafetyPolicy")]
+  P --> C2["Load current policy"]
+  C2 --> E2["GET /api/v1/admin/policy/nsfw"]
+  E2 --> SV2["ISafetyPolicyService.GetNsfwPolicyAsync()"]
+  SV2 --> DB1
+  P --> C3["SAFE-01..06 floors (locked list)"]
+  C3 --> STATIC["objFloors — static, non-disableable, no writable representation"]</pre>
+</div>
+<p><strong>Controls on this screen</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control</th><th>Type</th><th>Purpose</th><th>Populated / calculated by</th></tr></thead><tbody><tr><td>NSFW-mode Switch</td><td>Switch (Large)</td><td>owner toggle of general SFW filter</td><td><code>objNsfwEnabled</code>, disabled unless <code>objPersonalMode</code></td></tr><tr><td>Confirmation AlertDialog</td><td>AlertDialog</td><td>gate ENABLE only</td><td><code>OnToggleRequestedAsync</code> → <code>ConfirmEnableAsync</code></td></tr><tr><td>Multi-user note</td><td>Alert</td><td>explains forced-OFF in SaaS</td><td>shown when <code>!objPersonalMode</code></td></tr><tr><td>Safety floors list</td><td>locked rows</td><td>SAFE-01..06 always-enforced</td><td><code>objFloors</code> static array (6 rows)</td></tr></tbody></table></div>
+<p><strong>Data lineage</strong></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Control / Action</th><th>Razor (file:line)</th><th>Client/Service method (file)</th><th>API endpoint (file)</th><th>Engine service → repository (file)</th><th>Table / SQL query</th><th>Render status</th><th>Notes</th></tr></thead><tbody><tr><td>Load policy</td><td><code>AdminPolicy.razor:165-235</code></td><td><code>GetAsync(NsfwPolicyRoute)</code> (<code>:193</code>)</td><td><code>GET /api/v1/admin/policy/nsfw</code> → <code>GetNsfwPolicyAsync</code> (<code>SafetyEndpoints.cs:43,95</code>)</td><td><code>ISafetyPolicyService.GetNsfwPolicyAsync</code> (<code>Domain/Safety/</code>) → <code>SafetyPolicyRepository</code></td><td><code>FROM "SafetyPolicy"</code></td><td>renders (live-or-safe-seed)</td><td>tolerant of <code>personalMode</code>/<code>multiUser</code> field spellings (<code>:212-235</code>)</td></tr><tr><td>Enable NSFW (confirm)</td><td><code>AdminPolicy.razor:264-308,314-331</code></td><td><code>PutAsJsonAsync(NsfwPolicyRoute, {enabled})</code> (<code>:319</code>)</td><td><code>PUT /api/v1/admin/policy/nsfw</code> → <code>SetNsfwPolicyAsync</code> (<code>SafetyEndpoints.cs:44,99</code>)</td><td><code>ISafetyPolicyService.SetNsfwEnabledAsync</code> → <code>SafetyPolicyRepository</code></td><td><code>INTO "SafetyPolicy"</code></td><td>renders (wired)</td><td>enable in multi-user → 409 (<code>SafetyEndpoints.cs:108-111</code>)</td></tr><tr><td>Disable NSFW</td><td><code>AdminPolicy.razor:279-284</code></td><td><code>PutAsJsonAsync</code> (<code>:319</code>)</td><td>same PUT</td><td>same</td><td><code>"SafetyPolicy"</code></td><td>renders (wired)</td><td>disable applies immediately (no gate)</td></tr><tr><td>SAFE-01..06 floors</td><td><code>AdminPolicy.razor:82-95,138-152</code></td><td>none</td><td>—</td><td>enforced in generation pipeline, not here (<code>SafetyEndpoints.cs:14-16</code>)</td><td>—</td><td>renders (static, locked)</td><td>6 floors: CSAM, NCII/deepfake, consent, provenance, public-figure, audit</td></tr></tbody></table></div>
+<p><strong>Business rules / calculations</strong></p>
+<ul><li>Enable-vs-disable asymmetry: enabling ON opens the confirmation gate WITHOUT applying; disabling OFF applies immediately (relaxing a restriction needs consent; re-tightening never does) (<code>:258-284</code>).</li><li><code>objSwitchNonce</code> <code>@key</code> re-mounts the Switch so its optimistic internal state can never diverge from the C# source of truth (<code>:50,133-136</code>).</li><li>Multi-user guard: if <code>!objPersonalMode</code>, <code>objNsfwEnabled</code> is forced false regardless of any stored flag (<code>ApplyState</code>, <code>:230-234</code>); Switch disabled (<code>:51</code>).</li><li>Floors have no client-writable representation and are never in the PUT payload (<code>:310-313</code>) — the payload is <code>{ enabled }</code> only.</li></ul>
+<p><strong>Known issues / gotchas</strong></p>
+<ul><li>SAFE-01..06 are non-disableable by any setting/key/API — enforced in the generation pipeline, not this surface (<code>SafetyEndpoints.cs:14-16</code>). The UI renders them locked by design.</li><li>NSFW enable is owner + personal-mode only; a SaaS/multi-user instance forces OFF (server 409 on enable) — correct behavior, NOT a defect.</li></ul>
+<h2 id="defects-found">DEFECTS FOUND<a class="anchor-link" href="#defects-found">#</a></h2>
+<ol><li><strong>ComfyUI Import &amp; Debug — route-constant mismatch with the backend.</strong> <code>AdminComfy.razor:296-298</code> declares <code>ComfyStatusRoute="/api/v1/admin/comfy/status"</code>, <code>ComfyRunRoute=".../run"</code>, <code>ComfyInstallRoute=".../install"</code>, but <code>ComfyEndpoints.cs:36-57</code> maps <code>import</code>/<code>map</code>/<code>dependencies</code>/<code>debug</code>/<code>save-as-model</code>/<code>workflows</code>/<code>smoke</code>/<code>go-live</code> — there is <strong>no <code>/status</code>, <code>/run</code>, or <code>/install</code> route</strong>. Result: the "ComfyUI configured" probe always 404s (<code>objComfyConfigured</code> stuck false, <code>:338-339</code>), Run always falls to the representative local progression (<code>:486</code>), and Install-node never reaches the BE (<code>:536</code>). Only <code>ComfySaveRoute="/save-as-model"</code> (<code>:299</code>) matches. Fix = reconcile the FE consts to <code>/debug</code>, <code>/dependencies</code>, plus a real configured-probe (and <code>/smoke</code>,<code>/go-live</code> for the gate). Owning REQ: <strong>REQ-UI-072</strong>. (Confirms the PROJECT-STATUS note.)</li></ol>
+<ol><li><strong>Registry &amp; Providers — Save model / Save keys never persist.</strong> <code>AdminRegistry.razor:346-356</code> (<code>SaveModelAsync</code>) and <code>:358-362</code> (<code>SaveKeysAsync</code>) only call <code>ToastService.Success</code> and set <code>objSheetOpen=false</code> — they make <strong>no HTTP call</strong>, even though <code>PUT /api/v1/admin/registry/{id}</code> (<code>RegistryEndpoints.cs:40,80</code>) and <code>PUT /api/v1/admin/providers/keys</code> (<code>RegistryEndpoints.cs:52,135</code>) exist and are admin-wired. Editing a registry row / params-schema or entering a provider key and clicking Save shows a false "saved" toast with zero persistence. Owning REQ: <strong>REQ-UI-071</strong>.</li></ol>
+<h2 id="unresolved-todo-hops">Unresolved / TODO hops<a class="anchor-link" href="#unresolved-todo-hops">#</a></h2>
+<ul><li>None. Every service/repository hop resolved to a real symbol and table: <code>ModelSource</code>, <code>ModelInstall</code>, <code>RegistryModel</code>, <code>ProviderKey</code>, <code>SpendRecord</code>, <code>GenerationLog</code>, <code>SafetyPolicy</code>, <code>ComfyWorkflow</code>/<code>ComfyWorkflowVersion</code>, <code>SetupState</code>. <code>ICapabilityDetector</code> and <code>IRunPodOps</code> are host/RunPod-API probes with no DB read (noted inline, not TODOs).</li></ul>
+  </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+<script>
+// Light/dark toggle. The initial theme was already applied flash-free by the
+// <head> script (saved choice, else time-of-day). Clicking flips it, saves the
+// choice, and reloads so Mermaid re-renders in the matching theme.
+(function(){
+  var btn = document.getElementById('themeToggle');
+  if(!btn) return;
+  var relabel = function(){
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    btn.textContent = dark ? '☀ Light' : '☾ Dark';
+  };
+  relabel();
+  btn.addEventListener('click', function(){
+    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    try{ localStorage.setItem('tf-theme', next); }catch(e){}
+    location.reload();
+  });
+})();
+
+// Copy buttons on every code <pre> — but NEVER on a `pre.mermaid`:
+// mermaid reads the <pre>'s textContent as the diagram source, so a button
+// appended here glues "copy" onto the last line and breaks the parse
+// (flowcharts → "Syntax error"; sequence diagrams silently absorb it).
+// Mermaid blocks get copy/export from their own .diagram toolbar instead.
+document.querySelectorAll('pre:not(.mermaid)').forEach(pre => {
+  const btn = document.createElement('button');
+  btn.className = 'copy';
+  btn.textContent = 'copy';
+  btn.addEventListener('click', () => {
+    const text = pre.querySelector('code') ? pre.querySelector('code').innerText : pre.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'copied';
+      setTimeout(() => { btn.textContent = 'copy'; }, 1200);
+    });
+  });
+  pre.appendChild(btn);
+});
+
+// Mermaid init — theme follows the resolved light/dark theme
+if (window.mermaid) {
+  var mermaidTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default';
+  mermaid.initialize({ startOnLoad: true, theme: mermaidTheme, securityLevel: 'loose' });
+}
+
+// Mermaid toolbar wiring — run after mermaid renders
+function wireMermaidToolbars() {
+  document.querySelectorAll('.diagram').forEach(dia => {
+    if (dia.dataset.wired) return;
+    const merm = dia.querySelector('.mermaid');
+    const svg = merm && merm.querySelector('svg');
+    if (!svg) return;
+    dia.dataset.wired = '1';
+    let scale = 1;
+    const label = dia.querySelector('.zlabel');
+    const apply = () => {
+      svg.style.transform = `scale(${scale})`;
+      svg.style.transformOrigin = 'top left';
+      if (label) label.textContent = Math.round(scale * 100) + '%';
+    };
+    const setScale = (s) => { scale = Math.max(0.25, Math.min(4, s)); apply(); };
+    dia.querySelector('[data-zin]').onclick = () => setScale(scale * 1.2);
+    dia.querySelector('[data-zout]').onclick = () => setScale(scale / 1.2);
+    dia.querySelector('[data-fit]').onclick = () => {
+      svg.style.transform = '';
+      svg.removeAttribute('width');
+      svg.style.maxWidth = '100%';
+      svg.style.height = 'auto';
+      scale = 1;
+      if (label) label.textContent = 'Fit';
+    };
+    dia.querySelector('[data-one]').onclick = () => {
+      svg.style.transform = '';
+      svg.style.maxWidth = 'none';
+      svg.style.width = '';
+      svg.style.height = '';
+      scale = 1;
+      if (label) label.textContent = '100%';
+    };
+    dia.querySelector('[data-fs]').onclick = () => {
+      dia.classList.toggle('fs');
+      if (dia.classList.contains('fs')) {
+        document.addEventListener('keydown', escFs);
+      } else {
+        document.removeEventListener('keydown', escFs);
+      }
+    };
+    function escFs(e) { if (e.key === 'Escape') { dia.classList.remove('fs'); document.removeEventListener('keydown', escFs); } }
+    dia.querySelector('[data-pop]').onclick = () => openInNewTab(svg);
+    // Ctrl+wheel zoom
+    merm.addEventListener('wheel', (e) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      setScale(scale * (e.deltaY < 0 ? 1.1 : 1/1.1));
+    }, { passive: false });
+  });
+}
+
+function openInNewTab(svg) {
+  const svgSource = new XMLSerializer().serializeToString(svg);
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Diagram</title>
+<style>
+  html,body{margin:0;height:100%;background:#0f1115;color:#e6e8ee;font-family:system-ui,sans-serif}
+  .bar{position:fixed;top:0;left:0;right:0;padding:8px 12px;background:#161a22;border-bottom:1px solid #2a3142;display:flex;gap:8px;z-index:10}
+  .bar button{background:#1c2230;color:#9aa3b2;border:1px solid #2a3142;border-radius:6px;padding:5px 12px;font-size:13px;cursor:pointer}
+  .bar button:hover{color:#7cc4ff;border-color:#7cc4ff}
+  .bar .hint{margin-left:auto;color:#9aa3b2;font-size:11.5px;align-self:center}
+  #stage{position:absolute;top:42px;bottom:0;left:0;right:0;overflow:hidden}
+  #stage svg{width:100%;height:100%}
+</style>
+</head><body>
+<div class="bar">
+  <button onclick="zpz.zoomIn()">+</button>
+  <button onclick="zpz.zoomOut()">−</button>
+  <button onclick="zpz.fit();zpz.center()">Fit</button>
+  <button onclick="zpz.resetZoom();zpz.center()">1:1</button>
+  <button onclick="window.print()">Print</button>
+  <button onclick="dlPng()">PNG</button>
+  <button onclick="dlSvg()">SVG</button>
+  <span class="hint">Drag to pan · Ctrl+wheel to zoom · + / − keys</span>
+</div>
+<div id="stage">${svgSource}</div>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"><\/script>
+<script>
+  const el = document.querySelector('#stage svg');
+  const zpz = svgPanZoom(el, { zoomScaleSensitivity: .3, minZoom: .2, maxZoom: 10, controlIconsEnabled: false, fit: true, center: true });
+  document.addEventListener('keydown', e => {
+    if (e.key === '+' || e.key === '=') zpz.zoomIn();
+    if (e.key === '-' || e.key === '_') zpz.zoomOut();
+    if (e.key === '0') { zpz.resetZoom(); zpz.center(); }
+  });
+  function dlSvg() {
+    const blob = new Blob([new XMLSerializer().serializeToString(el)], { type: 'image/svg+xml' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'diagram.svg'; a.click();
+  }
+  function dlPng() {
+    const src = new XMLSerializer().serializeToString(el);
+    const img = new Image();
+    const url = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(src)));
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = el.clientWidth * 2; c.height = el.clientHeight * 2;
+      const ctx = c.getContext('2d'); ctx.scale(2,2); ctx.drawImage(img, 0, 0);
+      c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'diagram.png'; a.click(); });
+    };
+    img.src = url;
+  }
+<\/script>
+</body></html>`;
+  const w = window.open();
+  w.document.write(html);
+  w.document.close();
+}
+
+// Run wiring after mermaid finishes (it renders async)
+if (window.mermaid) {
+  setTimeout(wireMermaidToolbars, 400);
+  setTimeout(wireMermaidToolbars, 1200);  // safety re-run for slow renders
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TrStudio — Architecture — TrStudio</title>
+<script>
+/* Resolve the theme BEFORE first paint (no flash). Saved choice wins; otherwise
+   pick by time of day — light 07:00–19:00 local, softened dark at night. */
+(function(){
+  try{
+    var t = localStorage.getItem('tf-theme');
+    if(t!=='light' && t!=='dark'){ var h = new Date().getHours(); t = (h>=7 && h<19) ? 'light' : 'dark'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){ document.documentElement.setAttribute('data-theme','light'); }
+})();
+</script>
+<style>
+/* LIGHT is the default theme — a warm off-white, easy on the eyes (never bright white). */
+:root{
+  --bg:#f4f1e9; --panel:#efe9db; --panel2:#e7e0cd; --line:#d8cfb6;
+  --ink:#2e2a22; --muted:#6f6857; --accent:#2f6f9f; --accent2:#3f7d54;
+  --warn:#9a6b15; --danger:#b03a52; --ok:#3f7d54;
+  --code-bg:#ece5d3; --code-ink:#332f26; --row-alt:#eae2cf;
+  --h3:#3a352b; --h4:#2f6f9f; --quote:#4a4537; --cta-bg:#e6eef5;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+/* DARK — softened near-black (warmer / less harsh than pure #0f1115). */
+html[data-theme="dark"]{
+  --bg:#11141a; --panel:#171b23; --panel2:#1e2430; --line:#2b3240;
+  --ink:#dfe3ea; --muted:#99a2b1; --accent:#7cc4ff; --accent2:#a6e3a1;
+  --warn:#f9c74f; --danger:#f38ba8; --ok:#a6e3a1;
+  --code-bg:#0c1016; --code-ink:#d8dde8; --row-alt:#141821;
+  --h3:#cfd5e3; --h4:#7cc4ff; --quote:#cfd5e3; --cta-bg:#0d2030;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;font-size:15px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono);font-size:13px;background:var(--code-bg);color:var(--code-ink);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+pre{font-family:var(--mono);font-size:12.5px;background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:auto;color:var(--code-ink);position:relative}
+pre code{background:none;border:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:11px;font-family:var(--sans);cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+/* floating light/dark toggle (top-right) */
+.theme-toggle{position:fixed;top:12px;right:14px;z-index:10000;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:12.5px;font-family:var(--sans);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.theme-toggle:hover{color:var(--accent);border-color:var(--accent)}
+
+.layout{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.layout.no-toc{grid-template-columns:1fr}
+nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid var(--line);background:var(--panel);padding:18px 14px}
+nav.side h1{font-size:14px;margin:0 0 4px;letter-spacing:.5px;color:var(--ink)}
+nav.side .sub{font-size:11.5px;color:var(--muted);margin-bottom:14px}
+nav.side ol,nav.side ul{list-style:none;padding:0;margin:0}
+nav.side li{font-size:13px;margin:2px 0}
+nav.side li a{display:block;padding:5px 8px;color:var(--ink);border-radius:6px}
+nav.side li a:hover{background:var(--panel2);text-decoration:none}
+nav.side li.h3 a{padding-left:22px;font-size:12.5px;color:var(--h3)}
+nav.side .group{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin:14px 8px 4px}
+
+main{padding:28px 40px 80px;max-width:1100px}
+.layout.no-toc main{margin:0 auto}
+
+h1{font-size:28px;margin:0 0 6px}
+h2{font-size:22px;margin:32px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+h3{font-size:17px;margin:22px 0 6px;color:var(--h3);scroll-margin-top:16px}
+h4{font-size:14px;margin:14px 0 4px;color:var(--h4);scroll-margin-top:16px}
+.subtitle{color:var(--muted);font-size:14px;margin-top:-4px;margin-bottom:18px}
+p{margin:6px 0 10px}
+blockquote{border-left:3px solid var(--accent);background:var(--panel);margin:8px 0;padding:8px 14px;color:var(--quote)}
+ul,ol{padding-left:22px}
+li{margin:2px 0}
+
+table{border-collapse:collapse;width:100%;font-size:13.5px;margin:8px 0}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2);color:var(--h3);font-weight:600}
+tr:nth-child(even) td{background:var(--row-alt)}
+
+hr{border:none;border-top:1px solid var(--line);margin:24px 0}
+.anchor-link{color:var(--muted);font-weight:400;font-size:0.85em;margin-left:8px;opacity:0;transition:opacity .15s;text-decoration:none}
+h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
+
+/* inline TOC at top of main content */
+.toc-inline{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 16px;margin:14px 0 24px}
+.toc-inline > div{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.toc-inline ol,.toc-inline ul{margin:4px 0;padding-left:18px}
+.toc-inline li{font-size:13px;margin:1px 0}
+.toc-inline a{color:var(--h3)}
+
+/* mermaid diagram wrapper + toolbar */
+.diagram{position:relative;border:1px solid var(--line);border-radius:8px;background:var(--code-bg);margin:14px 0;overflow:hidden}
+.diagram .mermaid{padding:14px;margin:0;background:transparent;border:none;overflow:auto}
+.diagram .dt{display:flex;gap:6px;justify-content:flex-end;padding:6px 8px;background:var(--row-alt);border-bottom:1px solid var(--line)}
+.diagram .dt button{background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:3px 10px;font-size:12px;font-family:var(--sans);cursor:pointer;min-width:30px}
+.diagram .dt button:hover{color:var(--accent);border-color:var(--accent)}
+.diagram .dt .zlabel{padding:3px 6px;font-size:11px;color:var(--muted);font-family:var(--mono);align-self:center}
+.diagram.fs{position:fixed;inset:0;z-index:9999;border-radius:0;border:none}
+.diagram.fs .mermaid{height:calc(100vh - 40px);display:flex;align-items:center;justify-content:center}
+
+@media(max-width:900px){.layout{grid-template-columns:1fr}nav.side{position:static;height:auto}}
+</style>
+</head>
+<body>
+<button id="themeToggle" class="theme-toggle" title="Toggle light / dark">☾ Dark</button>
+<div class="layout">
+  <nav class="side">
+    <h1>TrStudio — Architecture</h1>
+    <div class="sub">Last rendered: 2026-07-07</div>
+    <div class="group">Contents</div>
+    <ol>
+      <li><a href="#tech-stack">1. Tech stack</a></li>
+      <li><a href="#component-map">2. Component map</a></li>
+      <li><a href="#data-flow-primary-generation-job-path">3. Data flow — primary generation job path</a></li>
+      <li class="h3"><a href="#prompt-crafting-chat-path-f-prompt-added-2026-07-07">3.1 Prompt-crafting chat path</a></li>
+      <li><a href="#module-responsibilities">4. Module responsibilities</a></li>
+      <li><a href="#provider-abstraction-and-the-three-execution-tiers">5. Provider abstraction and the three execution tiers</a></li>
+      <li><a href="#model-and-provider-registry">6. Model and provider registry</a></li>
+      <li><a href="#identity-and-licensing-appmanager-integration">7. Identity and licensing — AppManager integration</a></li>
+      <li><a href="#comfyui-pipeline-management">8. ComfyUI pipeline management</a></li>
+      <li><a href="#cross-cutting-concerns">9. Cross-cutting concerns</a></li>
+      <li><a href="#deployment-architecture">10. Deployment architecture</a></li>
+      <li><a href="#architectural-decisions-adr-style-log">11. Architectural decisions (ADR-style log)</a></li>
+      <li><a href="#build-roadmap-phased-target">12. Build roadmap (phased target)</a></li>
+      <li><a href="#open-questions-risks">13. Open questions / risks</a></li>
+      <li><a href="#sources-harvested">Sources harvested</a></li>
+    </ol>
+  </nav>
+  <main>
+    <h1>TrStudio — Architecture</h1>
+    <div class="subtitle">Target architecture (greenfield) — TrStudio</div>
+
+    <p><strong>Last updated:</strong> 2026-07-07<br>
+    <strong>Status:</strong> Target (greenfield) · amended 2026-07-05: consolidated to one role-based <code>TrStudio</code> app + MAUI desktop Win/Mac (ADR-012 supersedes ADR-001) · amended 2026-07-07: Prompt Studio LLM chat path added (F-PROMPT, BRD-88..92, ADR-013)</p>
+
+    <div class="toc-inline">
+      <div>Contents</div>
+      <ol>
+        <li><a href="#tech-stack">Tech stack</a></li>
+        <li><a href="#component-map">Component map</a></li>
+        <li><a href="#data-flow-primary-generation-job-path">Data flow — primary generation job path</a>
+          <ul>
+            <li><a href="#prompt-crafting-chat-path-f-prompt-added-2026-07-07">Prompt-crafting chat path (F-PROMPT)</a></li>
+          </ul>
+        </li>
+        <li><a href="#module-responsibilities">Module responsibilities</a></li>
+        <li><a href="#provider-abstraction-and-the-three-execution-tiers">Provider abstraction and the three execution tiers</a></li>
+        <li><a href="#model-and-provider-registry">Model and provider registry</a></li>
+        <li><a href="#identity-and-licensing-appmanager-integration">Identity and licensing — AppManager integration</a></li>
+        <li><a href="#comfyui-pipeline-management">ComfyUI pipeline management</a></li>
+        <li><a href="#cross-cutting-concerns">Cross-cutting concerns</a></li>
+        <li><a href="#deployment-architecture">Deployment architecture</a></li>
+        <li><a href="#architectural-decisions-adr-style-log">Architectural decisions (ADR-style log)</a></li>
+        <li><a href="#build-roadmap-phased-target">Build roadmap (phased target)</a></li>
+        <li><a href="#open-questions-risks">Open questions / risks</a></li>
+        <li><a href="#sources-harvested">Sources harvested</a></li>
+      </ol>
+    </div>
+
+    <h2 id="tech-stack">1. Tech stack<a class="anchor-link" href="#tech-stack">#</a></h2>
+    <table>
+      <thead>
+        <tr><th>Layer</th><th>Choice</th><th>Version</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Runtime</td><td>.NET</td><td>10 (LTS)</td><td>Unified Blazor render modes; released Nov 2025</td></tr>
+        <tr><td>Creator + Management UI</td><td><code>TrStudio</code> — <strong>one unified Blazor app</strong>, role-based surface (Blazor Web + MAUI Blazor Hybrid desktop)</td><td>.NET 10</td><td>Creator/Operator/Owner see their surface by role; Win+Mac desktop <strong>and</strong> browser</td></tr>
+        <tr><td><del>Management UI</del></td><td><del><code>TrStudioAdmin</code></del> — <strong>retired 2026-07-05</strong>, merged into <code>TrStudio</code> (ADR-012)</td><td>—</td><td>Screens moved to <code>TrStudioUI</code> RCL under role-gated routes</td></tr>
+        <tr><td>Shared UI</td><td><code>TrStudioUI</code> — Razor Class Library on <strong>TrBlazeUI</strong></td><td>.NET 10</td><td>Components/layouts/screens shared by both apps</td></tr>
+        <tr><td>Backend / API</td><td><code>TrStudioApi</code> — ASP.NET Core</td><td>.NET 10</td><td>Provider abstraction, registry, orchestrator, generation endpoints, OpenAPI, SignalR</td></tr>
+        <tr><td>Background jobs</td><td><strong>Hangfire</strong> (PostgreSQL storage)</td><td>—</td><td>Durable queue, retries, concurrency caps — <strong>no Redis</strong></td></tr>
+        <tr><td>Cache</td><td><code>IMemoryCache</code> (in-process)</td><td>—</td><td>No distributed cache for the MVP</td></tr>
+        <tr><td>Local image inference</td><td><strong>ONNX Runtime</strong> (CoreML/CPU EP)</td><td>—</td><td>SDXL/FLUX image path; aligns with TechieRag's ONNX usage</td></tr>
+        <tr><td>Media inference</td><td><strong>ComfyUI</strong> (managed, isolated Python)</td><td>—</td><td>Mac MPS (Fast tier) + RunPod serverless (High tier)</td></tr>
+        <tr><td>Premium avatar</td><td><strong>HeyGen API</strong></td><td>—</td><td>Premium tier, user-selectable per job</td></tr>
+        <tr><td>Closed image/video</td><td>Aggregator adapter (fal.ai / Replicate / WaveSpeed)</td><td>—</td><td>Vendor adapters (Veo/Kling/Seedance) later</td></tr>
+        <tr><td>Text / LLM / RAG</td><td><strong>TechieRag</strong> + <strong>TechieRag.Embedded</strong> (NuGet, GitHub Packages)</td><td>.NET 10</td><td>Script/caption/prompt-memory/character-bible; PgVector store + ONNX embeddings. <strong>Text only — not the image path</strong></td></tr>
+        <tr><td>DB</td><td><strong>PostgreSQL + PgVector</strong></td><td>16+</td><td>Relational + vector in one instance; India-resident (DPDP)</td></tr>
+        <tr><td>Data access</td><td><strong>Dapper</strong></td><td>—</td><td>Micro-ORM; <strong>no EF Core</strong>; parameterized SQL in the engine's <code>Infrastructure/</code> folder</td></tr>
+        <tr><td>Migrations</td><td><strong>DbUp</strong> (<code>TrStudioDb</code> project)</td><td>—</td><td>Embedded SQL scripts executed on <code>TrStudioApi</code> startup</td></tr>
+        <tr><td>Object storage</td><td>Object store (assets) + RunPod network volume (models)</td><td>—</td><td>Big media models on <code>$0.07/GB/mo</code> network volume</td></tr>
+        <tr><td>Auth / Identity</td><td><strong>AppManager</strong> (external child-app API)</td><td>—</td><td>JWT + <code>X-Api-Key</code>/<code>X-Api-Secret</code>, RSA-encrypted passwords; <strong>not</strong> the app DB</td></tr>
+        <tr><td>Logging / Telemetry</td><td><strong>Serilog</strong> (structured) + <strong>OpenTelemetry</strong></td><td>—</td><td>Queue/memory/latency/spend metrics, traceable job IDs</td></tr>
+        <tr><td>Packaging</td><td>Docker (<code>TrStudioApi</code> + workers) + RunPod template image</td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="component-map">2. Component map<a class="anchor-link" href="#component-map">#</a></h2>
+    <div class="diagram">
+      <div class="dt">
+        <button data-zout title="Zoom out">−</button>
+        <span class="zlabel">100%</span>
+        <button data-zin title="Zoom in">+</button>
+        <button data-fit title="Fit to width">Fit</button>
+        <button data-one title="Actual size">1:1</button>
+        <button data-fs title="Fullscreen">⛶</button>
+        <button data-pop title="Open in new tab">↗</button>
+      </div>
+      <pre class="mermaid">flowchart TB
+  subgraph Exp["Experience (Blazor Web + MAUI Blazor Hybrid)"]
+    Creator["TrStudio (creator app)"]
+    Admin["TrStudioAdmin (management app)"]
+    RCL["TrStudioUI RCL (TrBlazeUI)"]
+  end
+  subgraph Api["TrStudioApi (ASP.NET Core .NET 10)"]
+    Gen["Generation endpoints"]
+    Orch["Orchestrator + Hangfire queue"]
+    Reg["Model & Provider Registry"]
+    Prov["Provider abstraction (IGenerationProvider)"]
+    Cost["Cost estimation & guardrails"]
+    Safety["Safety pipeline (SAFE-01..06)"]
+    Sig["SignalR progress hub"]
+    Rag["TechieRag (text / RAG)"]
+    PChat["PromptChatService (Prompt Studio, chat-only)"]
+  end
+  subgraph Inf["Inference providers"]
+    Onnx["OnnxLocalProvider (images, Mac)"]
+    Comfy["ComfyUIProvider (Mac MPS / RunPod)"]
+    HeyGen["HeyGenProvider (Premium avatar)"]
+    Closed["ClosedApiProvider (aggregator)"]
+  end
+  subgraph Data["Data (India, DPDP)"]
+    PG[("PostgreSQL + PgVector")]
+    Obj[("Object storage / RunPod volume")]
+  end
+  AppMgr[/"AppManager (external identity & licensing)"/]
+
+  Creator --> RCL
+  Admin --> RCL
+  Creator -->|"HTTPS / JWT"| Gen
+  Admin -->|"admin-scoped HTTPS / JWT"| Gen
+  Gen --> Orch
+  Gen --> Cost
+  Gen --> Safety
+  Orch --> Prov
+  Prov --> Reg
+  Prov --> Onnx
+  Prov --> Comfy
+  Prov --> HeyGen
+  Prov --> Closed
+  Orch --> Sig
+  Sig -->|"live progress"| Creator
+  Gen --> Rag
+  Creator -->|"prompt-crafting chat"| PChat
+  PChat --> Reg
+  PChat --> Rag
+  PChat --> PG
+  Rag --> PG
+  Orch --> PG
+  Reg --> PG
+  Prov --> Obj
+  Api -->|"X-Api-Key + JWT"| AppMgr</pre>
+    </div>
+
+    <h2 id="data-flow-primary-generation-job-path">3. Data flow — primary generation job path<a class="anchor-link" href="#data-flow-primary-generation-job-path">#</a></h2>
+    <p>The signature flow: the creator submits <em>"task T, model M, params P"</em>; <code>TrStudioApi</code> never lets the UI know which provider runs it. Cost is estimated and safety-checked <strong>before</strong> the job is enqueued.</p>
+    <div class="diagram">
+      <div class="dt">
+        <button data-zout title="Zoom out">−</button>
+        <span class="zlabel">100%</span>
+        <button data-zin title="Zoom in">+</button>
+        <button data-fit title="Fit to width">Fit</button>
+        <button data-one title="Actual size">1:1</button>
+        <button data-fs title="Fullscreen">⛶</button>
+        <button data-pop title="Open in new tab">↗</button>
+      </div>
+      <pre class="mermaid">sequenceDiagram
+  actor U as "Creator"
+  participant W as "TrStudio UI"
+  participant A as "TrStudioApi"
+  participant SF as "Safety pipeline"
+  participant R as "Registry"
+  participant Q as "Hangfire queue"
+  participant P as "Provider (Onnx / ComfyUI / HeyGen)"
+  participant DB as "Postgres + PgVector"
+  U->>W: "pick model + params, submit"
+  W->>A: "POST /jobs (JWT)"
+  A->>R: "resolve M to provider + tier"
+  A->>A: "estimateCost(job)"
+  A->>SF: "pre-check inputs (CSAM / NCII / consent)"
+  SF-->>A: "allow or block"
+  A->>Q: "enqueue durable job"
+  A-->>W: "jobId + cost estimate"
+  Q->>P: "submit(job)"
+  P-->>A: "progress events"
+  A-->>W: "SignalR progress + eta"
+  P->>SF: "post-check + provenance stamp output"
+  P->>DB: "persist asset metadata + generation log"
+  A-->>W: "assetRef on completion"
+  W-->>U: "render result in gallery"</pre>
+    </div>
+
+    <h3 id="prompt-crafting-chat-path-f-prompt-added-2026-07-07">3.1 Prompt-crafting chat path (F-PROMPT, added 2026-07-07)<a class="anchor-link" href="#prompt-crafting-chat-path-f-prompt-added-2026-07-07">#</a></h3>
+    <p>The Prompt Studio path deliberately bypasses the generation-job machinery — no Hangfire job, no provider abstraction, no safety-generation pipeline (its output is advisory text, not media). <code>TrStudioApi</code> resolves the picked LLM from the registry (<code>text-chat</code> modality) and calls <strong>TechieRag chat-completion directly — no RAG/vector setup</strong>. Sessions and messages persist per user (BRD-81 owner filter); token usage flows into the BRD-56 text-LLM budget.</p>
+    <div class="diagram">
+      <div class="dt">
+        <button data-zout title="Zoom out">−</button>
+        <span class="zlabel">100%</span>
+        <button data-zin title="Zoom in">+</button>
+        <button data-fit title="Fit to width">Fit</button>
+        <button data-one title="Actual size">1:1</button>
+        <button data-fs title="Fullscreen">⛶</button>
+        <button data-pop title="Open in new tab">↗</button>
+      </div>
+      <pre class="mermaid">sequenceDiagram
+  actor U as "Creator"
+  participant W as "Prompt studio (/prompt-studio)"
+  participant A as "TrStudioApi (PromptChatService)"
+  participant R as "Registry (text-chat models)"
+  participant T as "TechieRag chat-completion (no RAG)"
+  participant DB as "Postgres (PromptChatSession / Message)"
+  U->>W: "pick LLM, type request (+ optional image)"
+  W->>A: "POST /prompt-chat/{sessionId}/messages (JWT)"
+  A->>R: "resolve LLM (endpoint, key, visionCapable)"
+  A->>A: "reject image if model not vision-capable"
+  A->>T: "chat-completion (history + message + image)"
+  T-->>A: "assistant reply (crafted prompt)"
+  A->>DB: "persist message pair (userId-scoped) + token usage (BRD-56)"
+  A-->>W: "reply"
+  W-->>U: "copy / save to library (BRD-50) / send to studio"</pre>
+    </div>
+
+    <h2 id="module-responsibilities">4. Module responsibilities<a class="anchor-link" href="#module-responsibilities">#</a></h2>
+    <table>
+      <thead>
+        <tr><th>Module</th><th>Type</th><th>Responsibility</th><th>Depends on</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>src/TrStudio</code></td><td>Blazor app</td><td><strong>Unified app (Web + MAUI Hybrid desktop, Win/Mac)</strong> — presents creator studios AND (role-gated) the management surface; avatar/image/video/voice studios, gallery, projects</td><td><code>TrStudioUI</code>, <code>TrStudio.Models</code>, <code>TrStudioApi</code> (HTTP)</td></tr>
+        <tr><td><code>src/TrStudioAdmin</code></td><td><del>Blazor app</del> <strong>RETIRED 2026-07-05 (ADR-012)</strong> — merged into <code>TrStudio</code>; management screens now live in <code>TrStudioUI</code> under role-gated routes</td><td><del>Management app (Web + MAUI Hybrid) — hardware detection, setup, model sources, registry editing, RunPod control, ComfyUI import/debug, ops, cost, content policy</del></td><td><code>TrStudioUI</code>, <code>TrStudio.Models</code>, <code>TrStudioApi</code> (admin-scoped HTTP)</td></tr>
+        <tr><td><code>src/TrStudioUI</code></td><td>Razor Class Library</td><td>Shared layouts, screens and components on TrBlazeUI, consumed by both apps across Web + desktop. Now also hosts the (role-gated) management screens formerly in <code>TrStudioAdmin</code>.</td><td>TrBlazeUI, <code>TrStudio.Models</code></td></tr>
+        <tr><td><code>src/TrStudioApi</code></td><td>ASP.NET Core host</td><td>The unified backend contract — generation endpoints, orchestrator wiring, registry endpoints, queue, cost, safety, auth integration, SignalR. Runs <code>TrStudioDb</code> (DbUp) on startup</td><td><code>TrStudio.Engine</code>, <code>TrStudio.Models</code>, <code>TrStudioDb</code></td></tr>
+        <tr><td><code>src/TrStudio.Engine</code></td><td>Class library</td><td>The engine. Folders: <strong><code>Domain/</code></strong> (entities &amp; rules — Character, Job, Asset, registry rows, GenerationLog, Consent), <strong><code>Infrastructure/</code></strong> (Dapper data access, Hangfire wiring, object storage, encrypted key store, AppManager client), <strong><code>Providers/</code></strong> (<code>OnnxLocalProvider</code>, <code>ComfyUIProvider</code>, <code>HeyGenProvider</code>, <code>ClosedApiProvider</code>), <strong><code>Workers/</code></strong> (ComfyUI worker control local MPS + RunPod, ONNX in-process image worker)</td><td><code>TrStudio.Models</code></td></tr>
+        <tr><td><code>src/TrStudio.Models</code></td><td>Class library</td><td>Shared models/DTOs/entities, <strong>interfaces</strong> (<code>IGenerationProvider</code>, repository contracts), provider/registry contracts, enums — referenced by every app, the RCL, and the engine</td><td>(none)</td></tr>
+        <tr><td><code>src/TrStudioDb</code></td><td>Class library</td><td><strong>DbUp</strong> migration runner — embedded, ordered SQL scripts (schema, PgVector, registry/jobs/characters, seed); executed on <code>TrStudioApi</code> startup</td><td>DbUp, <code>TrStudio.Models</code> (optional)</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong><code>TrStudio.Models</code> — the shared contract types.</strong> A dependency-free class library holding everything multiple projects must agree on: entity/DTO shapes, enums (tier, task, safetyClass), and the interfaces (<code>IGenerationProvider</code>, repository contracts). Both Blazor apps, the RCL, the API host and the engine reference it, so types never get duplicated or drift.</p>
+
+    <p><strong><code>TrStudio.Engine</code> — one engine, four folders.</strong> The former Domain / Infrastructure / Providers / Workers projects are now folders inside a single <code>TrStudio.Engine</code> class library (fewer projects to wire, one assembly to reference). <code>Domain/</code> holds business rules; <code>Infrastructure/</code> holds the <strong>Dapper</strong> data-access layer (parameterized SQL, the per-user <code>userId</code> owner filter applied to every query — BRD-81), Hangfire wiring, object storage, the encrypted key store and the AppManager client; <code>Providers/</code> holds the <code>IGenerationProvider</code> implementations; <code>Workers/</code> drives the ComfyUI workers (local MPS + RunPod) and the in-process ONNX image worker.</p>
+
+    <p><strong><code>TrStudioApi</code> — the shared contract.</strong> This is the boundary that keeps the system sane. <code>TrStudioAdmin</code> is <em>only a UI</em>; it performs admin actions by calling admin-scoped <code>TrStudioApi</code> endpoints. Any capability <code>TrStudio</code> also needs — or that may be exposed to third parties later — is a first-class <code>TrStudioApi</code> endpoint, never buried in the admin app. The registry, job, and generation services are shared; only setup/sources, ComfyUI import/debug, content-policy and ops are admin-scoped. <strong>On startup the API runs <code>TrStudioDb</code> (DbUp)</strong> to create/upgrade the schema before serving traffic.</p>
+
+    <p><strong>Provider abstraction.</strong> Each provider (in <code>TrStudio.Engine/Providers/</code>, implementing <code>IGenerationProvider</code> from <code>TrStudio.Models</code>) is routed by the orchestrator to exactly one resolved model and treated uniformly: <code>submit → status → result → estimateCost</code>. One <code>ComfyUIProvider</code> serves <em>all</em> ComfyUI-backed models (avatar, lip-sync, video) because each model is just a workflow template (§6/§8).</p>
+
+    <p><strong>Prompt Studio chat path (F-PROMPT, added 2026-07-07).</strong> The prompt-crafting chat spans the existing modules without new projects: <code>TrStudioUI</code> gains the Prompt Studio screen (<code>/prompt-studio</code> — chat pane, registry-driven LLM picker, image attachment, session list, prompt-use actions); <code>TrStudioApi</code> exposes the <code>prompt-chat</code> endpoints; <code>TrStudio.Engine</code> gains <code>Domain/</code> entities <code>PromptChatSession</code>/<code>PromptChatMessage</code> and an <code>Infrastructure/</code> <code>PromptChatService</code> that resolves the picked model from the registry and calls <strong>TechieRag chat-completion directly (no RAG pipeline)</strong>, applying the BRD-81 owner filter to every session/message query and recording token usage (BRD-56); <code>TrStudioDb</code> adds the DbUp script for the two tables. Text-chat LLMs are ordinary registry rows (<code>text-chat</code> modality, §6) — no separate config store.</p>
+
+    <p><strong>Single Postgres, Dapper + DbUp.</strong> PgVector gives vector + relational in one instance, so the registry, jobs, characters, asset metadata, generation log <strong>and</strong> embeddings/vectors all live in one PostgreSQL database. Data access is <strong>Dapper</strong> (parameterized SQL, no EF Core); schema is created/upgraded by <strong>DbUp</strong> scripts in <code>TrStudioDb</code>, run automatically when <code>TrStudioApi</code> starts. Durable jobs use Hangfire's Postgres storage; there is no Redis. Provider API keys are held in an encrypted key store.</p>
+
+    <h2 id="provider-abstraction-and-the-three-execution-tiers">5. Provider abstraction and the three execution tiers<a class="anchor-link" href="#provider-abstraction-and-the-three-execution-tiers">#</a></h2>
+    <p><code>TrStudio</code> requests <em>"task T with model M and params P."</em> <code>TrStudioApi</code> resolves <strong>M → a provider</strong> and routes the job. Every provider implements:</p>
+    <pre><code>IGenerationProvider
+  ├─ supports(task, model) : bool
+  ├─ submit(job) : jobId           // async
+  ├─ status(jobId) : {state, progress, eta}
+  ├─ result(jobId) : assetRef
+  └─ estimateCost(job) : money</code></pre>
+
+    <p><strong>Concrete providers (MVP):</strong></p>
+    <ul>
+      <li><code>OnnxLocalProvider</code> — ONNX Runtime, CoreML/CPU EP; image + upscale (<em>Fast tier</em>).</li>
+      <li><code>ComfyUIProvider</code> — drives a ComfyUI instance (local MPS or RunPod) via its HTTP <code>/prompt</code> API + WebSocket progress; serves all ComfyUI-backed models (<em>Fast/High tiers</em>).</li>
+      <li><code>HeyGenProvider</code> — adapter for the HeyGen API (<em>Premium tier</em>, avatars).</li>
+      <li><code>ClosedApiProvider</code> — aggregator (fal.ai/Replicate/WaveSpeed) or direct vendor for closed image/video (<em>Premium tier</em>).</li>
+    </ul>
+
+    <p>The same UI control (AV-04) lets the user pick the tier per job — <strong>Fast (Mac local)</strong>, <strong>High (RunPod serverless)</strong>, or <strong>Premium (HeyGen API)</strong> — and the abstraction swaps the provider underneath.</p>
+
+    <p><strong>The hard design driver — scale-to-zero.</strong> 36 GB unified memory + a $100/mo budget means heavy avatar/video cannot live on the Mac <em>or</em> on an always-on rented GPU (a 24/7 A100 ≈ $860/mo). Heavy jobs MUST run on serverless GPUs that <code>TrStudioAdmin</code> starts on demand and that idle-stop to $0.</p>
+
+    <div class="diagram">
+      <div class="dt">
+        <button data-zout title="Zoom out">−</button>
+        <span class="zlabel">100%</span>
+        <button data-zin title="Zoom in">+</button>
+        <button data-fit title="Fit to width">Fit</button>
+        <button data-one title="Actual size">1:1</button>
+        <button data-fs title="Fullscreen">⛶</button>
+        <button data-pop title="Open in new tab">↗</button>
+      </div>
+      <pre class="mermaid">sequenceDiagram
+  participant Orch as "Orchestrator"
+  participant RP as "RunPod control"
+  participant Pod as "RunPod serverless GPU"
+  participant Vol as "Network volume (models)"
+  participant Cost as "Cost guardrails"
+  Orch->>Cost: "estimate job cost"
+  Cost-->>Orch: "within monthly cap?"
+  Orch->>RP: "ensure worker (heavy job)"
+  RP->>Pod: "cold start (scale from zero)"
+  Pod->>Vol: "mount cached models"
+  Pod-->>Orch: "ready"
+  Orch->>Pod: "run workflow"
+  Pod-->>Orch: "progress + result"
+  Orch->>RP: "idle timer expired"
+  RP->>Pod: "scale to zero (billing stops)"
+  Cost->>Cost: "record spend-to-date (RunPod + closed APIs)"</pre>
+    </div>
+
+    <h2 id="model-and-provider-registry">6. Model and provider registry<a class="anchor-link" href="#model-and-provider-registry">#</a></h2>
+    <p>Every usable model is a registry row owned by <code>TrStudioApi</code>. A <strong>declarative params schema</strong> lets the UI render controls for any model with no code change — so "add a model" is a <code>TrStudioAdmin</code> action, not a dev task (NFR-09 extensibility).</p>
+    <pre><code class="language-jsonc">{
+  "id": "musetalk-v1",
+  "displayName": "MuseTalk (real-time lip-sync)",
+  "task": "lip-sync",
+  "providerType": "comfyui",
+  "tier": "fast",              // fast | high | premium
+  "workflowRef": "workflows/musetalk_v1.api.json",
+  "hardware": { "minVramGb": 8, "recommended": "A100", "runsOnMac": true },
+  "params": [
+    { "key": "sourceImage", "type": "image", "required": true },
+    { "key": "audio", "type": "audio", "required": true },
+    { "key": "resolution", "type": "enum", "values": ["256","512"], "default": "256" }
+  ],
+  "languages": ["en","hi","language-agnostic"],
+  "license": "MIT",            // VERIFY per release
+  "safetyClass": "avatar-synthetic-default",
+  "cost": { "kind": "serverless-seconds", "estimateSecPerJob": 90 }
+}</code></pre>
+
+    <p>The registry carries each model's <strong>license</strong> field (used by the build-time license check, ADR-006) and <strong>safetyClass</strong> (<code>synthetic-default</code> | <code>real-person-gated</code>), which scopes the safety floors (§9) applied to that model's jobs.</p>
+
+    <p><strong>Text-chat LLMs are registry rows too (F-PROMPT, added 2026-07-07).</strong> The Prompt Studio's LLM picker is driven by registry entries with <code>task: "text-chat"</code> — same admin Registry screen, same encrypted key store, no separate config table. They are not generation models: they never enter the provider abstraction/job queue; <code>PromptChatService</code> resolves them directly (§3.1).</p>
+
+    <pre><code class="language-jsonc">{
+  "id": "gpt-4o-chat",
+  "displayName": "GPT-4o (prompt crafting)",
+  "task": "text-chat",         // Prompt Studio picker filters on this
+  "providerType": "textllm",   // routed to PromptChatService, not IGenerationProvider
+  "endpoint": "https://api.openai.com/v1",
+  "apiKeyRef": "encrypted-key-store",
+  "visionCapable": true,       // gates image attachment in the chat UI (BRD-90)
+  "cost": { "kind": "tokens", "inPer1k": 0.005, "outPer1k": 0.015 }
+}</code></pre>
+
+    <h2 id="identity-and-licensing-appmanager-integration">7. Identity and licensing — AppManager integration<a class="anchor-link" href="#identity-and-licensing-appmanager-integration">#</a></h2>
+    <p>Users, login/JWT, licenses/subscriptions, feature &amp; tier gating, payments and support are provided by <strong>AppManager</strong> (<code>docs/AppManager-api-usage-guide.md</code>). <code>TrStudioApi</code> integrates as an AppManager <strong>child application</strong>: <code>X-Api-Key</code>/<code>X-Api-Secret</code> for the app handshake, JWT bearer for the user session, RSA-encrypted passwords. TrStudio stores only a reference to the AppManager <code>userId</code> for ownership of characters/jobs/assets — <strong>never passwords, and AppManager is never the application database.</strong></p>
+    <div class="diagram">
+      <div class="dt">
+        <button data-zout title="Zoom out">−</button>
+        <span class="zlabel">100%</span>
+        <button data-zin title="Zoom in">+</button>
+        <button data-fit title="Fit to width">Fit</button>
+        <button data-one title="Actual size">1:1</button>
+        <button data-fs title="Fullscreen">⛶</button>
+        <button data-pop title="Open in new tab">↗</button>
+      </div>
+      <pre class="mermaid">sequenceDiagram
+  actor U as "User"
+  participant W as "TrStudio UI"
+  participant A as "TrStudioApi"
+  participant AM as "AppManager (AuthSvc / LicenseSvc / FeatureSvc)"
+  U->>W: "login (email, password)"
+  W->>A: "credentials (RSA-encrypted password)"
+  A->>AM: "authenticate (X-Api-Key + X-Api-Secret)"
+  AM-->>A: "JWT + refresh + userId"
+  A-->>W: "session token"
+  U->>W: "select Premium (HeyGen) tier"
+  W->>A: "submit job (tier=premium)"
+  A->>AM: "check feature / license entitlement"
+  AM-->>A: "allowed or gated"
+  A-->>W: "proceed or upgrade prompt"</pre>
+    </div>
+    <p>In personal mode all tiers are available; when run multi-user/SaaS, which tiers a user may select is gated via AppManager FeatureSvc/LicenseSvc (e.g. Premium behind a paid license).</p>
+
+    <h2 id="comfyui-pipeline-management">8. ComfyUI pipeline management<a class="anchor-link" href="#comfyui-pipeline-management">#</a></h2>
+    <p>ComfyUI is both a media engine (Fast/High tiers) and the mechanism for adding new models. The import/debug/use screen lives in <code>TrStudioAdmin</code>; registered models it produces are served to <code>TrStudio</code> through <code>TrStudioApi</code>. ComfyUI exposes <code>POST /prompt</code> (workflow graph as API-format JSON), <code>GET /history/{id}</code>, <code>/view</code>, and a WebSocket for live progress + node-level errors. <code>TrStudioApi</code> maps a workflow's editable node fields to UI controls via the registry params schema.</p>
+    <div class="diagram">
+      <div class="dt">
+        <button data-zout title="Zoom out">−</button>
+        <span class="zlabel">100%</span>
+        <button data-zin title="Zoom in">+</button>
+        <button data-fit title="Fit to width">Fit</button>
+        <button data-one title="Actual size">1:1</button>
+        <button data-fs title="Fullscreen">⛶</button>
+        <button data-pop title="Open in new tab">↗</button>
+      </div>
+      <pre class="mermaid">flowchart LR
+  Import["Import workflow JSON (drag-drop / paste)"] --> Parse["Parse nodes, list editable inputs"]
+  Parse --> Map["Map inputs to registry params (types, defaults, required)"]
+  Map --> Debug["Run + Debug (per-node status, WebSocket previews)"]
+  Debug --> Smoke["Sandbox smoke test"]
+  Smoke --> Save["Save as registered model (graph hidden)"]
+  Save --> Use["Served to TrStudio via TrStudioApi"]</pre>
+    </div>
+
+    <h2 id="cross-cutting-concerns">9. Cross-cutting concerns<a class="anchor-link" href="#cross-cutting-concerns">#</a></h2>
+    <ul>
+      <li><strong>Logging</strong> — Serilog (structured), traceable job IDs; no secrets in logs/URLs (NFR-05/08).</li>
+      <li><strong>Telemetry</strong> — OpenTelemetry metrics: queue depth, memory, latency, spend-to-date.</li>
+      <li><strong>Error handling</strong> — global middleware; <code>ProblemDetails</code>; actionable failures surfaced to the UI (e.g. "out of memory — drop to 256px or route to RunPod", ADM-09).</li>
+      <li><strong>Auth</strong> — AppManager JWT bearer for users; <code>X-Api-Key</code>/<code>X-Api-Secret</code> for the child-app handshake; admin-scoped endpoints for <code>TrStudioAdmin</code>-only operations.</li>
+      <li><strong>Caching</strong> — <code>IMemoryCache</code> in-process only (no Redis).</li>
+      <li><strong>Cost control</strong> — per-job estimate before run; RunPod idle auto-stop; monthly cap + alerts across RunPod <strong>and</strong> closed APIs incl. HeyGen (ADM-10 / NFR-07).</li>
+      <li><strong>Safety (binding)</strong> — a non-disableable pipeline on every provider: CSAM hash+classifier blocks, NCII/real-person-deepfake refusal, consent gating for real faces/voices, C2PA-style provenance on outputs, public-figure impersonation block, full audit trail (SAFE-01..06).</li>
+      <li><strong>Privacy / Compliance</strong> — local jobs stay local; UI flags when a job routes to a closed API; data resident in India; DPDP-aligned; configurable retention (NFR-06/10).</li>
+    </ul>
+
+    <h2 id="deployment-architecture">10. Deployment architecture<a class="anchor-link" href="#deployment-architecture">#</a></h2>
+    <div class="diagram">
+      <div class="dt">
+        <button data-zout title="Zoom out">−</button>
+        <span class="zlabel">100%</span>
+        <button data-zin title="Zoom in">+</button>
+        <button data-fit title="Fit to width">Fit</button>
+        <button data-one title="Actual size">1:1</button>
+        <button data-fs title="Fullscreen">⛶</button>
+        <button data-pop title="Open in new tab">↗</button>
+      </div>
+      <pre class="mermaid">flowchart LR
+  Dev["Dev box (Windows)"] --> Build["dotnet build + tests"]
+  Build --> ApiImg["Docker: TrStudioApi + workers"]
+  Build --> WorkerImg["RunPod template image (GPU worker)"]
+  ApiImg --> Host["App host (India region)"]
+  Host --> PG[("PostgreSQL + PgVector")]
+  Host --> Obj[("Object storage")]
+  Host -->|"on-demand"| RunPod["RunPod serverless (scale-to-zero)"]
+  WorkerImg --> RunPod
+  RunPod --> Vol[("Network volume — cached models")]
+  Mac["Mac M4 Max"] --> LocalComfy["Local ComfyUI (MPS) + ONNX"]
+  Host -->|"X-Api-Key + JWT"| AppMgr[/"AppManager service"/]</pre>
+    </div>
+    <p>Mac runs the local model stack (Fast tier) and the control plane during dev; Windows is the dev/build box; the API + workers deploy to a server in India later. The single <code>TrStudio</code> app ships as a MAUI Blazor Hybrid desktop app (Win/Mac) — the primary local delivery — and as a Blazor Web app in any modern browser; both host the same <code>TrStudioUI</code> RCL and role-gate the surface by the signed-in user (ADR-012).</p>
+
+    <h2 id="architectural-decisions-adr-style-log">11. Architectural decisions (ADR-style log)<a class="anchor-link" href="#architectural-decisions-adr-style-log">#</a></h2>
+    <ul>
+      <li><strong>[SUPERSEDED by ADR-012, 2026-07-05]</strong> <strong>ADR-001 — Two Blazor apps + shared RCL on TrBlazeUI, both Web + MAUI Blazor Hybrid.</strong> Reason: clean separation of the creator experience (<code>TrStudio</code>) from model/provider management (<code>TrStudioAdmin</code>) while sharing one component set (<code>TrStudioUI</code>); requirement §25 mandates Web + desktop for both.</li>
+      <li><strong>ADR-002 — PostgreSQL + PgVector as the single datastore; no Redis.</strong> Reason: PgVector gives vector + relational in one DB; Hangfire/Postgres gives durable jobs; <code>IMemoryCache</code> covers in-process caching — a second datastore adds ops cost for no MVP benefit (§11 of requirements).</li>
+      <li><strong>ADR-003 — PgVector (via TechieRag <code>UsePgVector</code>) as the vector store.</strong> Reason: RAG-backed character bible, prompt/script memory and embeddings live on the same Postgres instance — no separate vector DB.</li>
+      <li><strong>ADR-004 — Provider abstraction with a three-tier selector (Fast/High/Premium).</strong> Reason: HeyGen-grade realism on tap, open-model parity, and budget control all flow through one <code>IGenerationProvider</code> seam; the UI never knows the provider.</li>
+      <li><strong>ADR-005 — RunPod serverless, scale-to-zero, for heavy jobs.</strong> Reason: 36 GB + $100/mo make always-on GPUs impossible; heavy avatar/video must be bursty and idle-stop to $0 (§3, risk register).</li>
+      <li><strong>ADR-006 — ONNX Runtime directly for the image path (not TensorStack).</strong> Reason: already used by TechieRag, removes a thin third-party dependency, full control of the image path; ComfyUI covers the media models anyway (§11 of requirements).</li>
+      <li><strong>ADR-007 — AppManager as external identity/licensing child-app; not the app DB.</strong> Reason: personal-first, SaaS-ready; delegates auth/license/feature/payment/support while TrStudio keeps its own India-resident data (DPDP).</li>
+      <li><strong>ADR-008 — TechieRag (NuGet) for text/LLM/RAG only.</strong> Reason: confirmed text-only library (script/caption/prompt memory/character bible); the image diffusion path is a separate ONNX implementation.</li>
+      <li><strong>ADR-009 — Hard safety floors are non-disableable; the <em>general</em> SFW filter is an owner-only toggle.</strong> Reason: CSAM, real-person/NCII, minors and public-figure impersonation (SAFE-01/02/03/05) are illegal-harm floors that stay enforced regardless of mode and keep payments/hosting/stores viable; the general adult-content filter may be lifted by the owner in personal mode for <strong>synthetic adult personas</strong> (F-NSFW, BRD-79/80) and is auto-disabled in multi-user/SaaS.</li>
+      <li><strong>ADR-010 — Dapper for data access + DbUp for migrations (not EF Core).</strong> Reason: explicit, parameterized SQL gives full control over PgVector queries and the per-user owner filter; DbUp runs ordered embedded SQL scripts (<code>TrStudioDb</code>) on API startup — simple, transparent, no migration-runtime magic.</li>
+      <li><strong>ADR-011 — One <code>TrStudio.Engine</code> library + a shared <code>TrStudio.Models</code> library.</strong> Reason: Domain/Infrastructure/Providers/Workers collapse into one engine assembly (folders, not projects) to cut wiring overhead; <code>TrStudio.Models</code> holds the contract types every app/engine shares so they never drift.</li>
+      <li><strong>ADR-012 — One unified <code>TrStudio</code> app with a role-based surface, shipped as Blazor Web + MAUI Blazor Hybrid desktop (Win/Mac); supersedes ADR-001.</strong> Reason: the owner's product intent is a single, locally-run desktop app in which the creator and management experiences are the SAME application, gated by the signed-in user's role (Creator → studios; Operator/Admin → management; Owner → both). <code>TrStudioAdmin</code> is retired; its screens move into the shared <code>TrStudioUI</code> RCL under role-gated routes hosted by the one <code>TrStudio</code> app, which ships a Blazor Web head and MAUI Blazor Hybrid desktop heads (Windows + macOS). <code>TrStudioApi</code> (the backend contract, provider abstraction, registry, orchestrator) is unchanged — only the presentation layer consolidates. The previously-deferred MAUI desktop heads (NFR-03/BRD-71/§25) become the primary delivery (BRD-86/87).</li>
+      <li><strong>ADR-013 — Prompt Studio uses TechieRag direct chat-completion (no RAG pipeline); text-chat LLMs are registry rows (<code>text-chat</code> modality), outside the generation-provider abstraction.</strong> <em>(2026-07-07)</em> Reason: the feature is a conversational prompt-crafting aid (F-PROMPT, BRD-88..92) — synchronous advisory text, so the Hangfire job model, <code>IGenerationProvider</code> seam and media safety pipeline don't apply; skipping RAG/vector setup keeps it a thin chat client. Reusing the registry (with a <code>visionCapable</code> flag and the encrypted key store) keeps "add an LLM" a config action per NFR-09 and gives the picker its DB-configured list for free.</li>
+    </ul>
+
+    <h2 id="build-roadmap-phased-target">12. Build roadmap (phased target)<a class="anchor-link" href="#build-roadmap-phased-target">#</a></h2>
+    <p>Greenfield — nothing is built yet. The §12 build order from the requirements doc is the dependency-ordered target; each phase is independently testable. (Carried into the BRD §4 status table and seeded as phase tags by <code>*split-brd</code>.)</p>
+    <div class="diagram">
+      <div class="dt">
+        <button data-zout title="Zoom out">−</button>
+        <span class="zlabel">100%</span>
+        <button data-zin title="Zoom in">+</button>
+        <button data-fit title="Fit to width">Fit</button>
+        <button data-one title="Actual size">1:1</button>
+        <button data-fs title="Fullscreen">⛶</button>
+        <button data-pop title="Open in new tab">↗</button>
+      </div>
+      <pre class="mermaid">flowchart TB
+  P1["Phase 1 — Skeleton & spine (apps, provider abstraction, registry, Hangfire queue, auth, storage, OpenAPI, Serilog)"]
+  P2["Phase 2 — Local image vertical (OnnxLocalProvider, Image studio, gallery/history)"]
+  P3["Phase 3 — Managed ComfyUI + RunPod (scale-to-zero, cost guardrails)"]
+  P4["Phase 4 — Voice EN+HI (XTTS / IndicF5 / OmniVoice)"]
+  P5["Phase 5 — Avatar pipeline (Character, lip-sync, script-to-video, tier selector incl. HeyGen, captions)"]
+  P6["Phase 6 — ComfyUI pipeline screen (import new models)"]
+  P7["Phase 7 — Video + closed API (I2V/T2V, aggregator, HeyGenProvider)"]
+  P8["Phase 8 — Safety + provenance throughout"]
+  P9["Phase 9 — Polish + SaaS-ready seams (comparison, libraries, spend dashboard, API seam)"]
+  P10["Phase 10 — Prompt Studio (LLM prompt-crafting chat — added 2026-07-07)"]
+  P1 --> P2 --> P3 --> P4 --> P5 --> P6 --> P7 --> P8 --> P9 --> P10</pre>
+    </div>
+    <blockquote><p>Safety (SAFE-01/04) is wired into every provider from Phase 2 onward; SAFE-02/03/05 are enforced before any real-person feature. Phase 8 is the consolidation/verification pass, not the first time safety appears.</p></blockquote>
+
+    <h2 id="open-questions-risks">13. Open questions / risks<a class="anchor-link" href="#open-questions-risks">#</a></h2>
+    <ul>
+      <li><strong>Model licences</strong> vary and date quickly (XTTS Coqui CPML is non-standard; Hunyuan has a MAU cap; HeyGen has its own ToS) — the registry <code>license</code> field + a build-time check must verify each before commercial use.</li>
+      <li><strong>ComfyUI on Apple Silicon (MPS/GGUF)</strong> can be flaky — default to GGUF + low-res-first, auto-fallback to RunPod on OOM.</li>
+      <li><strong>HeyGen / aggregator price changes</strong> — keep open-model parity so the Premium tier stays optional behind the selector.</li>
+      <li><strong>36 GB unified memory</strong> is marginal for local video — route heavy jobs to RunPod/HeyGen; Mac is image + light lip-sync only.</li>
+      <li><strong>TechieRag / TrBlazeUI reuse assumptions</strong> — confirm against the real packages at Phase 1 before depending on them.</li>
+      <li><strong>Credentials needed at build/run</strong> (not blocking docs): GitHub PAT (<code>read:packages</code>), HeyGen API key, AppManager API key/secret.</li>
+      <li><strong>Field-prefix:</strong> greenfield, no code to detect from — defaulted to <code>obj</code> (Coding Standards is authoritative).</li>
+    </ul>
+
+    <h2 id="sources-harvested">Sources harvested<a class="anchor-link" href="#sources-harvested">#</a></h2>
+    <ul>
+      <li><code>docs/TrStudio-Requirements-v0.3.md</code> — §2 app surface, §3 hardware/budget, §4 architecture, §4.2 provider abstraction, §4.3 registry, §5 model stack, §6 ComfyUI, §7 TechieRag, §11 stack, §12 build order, §13 risks.</li>
+      <li><code>docs/AppManager-api-usage-guide.md</code> — child-app integration model (referenced; stays in <code>docs/</code> as independently authoritative).</li>
+    </ul>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+<script>
+// Light/dark toggle. The initial theme was already applied flash-free by the
+// <head> script (saved choice, else time-of-day). Clicking flips it, saves the
+// choice, and reloads so Mermaid re-renders in the matching theme.
+(function(){
+  var btn = document.getElementById('themeToggle');
+  if(!btn) return;
+  var relabel = function(){
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    btn.textContent = dark ? '☀ Light' : '☾ Dark';
+  };
+  relabel();
+  btn.addEventListener('click', function(){
+    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    try{ localStorage.setItem('tf-theme', next); }catch(e){}
+    location.reload();
+  });
+})();
+
+// Copy buttons on every code <pre> — but NEVER on a `pre.mermaid`:
+// mermaid reads the <pre>'s textContent as the diagram source, so a button
+// appended here glues "copy" onto the last line and breaks the parse
+// (flowcharts → "Syntax error"; sequence diagrams silently absorb it).
+// Mermaid blocks get copy/export from their own .diagram toolbar instead.
+document.querySelectorAll('pre:not(.mermaid)').forEach(pre => {
+  const btn = document.createElement('button');
+  btn.className = 'copy';
+  btn.textContent = 'copy';
+  btn.addEventListener('click', () => {
+    const text = pre.querySelector('code') ? pre.querySelector('code').innerText : pre.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'copied';
+      setTimeout(() => { btn.textContent = 'copy'; }, 1200);
+    });
+  });
+  pre.appendChild(btn);
+});
+
+// Mermaid init — theme follows the resolved light/dark theme
+if (window.mermaid) {
+  var mermaidTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default';
+  mermaid.initialize({ startOnLoad: true, theme: mermaidTheme, securityLevel: 'loose' });
+}
+
+// Mermaid toolbar wiring — run after mermaid renders
+function wireMermaidToolbars() {
+  document.querySelectorAll('.diagram').forEach(dia => {
+    if (dia.dataset.wired) return;
+    const merm = dia.querySelector('.mermaid');
+    const svg = merm && merm.querySelector('svg');
+    if (!svg) return;
+    dia.dataset.wired = '1';
+    let scale = 1;
+    const label = dia.querySelector('.zlabel');
+    const apply = () => {
+      svg.style.transform = `scale(${scale})`;
+      svg.style.transformOrigin = 'top left';
+      if (label) label.textContent = Math.round(scale * 100) + '%';
+    };
+    const setScale = (s) => { scale = Math.max(0.25, Math.min(4, s)); apply(); };
+    dia.querySelector('[data-zin]').onclick = () => setScale(scale * 1.2);
+    dia.querySelector('[data-zout]').onclick = () => setScale(scale / 1.2);
+    dia.querySelector('[data-fit]').onclick = () => {
+      svg.style.transform = '';
+      svg.removeAttribute('width');
+      svg.style.maxWidth = '100%';
+      svg.style.height = 'auto';
+      scale = 1;
+      if (label) label.textContent = 'Fit';
+    };
+    dia.querySelector('[data-one]').onclick = () => {
+      svg.style.transform = '';
+      svg.style.maxWidth = 'none';
+      svg.style.width = '';
+      svg.style.height = '';
+      scale = 1;
+      if (label) label.textContent = '100%';
+    };
+    dia.querySelector('[data-fs]').onclick = () => {
+      dia.classList.toggle('fs');
+      if (dia.classList.contains('fs')) {
+        document.addEventListener('keydown', escFs);
+      } else {
+        document.removeEventListener('keydown', escFs);
+      }
+    };
+    function escFs(e) { if (e.key === 'Escape') { dia.classList.remove('fs'); document.removeEventListener('keydown', escFs); } }
+    dia.querySelector('[data-pop]').onclick = () => openInNewTab(svg);
+    // Ctrl+wheel zoom
+    merm.addEventListener('wheel', (e) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      setScale(scale * (e.deltaY < 0 ? 1.1 : 1/1.1));
+    }, { passive: false });
+  });
+}
+
+function openInNewTab(svg) {
+  const svgSource = new XMLSerializer().serializeToString(svg);
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Diagram</title>
+<style>
+  html,body{margin:0;height:100%;background:#0f1115;color:#e6e8ee;font-family:system-ui,sans-serif}
+  .bar{position:fixed;top:0;left:0;right:0;padding:8px 12px;background:#161a22;border-bottom:1px solid #2a3142;display:flex;gap:8px;z-index:10}
+  .bar button{background:#1c2230;color:#9aa3b2;border:1px solid #2a3142;border-radius:6px;padding:5px 12px;font-size:13px;cursor:pointer}
+  .bar button:hover{color:#7cc4ff;border-color:#7cc4ff}
+  .bar .hint{margin-left:auto;color:#9aa3b2;font-size:11.5px;align-self:center}
+  #stage{position:absolute;top:42px;bottom:0;left:0;right:0;overflow:hidden}
+  #stage svg{width:100%;height:100%}
+</style>
+</head><body>
+<div class="bar">
+  <button onclick="zpz.zoomIn()">+</button>
+  <button onclick="zpz.zoomOut()">−</button>
+  <button onclick="zpz.fit();zpz.center()">Fit</button>
+  <button onclick="zpz.resetZoom();zpz.center()">1:1</button>
+  <button onclick="window.print()">Print</button>
+  <button onclick="dlPng()">PNG</button>
+  <button onclick="dlSvg()">SVG</button>
+  <span class="hint">Drag to pan · Ctrl+wheel to zoom · + / − keys</span>
+</div>
+<div id="stage">${svgSource}</div>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"><\/script>
+<script>
+  const el = document.querySelector('#stage svg');
+  const zpz = svgPanZoom(el, { zoomScaleSensitivity: .3, minZoom: .2, maxZoom: 10, controlIconsEnabled: false, fit: true, center: true });
+  document.addEventListener('keydown', e => {
+    if (e.key === '+' || e.key === '=') zpz.zoomIn();
+    if (e.key === '-' || e.key === '_') zpz.zoomOut();
+    if (e.key === '0') { zpz.resetZoom(); zpz.center(); }
+  });
+  function dlSvg() {
+    const blob = new Blob([new XMLSerializer().serializeToString(el)], { type: 'image/svg+xml' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'diagram.svg'; a.click();
+  }
+  function dlPng() {
+    const src = new XMLSerializer().serializeToString(el);
+    const img = new Image();
+    const url = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(src)));
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = el.clientWidth * 2; c.height = el.clientHeight * 2;
+      const ctx = c.getContext('2d'); ctx.scale(2,2); ctx.drawImage(img, 0, 0);
+      c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'diagram.png'; a.click(); });
+    };
+    img.src = url;
+  }
+<\/script>
+</body></html>`;
+  const w = window.open();
+  w.document.write(html);
+  w.document.close();
+}
+
+// Run wiring after mermaid finishes (it renders async)
+if (window.mermaid) {
+  setTimeout(wireMermaidToolbars, 400);
+  setTimeout(wireMermaidToolbars, 1200);  // safety re-run for slow renders
+}
+</script>
+</body>
+</html>

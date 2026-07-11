@@ -1,0 +1,56 @@
+@page "/dev/desktop"
+@layout TrStudioUI.Layout.EmptyLayout
+@inject IAuthSession AuthSession
+@inject NavigationManager Navigation
+
+@*
+    DEV-ONLY desktop session picker (the Hybrid analogue of the web head's /dev/session seam). Mints
+    an HS256 dev token for the chosen role and stores it via the Hybrid IAuthSession, then lands on
+    the role's surface — so the desktop app can be driven as Creator / Operator / Owner without a
+    live AppManager. Disabled outside a DEBUG build.
+*@
+
+<PageTitle>TrStudio — Desktop dev session</PageTitle>
+
+@if (!DesktopDevSession.IsEnabled)
+{
+    <Card Class="auth-card">
+        <div class="auth-brand-name">Not available</div>
+        <div class="auth-note">The desktop dev session seam is disabled outside a DEBUG build.</div>
+    </Card>
+}
+else
+{
+    <Card Class="auth-card" data-testid="dev-desktop-card">
+        <div class="auth-brand">
+            <div class="auth-brand-logo shell-logo brand-gradient">TR</div>
+            <div>
+                <h1 class="auth-brand-name">Desktop dev session</h1>
+                <div class="auth-brand-tag">Establish a role-based session (dev-signed token)</div>
+            </div>
+        </div>
+
+        <Button Class="auth-submit" OnClick="@(() => EstablishAsync(UserRole.Creator))" data-testid="dev-creator">
+            <LucideIcon Name="palette" Size="14" />
+            <span>Enter as Creator</span>
+        </Button>
+        <Button Class="auth-submit" OnClick="@(() => EstablishAsync(UserRole.Operator))" data-testid="dev-operator">
+            <LucideIcon Name="server-cog" Size="14" />
+            <span>Enter as Operator</span>
+        </Button>
+        <Button Class="auth-submit" OnClick="@(() => EstablishAsync(UserRole.Owner))" data-testid="dev-owner">
+            <LucideIcon Name="crown" Size="14" />
+            <span>Enter as Owner</span>
+        </Button>
+    </Card>
+}
+
+@code {
+    /// <summary>Establishes a dev session for the chosen role and lands on its surface.</summary>
+    /// <param name="aRole">The role to enter as.</param>
+    private async Task EstablishAsync(UserRole aRole)
+    {
+        var vLanding = await DesktopDevSession.EstablishAsync(AuthSession, aRole);
+        Navigation.NavigateTo(vLanding, forceLoad: false);
+    }
+}

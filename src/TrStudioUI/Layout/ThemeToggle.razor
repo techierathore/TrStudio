@@ -1,0 +1,47 @@
+@inject IJSRuntime Js
+
+@*
+    Light/dark theme toggle (REQ-UI-005). Dark is the default; the persisted choice
+    lives in localStorage ("trstudio-theme") and is applied pre-paint by
+    _content/TrStudioUI/js/theme.js — this button only flips it via that JS API.
+    Shows "sun" while dark (click for light) and "moon" while light, per the mockups.
+*@
+
+<Button Variant="ButtonVariant.Outline"
+        Size="ButtonSize.Icon"
+        AriaLabel="Toggle dark mode"
+        OnClick="ToggleThemeAsync"
+        Class="@Class"
+        data-testid="theme-toggle">
+    <LucideIcon Name="@(objIsDark ? "sun" : "moon")" Size="16" />
+</Button>
+
+@code {
+    private bool objIsDark = true;
+
+    /// <summary>Additional CSS classes for the toggle button (e.g. auth-screen positioning).</summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <inheritdoc />
+    protected override async Task OnAfterRenderAsync(bool aFirstRender)
+    {
+        if (!aFirstRender)
+        {
+            return;
+        }
+
+        var vIsDark = await Js.InvokeAsync<bool>("trStudioTheme.isDark");
+        if (vIsDark != objIsDark)
+        {
+            objIsDark = vIsDark;
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>Flips the theme through the shared JS API and updates the icon.</summary>
+    private async Task ToggleThemeAsync()
+    {
+        objIsDark = await Js.InvokeAsync<bool>("trStudioTheme.toggle");
+    }
+}

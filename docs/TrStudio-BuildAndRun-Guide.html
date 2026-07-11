@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TrStudio — Build &amp; Run Guide — TrStudio</title>
+<script>
+/* Resolve the theme BEFORE first paint (no flash). Saved choice wins; otherwise
+   pick by time of day — light 07:00–19:00 local, softened dark at night. */
+(function(){
+  try{
+    var t = localStorage.getItem('tf-theme');
+    if(t!=='light' && t!=='dark'){ var h = new Date().getHours(); t = (h>=7 && h<19) ? 'light' : 'dark'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){ document.documentElement.setAttribute('data-theme','light'); }
+})();
+</script>
+<style>
+/* LIGHT is the default theme — a warm off-white, easy on the eyes (never bright white). */
+:root{
+  --bg:#f4f1e9; --panel:#efe9db; --panel2:#e7e0cd; --line:#d8cfb6;
+  --ink:#2e2a22; --muted:#6f6857; --accent:#2f6f9f; --accent2:#3f7d54;
+  --warn:#9a6b15; --danger:#b03a52; --ok:#3f7d54;
+  --code-bg:#ece5d3; --code-ink:#332f26; --row-alt:#eae2cf;
+  --h3:#3a352b; --h4:#2f6f9f; --quote:#4a4537; --cta-bg:#e6eef5;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+/* DARK — softened near-black (warmer / less harsh than pure #0f1115). */
+html[data-theme="dark"]{
+  --bg:#11141a; --panel:#171b23; --panel2:#1e2430; --line:#2b3240;
+  --ink:#dfe3ea; --muted:#99a2b1; --accent:#7cc4ff; --accent2:#a6e3a1;
+  --warn:#f9c74f; --danger:#f38ba8; --ok:#a6e3a1;
+  --code-bg:#0c1016; --code-ink:#d8dde8; --row-alt:#141821;
+  --h3:#cfd5e3; --h4:#7cc4ff; --quote:#cfd5e3; --cta-bg:#0d2030;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;font-size:15px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono);font-size:13px;background:var(--code-bg);color:var(--code-ink);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+pre{font-family:var(--mono);font-size:12.5px;background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:auto;color:var(--code-ink);position:relative}
+pre code{background:none;border:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:11px;font-family:var(--sans);cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+/* floating light/dark toggle (top-right) */
+.theme-toggle{position:fixed;top:12px;right:14px;z-index:10000;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:12.5px;font-family:var(--sans);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.theme-toggle:hover{color:var(--accent);border-color:var(--accent)}
+
+.layout{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.layout.no-toc{grid-template-columns:1fr}
+nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid var(--line);background:var(--panel);padding:18px 14px}
+nav.side h1{font-size:14px;margin:0 0 4px;letter-spacing:.5px;color:var(--ink)}
+nav.side .sub{font-size:11.5px;color:var(--muted);margin-bottom:14px}
+nav.side ol,nav.side ul{list-style:none;padding:0;margin:0}
+nav.side li{font-size:13px;margin:2px 0}
+nav.side li a{display:block;padding:5px 8px;color:var(--ink);border-radius:6px}
+nav.side li a:hover{background:var(--panel2);text-decoration:none}
+nav.side li.h3 a{padding-left:22px;font-size:12.5px;color:var(--h3)}
+nav.side .group{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin:14px 8px 4px}
+
+main{padding:28px 40px 80px;max-width:1100px}
+.layout.no-toc main{margin:0 auto}
+
+h1{font-size:28px;margin:0 0 6px}
+h2{font-size:22px;margin:32px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+h3{font-size:17px;margin:22px 0 6px;color:var(--h3);scroll-margin-top:16px}
+h4{font-size:14px;margin:14px 0 4px;color:var(--h4);scroll-margin-top:16px}
+.subtitle{color:var(--muted);font-size:14px;margin-top:-4px;margin-bottom:18px}
+p{margin:6px 0 10px}
+blockquote{border-left:3px solid var(--accent);background:var(--panel);margin:8px 0;padding:8px 14px;color:var(--quote)}
+ul,ol{padding-left:22px}
+li{margin:2px 0}
+
+table{border-collapse:collapse;width:100%;font-size:13.5px;margin:8px 0}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2);color:var(--h3);font-weight:600}
+tr:nth-child(even) td{background:var(--row-alt)}
+
+hr{border:none;border-top:1px solid var(--line);margin:24px 0}
+.anchor-link{color:var(--muted);font-weight:400;font-size:0.85em;margin-left:8px;opacity:0;transition:opacity .15s;text-decoration:none}
+h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
+
+/* inline TOC at top of main content */
+.toc-inline{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 16px;margin:14px 0 24px}
+.toc-inline > div{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.toc-inline ol,.toc-inline ul{margin:4px 0;padding-left:18px}
+.toc-inline li{font-size:13px;margin:1px 0}
+.toc-inline a{color:var(--h3)}
+
+/* mermaid diagram wrapper + toolbar */
+.diagram{position:relative;border:1px solid var(--line);border-radius:8px;background:var(--code-bg);margin:14px 0;overflow:hidden}
+.diagram .mermaid{padding:14px;margin:0;background:transparent;border:none;overflow:auto}
+.diagram .dt{display:flex;gap:6px;justify-content:flex-end;padding:6px 8px;background:var(--row-alt);border-bottom:1px solid var(--line)}
+.diagram .dt button{background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:3px 10px;font-size:12px;font-family:var(--sans);cursor:pointer;min-width:30px}
+.diagram .dt button:hover{color:var(--accent);border-color:var(--accent)}
+.diagram .dt .zlabel{padding:3px 6px;font-size:11px;color:var(--muted);font-family:var(--mono);align-self:center}
+.diagram.fs{position:fixed;inset:0;z-index:9999;border-radius:0;border:none}
+.diagram.fs .mermaid{height:calc(100vh - 40px);display:flex;align-items:center;justify-content:center}
+
+@media(max-width:900px){.layout{grid-template-columns:1fr}nav.side{position:static;height:auto}}
+</style>
+</head>
+<body>
+<button id="themeToggle" class="theme-toggle" title="Toggle light / dark">☾ Dark</button>
+<div class="layout no-toc">
+  <main>
+    <h1>TrStudio — Build &amp; Run Guide</h1>
+    <div class="subtitle">Build on Windows · run on the Mac — the unified role-based app's three projects and both distribution options</div>
+
+    <blockquote><p><strong>Audience:</strong> the owner / any human moving TrStudio between the Windows dev machine and the LAN Mac. Prerequisite installs will eventually be one click in <strong>TrSetup</strong> (see <code>TrSetup/docs/TrSetup-BRD.md</code>); until then this guide lists them manually.</p>
+    <p><strong>The one rule that governs everything below:</strong> <code>-r osx-arm64</code> cross-publishes <strong>plain .NET</strong> projects only — the .NET runtime pack is just a NuGet download, so Windows can build a Mac binary. A <strong>MAUI</strong> head is different in kind: it compiles against Apple's native SDKs and is signed with Apple tools that ship only inside Xcode, <strong>macOS only</strong> — no flag, TFM, or RID makes a Catalyst <code>.app</code> buildable from Windows (VS "Pair to Mac" is iOS-only). So: API + web head → build on Windows, copy to the Mac (§3 Option B); the native desktop <code>.app</code> → one command <strong>on the Mac</strong> (§3 Option A).</p></blockquote>
+
+    <div class="toc-inline">
+      <div>Contents</div>
+      <ol>
+        <li><a href="#what-trstudio-ships-as">What TrStudio ships as</a></li>
+        <li><a href="#build-run-on-windows-visual-studio">Build &amp; run on Windows (Visual Studio)</a></li>
+        <li><a href="#run-on-the-mac-two-options">Run on the Mac — two options</a>
+          <ul>
+            <li><a href="#option-b-copy-to-mac-binaries-no-net-on-the-mac-the-recommended-first-path">Option B — copy-to-Mac binaries (no .NET on the Mac)</a></li>
+            <li><a href="#option-a-native-mac-desktop-app-catalyst-built-on-the-mac">Option A — native Mac desktop app (Catalyst, built on the Mac)</a></li>
+          </ul>
+        </li>
+        <li><a href="#mac-runtime-prerequisites-what-trstudio-needs-to-actually-generate">Mac runtime prerequisites</a></li>
+        <li><a href="#first-run-on-the-mac">First run on the Mac</a></li>
+        <li><a href="#where-trsetup-takes-over">Where TrSetup takes over</a></li>
+      </ol>
+    </div>
+
+    <h2 id="what-trstudio-ships-as">1. What TrStudio ships as<a class="anchor-link" href="#what-trstudio-ships-as">#</a></h2>
+
+    <p>TrStudio is now a <strong>unified role-based app</strong> (ADR-012 / BRD-87): one shared component set (<code>TrStudioUI</code> RCL) rendered by <strong>two interchangeable UI heads</strong> over one backend. The old separate <code>TrStudioAdmin</code> app is gone — admin screens live under <code>/admin/*</code> inside the same app, gated by role.</p>
+
+    <table>
+      <thead><tr><th>Project</th><th>Kind</th><th>Role</th><th>How it runs</th></tr></thead>
+      <tbody>
+        <tr><td><code>src/TrStudioApi</code></td><td>plain .NET web app (Kestrel)</td><td>Backend — jobs, registry, providers, Hangfire, JWT auth</td><td><code>http://localhost:5102</code></td></tr>
+        <tr><td><code>src/TrStudio</code></td><td>plain .NET web app (Blazor Server)</td><td><strong>Web head</strong> — full app in the browser</td><td><code>http://localhost:5099</code></td></tr>
+        <tr><td><code>src/TrStudio.Desktop</code></td><td><strong>MAUI Blazor Hybrid</strong></td><td><strong>Desktop head</strong> — same UI in a native window</td><td>Windows unpackaged exe · Mac Catalyst <code>.app</code></td></tr>
+      </tbody>
+    </table>
+
+    <p>Because both heads host the same <code>TrStudioUI</code> RCL, they are feature-identical — the desktop head is a nicer window around the exact same screens. Both talk to <code>TrStudioApi</code> over HTTP (the desktop head defaults to <code>http://localhost:5102</code>; override with the <code>TrStudioApiBaseUrl</code> environment variable).</p>
+
+    <p><strong>Distribution consequence (per TrSetup guide §1b):</strong></p>
+    <ul>
+      <li><code>TrStudioApi</code> and the <code>TrStudio</code> web head are plain .NET → <strong>Option B works</strong>: cross-publish on Windows, copy the folder to the Mac, run — no .NET on the Mac needed.</li>
+      <li><code>TrStudio.Desktop</code> is MAUI → the Mac <code>.app</code> can <strong>only be built on the Mac</strong> (Option A). The Windows exe cannot be copied over.</li>
+    </ul>
+
+    <h2 id="build-run-on-windows-visual-studio">2. Build &amp; run on Windows (Visual Studio)<a class="anchor-link" href="#build-run-on-windows-visual-studio">#</a></h2>
+
+    <ol>
+      <li>Open <code>TrStudio.slnx</code> in Visual Studio 2022 (17.10 or newer — required to read the modern XML <code>.slnx</code> solution format; the <code>dotnet</code> CLI and VS Code open it natively) with the .NET 10 SDK + the <strong>.NET MAUI workload</strong>; the private TechieRag feed in <code>nuget.config</code> must authenticate — PAT with <code>read:packages</code>).</li>
+      <li>Solution → <em>Configure Startup Projects…</em> → <strong>Multiple startup projects</strong>: <code>TrStudioApi</code> + <strong>either</strong> <code>TrStudio</code> (browser) <strong>or</strong> <code>TrStudio.Desktop</code> (native window) → Start.</li>
+      <li>For <code>TrStudio.Desktop</code>, pick framework <code>net10.0-windows10.0.19041.0</code> in the debug-target dropdown. The csproj lists both TFMs unconditionally, so <strong>on Windows always build it with <code>-f net10.0-windows10.0.19041.0</code></strong> — building all frameworks would try (and fail) to build Mac Catalyst without a Mac.</li>
+      <li>CLI equivalents:
+        <pre><code class="language-powershell">dotnet run --project src/TrStudioApi                                        # backend on :5102
+dotnet run --project src/TrStudio                                           # web head on :5099
+dotnet build src/TrStudio.Desktop -f net10.0-windows10.0.19041.0 -c Release # desktop exe
+# exe: src\TrStudio.Desktop\bin\Release\net10.0-windows10.0.19041.0\win10-x64\TrStudio.Desktop.exe
+# (unpackaged MAUI app — distribute the whole win10-x64 folder, not the lone exe)</code></pre>
+      </li>
+      <li>Runtime prerequisites on Windows (same list as the Mac's §4): PostgreSQL + PgVector, ffmpeg, and the isolated Python/ComfyUI env for local generation.</li>
+    </ol>
+
+    <h2 id="run-on-the-mac-two-options">3. Run on the Mac — two options<a class="anchor-link" href="#run-on-the-mac-two-options">#</a></h2>
+
+    <h3 id="option-b-copy-to-mac-binaries-no-net-on-the-mac-the-recommended-first-path">Option B — copy-to-Mac binaries (no .NET on the Mac) — the recommended first path<a class="anchor-link" href="#option-b-copy-to-mac-binaries-no-net-on-the-mac-the-recommended-first-path">#</a></h3>
+
+    <p>The API + web head are plain .NET, so the true "build on Windows, copy, run" flow works. You get the complete app in Safari/Chrome on the Mac; only §4's runtime prerequisites (database, ffmpeg, …) are still needed for actual generation.</p>
+
+    <p><strong>On the Windows machine:</strong></p>
+
+    <pre><code class="language-powershell">dotnet publish src/TrStudioApi -c Release -r osx-arm64 --self-contained true -o publish\mac\TrStudioApi
+dotnet publish src/TrStudio    -c Release -r osx-arm64 --self-contained true -o publish\mac\TrStudio</code></pre>
+
+    <p>(<code>-r osx-arm64</code> targets Apple Silicon; <code>--self-contained true</code> bundles the .NET runtime into each folder — the folders are ~100 MB each and <strong>must be copied whole</strong>.)</p>
+    <p>⚠ <strong>These two commands are the complete Option B list — <code>TrStudio.Desktop</code> is deliberately NOT here.</strong> <code>-r osx-arm64</code> only cross-compiles plain .NET (<code>TrStudioApi</code>, <code>TrStudio</code>); it cannot produce the MAUI/Catalyst <code>.app</code> from Windows — attempting it just hits the csproj's macOS-only TFM guard (<code>NETSDK1005</code>/unknown-TFM). The native desktop head's Mac build is Option A below: one command, on the Mac. There is no <code>-r osx-arm64</code> MAUI build, by design — not a missing feature of this guide.</p>
+
+    <p><strong>Copy</strong> both <code>publish\mac\*</code> folders to the Mac (Finder <code>Cmd+K</code> → <code>smb://&lt;windows-ip&gt;</code>, <code>scp -r</code>, AirDrop a zip, or USB).</p>
+
+    <p><strong>On the Mac:</strong></p>
+
+    <pre><code class="language-bash">chmod +x TrStudioApi/TrStudioApi TrStudio/TrStudio      # SMB/zip copies strip the execute bit
+xattr -dr com.apple.quarantine TrStudioApi TrStudio     # clear Gatekeeper quarantine (unsigned build)
+./TrStudioApi/TrStudioApi &amp;                             # backend first → :5102
+./TrStudio/TrStudio &amp;                                   # web head → :5099
+open http://localhost:5099</code></pre>
+
+    <p>Set <code>ASPNETCORE_URLS=http://localhost:5099</code> (etc.) before launching if a port needs to be explicit. If Gatekeeper still complains, allow once via System Settings → Privacy &amp; Security.</p>
+
+    <h3 id="option-a-native-mac-desktop-app-catalyst-built-on-the-mac">Option A — native Mac desktop app (Catalyst, built on the Mac)<a class="anchor-link" href="#option-a-native-mac-desktop-app-catalyst-built-on-the-mac">#</a></h3>
+
+    <p><strong>Prerequisites</strong> (TrSetup's Mac roles install all of these): Xcode with licence accepted, .NET 10 SDK, <code>sudo dotnet workload install maui</code>, git, and the TechieRag feed PAT (comes with the source checkout's <code>nuget.config</code>).</p>
+
+    <pre><code class="language-bash">git clone &lt;TrStudio repo&gt; &amp;&amp; cd TrStudio     # or copy the source tree over the LAN (exclude bin/, obj/)
+dotnet build src/TrStudio.Desktop -f net10.0-maccatalyst -c Release
+open src/TrStudio.Desktop/bin/Release/net10.0-maccatalyst/maccatalyst-arm64/TrStudio.app</code></pre>
+
+    <p>Ad-hoc signing is fine for personal use. The desktop head still needs <code>TrStudioApi</code> running somewhere — either the Option B copied binary on the same Mac (default <code>http://localhost:5102</code> just works), or point it elsewhere:</p>
+
+    <pre><code class="language-bash">TrStudioApiBaseUrl=http://&lt;windows-ip&gt;:5102 open src/TrStudio.Desktop/bin/Release/net10.0-maccatalyst/maccatalyst-arm64/TrStudio.app</code></pre>
+
+    <p><strong>Mix-and-match tip:</strong> the fastest good setup on the Mac is <em>Option B for the API</em> (no toolchain needed) + <em>Option A for the desktop head</em> (one build once TrSetup has installed the toolchain). Until then, Option B alone gives you everything in the browser.</p>
+
+    <p><strong>Secrets caution (both options):</strong> <code>appsettings.json</code> travels inside the publish folders. Keep real keys (RunPod, HeyGen, AppManager) out of the copied files — supply them on the Mac via environment variables (<code>RunPod__ApiKey=…</code> style) or a local <code>appsettings.Production.json</code> that never leaves the machine.</p>
+
+    <h2 id="mac-runtime-prerequisites-what-trstudio-needs-to-actually-generate">4. Mac runtime prerequisites (what TrStudio needs to actually generate)<a class="anchor-link" href="#mac-runtime-prerequisites-what-trstudio-needs-to-actually-generate">#</a></h2>
+
+    <p>TrSetup's "app runner" role will install all of these; manual list until then:</p>
+
+    <table>
+      <thead><tr><th>#</th><th>Requirement</th><th>Check</th><th>Install</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>PostgreSQL 16+ running</td><td><code>psql --version</code> / port 5432</td><td><code>brew install postgresql@16 &amp;&amp; brew services start postgresql@16</code></td></tr>
+        <tr><td>2</td><td><strong>PgVector extension</strong></td><td><code>CREATE EXTENSION IF NOT EXISTS vector;</code> succeeds</td><td><code>brew install pgvector</code></td></tr>
+        <tr><td>3</td><td><code>trstudio</code> database + user matching the connection string</td><td>API starts without DB errors</td><td>create DB/user per <code>TrStudioApi/appsettings.json</code> (<code>ConnectionStrings:Default</code> — override the password via env var rather than editing the copied file)</td></tr>
+        <tr><td>4</td><td>ffmpeg on PATH</td><td><code>ffmpeg -version</code></td><td><code>brew install ffmpeg</code></td></tr>
+        <tr><td>5</td><td>Isolated Python + <strong>ComfyUI</strong></td><td>Admin → Hardware &amp; readiness shows green</td><td><strong>TrSetup installs the runtime</strong>; model/workflow provisioning then runs inside the app's <strong>admin area guided setup</strong> (<code>/admin/*</code>, role-gated) — that part stays in the app</td></tr>
+        <tr><td>6</td><td>API keys present (only for the tiers you use)</td><td>Admin → Provider config</td><td><code>RunPod:ApiKey</code> (High tier), HeyGen key (Premium), AppManager key (identity) — env vars preferred</td></tr>
+        <tr><td>7</td><td>Disk space for models</td><td>—</td><td>~400 GB free is the BRD reference for a full local library; less is fine for light use</td></tr>
+      </tbody>
+    </table>
+
+    <p>The Mac <strong>is</strong> the natural TrStudio host (capability detection targets Apple Silicon/MPS) — Fast-tier local generation only works on a machine with MPS, i.e. this Mac, not the Windows box.</p>
+
+    <h2 id="first-run-on-the-mac">5. First run on the Mac<a class="anchor-link" href="#first-run-on-the-mac">#</a></h2>
+
+    <ol>
+      <li>Start <code>TrStudioApi</code>, then a UI head (web <code>:5099</code> or the Catalyst desktop app) → log in (AppManager superadmin bootstrap). With setup incomplete you land in the <strong>setup-required gate</strong> (BRD-85), which routes admins into guided setup.</li>
+      <li>Complete: hardware readiness → guided setup → Model sources → install at least one model (admin-role screens under <code>/admin/*</code>).</li>
+      <li>Back in the creator screens: generate a test image (Fast tier, local MPS) → check it appears in the Gallery with provenance.</li>
+    </ol>
+
+    <h2 id="where-trsetup-takes-over">6. Where TrSetup takes over<a class="anchor-link" href="#where-trsetup-takes-over">#</a></h2>
+
+    <p>Once TrSetup P3 ships, §4 collapses to: <em>run TrSetup on the Mac → role "App runner" → app "TrStudio" → Fix all</em>, and the Option A toolchain (§3) is one more Fix click. This guide stays as the manual reference.</p>
+
+    <hr>
+    <p><em>Created 2026-07-05; rewritten 2026-07-06 for the unified role-based app (ADR-012): <code>TrStudio.Desktop</code> MAUI head added, <code>TrStudioAdmin</code> head retired, API moved to :5102. Ports from each head's <code>launchSettings.json</code> + <code>TrStudio.Desktop/MauiProgram.cs</code>. Clarified 2026-07-10: the plain-.NET-only scope of the <code>-r osx-arm64</code> cross-publish made explicit (intro + §3 Option B) — the MAUI head is never cross-published; its Mac <code>.app</code> is Option A on the Mac. Stale pointer to the (since rewritten) TrSetup guide §1b removed.</em></p>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+<script>
+// Light/dark toggle. The initial theme was already applied flash-free by the
+// <head> script (saved choice, else time-of-day). Clicking flips it, saves the
+// choice, and reloads so Mermaid re-renders in the matching theme.
+(function(){
+  var btn = document.getElementById('themeToggle');
+  if(!btn) return;
+  var relabel = function(){
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    btn.textContent = dark ? '☀ Light' : '☾ Dark';
+  };
+  relabel();
+  btn.addEventListener('click', function(){
+    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    try{ localStorage.setItem('tf-theme', next); }catch(e){}
+    location.reload();
+  });
+})();
+
+// Copy buttons on every code <pre> — but NEVER on a `pre.mermaid`:
+// mermaid reads the <pre>'s textContent as the diagram source, so a button
+// appended here glues "copy" onto the last line and breaks the parse
+// (flowcharts → "Syntax error"; sequence diagrams silently absorb it).
+// Mermaid blocks get copy/export from their own .diagram toolbar instead.
+document.querySelectorAll('pre:not(.mermaid)').forEach(pre => {
+  const btn = document.createElement('button');
+  btn.className = 'copy';
+  btn.textContent = 'copy';
+  btn.addEventListener('click', () => {
+    const text = pre.querySelector('code') ? pre.querySelector('code').innerText : pre.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'copied';
+      setTimeout(() => { btn.textContent = 'copy'; }, 1200);
+    });
+  });
+  pre.appendChild(btn);
+});
+
+// Mermaid init — theme follows the resolved light/dark theme
+if (window.mermaid) {
+  var mermaidTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default';
+  mermaid.initialize({ startOnLoad: true, theme: mermaidTheme, securityLevel: 'loose' });
+}
+
+// Mermaid toolbar wiring — run after mermaid renders
+function wireMermaidToolbars() {
+  document.querySelectorAll('.diagram').forEach(dia => {
+    if (dia.dataset.wired) return;
+    const merm = dia.querySelector('.mermaid');
+    const svg = merm && merm.querySelector('svg');
+    if (!svg) return;
+    dia.dataset.wired = '1';
+    let scale = 1;
+    const label = dia.querySelector('.zlabel');
+    const apply = () => {
+      svg.style.transform = `scale(${scale})`;
+      svg.style.transformOrigin = 'top left';
+      if (label) label.textContent = Math.round(scale * 100) + '%';
+    };
+    const setScale = (s) => { scale = Math.max(0.25, Math.min(4, s)); apply(); };
+    dia.querySelector('[data-zin]').onclick = () => setScale(scale * 1.2);
+    dia.querySelector('[data-zout]').onclick = () => setScale(scale / 1.2);
+    dia.querySelector('[data-fit]').onclick = () => {
+      svg.style.transform = '';
+      svg.removeAttribute('width');
+      svg.style.maxWidth = '100%';
+      svg.style.height = 'auto';
+      scale = 1;
+      if (label) label.textContent = 'Fit';
+    };
+    dia.querySelector('[data-one]').onclick = () => {
+      svg.style.transform = '';
+      svg.style.maxWidth = 'none';
+      svg.style.width = '';
+      svg.style.height = '';
+      scale = 1;
+      if (label) label.textContent = '100%';
+    };
+    dia.querySelector('[data-fs]').onclick = () => {
+      dia.classList.toggle('fs');
+      if (dia.classList.contains('fs')) {
+        document.addEventListener('keydown', escFs);
+      } else {
+        document.removeEventListener('keydown', escFs);
+      }
+    };
+    function escFs(e) { if (e.key === 'Escape') { dia.classList.remove('fs'); document.removeEventListener('keydown', escFs); } }
+    dia.querySelector('[data-pop]').onclick = () => openInNewTab(svg);
+    // Ctrl+wheel zoom
+    merm.addEventListener('wheel', (e) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      setScale(scale * (e.deltaY < 0 ? 1.1 : 1/1.1));
+    }, { passive: false });
+  });
+}
+
+function openInNewTab(svg) {
+  const svgSource = new XMLSerializer().serializeToString(svg);
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Diagram</title>
+<style>
+  html,body{margin:0;height:100%;background:#0f1115;color:#e6e8ee;font-family:system-ui,sans-serif}
+  .bar{position:fixed;top:0;left:0;right:0;padding:8px 12px;background:#161a22;border-bottom:1px solid #2a3142;display:flex;gap:8px;z-index:10}
+  .bar button{background:#1c2230;color:#9aa3b2;border:1px solid #2a3142;border-radius:6px;padding:5px 12px;font-size:13px;cursor:pointer}
+  .bar button:hover{color:#7cc4ff;border-color:#7cc4ff}
+  .bar .hint{margin-left:auto;color:#9aa3b2;font-size:11.5px;align-self:center}
+  #stage{position:absolute;top:42px;bottom:0;left:0;right:0;overflow:hidden}
+  #stage svg{width:100%;height:100%}
+</style>
+</head><body>
+<div class="bar">
+  <button onclick="zpz.zoomIn()">+</button>
+  <button onclick="zpz.zoomOut()">−</button>
+  <button onclick="zpz.fit();zpz.center()">Fit</button>
+  <button onclick="zpz.resetZoom();zpz.center()">1:1</button>
+  <button onclick="window.print()">Print</button>
+  <button onclick="dlPng()">PNG</button>
+  <button onclick="dlSvg()">SVG</button>
+  <span class="hint">Drag to pan · Ctrl+wheel to zoom · + / − keys</span>
+</div>
+<div id="stage">${svgSource}</div>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"><\/script>
+<script>
+  const el = document.querySelector('#stage svg');
+  const zpz = svgPanZoom(el, { zoomScaleSensitivity: .3, minZoom: .2, maxZoom: 10, controlIconsEnabled: false, fit: true, center: true });
+  document.addEventListener('keydown', e => {
+    if (e.key === '+' || e.key === '=') zpz.zoomIn();
+    if (e.key === '-' || e.key === '_') zpz.zoomOut();
+    if (e.key === '0') { zpz.resetZoom(); zpz.center(); }
+  });
+  function dlSvg() {
+    const blob = new Blob([new XMLSerializer().serializeToString(el)], { type: 'image/svg+xml' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'diagram.svg'; a.click();
+  }
+  function dlPng() {
+    const src = new XMLSerializer().serializeToString(el);
+    const img = new Image();
+    const url = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(src)));
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = el.clientWidth * 2; c.height = el.clientHeight * 2;
+      const ctx = c.getContext('2d'); ctx.scale(2,2); ctx.drawImage(img, 0, 0);
+      c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'diagram.png'; a.click(); });
+    };
+    img.src = url;
+  }
+<\/script>
+</body></html>`;
+  const w = window.open();
+  w.document.write(html);
+  w.document.close();
+}
+
+// Run wiring after mermaid finishes (it renders async)
+if (window.mermaid) {
+  setTimeout(wireMermaidToolbars, 400);
+  setTimeout(wireMermaidToolbars, 1200);  // safety re-run for slow renders
+}
+</script>
+</body>
+</html>

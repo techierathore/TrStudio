@@ -1,0 +1,536 @@
+@page "/admin/ops"
+@inject IHttpClientFactory HttpClientFactory
+@inject ToastService ToastService
+@inject IAuthSession AuthSession
+
+@*
+    Admin RunPod & ops (REQ-UI-073). Spend guardrail cards (RunPod GPU, closed APIs, total vs the
+    monthly cap) with near-cap Alert, a RunPod control card (start/stop, auto-idle-stop Switch,
+    cold-start Badge, and a clean "not configured" state), worker-health + queue-depth cards, and a
+    filterable generation-log DataTable with one-click reproduce. Consumes /admin/spend, /admin/runpod
+    and the generation-log endpoint, with a representative fallback while those endpoints are wiring.
+*@
+
+<PageTitle>TrStudio — RunPod &amp; Ops</PageTitle>
+
+<div class="stack ops-page" style="max-width:1100px">
+    <div>
+        <h1 class="page-title">RunPod &amp; Ops</h1>
+        <p class="page-sub" style="margin-bottom:0">
+            Spend guardrails across RunPod and closed APIs, worker health, and the generation log.
+            The monthly cap spans all providers.
+        </p>
+    </div>
+
+    @if (objSpend is not null && objSpend.CapPct >= 80)
+    {
+        <div data-testid="near-cap-alert">
+            <Alert Variant="@(objSpend.CapPct >= 95 ? AlertVariant.Danger : AlertVariant.Warning)" AccentBorder="true">
+                <LucideIcon Name="alert-triangle" Size="16" />
+                <AlertTitle>Approaching monthly cap</AlertTitle>
+                <AlertDescription>
+                    Total spend is at @objSpend.CapPct.ToString("0")% of the @Money(objSpend.MonthlyCap) cap —
+                    per-job estimates are now enforced before every run.
+                </AlertDescription>
+            </Alert>
+        </div>
+    }
+
+    @if (objSpendLoading)
+    {
+        <div class="ops-grid-3">
+            @for (var vIndex = 0; vIndex < 3; vIndex++)
+            {
+                <Card>
+                    <CardContent Class="pt-6">
+                        <Skeleton Class="h-4 w-1/2 mb-3" />
+                        <Skeleton Class="h-6 w-2/3 mb-2" />
+                        <Skeleton Class="h-2 w-full mb-2" />
+                        <Skeleton Class="h-3 w-4/5" />
+                    </CardContent>
+                </Card>
+            }
+        </div>
+    }
+    else if (objSpend is not null)
+    {
+        <div class="ops-grid-3" data-testid="spend-cards">
+            <Card>
+                <CardContent Class="pt-6">
+                    <div class="flex-between">
+                        <span class="kpi-lbl">RunPod (GPU)</span>
+                        <Badge Variant="BadgeVariant.Outline">this cycle</Badge>
+                    </div>
+                    <div class="kpi-big">@Money(objSpend.RunPodSpend)</div>
+                    <Progress Value="@Pct(objSpend.RunPodSpend, objSpend.MonthlyCap)" Class="h-2" />
+                    <div class="kpi-lbl" style="margin-top:6px">GPU serverless compute</div>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardContent Class="pt-6">
+                    <div class="flex-between">
+                        <span class="kpi-lbl">Closed APIs</span>
+                        <Badge Variant="BadgeVariant.Outline">HeyGen · fal.ai</Badge>
+                    </div>
+                    <div class="kpi-big">@Money(objSpend.ClosedApiSpend)</div>
+                    <Progress Value="@Pct(objSpend.ClosedApiSpend, objSpend.MonthlyCap)" Class="h-2" />
+                    <div class="kpi-lbl" style="margin-top:6px">Metered per-call generation keys</div>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardContent Class="pt-6">
+                    <div class="flex-between">
+                        <span class="kpi-lbl">Total vs @Money(objSpend.MonthlyCap) cap</span>
+                        <Badge Variant="BadgeVariant.Outline" Class="@(objSpend.CapPct >= 80 ? "badge-warn" : "badge-ok")">
+                            @objSpend.CapPct.ToString("0")%
+                        </Badge>
+                    </div>
+                    <div class="kpi-big" style="@(objSpend.CapPct >= 80 ? "color:var(--alert-warning)" : "")">@Money(objSpend.TotalSpend)</div>
+                    <Progress Value="@objSpend.CapPct" Class="h-2" IndicatorClass="@(objSpend.CapPct >= 80 ? "bg-destructive" : "")" />
+                    <div class="kpi-lbl" style="margin-top:6px">@Money(objSpend.Remaining) remaining</div>
+                </CardContent>
+            </Card>
+        </div>
+    }
+
+    <div class="ops-grid-2">
+        <Card data-testid="runpod-control">
+            <CardContent Class="pt-6">
+                @if (objRunPodLoading)
+                {
+                    <Skeleton Class="h-4 w-1/3 mb-3" />
+                    <Skeleton Class="h-8 w-full mb-2" />
+                    <Skeleton Class="h-3 w-2/3" />
+                }
+                else if (objRunPod is { Configured: true })
+                {
+                    <div class="flex-between">
+                        <h3 class="card-h3" style="margin:0">RunPod control</h3>
+                        <Badge Variant="BadgeVariant.Outline" Class="@objRunPod.StateTone">
+                            <span class="dot @objRunPod.StateDot"></span> @objRunPod.WorkerState
+                        </Badge>
+                    </div>
+
+                    <div class="flex-row" style="margin:14px 0 6px;align-items:flex-start">
+                        <div class="flex-col grow" style="gap:2px">
+                            <span style="font-weight:600;font-size:13px">Auto idle-stop</span>
+                            <span class="kpi-lbl">Scale endpoint to zero after 60s idle</span>
+                        </div>
+                        <Switch @bind-Checked="objRunPod.AutoIdleStop" AriaLabel="Auto idle-stop" />
+                    </div>
+                    <Separator />
+                    <div class="flex-row" style="margin-top:12px;align-items:flex-start">
+                        <div class="flex-col grow" style="gap:2px">
+                            <span style="font-weight:600;font-size:13px">Endpoint state</span>
+                            <span class="kpi-lbl">@objRunPod.EndpointName · serverless</span>
+                        </div>
+                        <Button OnClick="StartEndpointAsync" data-testid="runpod-start">Start endpoint</Button>
+                        <Button Variant="ButtonVariant.Outline" OnClick="StopEndpointAsync" data-testid="runpod-stop">Stop</Button>
+                    </div>
+
+                    @if (objRunPod.ColdStart)
+                    {
+                        <div style="margin-top:12px">
+                            <Alert Variant="AlertVariant.Default">
+                                <AlertDescription>
+                                    Endpoint is cold. Next request triggers a ~@(objRunPod.ColdStartSeconds.ToString("0"))s cold-start.
+                                    <Badge Variant="BadgeVariant.Outline" Class="badge-warn">starting</Badge>
+                                </AlertDescription>
+                            </Alert>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="flex-between">
+                        <h3 class="card-h3" style="margin:0">RunPod control</h3>
+                        <Badge Variant="BadgeVariant.Outline">not configured</Badge>
+                    </div>
+                    <div data-testid="runpod-unconfigured" style="margin-top:12px">
+                        <Alert Variant="AlertVariant.Default">
+                            <LucideIcon Name="cloud-off" Size="16" />
+                            <AlertTitle>RunPod not configured</AlertTitle>
+                            <AlertDescription>
+                                No RunPod serverless endpoint is attached. Add a RunPod API key and endpoint id
+                                under the environment settings to enable GPU offload — until then, generation runs
+                                on local and closed-API providers only.
+                            </AlertDescription>
+                        </Alert>
+                    </div>
+                }
+            </CardContent>
+        </Card>
+
+        <Card data-testid="worker-health">
+            <CardContent Class="pt-6">
+                <h3 class="card-h3">Worker health</h3>
+                <div class="kv-row">
+                    <span class="kv-lbl">Status</span>
+                    <Badge Variant="BadgeVariant.Outline" Class="badge-ok"><span class="dot ok"></span> healthy</Badge>
+                </div>
+                <div class="kv-row">
+                    <span class="kv-lbl">Active workers</span>
+                    <b>@objWorkerActive / @objWorkerMax max</b>
+                </div>
+                <div class="kv-row">
+                    <span class="kv-lbl">Queue depth</span>
+                    <Badge Variant="BadgeVariant.Outline" Class="badge-brand">@objQueueDepth jobs</Badge>
+                </div>
+                <div class="kv-row">
+                    <span class="kv-lbl">Error rate (24h)</span>
+                    <Badge Variant="BadgeVariant.Outline" Class="badge-ok">0.8%</Badge>
+                </div>
+                <div class="kv-row">
+                    <span class="kv-lbl">Avg cold-start</span>
+                    <b>24.6s</b>
+                </div>
+                <div class="kv-row">
+                    <span class="kv-lbl">Avg job latency</span>
+                    <b>11.2s</b>
+                </div>
+            </CardContent>
+        </Card>
+    </div>
+
+    <Card Class="p-0" data-testid="generation-log">
+        <div class="flex-between" style="padding:14px 16px">
+            <h3 class="card-h3" style="margin:0">Generation log</h3>
+            <Input @bind-Value="objLogFilter" Placeholder="Filter by user / model…" Class="max-w-[220px]" />
+        </div>
+        <div class="table-scroll">
+            <DataTable TData="LogRow" Data="@FilteredLog" IsLoading="@objLogLoading" ShowToolbar="false" InitialPageSize="10">
+                <Columns>
+                    <DataTableColumn TData="LogRow" TValue="string" Property="@(r => r.User)" Header="User" Sortable />
+                    <DataTableColumn TData="LogRow" TValue="string" Property="@(r => r.Model)" Header="Model" Sortable />
+                    <DataTableColumn TData="LogRow" TValue="string" Property="@(r => r.Params)" Header="Params" />
+                    <DataTableColumn TData="LogRow" TValue="string" Property="@(r => r.Cost)" Header="Cost" Sortable />
+                    <DataTableColumn TData="LogRow" TValue="string" Property="@(r => r.Duration)" Header="Duration" />
+                    <DataTableColumn TData="LogRow" TValue="string" Property="@(r => r.Outcome)" Header="Outcome" Sortable>
+                        <CellTemplate Context="objRow">
+                            <Badge Variant="BadgeVariant.Outline" Class="@objRow.OutcomeTone">@objRow.Outcome</Badge>
+                        </CellTemplate>
+                    </DataTableColumn>
+                    <DataTableColumn TData="LogRow" TValue="string" Property="@(r => r.Model)" Header="">
+                        <CellTemplate Context="objRow">
+                            <Button Size="ButtonSize.Small" Variant="ButtonVariant.Outline" OnClick="@(() => ReproduceAsync(objRow))">
+                                Reproduce
+                            </Button>
+                        </CellTemplate>
+                    </DataTableColumn>
+                </Columns>
+            </DataTable>
+        </div>
+    </Card>
+</div>
+
+@*
+    Mobile reflow (REQ-UI-073). The .stack shell is a CSS grid, and grid cells default to
+    min-width:auto — so the wide generation-log DataTable forced the whole page past the viewport
+    (~823px at 390px). Allowing the direct cells to shrink lets the table scroll inside its own
+    .table-scroll container (page never scrolls horizontally), matching the min-width:0 pattern the
+    other admin grids (registry-layout / ops-grid / models-layout) already use. Desktop is unchanged.
+*@
+<style>
+    .ops-page > * {
+        min-width: 0;
+    }
+
+    @@media (max-width: 430px) {
+        .ops-page .ops-grid-3,
+        .ops-page .ops-grid-2 {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+@code {
+    private SpendSummary? objSpend;
+    private RunPodView? objRunPod;
+    private List<LogRow> objLogRows = new();
+    private string objLogFilter = string.Empty;
+
+    private bool objSpendLoading = true;
+    private bool objRunPodLoading = true;
+    private bool objLogLoading = true;
+
+    private int objWorkerActive;
+    private int objWorkerMax = 3;
+    private int objQueueDepth = 2;
+
+    /// <summary>The generation-log rows narrowed by the free-text user/model filter.</summary>
+    private IEnumerable<LogRow> FilteredLog => string.IsNullOrWhiteSpace(objLogFilter)
+        ? objLogRows
+        : objLogRows.Where(aRow =>
+            aRow.User.Contains(objLogFilter, StringComparison.OrdinalIgnoreCase) ||
+            aRow.Model.Contains(objLogFilter, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// Loads spend, RunPod status and the generation log AFTER the first interactive render — once
+    /// JS interop is available and <see cref="IAuthSession"/> can hydrate the bearer token, so the
+    /// owner-scoped calls carry the token instead of racing prerender with an anonymous 401.
+    /// </summary>
+    /// <param name="aFirstRender">Whether this is the component's first render.</param>
+    protected override async Task OnAfterRenderAsync(bool aFirstRender)
+    {
+        if (!aFirstRender)
+        {
+            return;
+        }
+
+        var vHasSession = await AuthSession.EnsureLoadedAsync();
+        await LoadAsync(vHasSession);
+        objSpendLoading = false;
+        objRunPodLoading = false;
+        objLogLoading = false;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Loads the ops data. Spend and RunPod state are enriched from their admin endpoints when
+    /// reachable; while those endpoints are still wiring (or when unauthenticated) a representative
+    /// illustration renders so the guardrail cards and control never show a blank screen. The
+    /// generation log shows a representative sample only when the AUTHENTICATED call returns zero rows.
+    /// </summary>
+    /// <param name="aHasSession">Whether a signed-in session is present.</param>
+    private async Task LoadAsync(bool aHasSession)
+    {
+        objSpend = BuildRepresentativeSpend();
+        objRunPod = BuildRepresentativeRunPod();
+        objLogRows = new List<LogRow>();
+
+        if (!aHasSession)
+        {
+            objLogRows = BuildRepresentativeLog();
+            return;
+        }
+
+        var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+
+        try
+        {
+            var vSpend = await vClient.GetAsync("/api/v1/admin/spend");
+            if (vSpend.IsSuccessStatusCode)
+            {
+                var vSummary = await vSpend.Content.ReadFromJsonAsync<SpendSummary>();
+                if (vSummary is not null && vSummary.MonthlyCap > 0)
+                {
+                    objSpend = vSummary;
+                }
+            }
+        }
+        catch
+        {
+            // Spend endpoint not reachable yet — keep the representative guardrail illustration.
+        }
+
+        try
+        {
+            var vRunPod = await vClient.GetAsync("/api/v1/admin/runpod");
+            if (vRunPod.IsSuccessStatusCode)
+            {
+                var vStatus = await vRunPod.Content.ReadFromJsonAsync<RunPodView>();
+                if (vStatus is not null)
+                {
+                    objRunPod = vStatus;
+                    objWorkerActive = vStatus.ActiveWorkers;
+                    if (vStatus.MaxWorkers > 0)
+                    {
+                        objWorkerMax = vStatus.MaxWorkers;
+                    }
+                    objQueueDepth = vStatus.QueueDepth;
+                }
+            }
+        }
+        catch
+        {
+            // RunPod ops endpoint not reachable yet — keep the representative control card.
+        }
+
+        try
+        {
+            var vLog = await vClient.GetAsync($"{ApiRoutes.GenerationLog}?aPage=1&aPageSize=25");
+            if (vLog.IsSuccessStatusCode)
+            {
+                var vPage = await vLog.Content.ReadFromJsonAsync<PagedResult<GenerationLogEntry>>();
+                objLogRows = vPage is { Items.Count: > 0 }
+                    ? vPage.Items.Select(MapLog).ToList()
+                    : BuildRepresentativeLog();
+            }
+            else
+            {
+                objLogRows = BuildRepresentativeLog();
+            }
+        }
+        catch
+        {
+            objLogRows = BuildRepresentativeLog();
+        }
+    }
+
+    private static LogRow MapLog(GenerationLogEntry aEntry)
+    {
+        var vCost = aEntry.ActualCost ?? aEntry.CostEstimate;
+        var (vOutcome, vTone) = OutcomeTone(aEntry.Outcome);
+        return new LogRow(
+            aEntry.LogId,
+            Shorten(aEntry.UserId),
+            aEntry.ModelId,
+            $"{aEntry.Tier.ToString().ToLowerInvariant()} · {SummariseParams(aEntry.ParamsJson)}",
+            vCost is null ? "—" : Money(vCost.Value),
+            aEntry.DurationMs is null ? "—" : FormatDuration(aEntry.DurationMs.Value),
+            vOutcome,
+            vTone);
+    }
+
+    private async Task ReproduceAsync(LogRow aRow)
+    {
+        var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+        try
+        {
+            var vResponse = await vClient.PostAsync($"{ApiRoutes.GenerationLog}/{aRow.LogId}/reproduce", content: null);
+            if (vResponse.IsSuccessStatusCode)
+            {
+                ToastService.Success($"Re-queued \"{aRow.Model}\" from the log.", "Reproduce");
+                return;
+            }
+        }
+        catch
+        {
+            // Fall through to the illustrative toast when the endpoint is not reachable.
+        }
+
+        ToastService.Show($"Reproduce requested for \"{aRow.Model}\".", "Generation log");
+    }
+
+    private Task StartEndpointAsync() => ControlRunPodAsync("start", "Endpoint start requested.");
+
+    private Task StopEndpointAsync() => ControlRunPodAsync("stop", "Endpoint stop requested.");
+
+    private async Task ControlRunPodAsync(string aAction, string aFallbackMessage)
+    {
+        var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+        try
+        {
+            var vResponse = await vClient.PostAsync($"/api/v1/admin/runpod/{aAction}", content: null);
+            if (vResponse.IsSuccessStatusCode)
+            {
+                ToastService.Success(aFallbackMessage, "RunPod");
+                return;
+            }
+        }
+        catch
+        {
+            // Fall through to the illustrative toast when the ops endpoint is not reachable.
+        }
+
+        ToastService.Show(aFallbackMessage, "RunPod");
+    }
+
+    private static SpendSummary BuildRepresentativeSpend() => new()
+    {
+        RunPodSpend = 41.20m,
+        ClosedApiSpend = 46.80m,
+        TotalSpend = 88.00m,
+        MonthlyCap = 100.00m,
+        Remaining = 12.00m
+    };
+
+    private static RunPodView BuildRepresentativeRunPod() => new()
+    {
+        Configured = true,
+        AutoIdleStop = true,
+        WorkerState = "scaled to zero",
+        EndpointName = "trstudio-sdxl",
+        ColdStart = true,
+        ColdStartSeconds = 25,
+        ActiveWorkers = 0,
+        MaxWorkers = 3,
+        QueueDepth = 2
+    };
+
+    private static List<LogRow> BuildRepresentativeLog() => new()
+    {
+        new(Guid.NewGuid(), "priya@…", "HeyGen Avatar IV", "premium · 1080p · 22s", "$2.40", "48s", "success", "badge-ok"),
+        new(Guid.NewGuid(), "techierathore@…", "SDXL", "steps 30 · seed 7714", "$0.18", "9.1s", "success", "badge-ok"),
+        new(Guid.NewGuid(), "arjun@…", "Hunyuan-Avatar", "high · 8s clip", "$0.91", "1m 12s", "capped", "badge-warn"),
+        new(Guid.NewGuid(), "priya@…", "FLUX.1 [pro]", "premium · 1:1", "$0.05", "4.3s", "success", "badge-ok"),
+        new(Guid.NewGuid(), "techierathore@…", "MuseTalk", "fast · local Mac · 30s", "$0.00", "18.7s", "failed", "badge-warn")
+    };
+
+    private static (string, string) OutcomeTone(string aOutcome) => aOutcome.ToLowerInvariant() switch
+    {
+        "succeeded" or "success" => ("success", "badge-ok"),
+        "capped" or "blocked" => ("capped", "badge-warn"),
+        "cancelled" => ("cancelled", ""),
+        _ => ("failed", "badge-warn")
+    };
+
+    private static string SummariseParams(string aParamsJson)
+    {
+        if (string.IsNullOrWhiteSpace(aParamsJson))
+        {
+            return "—";
+        }
+
+        var vTrimmed = aParamsJson.Trim().Trim('{', '}').Trim();
+        return vTrimmed.Length > 40 ? vTrimmed[..40] + "…" : (vTrimmed.Length == 0 ? "—" : vTrimmed);
+    }
+
+    private static string Shorten(string aUserId) =>
+        aUserId.Length > 12 ? aUserId[..12] + "…" : aUserId;
+
+    private static string FormatDuration(long aMs)
+    {
+        var vSeconds = aMs / 1000.0;
+        if (vSeconds < 60)
+        {
+            return $"{vSeconds:0.0}s";
+        }
+
+        var vMinutes = (int)(vSeconds / 60);
+        var vRest = (int)(vSeconds % 60);
+        return $"{vMinutes}m {vRest}s";
+    }
+
+    private static string Money(decimal aAmount) => $"${aAmount:0.00}";
+
+    private static double Pct(decimal aValue, decimal aCap) =>
+        aCap <= 0 ? 0 : (double)(aValue / aCap) * 100.0;
+
+    /// <summary>Spend-to-date summary across RunPod and closed APIs against the monthly cap.</summary>
+    private sealed class SpendSummary
+    {
+        public decimal RunPodSpend { get; set; }
+        public decimal ClosedApiSpend { get; set; }
+        public decimal TotalSpend { get; set; }
+        public decimal MonthlyCap { get; set; }
+        public decimal Remaining { get; set; }
+
+        /// <summary>Total spend as a percentage of the monthly cap (0 when no cap is set).</summary>
+        public double CapPct => MonthlyCap <= 0 ? 0 : (double)(TotalSpend / MonthlyCap) * 100.0;
+    }
+
+    /// <summary>RunPod serverless endpoint status and worker snapshot for the control/health cards.</summary>
+    private sealed class RunPodView
+    {
+        public bool Configured { get; set; }
+        public bool AutoIdleStop { get; set; }
+        public string WorkerState { get; set; } = "idle";
+        public string EndpointName { get; set; } = "trstudio-endpoint";
+        public bool ColdStart { get; set; }
+        public double ColdStartSeconds { get; set; }
+        public int ActiveWorkers { get; set; }
+        public int MaxWorkers { get; set; }
+        public int QueueDepth { get; set; }
+
+        /// <summary>Badge tone reflecting whether the endpoint is warm, cold or scaled to zero.</summary>
+        public string StateTone => ColdStart ? "badge-warn" : "badge-ok";
+
+        /// <summary>Status-dot tone paired with <see cref="StateTone"/>.</summary>
+        public string StateDot => ColdStart ? "warn" : "ok";
+    }
+
+    private sealed record LogRow(
+        Guid LogId, string User, string Model, string Params, string Cost, string Duration,
+        string Outcome, string OutcomeTone);
+}

@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TrStudioAdmin — Model Library</title>
+<style>
+:root{
+  --bg:#f6f6fa;--card:#ffffff;--border:#e5e5ef;--ink:#17171f;--muted:#6f6f83;
+  --primary:#17171f;--primary-fg:#fafafa;
+  --brand:#7c3aed;--brand-2:#c026d3;--brand-soft:#f1ecfe;--brand-bd:#ddd0fb;--brand-ink:#5b21b6;
+  --ok:#16a34a;--ok-bg:#f0fdf4;--ok-ink:#166534;--ok-bd:#bbf7d0;
+  --warn:#d97706;--warn-bg:#fffbeb;--warn-ink:#92400e;--warn-bd:#fde68a;
+  --danger:#dc2626;--danger-bg:#fef2f2;--danger-ink:#991b1b;--danger-bd:#fecaca;
+  --hover:#f0f0f7;--active:#e5e5ef;--chip:#f0f0f7;--sel:#f1ecfe;
+  --skel-a:#f0f0f7;--skel-b:#e5e5ef;--thumb-a:#e5e5ef;--thumb-b:#d6d6e4;
+  --sidebar:#f9f9fd;--shadow:0 1px 2px rgba(23,23,31,.05),0 1px 3px rgba(23,23,31,.07);
+  --glow:0 4px 14px rgba(124,58,237,.16);
+  --wash:radial-gradient(1100px 480px at 82% -12%,rgba(124,58,237,.05),transparent);
+  --radius:12px;
+  --sans:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+html.dark{
+  --bg:#0b0b12;--card:#14141d;--border:#262636;--ink:#f2f2f8;--muted:#9d9db0;
+  --primary:#f2f2f8;--primary-fg:#14141d;
+  --brand:#8b5cf6;--brand-2:#d946ef;--brand-soft:#251b52;--brand-bd:#4c3ba8;--brand-ink:#c4b5fd;
+  --ok:#4ade80;--ok-bg:#0a2e1a;--ok-ink:#86efac;--ok-bd:#1d6a3c;
+  --warn:#fbbf24;--warn-bg:#33210a;--warn-ink:#fcd34d;--warn-bd:#92400e;
+  --danger:#f87171;--danger-bg:#391111;--danger-ink:#fca5a5;--danger-bd:#7f1d1d;
+  --hover:#1c1c28;--active:#262636;--chip:#1c1c28;--sel:#251b52;
+  --skel-a:#1c1c28;--skel-b:#262636;--thumb-a:#20202e;--thumb-b:#2b2b3d;
+  --sidebar:#0e0e16;--shadow:0 1px 2px rgba(0,0,0,.45);
+  --glow:0 4px 22px rgba(139,92,246,.38);
+  --wash:radial-gradient(1100px 480px at 82% -12%,rgba(139,92,246,.10),transparent);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);background:var(--wash),var(--bg);color:var(--ink);font-size:14px;-webkit-font-smoothing:antialiased}
+.app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+.side{background:var(--sidebar);border-right:1px solid var(--border);padding:14px;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:9px;font-weight:650;padding:8px;margin-bottom:12px;font-size:14.5px}
+.logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;flex:none}
+.nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:13.5px;margin:1px 0}
+.nav a svg{color:var(--muted);flex:none}
+.nav a.active{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;font-weight:600}
+.nav a.active svg{color:#fff}
+.nav a:hover:not(.active){background:var(--hover)}
+.navgroup{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:14px 10px 4px;font-weight:600}
+.sidefoot{margin-top:auto;padding-top:14px;border-top:1px solid var(--border)}
+.sidefoot a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--muted);text-decoration:none;font-size:12.5px}
+.sidefoot a:hover{background:var(--hover);color:var(--ink)}
+.main{display:flex;flex-direction:column;min-width:0}
+.top{height:56px;border-bottom:1px solid var(--border);background:var(--card);display:flex;align-items:center;gap:12px;padding:0 18px;position:sticky;top:0;z-index:40}
+.crumb{color:var(--muted);font-size:13px}.crumb.here{color:var(--ink);font-weight:550}.spacer{flex:1}
+.iconbtn{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+.iconbtn:hover{background:var(--hover)}
+.userchip{width:32px;height:32px;border-radius:999px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:650;flex:none}
+.content{padding:24px;overflow:auto}
+.h{font-size:22px;font-weight:700;margin:0 0 3px;letter-spacing:-.3px}.sub{color:var(--muted);margin:0 0 18px}
+.grid{display:grid;gap:14px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 8px;font-size:14px;font-weight:625}
+.btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;box-shadow:var(--glow);border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:550;cursor:pointer;font-family:inherit}
+.btn:hover{opacity:.92}
+.btn.brand{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;box-shadow:var(--glow)}
+.btn.outline{background:transparent;color:var(--ink);border:1px solid var(--border)}.btn.outline:hover{background:var(--hover);opacity:1}
+.btn.ghost{background:transparent;color:var(--ink)}.btn.ghost:hover{background:var(--hover);opacity:1}
+.btn.danger{background:var(--danger);color:#fff}
+.badge{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:999px;padding:2px 10px;font-size:11.5px;background:var(--chip);font-weight:500}
+.badge.brand{background:var(--brand-soft);color:var(--brand-ink);border-color:var(--brand-bd)}
+.badge.primary{background:var(--primary);color:var(--primary-fg);border-color:var(--primary)}
+.badge.ok{background:var(--ok-bg);color:var(--ok-ink);border-color:var(--ok-bd)}
+.badge.warn{background:var(--warn-bg);color:var(--warn-ink);border-color:var(--warn-bd)}
+.badge.danger{background:var(--danger-bg);color:var(--danger-ink);border-color:var(--danger-bd)}
+.dot{width:7px;height:7px;border-radius:999px;background:var(--muted);flex:none}
+.dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}.dot.danger{background:var(--danger)}.dot.brand{background:var(--brand)}
+.input,.select,textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--card);color:var(--ink);font-family:inherit}
+.input::placeholder,textarea::placeholder{color:var(--muted)}
+.input:focus,.select:focus,textarea:focus{outline:2px solid var(--brand);outline-offset:-1px}
+.label{font-size:12.5px;font-weight:600;margin-bottom:4px;display:block}.muted{color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{border-bottom:1px solid var(--border);padding:9px 10px;text-align:left}
+th{color:var(--muted);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px}
+tbody tr:hover td{background:var(--hover)}
+tr.sel td{background:var(--sel)}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:9px;overflow:hidden;background:var(--card)}
+.seg button{border:none;background:transparent;color:var(--ink);padding:8px 14px;cursor:pointer;font-size:13px;font-family:inherit;border-right:1px solid var(--border)}
+.seg button:last-child{border-right:none}
+.seg button.active{background:var(--brand-soft);color:var(--brand-ink);font-weight:600}
+.prog{height:8px;background:var(--skel-a);border-radius:999px;overflow:hidden}
+.prog>i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--brand-2))}
+.alert{border:1px solid var(--border);border-left:3px solid var(--brand);border-radius:8px;padding:10px 12px;background:var(--brand-soft);font-size:13px}
+.alert.warn{border-left-color:var(--warn);background:var(--warn-bg);border-color:var(--warn-bd)}
+.alert.danger{border-left-color:var(--danger);background:var(--danger-bg);border-color:var(--danger-bd)}
+.alert.ok{border-left-color:var(--ok);background:var(--ok-bg);border-color:var(--ok-bd)}
+.thumb{aspect-ratio:1;border-radius:10px;background:linear-gradient(135deg,var(--thumb-a),var(--thumb-b));display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;overflow:hidden}
+.skel{background:linear-gradient(90deg,var(--skel-a),var(--skel-b),var(--skel-a));border-radius:8px;height:14px}
+.row{display:flex;gap:12px;align-items:center}.col{display:flex;flex-direction:column;gap:6px}
+.toggle{width:36px;height:20px;border-radius:999px;background:var(--active);position:relative;flex:none;cursor:pointer}
+.toggle.on{background:var(--brand)}
+.toggle::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:999px;background:#fff;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.toggle.on::after{left:18px}
+.kv{display:flex;justify-content:space-between;padding:4px 0;font-size:13px}
+/* page-specific */
+.layout{display:grid;grid-template-columns:1fr 340px;gap:14px;align-items:start}
+.filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.qitem{padding:12px 0;border-bottom:1px solid var(--border)}
+.qitem:last-child{border-bottom:none;padding-bottom:2px}
+.qitem .t{font-weight:600;font-size:13px}
+.pgfoot{display:flex;align-items:center;gap:6px;padding:12px 16px;font-size:12.5px}
+.pgbtn{min-width:34px;height:34px;padding:0 10px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit;font-size:13px}
+.pgbtn:hover{background:var(--hover)}
+.pgbtn.active{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;border-color:transparent;font-weight:600}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="side">
+  <div class="brand"><div class="logo">TR</div><div>TrStudioAdmin <span class="badge" style="font-size:10px;padding:1px 7px;vertical-align:middle">admin</span></div></div>
+  <div class="navgroup">Environment</div>
+  <nav class="nav">
+    <a href="admin-hardware.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M9 2v2M15 20v2M9 20v2M2 15h2M2 9h2M20 15h2M20 9h2"/></svg>Hardware &amp; Setup</a>
+    <a href="admin-ops.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 1 0-.4-8.98 6 6 0 1 0-11.6 2.2A3.5 3.5 0 0 0 6.5 19z"/></svg>RunPod &amp; Ops</a>
+  </nav>
+  <div class="navgroup">Models</div>
+  <nav class="nav">
+    <a href="admin-sources.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Model Sources</a>
+    <a class="active" href="admin-models.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>Model Library</a>
+    <a href="admin-registry.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>Registry &amp; Providers</a>
+    <a href="admin-comfy.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>ComfyUI Import</a>
+  </nav>
+  <div class="navgroup">Governance</div>
+  <nav class="nav">
+    <a href="admin-policy.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Content Policy</a>
+  </nav>
+  <div class="sidefoot">
+    <a href="avatar-studio.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudio</a>
+  </div>
+</aside>
+<div class="main">
+<header class="top">
+  <span class="crumb">Admin</span><span class="crumb">/</span><span class="crumb here">Model Library</span>
+  <span class="spacer"></span>
+  <span class="badge ok"><span class="dot ok"></span>2 sources enabled</span>
+  <a href="admin-sources.html" class="btn outline" style="text-decoration:none">Manage sources</a>
+  <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
+  <div class="userchip">TR</div>
+</header>
+<div class="content">
+  <div>
+    <h1 class="h">Model Library</h1>
+    <p class="sub">Browse and install open models from your enabled sources — Hugging Face and Civitai.</p>
+  </div>
+
+  <div class="filters">
+    <input class="input" style="max-width:260px" placeholder="Search models… e.g. avatar, sdxl, tts">
+    <div class="seg">
+      <button class="active">All</button><button>Image</button><button>Video</button><button>Avatar</button><button>Voice</button>
+    </div>
+    <select class="select" style="max-width:160px"><option>All sources</option><option>Hugging Face</option><option>Civitai</option></select>
+    <span class="spacer"></span>
+    <span class="muted" style="font-size:12.5px">8 models · sorted by downloads</span>
+  </div>
+
+  <div class="layout">
+    <!-- Results -->
+    <div class="card" style="padding:0;overflow:hidden">
+      <table>
+        <thead><tr><th>Model</th><th>Source</th><th>Task</th><th>Size</th><th>Min VRAM</th><th>License</th><th style="text-align:right">Action</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>Hunyuan-Avatar</b><div class="muted" style="font-size:11px">tencent/HunyuanVideo-Avatar</div></td>
+            <td>Hugging Face</td><td>Avatar / video</td><td>24.0 GB</td><td>24 GB</td>
+            <td><span class="badge warn">Tencent Community</span></td>
+            <td style="text-align:right"><span class="badge brand"><span class="dot brand"></span>Installing 62%</span></td>
+          </tr>
+          <tr>
+            <td><b>SDXL 1.0</b><div class="muted" style="font-size:11px">stabilityai/stable-diffusion-xl · base + refiner</div></td>
+            <td>Hugging Face</td><td>Image</td><td>13.4 GB</td><td>12 GB</td>
+            <td><span class="badge warn">OpenRAIL++</span></td>
+            <td style="text-align:right"><span class="badge"><span class="dot warn"></span>Refiner paused</span></td>
+          </tr>
+          <tr>
+            <td><b>MuseTalk</b><div class="muted" style="font-size:11px">TMElyralab/MuseTalk · lip-sync</div></td>
+            <td>Hugging Face</td><td>Avatar</td><td>1.8 GB</td><td>8 GB</td>
+            <td><span class="badge ok">MIT</span></td>
+            <td style="text-align:right"><span class="badge ok"><span class="dot ok"></span>Installed</span></td>
+          </tr>
+          <tr>
+            <td><b>FLUX.1 [dev]</b><div class="muted" style="font-size:11px">black-forest-labs/FLUX.1-dev</div></td>
+            <td>Hugging Face</td><td>Image</td><td>23.8 GB</td><td>24 GB</td>
+            <td><span class="badge warn">FLUX non-commercial</span></td>
+            <td style="text-align:right"><span class="badge warn">Needs volume</span></td>
+          </tr>
+          <tr>
+            <td><b>XTTS v2</b><div class="muted" style="font-size:11px">coqui/XTTS-v2 · voice clone</div></td>
+            <td>Hugging Face</td><td>Voice</td><td>1.9 GB</td><td>6 GB</td>
+            <td><span class="badge warn">Coqui CPML</span></td>
+            <td style="text-align:right"><button class="btn brand" data-act="Install">Install</button></td>
+          </tr>
+          <tr>
+            <td><b>IndicF5</b><div class="muted" style="font-size:11px">ai4bharat/IndicF5 · Hindi + 10 Indic languages</div></td>
+            <td>Hugging Face</td><td>Voice</td><td>1.2 GB</td><td>6 GB</td>
+            <td><span class="badge ok">Apache-2.0</span></td>
+            <td style="text-align:right"><button class="btn brand" data-act="Install">Install</button></td>
+          </tr>
+          <tr>
+            <td><b>Realistic Vision v6</b><div class="muted" style="font-size:11px">SD 1.5 checkpoint · photoreal portraits</div></td>
+            <td>Civitai</td><td>Image</td><td>4.3 GB</td><td>8 GB</td>
+            <td><span class="badge warn">OpenRAIL-M</span></td>
+            <td style="text-align:right"><button class="btn brand" data-act="Install">Install</button></td>
+          </tr>
+          <tr>
+            <td><b>RealESRGAN x4</b><div class="muted" style="font-size:11px">4× upscaler for final renders</div></td>
+            <td>Civitai</td><td>Image</td><td>67 MB</td><td>4 GB</td>
+            <td><span class="badge ok">BSD-3</span></td>
+            <td style="text-align:right"><button class="btn brand" data-act="Install">Install</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="pgfoot">
+        <span class="muted">Showing 1–8 of 42 models</span>
+        <span class="spacer"></span>
+        <button class="pgbtn" type="button">Prev</button>
+        <button class="pgbtn active" type="button" data-page="1">1</button>
+        <button class="pgbtn" type="button" data-page="2">2</button>
+        <button class="pgbtn" type="button" data-page="3">3</button>
+        <button class="pgbtn" type="button" data-page="4">4</button>
+        <button class="pgbtn" type="button" data-page="5">5</button>
+        <button class="pgbtn" type="button" data-page="6">6</button>
+        <button class="pgbtn" type="button">Next</button>
+      </div>
+    </div>
+
+    <!-- Install queue -->
+    <div class="grid">
+      <div class="card">
+        <div class="row"><h3 style="margin:0">Install queue</h3><span class="spacer"></span><span class="badge brand">2 active</span></div>
+        <div class="qitem">
+          <div class="row" style="gap:8px"><span class="t">Hunyuan-Avatar</span><span class="spacer"></span><span class="badge brand">downloading</span></div>
+          <div class="prog" style="margin:8px 0 4px"><i style="width:62%"></i></div>
+          <div class="row" style="font-size:11.5px;color:var(--muted)"><span>14.9 / 24.0 GB · 62% · 41 MB/s</span><span class="spacer"></span><span>→ RunPod network volume</span></div>
+          <div class="row" style="margin-top:8px"><button class="btn outline" style="padding:5px 10px;font-size:12px">Pause</button><button class="btn ghost" style="padding:5px 10px;font-size:12px">Cancel</button></div>
+        </div>
+        <div class="qitem">
+          <div class="row" style="gap:8px"><span class="t">SDXL refiner</span><span class="spacer"></span><span class="badge warn">paused</span></div>
+          <div class="prog" style="margin:8px 0 4px"><i style="width:46%;opacity:.55"></i></div>
+          <div class="row" style="font-size:11.5px;color:var(--muted)"><span>2.8 / 6.1 GB · resumable</span><span class="spacer"></span><span>→ local disk</span></div>
+          <div class="row" style="margin-top:8px"><button class="btn outline" style="padding:5px 10px;font-size:12px" data-act="Resume">Resume</button><button class="btn ghost" style="padding:5px 10px;font-size:12px">Cancel</button></div>
+        </div>
+        <div class="qitem">
+          <div class="row" style="gap:8px"><span class="t">MuseTalk</span><span class="spacer"></span><span class="badge ok">completed</span></div>
+          <div class="muted" style="font-size:11.5px;margin-top:4px">1.8 GB · local disk · verified checksum</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Destination</h3>
+        <div class="kv"><span class="muted">Local disk free</span><b>412 GB</b></div>
+        <div class="kv"><span class="muted">RunPod network volume</span><b>1.2 TB free</b></div>
+        <p class="muted" style="font-size:12px;margin:8px 0 0">Models over 10 GB install to the RunPod network volume by default; local (Mac) models stay on disk. Downloads resume automatically after interruption.</p>
+      </div>
+
+      <div class="alert warn"><b>FLUX.1 [dev] exceeds free local disk.</b> 23.8 GB needed, 12 GB headroom reserved — install to the RunPod network volume, or free space in <a href="admin-hardware.html" style="color:inherit;font-weight:600">Hardware &amp; Setup</a>.</div>
+
+      <div class="alert">Restrictive licenses are flagged <span class="badge warn" style="vertical-align:middle">amber</span>. Installed models still need a registry row before creators can use them — <a href="admin-registry.html" style="color:inherit;font-weight:600">Registry &amp; Providers →</a></div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+<script>
+(function(){
+  document.addEventListener('click',function(e){
+    var b=e.target.closest&&e.target.closest('.pgbtn[data-page]');
+    if(!b)return;
+    Array.prototype.forEach.call(document.querySelectorAll('.pgbtn[data-page]'),function(x){x.classList.remove('active');});
+    b.classList.add('active');
+  });
+})();
+</script>
+<script>
+(function(){
+  var KEY='trstudio-mock-theme';
+  var SUN='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+  var MOON='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg>';
+  function apply(t){
+    document.documentElement.classList.toggle('dark',t==='dark');
+    var b=document.getElementById('themeBtn');
+    if(b)b.innerHTML=t==='dark'?SUN:MOON;
+  }
+  var s=null;try{s=localStorage.getItem(KEY);}catch(e){}
+  apply(s==='light'?'light':'dark');
+  document.addEventListener('click',function(e){
+    var tb=e.target.closest&&e.target.closest('#themeBtn');
+    if(tb){var n=document.documentElement.classList.contains('dark')?'light':'dark';
+      try{localStorage.setItem(KEY,n);}catch(e2){}apply(n);return;}
+    var sg=e.target.closest&&e.target.closest('.seg button,.tabbtn');
+    if(sg&&sg.parentElement){Array.prototype.forEach.call(sg.parentElement.querySelectorAll('button,.tabbtn'),function(x){x.classList.remove('active');});sg.classList.add('active');}
+    var ib=e.target.closest&&e.target.closest('[data-act]');
+    if(ib&&!ib.disabled){ib.disabled=true;ib.style.opacity=.7;ib.textContent='Working…';setTimeout(function(){ib.textContent='Done ✓';},700);}
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+@*
+    Root component for the MAUI Blazor Hybrid desktop head. The Router draws its routable pages from
+    the shared TrStudioUI RCL (all creator + management screens) AND this desktop assembly (the
+    DEBUG-only dev-session picker), with the RCL's role-gated MainLayout as the default layout — so
+    the SAME role-based shell that the Blazor Web head renders shows up in the desktop window (ADR-012).
+    DevSessionInitializer runs once at the root to honour a smoke/launch-requested dev role.
+*@
+<DevSessionInitializer />
+
+<Router AppAssembly="typeof(MauiProgram).Assembly"
+        AdditionalAssemblies="new[] { typeof(TrStudioUI.Layout.MainLayout).Assembly }"
+        NotFoundPage="typeof(TrStudio.Desktop.Components.Pages.NotFound)">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(TrStudioUI.Layout.MainLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+</Router>
