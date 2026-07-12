@@ -106,40 +106,45 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <div class="layout">
   <nav class="side">
     <h1>TrStudio — Usage Guide</h1>
-    <div class="sub">Test Users · Test Plan · Setup — Last rendered: 2026-07-07</div>
+    <div class="sub">Test Users · Test Plan · Setup — Last rendered: 2026-07-12</div>
     <div class="group">Contents</div>
     <ol>
       <li><a href="#test-users-canonical-use-these-for-all-smoke-verify-uat">Test users (canonical)</a></li>
-      <li><a href="#who-lands-where-default-pages-first-run-gate-screen-flow">Who lands where — default pages, first-run gate &amp; screen flow</a></li>
+      <li><a href="#who-lands-where-default-pages-first-run-gate-screen-flow">Who lands where</a></li>
       <li class="h3"><a href="#default-landing-page-by-role">Default landing page by role</a></li>
       <li class="h3"><a href="#first-run-setup-gate-brd-85">First-run setup gate (BRD-85)</a></li>
       <li class="h3"><a href="#screen-flow-by-role">Screen flow by role</a></li>
-      <li><a href="#how-to-test-screen-by-screen-menu-by-menu">How to test — screen by screen / menu by menu</a></li>
+      <li><a href="#how-to-test-screen-by-screen-menu-by-menu">How to test — screen by screen</a></li>
       <li class="h3"><a href="#register-register-appmanager-backed">Register</a></li>
       <li class="h3"><a href="#login-login-appmanager-backed">Login</a></li>
       <li class="h3"><a href="#forgot-password-forgot-password">Forgot password</a></li>
-      <li class="h3"><a href="#first-run-setup-gate-setup-required-setup-required">First-run setup gate &amp; Setup-required</a></li>
+      <li class="h3"><a href="#first-run-setup-gate-setup-required-setup-required">Setup gate &amp; Setup-required</a></li>
       <li class="h3"><a href="#admin-hardware-readiness-admin-setup-hardware">Admin — Hardware &amp; readiness</a></li>
       <li class="h3"><a href="#admin-guided-setup-admin-setup">Admin — Guided setup</a></li>
       <li class="h3"><a href="#admin-model-sources-admin-sources">Admin — Model sources</a></li>
       <li class="h3"><a href="#admin-model-library-admin-models">Admin — Model library</a></li>
-      <li class="h3"><a href="#admin-model-provider-registry-admin-registry">Admin — Model &amp; Provider Registry</a></li>
+      <li class="h3"><a href="#admin-model-provider-registry-admin-registry">Admin — Registry</a></li>
       <li class="h3"><a href="#admin-provider-config-admin-providers">Admin — Provider config</a></li>
-      <li class="h3"><a href="#admin-runpod-cost-guardrails-admin-ops">Admin — RunPod &amp; cost guardrails</a></li>
-      <li class="h3"><a href="#admin-comfyui-import-debug-admin-comfy-import-admin-comfy-debug">Admin — ComfyUI import &amp; debug</a></li>
-      <li class="h3"><a href="#admin-content-policy-nsfw-mode-admin-policy">Admin — Content policy / NSFW mode</a></li>
+      <li class="h3"><a href="#admin-runpod-cost-guardrails-admin-ops">Admin — RunPod &amp; cost</a></li>
+      <li class="h3"><a href="#admin-comfyui-import-debug-admin-comfy-import-admin-comfy-debug">Admin — ComfyUI import</a></li>
+      <li class="h3"><a href="#admin-content-policy-nsfw-mode-admin-policy">Admin — Content policy</a></li>
       <li class="h3"><a href="#image-studio-image-image-batch">Image studio</a></li>
       <li class="h3"><a href="#voice-studio-voice-voice-clone">Voice studio</a></li>
       <li class="h3"><a href="#avatar-studio-avatar-avatar-characters">Avatar studio</a></li>
       <li class="h3"><a href="#video-studio-video-video-edit">Video studio</a></li>
       <li class="h3"><a href="#prompt-studio-prompt-studio-phase-10-shipped-2026-07-07">Prompt studio</a></li>
-      <li class="h3"><a href="#workspace-gallery-projects-comparison-library-account-gallery-projects-compare-library-account">Workspace — Gallery, Projects, Comparison, Library, Account</a></li>
+      <li class="h3"><a href="#workspace-gallery-projects-comparison-library-account-gallery-projects-compare-library-account">Workspace</a></li>
       <li class="h3"><a href="#safety-floors-must-always-fire">Safety floors</a></li>
       <li class="h3"><a href="#per-user-isolation-gallery-projects">Per-user isolation</a></li>
       <li><a href="#prerequisites">Prerequisites</a></li>
       <li><a href="#which-projects-to-run-this-is-a-multi-project-solution">Which projects to run</a></li>
-      <li><a href="#how-to-run-visual-studio-recommended-for-uat">How to run — Visual Studio</a></li>
-      <li><a href="#how-to-run-command-line-alternative">How to run — command line</a></li>
+      <li><a href="#how-to-run-windows-visual-studio-recommended-for-uat-on-windows">How to run — Windows · VS</a></li>
+      <li><a href="#how-to-run-windows-command-line-alternative">How to run — Windows · CLI</a></li>
+      <li><a href="#how-to-run-macos-apple-silicon-added-2026-07-12-after-the-code-moved-to-the-mac">How to run — macOS</a></li>
+      <li class="h3"><a href="#one-time-setup-new-mac">One-time setup (new Mac)</a></li>
+      <li class="h3"><a href="#run-the-web-app-mac-cli-the-working-uat-path-on-the-mac">Run the web app (Mac CLI)</a></li>
+      <li class="h3"><a href="#run-the-maui-desktop-head-mac-catalyst">Run the MAUI head (Catalyst)</a></li>
+      <li class="h3"><a href="#mac-troubleshooting">Mac troubleshooting</a></li>
       <li><a href="#troubleshooting-startup">Troubleshooting startup</a></li>
       <li><a href="#test-automated">Test (automated)</a></li>
       <li><a href="#smoke-checklist-quick-capability-pass">Smoke checklist</a></li>
@@ -148,18 +153,19 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
   </nav>
   <main>
     <h1>TrStudio — Usage Guide (Test Users · Test Plan · Setup)</h1>
-    <div class="subtitle">The single source for how to test and run this app — last rendered: 2026-07-07</div>
+    <div class="subtitle">The single source for how to test and run this app — Windows and macOS.</div>
 
     <div class="toc-inline">
       <div>Contents</div>
       <ol>
-        <li><a href="#test-users-canonical-use-these-for-all-smoke-verify-uat">Test users (canonical — use THESE for all smoke / verify / UAT)</a></li>
+        <li><a href="#test-users-canonical-use-these-for-all-smoke-verify-uat">Test users (canonical)</a></li>
         <li><a href="#who-lands-where-default-pages-first-run-gate-screen-flow">Who lands where — default pages, first-run gate &amp; screen flow</a></li>
         <li><a href="#how-to-test-screen-by-screen-menu-by-menu">How to test — screen by screen / menu by menu</a></li>
         <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#which-projects-to-run-this-is-a-multi-project-solution">Which projects to run (this is a multi-project solution)</a></li>
-        <li><a href="#how-to-run-visual-studio-recommended-for-uat">How to run — Visual Studio (recommended for UAT)</a></li>
-        <li><a href="#how-to-run-command-line-alternative">How to run — command line (alternative)</a></li>
+        <li><a href="#which-projects-to-run-this-is-a-multi-project-solution">Which projects to run</a></li>
+        <li><a href="#how-to-run-windows-visual-studio-recommended-for-uat-on-windows">How to run — Windows · Visual Studio</a></li>
+        <li><a href="#how-to-run-windows-command-line-alternative">How to run — Windows · command line</a></li>
+        <li><a href="#how-to-run-macos-apple-silicon-added-2026-07-12-after-the-code-moved-to-the-mac">How to run — macOS (Apple Silicon)</a></li>
         <li><a href="#troubleshooting-startup">Troubleshooting startup</a></li>
         <li><a href="#test-automated">Test (automated)</a></li>
         <li><a href="#smoke-checklist-quick-capability-pass">Smoke checklist (quick capability pass)</a></li>
@@ -171,18 +177,14 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 
     <h2 id="test-users-canonical-use-these-for-all-smoke-verify-uat">Test users (canonical — use THESE for all smoke / verify / UAT)<a class="anchor-link" href="#test-users-canonical-use-these-for-all-smoke-verify-uat">#</a></h2>
 
-    <blockquote>
-      <p>Identity is delegated to <strong>AppManager</strong> (child-app integration). TrStudio stores only the AppManager <code>userId</code>; no passwords are ever stored locally.<br>
-      <strong>✅ AppManager auth path RESOLVED + VERIFIED LIVE 2026-07-07.</strong> The earlier blocker (AppManager <code>/AuthSvc/*</code> → HTTP 500, root-caused to <code>System.UnauthorizedAccessException: Access to the path '/keys/rsa-private.pem' is denied</code> — its <code>RsaEncryptionService</code> couldn't write its RSA key) was <strong>fixed by the owner</strong> (made <code>/keys</code> writable + restarted the <code>appmanager-api</code> container). Re-verified end-to-end: real login <code>admin@appmanager.local</code>/<code>Admin@123!</code> → <strong>200 + JWT</strong> (Owner, role 0); <code>/auth/me</code> → 200 (AppManager <code>/AuthSvc/validate</code>); <code>/license</code> → 200 (AppManager <code>/LicenseSvc/validate</code>); <code>/register</code> created <code>creator@trstudio.test</code> → 200 (Creator, role 1) and login as that new account → 200. <strong>REQ-FN-012/013/015 now Verified; FN-016 login-driven landing Verified.</strong> Real AppManager login is the primary UAT path; the <code>/dev/session</code> seam remains available for role-switching smokes. Remaining external item: assign a <strong>Premium license</strong> in AppManager to fully exercise Premium tier-gating (FN-014).</p>
-    </blockquote>
+    <blockquote><p>Identity is delegated to <strong>AppManager</strong> (child-app integration). TrStudio stores only the AppManager <code>userId</code>; no passwords are ever stored locally.</p>
+    <p><strong>✅ AppManager auth path RESOLVED + VERIFIED LIVE 2026-07-07.</strong> The earlier blocker (AppManager <code>/AuthSvc/*</code> → HTTP 500, root-caused to <code>System.UnauthorizedAccessException: Access to the path '/keys/rsa-private.pem' is denied</code> — its <code>RsaEncryptionService</code> couldn't write its RSA key) was <strong>fixed by the owner</strong> (made <code>/keys</code> writable + restarted the <code>appmanager-api</code> container). Re-verified end-to-end: real login <code>admin@appmanager.local</code>/<code>Admin@123!</code> → <strong>200 + JWT</strong> (Owner, role 0); <code>/auth/me</code> → 200 (AppManager <code>/AuthSvc/validate</code>); <code>/license</code> → 200 (AppManager <code>/LicenseSvc/validate</code>); <code>/register</code> created <code>creator@trstudio.test</code> → 200 (Creator, role 1) and login as that new account → 200. <strong>REQ-FN-012/013/015 now Verified; FN-016 login-driven landing Verified.</strong> Real AppManager login is the primary UAT path; the <code>/dev/session</code> seam remains available for role-switching smokes. Remaining external item: assign a <strong>Premium license</strong> in AppManager to fully exercise Premium tier-gating (FN-014).</p></blockquote>
 
     <table>
-      <thead>
-        <tr><th>#</th><th>Username / Email</th><th>Password</th><th>Role / Permission</th><th>Created?</th><th>Notes</th></tr>
-      </thead>
+      <thead><tr><th>#</th><th>Username / Email</th><th>Password</th><th>Role / Permission</th><th>Created?</th><th>Notes</th></tr></thead>
       <tbody>
         <tr><td>1</td><td>admin@appmanager.local</td><td><code>Admin@123!</code></td><td>Superadmin (Owner — Creator + Operator, all tiers)</td><td>✅ (pre-existing in AppManager)</td><td>Generic AppManager superadmin shared across the owner's apps; already exists — do NOT create. Credential provided by owner 2026-07-07. ⚠ Real TrStudio login via this account is currently <strong>blocked by an AppManager-side fault</strong> (its <code>/AuthSvc/*</code> → HTTP 500; see UAT-blocker note) — not a credential problem. Use <code>/dev/session</code> until AppManager is fixed</td></tr>
-        <tr><td>2</td><td>creator@trstudio.test</td><td>TrStudio!Creator1</td><td>Standard creator (Fast + High tiers)</td><td>✅ Created 2026-07-07 (AppManager userId 13, role Creator)</td><td>Registered live via <code>/register</code> once AppManager was fixed (FN-015 Verified). Real login works; lands on <code>/avatar</code></td></tr>
+        <tr><td>2</td><td>creator@trstudio.test</td><td><code>TrStudio!Creator1</code></td><td>Standard creator (Fast + High tiers)</td><td>✅ Created 2026-07-07 (AppManager userId 13, role Creator)</td><td>Registered live via <code>/register</code> once AppManager was fixed (FN-015 Verified). Real login works; lands on <code>/avatar</code></td></tr>
         <tr><td>3</td><td>admin@trstudio.test</td><td>TrStudio!Admin1</td><td>Operator / Admin</td><td>⬜ Not yet created</td><td>Create in AppManager with the admin/operator role (AppManager auth works now) to exercise the management surface via real login</td></tr>
         <tr><td>4</td><td>premium@trstudio.test</td><td>TrStudio!Premium1</td><td>Premium-licensed creator</td><td>⬜ Not yet created</td><td>Register via <code>/register</code>, then assign a Premium license in AppManager, to exercise Premium tier-gating (FN-014)</td></tr>
       </tbody>
@@ -201,9 +203,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
     <h3 id="default-landing-page-by-role">Default landing page by role<a class="anchor-link" href="#default-landing-page-by-role">#</a></h3>
 
     <table>
-      <thead>
-        <tr><th>Role (test user)</th><th>Default landing after login</th><th>When first-run setup is incomplete</th></tr>
-      </thead>
+      <thead><tr><th>Role (test user)</th><th>Default landing after login</th><th>When first-run setup is incomplete</th></tr></thead>
       <tbody>
         <tr><td><strong>Superadmin / Owner</strong> (user 1)</td><td>Avatar studio <code>/avatar</code> — full Creator surface, all tiers; switches to TrStudioAdmin via the sidebar footer link</td><td>TrStudioAdmin <strong>Guided setup</strong> <code>/admin/setup</code> (bootstrap account completes first-run)</td></tr>
         <tr><td><strong>Operator / Admin</strong> (user 3)</td><td>TrStudioAdmin <strong>Ops dashboard</strong> <code>/admin/ops</code></td><td><strong>Hardware &amp; readiness</strong> <code>/admin/setup/hardware</code>, then the guided-setup wizard</td></tr>
@@ -424,9 +424,14 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
     <h2 id="prerequisites">Prerequisites<a class="anchor-link" href="#prerequisites">#</a></h2>
 
     <ul>
-      <li>.NET 10 SDK</li>
-      <li><strong>Docker Desktop running</strong>, with the two dependency containers up (see step 1 below) — PostgreSQL + PgVector <strong>and</strong> AppManager both run as Docker containers in dev. <strong>If they are not running, the app cannot reach its database or identity service and startup/login will fail</strong> (this is the usual cause of "can't connect" / "Docker" errors during UAT).</li>
-      <li>GitHub PAT (<code>read:packages</code>) for the TechieRag NuGet feed (see <code>nuget.config</code>)</li>
+      <li>.NET 10 SDK (+ the <strong>.NET MAUI workload</strong> if you run the desktop head — <code>dotnet workload list</code> should show <code>maui</code>)</li>
+      <li><strong>A container runtime running</strong> (Docker Desktop on Windows; Docker Desktop or OrbStack on the Mac), with the two dependency containers up (see the platform run sections below) — PostgreSQL + PgVector <strong>and</strong> AppManager both run as containers in dev. <strong>If they are not running, the app cannot reach its database or identity service and startup/login will fail</strong> (this is the usual cause of "can't connect" / "Docker" errors during UAT).</li>
+      <li><strong>The two gitignored secrets files</strong> — these do <strong>NOT</strong> travel with a copy of the source tree; recreate them on every new machine (this bit the 2026-07-12 Windows→Mac move):
+        <ul>
+          <li><code>nuget.config</code> (repo root) ← copy <code>nuget.config.template</code> and fill in your GitHub username + PAT (<code>read:packages</code>) for the private TrBlazeUI/TechieRag feed. Without it <code>dotnet restore</code> fails with <code>NU1101: Unable to find package TechieRag</code>.</li>
+          <li><code>src/TrStudioApi/appsettings.json</code> ← copy <code>src/TrStudioApi/appsettings.template.json</code> and fill in the DB connection string + the <code>AppManager</code> block (ApplicationId 4, ApiKey / ApiSecret / JwtSigningKey). Without it the API can't reach Postgres or AppManager.</li>
+        </ul>
+      </li>
     </ul>
 
     <h2 id="which-projects-to-run-this-is-a-multi-project-solution">Which projects to run (this is a multi-project solution)<a class="anchor-link" href="#which-projects-to-run-this-is-a-multi-project-solution">#</a></h2>
@@ -434,9 +439,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
     <p><code>TrStudio.slnx</code> now has <strong>7 projects</strong> (the retired <code>TrStudioAdmin</code> was removed from the solution on 2026-07-05, ADR-012). Running the <strong>web</strong> app means starting <strong><code>TrStudioApi</code> + <code>TrStudio</code> together</strong> (API first) — everything else is a class library or the desktop head, which must <strong>not</strong> be set to start alongside the web app:</p>
 
     <table>
-      <thead>
-        <tr><th>Project</th><th>Role</th><th>Start it?</th><th>URL</th></tr>
-      </thead>
+      <thead><tr><th>Project</th><th>Role</th><th>Start it?</th><th>URL</th></tr></thead>
       <tbody>
         <tr><td><strong><code>src/TrStudioApi</code></strong></td><td>ASP.NET Core Web API (backend spine, DbUp migrations, Hangfire) — <strong>must start first</strong></td><td>✅ <strong>Startup</strong></td><td>http://localhost:5102 (<code>/swagger</code>, <code>/health</code>)</td></tr>
         <tr><td><strong><code>src/TrStudio</code></strong></td><td>Blazor Web app — <strong>the ONE unified app</strong>: creator studios + (role-gated) management surface (Creator→studios, Operator→management, Owner→both with an in-app switch)</td><td>✅ <strong>Startup</strong></td><td>http://localhost:5099</td></tr>
@@ -451,7 +454,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 
     <blockquote><p><strong>Web vs. desktop delivery.</strong> The <strong>web</strong> delivery is <strong><code>TrStudio</code></strong> (Blazor Web, <code>net10.0</code>, http://localhost:5099). The <strong>desktop</strong> delivery is <strong><code>TrStudio.Desktop</code></strong> (MAUI Blazor Hybrid, Windows + macOS — TFMs <code>net10.0-windows10.0.19041.0</code> / <code>net10.0-maccatalyst</code>), hosting the same unified app. <strong>Start <code>TrStudioApi</code> first either way</strong> — it must be listening before the app makes its first call.</p></blockquote>
 
-    <h2 id="how-to-run-visual-studio-recommended-for-uat">How to run — Visual Studio (recommended for UAT)<a class="anchor-link" href="#how-to-run-visual-studio-recommended-for-uat">#</a></h2>
+    <h2 id="how-to-run-windows-visual-studio-recommended-for-uat-on-windows">How to run — Windows · Visual Studio (recommended for UAT on Windows)<a class="anchor-link" href="#how-to-run-windows-visual-studio-recommended-for-uat-on-windows">#</a></h2>
 
     <ol>
       <li><strong>Start the dependency containers</strong> (Docker Desktop must be running), then confirm both are up:
@@ -459,15 +462,13 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 docker ps        # expect WinPgVectorDb (0.0.0.0:5432) and appmanager-api (…:5101) both "Up"</code></pre>
       </li>
       <li>Open <code>TrStudio.slnx</code>. Right-click the <strong>solution</strong> → <strong>Configure Startup Projects…</strong> → <strong>Multiple startup projects</strong> and set <strong>Action = Start</strong> for <strong><code>TrStudioApi</code> + <code>TrStudio</code></strong> (leave every other project = <strong>None</strong>). Move <strong><code>TrStudioApi</code> to the top</strong> of the list so it launches first. Click OK.
-        <ul>
-          <li>For the <strong>DESKTOP</strong> app, set startup = <strong><code>TrStudioApi</code> + <code>TrStudio.Desktop</code></strong> instead (Windows head runs here; the Mac head needs a Mac).</li>
-        </ul>
+        <ul><li>For the <strong>DESKTOP</strong> app, set startup = <strong><code>TrStudioApi</code> + <code>TrStudio.Desktop</code></strong> instead (Windows head runs here; the Mac head needs a Mac).</li></ul>
       </li>
       <li>Press <strong>F5</strong> (or Ctrl+F5). Two console/app windows come up; wait for the API console to log <code>Now listening on: http://localhost:5102</code> and <code>Application started</code>.</li>
       <li>Open <strong>http://localhost:5099</strong> — the ONE unified app (creator studios + role-gated management surface). Log in as a Test user, or use the <strong><code>/dev/session</code></strong> seam (<code>http://localhost:5099/dev/session</code>) until AppManager app 4 is published.</li>
     </ol>
 
-    <h2 id="how-to-run-command-line-alternative">How to run — command line (alternative)<a class="anchor-link" href="#how-to-run-command-line-alternative">#</a></h2>
+    <h2 id="how-to-run-windows-command-line-alternative">How to run — Windows · command line (alternative)<a class="anchor-link" href="#how-to-run-windows-command-line-alternative">#</a></h2>
 
     <pre><code class="language-powershell">docker start WinPgVectorDb appmanager-api        # 1. dependencies up first
 dotnet restore                                    # needs the GitHub Packages PAT for TechieRag
@@ -478,6 +479,64 @@ dotnet run --project src/TrStudio      --urls http://localhost:5099
 # optional — DESKTOP head instead of the web app (Windows; MAUI workloads required):
 dotnet build src/TrStudio.Desktop -f net10.0-windows10.0.19041.0   # then run the produced app</code></pre>
     <p>Then open <code>http://localhost:5099</code> (or <code>/dev/session</code>).</p>
+
+    <h2 id="how-to-run-macos-apple-silicon-added-2026-07-12-after-the-code-moved-to-the-mac">How to run — macOS (Apple Silicon) — <em>added 2026-07-12 after the code moved to the Mac</em><a class="anchor-link" href="#how-to-run-macos-apple-silicon-added-2026-07-12-after-the-code-moved-to-the-mac">#</a></h2>
+
+    <blockquote><p><strong>Mac environment check, 2026-07-12:</strong> .NET SDK 10.0.301 ✅ · MAUI workload 10.0.20 ✅ · TrBlazeUI 1.0.7 present in the <code>~/LocalNuGet</code> folder feed ✅ · Homebrew ✅. <strong>Missing at that check:</strong> the two gitignored secrets files (they stayed on the Windows machine — see Prerequisites), any container runtime (no <code>docker</code> CLI → no PgVector / AppManager containers), and full Xcode (only Command Line Tools). Work through the one-time setup below in order; afterwards the run steps are two commands.</p></blockquote>
+
+    <h3 id="one-time-setup-new-mac">One-time setup (new Mac)<a class="anchor-link" href="#one-time-setup-new-mac">#</a></h3>
+
+    <ol>
+      <li><strong>Secrets</strong> (gitignored — recreate; see Prerequisites):
+        <pre><code class="language-bash">cp nuget.config.template nuget.config
+cp src/TrStudioApi/appsettings.template.json src/TrStudioApi/appsettings.json</code></pre>
+        Fill both in with the real values from the Windows machine's copies of the same two files (or mint fresh ones: a GitHub PAT with <code>read:packages</code>; the AppManager application-4 ApiKey/ApiSecret/JwtSigningKey from the AppManager admin).
+      </li>
+      <li><strong>Container runtime</strong> — install Docker Desktop for Mac or OrbStack (<code>brew install --cask docker</code> or <code>brew install --cask orbstack</code>), and start it.</li>
+      <li><strong>PostgreSQL + PgVector container</strong> (the Mac twin of Windows' <code>WinPgVectorDb</code>):
+        <pre><code class="language-bash">docker run -d --name MacPgVectorDb -p 5432:5432 \
+  -e POSTGRES_USER=&lt;user&gt; -e POSTGRES_PASSWORD=&lt;password&gt; -e POSTGRES_DB=trstudio \
+  -v macpgvector-data:/var/lib/postgresql/data \
+  pgvector/pgvector:pg16</code></pre>
+        <code>&lt;user&gt;</code>/<code>&lt;password&gt;</code> must match <code>ConnectionStrings:Default</code> in the <code>appsettings.json</code> you created in step 1. DbUp creates the schema on first API start.
+      </li>
+      <li><strong>AppManager container</strong> — the image is the owner's own build; bring it over from the Windows box (<code>docker save</code>/<code>docker load</code>, or pull from your registry) and run it as <code>appmanager-api</code> on <strong>:5101</strong> — <strong>with its <code>/keys</code> volume writable</strong> (the 2026-07-07 incident: an unwritable <code>/keys</code> → <code>RsaEncryptionService</code> can't persist its RSA key → every login is HTTP 500).</li>
+      <li><strong>(Desktop head only) Full Xcode</strong> — the MAUI Mac Catalyst build needs Xcode.app; the Command Line Tools alone are <strong>not</strong> enough (<code>xcode-select -p</code> must point at <code>/Applications/Xcode.app/Contents/Developer</code>, not <code>/Library/Developer/CommandLineTools</code>). Install Xcode from the App Store, then <code>sudo xcode-select -s /Applications/Xcode.app/Contents/Developer</code> and accept the licence.</li>
+    </ol>
+
+    <blockquote><p>There is no Visual Studio on the Mac (VS for Mac is retired) — use the CLI below, VS Code, or Rider.</p></blockquote>
+
+    <h3 id="run-the-web-app-mac-cli-the-working-uat-path-on-the-mac">Run the web app (Mac CLI — the working UAT path on the Mac)<a class="anchor-link" href="#run-the-web-app-mac-cli-the-working-uat-path-on-the-mac">#</a></h3>
+
+    <pre><code class="language-bash">docker start MacPgVectorDb appmanager-api                      # 1. dependencies up first
+dotnet restore TrStudio.slnx -p:EnableWindowsTargeting=true    # flag needed: the Desktop head also targets Windows
+# two terminals — API FIRST, wait for "Application started", then the unified web app:
+dotnet run --project src/TrStudioApi   --urls http://localhost:5102
+dotnet run --project src/TrStudio      --urls http://localhost:5099</code></pre>
+    <p>Then open <code>http://localhost:5099</code> (or <code>/dev/session</code> for role-switching smokes). Everything above this section — test users, landings, the screen-by-screen plan, ports — is platform-independent and applies unchanged.</p>
+
+    <h3 id="run-the-maui-desktop-head-mac-catalyst">Run the MAUI desktop head (Mac Catalyst)<a class="anchor-link" href="#run-the-maui-desktop-head-mac-catalyst">#</a></h3>
+
+    <blockquote><p>⚠ <strong>Currently blocked by TrBlazeUI 1.0.7 — TR-011 (logged 2026-07-12).</strong> All three TrBlazeUI packages ship a <code>Microsoft.AspNetCore.App</code> FrameworkReference, and no ASP.NET Core runtime pack exists for <code>maccatalyst-arm64</code>, so the Catalyst build fails with <code>NETSDK1082</code> on any Mac — regardless of Xcode or workloads. (The Windows desktop head and the web head are unaffected.) The fix belongs in TrBlazeUI (swap the FrameworkReference for a <code>Microsoft.AspNetCore.Components.Web</code> PackageReference and re-pack); see <code>docs/TrStudio-TrBlazeUI-Feedback.md</code> TR-011. Until then, use the web app above — it is feature-identical (same <code>TrStudioUI</code> RCL).</p></blockquote>
+
+    <p>Once TR-011 is fixed (and one-time setup steps 2–5 are done):</p>
+
+    <pre><code class="language-bash"># the desktop head does NOT reference TechieRag, so it builds even without the PAT —
+# but the API it talks to does need the PAT + secrets, so finish one-time setup first
+dotnet build src/TrStudio.Desktop -f net10.0-maccatalyst -c Release -p:EnableWindowsTargeting=true
+open src/TrStudio.Desktop/bin/Release/net10.0-maccatalyst/maccatalyst-arm64/TrStudio.app</code></pre>
+
+    <p>Start <code>TrStudioApi</code> first (the desktop head defaults to <code>http://localhost:5102</code>); point it elsewhere with <code>TrStudioApiBaseUrl=http://&lt;host&gt;:5102</code>. Ad-hoc signing is fine for personal use — allow the unsigned app once via System Settings → Privacy &amp; Security if Gatekeeper complains.</p>
+
+    <h3 id="mac-troubleshooting">Mac troubleshooting<a class="anchor-link" href="#mac-troubleshooting">#</a></h3>
+
+    <ul>
+      <li><strong><code>error NETSDK1100: To build a project targeting Windows…</code></strong> on any solution-level <code>dotnet</code> command → add <code>-p:EnableWindowsTargeting=true</code> (the Desktop csproj lists its Windows TFM unconditionally; the flag lets macOS restore it without building it).</li>
+      <li><strong><code>error NU1101: Unable to find package TechieRag</code></strong> → <code>nuget.config</code> is missing or its PAT is invalid (one-time setup step 1). TrBlazeUI resolves from <code>~/LocalNuGet</code> even without it; TechieRag does not.</li>
+      <li><strong><code>error NETSDK1082: no runtime pack for Microsoft.AspNetCore.App … maccatalyst-arm64</code></strong> → that's TR-011 (library defect, see above), <strong>not</strong> a problem with your Mac, Xcode, or workloads.</li>
+      <li><strong><code>xcodebuild … requires Xcode</code></strong> / Catalyst build can't find Apple SDKs → full Xcode isn't installed or <code>xcode-select</code> still points at the Command Line Tools (one-time setup step 5).</li>
+      <li><strong>Login returns HTTP 500 / <code>UPSTREAM_ERROR</code></strong> → same as the Windows note in Troubleshooting startup: check the AppManager container's <code>/keys</code> volume is writable.</li>
+    </ul>
 
     <h2 id="troubleshooting-startup">Troubleshooting startup<a class="anchor-link" href="#troubleshooting-startup">#</a></h2>
 
@@ -495,16 +554,16 @@ dotnet build src/TrStudio.Desktop -f net10.0-windows10.0.19041.0   # then run th
 
     <h2 id="smoke-checklist-quick-capability-pass">Smoke checklist (quick capability pass)<a class="anchor-link" href="#smoke-checklist-quick-capability-pass">#</a></h2>
 
-    <ul style="list-style:none;padding-left:4px">
-      <li><input type="checkbox" disabled> Log in (or <code>/dev/session</code>) and confirm each role lands on its default page (BRD-84); fresh install routes to setup / Setup-required (BRD-85)</li>
-      <li><input type="checkbox" disabled> Admin: hardware readiness summary renders from live host capabilities</li>
-      <li><input type="checkbox" disabled> Creator: generate + reproduce one image (byte-identical from the same seed)</li>
-      <li><input type="checkbox" disabled> Creator: generate EN and HI speech; real-person voice clone is consent-gated</li>
-      <li><input type="checkbox" disabled> Owner: one talking-avatar spec routes across Fast / High / Premium</li>
-      <li><input type="checkbox" disabled> Admin: import a ComfyUI workflow, save-as-model (graph hidden), sandbox gate blocks go-live before smoke</li>
-      <li><input type="checkbox" disabled> A safety block fires (CSAM/NCII → 403 before enqueue) and every job is in the audit trail; provenance present on an export</li>
-      <li><input type="checkbox" disabled> Prompt Studio: pick a text-chat LLM, get a crafted prompt back, Copy / Save-to-Library / Send-to-Studio work; attaching an image to a text-only model is blocked</li>
-      <li><input type="checkbox" disabled> Per-user isolation: a second user cannot see or fetch the first user's assets</li>
+    <ul>
+      <li>☐ Log in (or <code>/dev/session</code>) and confirm each role lands on its default page (BRD-84); fresh install routes to setup / Setup-required (BRD-85)</li>
+      <li>☐ Admin: hardware readiness summary renders from live host capabilities</li>
+      <li>☐ Creator: generate + reproduce one image (byte-identical from the same seed)</li>
+      <li>☐ Creator: generate EN and HI speech; real-person voice clone is consent-gated</li>
+      <li>☐ Owner: one talking-avatar spec routes across Fast / High / Premium</li>
+      <li>☐ Admin: import a ComfyUI workflow, save-as-model (graph hidden), sandbox gate blocks go-live before smoke</li>
+      <li>☐ A safety block fires (CSAM/NCII → 403 before enqueue) and every job is in the audit trail; provenance present on an export</li>
+      <li>☐ Prompt Studio: pick a text-chat LLM, get a crafted prompt back, Copy / Save-to-Library / Send-to-Studio work; attaching an image to a text-only model is blocked</li>
+      <li>☐ Per-user isolation: a second user cannot see or fetch the first user's assets</li>
     </ul>
 
     <h2 id="known-limitations">Known limitations<a class="anchor-link" href="#known-limitations">#</a></h2>
@@ -514,8 +573,8 @@ dotnet build src/TrStudio.Desktop -f net10.0-windows10.0.19041.0   # then run th
       <li><strong>Model/service-gated execution (Implemented/PARTIAL, degrade cleanly):</strong> real ONNX image pixels + guided-setup provisioning (FN-009/010/011/019/021); voice synthesis (FN-031/033/034/035); lip-sync/HeyGen (FN-037/038); ComfyUI live run + WS previews (FN-045/046/047); video generation/interpolation/upscale (FN-051/053); real ffmpeg export (FN-054); RunPod cold-start (FN-028); TechieRag LLM for script/captions (RAG-001/002) and Prompt Studio chat completion (RAG-005 — set <code>TechieRag:Llm:Source</code> + endpoint/key, or add a real key to a <code>/admin/registry</code> text-chat row). Each needs its model/key/service supplied — no rebuild.</li>
       <li><strong>DPDP residency + retention config</strong> (NFR-010) are deployment config, not code.</li>
       <li><strong>Deferred (Could, behind MVP):</strong> digital-twin (FN-041), multi-shot (FN-042), clip extension (FN-055), webhooks (FN-070), MCP server (FN-071).</li>
-      <li><strong>Library gaps:</strong> TrBlazeUI TR-001..010 (3 major, 6 minor, 1 nice-to-have — see <code>docs/TrStudio-TrBlazeUI-Feedback.md</code>); TechieRag 1 major + 3 minor — TR-RAG-001 = no native image/multimodal seam at 1.0.5, blocks the Prompt Studio vision path through the library (see <code>docs/TrStudio-TechieRag-Feedback.md</code>). All worked around.</li>
-      <li><strong>MAUI desktop head now shipped</strong> — <code>src/TrStudio.Desktop</code> (MAUI Blazor Hybrid, Windows + macOS) hosts the unified app as a desktop delivery (Windows head verified; Mac head build-only, needs a Mac). The web delivery remains <code>src/TrStudio</code> (Blazor Web, <code>net10.0</code>).</li>
+      <li><strong>Library gaps:</strong> TrBlazeUI TR-001..011 (<strong>1 blocker — TR-011, Mac Catalyst head unbuildable</strong>, 3 major, 6 minor, 1 nice-to-have — see <code>docs/TrStudio-TrBlazeUI-Feedback.md</code>); TechieRag 1 major + 3 minor — TR-RAG-001 = no native image/multimodal seam at 1.0.5, blocks the Prompt Studio vision path through the library (see <code>docs/TrStudio-TechieRag-Feedback.md</code>). All worked around except TR-011.</li>
+      <li><strong>MAUI desktop head</strong> — <code>src/TrStudio.Desktop</code> (MAUI Blazor Hybrid, Windows + macOS) hosts the unified app as a desktop delivery. Windows head run-verified. <strong>Mac Catalyst head: the first build attempt on a real Mac (2026-07-12) failed with <code>NETSDK1082</code> — TrBlazeUI 1.0.7's <code>Microsoft.AspNetCore.App</code> FrameworkReference has no maccatalyst runtime pack (TR-011); the earlier from-Windows "build-verified" claim never reached runtime-pack resolution and is withdrawn.</strong> The web delivery (<code>src/TrStudio</code>, Blazor Web, <code>net10.0</code>) runs fine on the Mac and is feature-identical.</li>
     </ul>
 
   </main>

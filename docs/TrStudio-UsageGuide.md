@@ -187,9 +187,11 @@ One subsection per screen, in navigation order. Each names the test user, the st
 
 ## Prerequisites
 
-- .NET 10 SDK
-- **Docker Desktop running**, with the two dependency containers up (see step 1 below) — PostgreSQL + PgVector **and** AppManager both run as Docker containers in dev. **If they are not running, the app cannot reach its database or identity service and startup/login will fail** (this is the usual cause of "can't connect" / "Docker" errors during UAT).
-- GitHub PAT (`read:packages`) for the TechieRag NuGet feed (see `nuget.config`)
+- .NET 10 SDK (+ the **.NET MAUI workload** if you run the desktop head — `dotnet workload list` should show `maui`)
+- **A container runtime running** (Docker Desktop on Windows; Docker Desktop or OrbStack on the Mac), with the two dependency containers up (see the platform run sections below) — PostgreSQL + PgVector **and** AppManager both run as containers in dev. **If they are not running, the app cannot reach its database or identity service and startup/login will fail** (this is the usual cause of "can't connect" / "Docker" errors during UAT).
+- **The two gitignored secrets files** — these do **NOT** travel with a copy of the source tree; recreate them on every new machine (this bit the 2026-07-12 Windows→Mac move):
+  - `nuget.config` (repo root) ← copy `nuget.config.template` and fill in your GitHub username + PAT (`read:packages`) for the private TrBlazeUI/TechieRag feed. Without it `dotnet restore` fails with `NU1101: Unable to find package TechieRag`.
+  - `src/TrStudioApi/appsettings.json` ← copy `src/TrStudioApi/appsettings.template.json` and fill in the DB connection string + the `AppManager` block (ApplicationId 4, ApiKey / ApiSecret / JwtSigningKey). Without it the API can't reach Postgres or AppManager.
 
 ## Which projects to run (this is a multi-project solution)
 
@@ -208,7 +210,7 @@ One subsection per screen, in navigation order. Each names the test user, the st
 
 > **Web vs. desktop delivery.** The **web** delivery is **`TrStudio`** (Blazor Web, `net10.0`, http://localhost:5099). The **desktop** delivery is **`TrStudio.Desktop`** (MAUI Blazor Hybrid, Windows + macOS — TFMs `net10.0-windows10.0.19041.0` / `net10.0-maccatalyst`), hosting the same unified app. **Start `TrStudioApi` first either way** — it must be listening before the app makes its first call.
 
-## How to run — Visual Studio (recommended for UAT)
+## How to run — Windows · Visual Studio (recommended for UAT on Windows)
 
 1. **Start the dependency containers** (Docker Desktop must be running), then confirm both are up:
    ```powershell
@@ -220,7 +222,7 @@ One subsection per screen, in navigation order. Each names the test user, the st
 3. Press **F5** (or Ctrl+F5). Two console/app windows come up; wait for the API console to log `Now listening on: http://localhost:5102` and `Application started`.
 4. Open **http://localhost:5099** — the ONE unified app (creator studios + role-gated management surface). Log in as a Test user, or use the **`/dev/session`** seam (`http://localhost:5099/dev/session`) until AppManager app 4 is published.
 
-## How to run — command line (alternative)
+## How to run — Windows · command line (alternative)
 
 ```powershell
 docker start WinPgVectorDb appmanager-api        # 1. dependencies up first
@@ -233,6 +235,66 @@ dotnet run --project src/TrStudio      --urls http://localhost:5099
 dotnet build src/TrStudio.Desktop -f net10.0-windows10.0.19041.0   # then run the produced app
 ```
 Then open `http://localhost:5099` (or `/dev/session`).
+
+## How to run — macOS (Apple Silicon) — *added 2026-07-12 after the code moved to the Mac*
+
+> **Mac environment check, 2026-07-12:** .NET SDK 10.0.301 ✅ · MAUI workload 10.0.20 ✅ · TrBlazeUI 1.0.7 present in the `~/LocalNuGet` folder feed ✅ · Homebrew ✅. **Missing at that check:** the two gitignored secrets files (they stayed on the Windows machine — see Prerequisites), any container runtime (no `docker` CLI → no PgVector / AppManager containers), and full Xcode (only Command Line Tools). Work through the one-time setup below in order; afterwards the run steps are two commands.
+
+### One-time setup (new Mac)
+
+1. **Secrets** (gitignored — recreate; see Prerequisites):
+   ```bash
+   cp nuget.config.template nuget.config
+   cp src/TrStudioApi/appsettings.template.json src/TrStudioApi/appsettings.json
+   ```
+   Fill both in with the real values from the Windows machine's copies of the same two files (or mint fresh ones: a GitHub PAT with `read:packages`; the AppManager application-4 ApiKey/ApiSecret/JwtSigningKey from the AppManager admin).
+2. **Container runtime** — install Docker Desktop for Mac or OrbStack (`brew install --cask docker` or `brew install --cask orbstack`), and start it.
+3. **PostgreSQL + PgVector container** (the Mac twin of Windows' `WinPgVectorDb`):
+   ```bash
+   docker run -d --name MacPgVectorDb -p 5432:5432 \
+     -e POSTGRES_USER=<user> -e POSTGRES_PASSWORD=<password> -e POSTGRES_DB=trstudio \
+     -v macpgvector-data:/var/lib/postgresql/data \
+     pgvector/pgvector:pg16
+   ```
+   `<user>`/`<password>` must match `ConnectionStrings:Default` in the `appsettings.json` you created in step 1. DbUp creates the schema on first API start.
+4. **AppManager container** — the image is the owner's own build; bring it over from the Windows box (`docker save`/`docker load`, or pull from your registry) and run it as `appmanager-api` on **:5101** — **with its `/keys` volume writable** (the 2026-07-07 incident: an unwritable `/keys` → `RsaEncryptionService` can't persist its RSA key → every login is HTTP 500).
+5. **(Desktop head only) Full Xcode** — the MAUI Mac Catalyst build needs Xcode.app; the Command Line Tools alone are **not** enough (`xcode-select -p` must point at `/Applications/Xcode.app/Contents/Developer`, not `/Library/Developer/CommandLineTools`). Install Xcode from the App Store, then `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer` and accept the licence.
+
+> There is no Visual Studio on the Mac (VS for Mac is retired) — use the CLI below, VS Code, or Rider.
+
+### Run the web app (Mac CLI — the working UAT path on the Mac)
+
+```bash
+docker start MacPgVectorDb appmanager-api                      # 1. dependencies up first
+dotnet restore TrStudio.slnx -p:EnableWindowsTargeting=true    # flag needed: the Desktop head also targets Windows
+# two terminals — API FIRST, wait for "Application started", then the unified web app:
+dotnet run --project src/TrStudioApi   --urls http://localhost:5102
+dotnet run --project src/TrStudio      --urls http://localhost:5099
+```
+Then open `http://localhost:5099` (or `/dev/session` for role-switching smokes). Everything above this section — test users, landings, the screen-by-screen plan, ports — is platform-independent and applies unchanged.
+
+### Run the MAUI desktop head (Mac Catalyst)
+
+> ⚠ **Currently blocked by TrBlazeUI 1.0.7 — TR-011 (logged 2026-07-12).** All three TrBlazeUI packages ship a `Microsoft.AspNetCore.App` FrameworkReference, and no ASP.NET Core runtime pack exists for `maccatalyst-arm64`, so the Catalyst build fails with `NETSDK1082` on any Mac — regardless of Xcode or workloads. (The Windows desktop head and the web head are unaffected.) The fix belongs in TrBlazeUI (swap the FrameworkReference for a `Microsoft.AspNetCore.Components.Web` PackageReference and re-pack); see `docs/TrStudio-TrBlazeUI-Feedback.md` TR-011. Until then, use the web app above — it is feature-identical (same `TrStudioUI` RCL).
+
+Once TR-011 is fixed (and one-time setup steps 2–5 are done):
+
+```bash
+# the desktop head does NOT reference TechieRag, so it builds even without the PAT —
+# but the API it talks to does need the PAT + secrets, so finish one-time setup first
+dotnet build src/TrStudio.Desktop -f net10.0-maccatalyst -c Release -p:EnableWindowsTargeting=true
+open src/TrStudio.Desktop/bin/Release/net10.0-maccatalyst/maccatalyst-arm64/TrStudio.app
+```
+
+Start `TrStudioApi` first (the desktop head defaults to `http://localhost:5102`); point it elsewhere with `TrStudioApiBaseUrl=http://<host>:5102`. Ad-hoc signing is fine for personal use — allow the unsigned app once via System Settings → Privacy & Security if Gatekeeper complains.
+
+### Mac troubleshooting
+
+- **`error NETSDK1100: To build a project targeting Windows…`** on any solution-level `dotnet` command → add `-p:EnableWindowsTargeting=true` (the Desktop csproj lists its Windows TFM unconditionally; the flag lets macOS restore it without building it).
+- **`error NU1101: Unable to find package TechieRag`** → `nuget.config` is missing or its PAT is invalid (one-time setup step 1). TrBlazeUI resolves from `~/LocalNuGet` even without it; TechieRag does not.
+- **`error NETSDK1082: no runtime pack for Microsoft.AspNetCore.App … maccatalyst-arm64`** → that's TR-011 (library defect, see above), **not** a problem with your Mac, Xcode, or workloads.
+- **`xcodebuild … requires Xcode`** / Catalyst build can't find Apple SDKs → full Xcode isn't installed or `xcode-select` still points at the Command Line Tools (one-time setup step 5).
+- **Login returns HTTP 500 / `UPSTREAM_ERROR`** → same as the Windows note in Troubleshooting startup: check the AppManager container's `/keys` volume is writable.
 
 ## Troubleshooting startup
 
@@ -266,5 +328,5 @@ dotnet test
 - **Model/service-gated execution (Implemented/PARTIAL, degrade cleanly):** real ONNX image pixels + guided-setup provisioning (FN-009/010/011/019/021); voice synthesis (FN-031/033/034/035); lip-sync/HeyGen (FN-037/038); ComfyUI live run + WS previews (FN-045/046/047); video generation/interpolation/upscale (FN-051/053); real ffmpeg export (FN-054); RunPod cold-start (FN-028); TechieRag LLM for script/captions (RAG-001/002) and Prompt Studio chat completion (RAG-005 — set `TechieRag:Llm:Source` + endpoint/key, or add a real key to a `/admin/registry` text-chat row). Each needs its model/key/service supplied — no rebuild.
 - **DPDP residency + retention config** (NFR-010) are deployment config, not code.
 - **Deferred (Could, behind MVP):** digital-twin (FN-041), multi-shot (FN-042), clip extension (FN-055), webhooks (FN-070), MCP server (FN-071).
-- **Library gaps:** TrBlazeUI TR-001..010 (3 major, 6 minor, 1 nice-to-have — see `docs/TrStudio-TrBlazeUI-Feedback.md`); TechieRag 1 major + 3 minor — TR-RAG-001 = no native image/multimodal seam at 1.0.5, blocks the Prompt Studio vision path through the library (see `docs/TrStudio-TechieRag-Feedback.md`). All worked around.
-- **MAUI desktop head now shipped** — `src/TrStudio.Desktop` (MAUI Blazor Hybrid, Windows + macOS) hosts the unified app as a desktop delivery (Windows head verified; Mac head build-only, needs a Mac). The web delivery remains `src/TrStudio` (Blazor Web, `net10.0`).
+- **Library gaps:** TrBlazeUI TR-001..011 (**1 blocker — TR-011, Mac Catalyst head unbuildable**, 3 major, 6 minor, 1 nice-to-have — see `docs/TrStudio-TrBlazeUI-Feedback.md`); TechieRag 1 major + 3 minor — TR-RAG-001 = no native image/multimodal seam at 1.0.5, blocks the Prompt Studio vision path through the library (see `docs/TrStudio-TechieRag-Feedback.md`). All worked around except TR-011.
+- **MAUI desktop head** — `src/TrStudio.Desktop` (MAUI Blazor Hybrid, Windows + macOS) hosts the unified app as a desktop delivery. Windows head run-verified. **Mac Catalyst head: the first build attempt on a real Mac (2026-07-12) failed with `NETSDK1082` — TrBlazeUI 1.0.7's `Microsoft.AspNetCore.App` FrameworkReference has no maccatalyst runtime pack (TR-011); the earlier from-Windows "build-verified" claim never reached runtime-pack resolution and is withdrawn.** The web delivery (`src/TrStudio`, Blazor Web, `net10.0`) runs fine on the Mac and is feature-identical.

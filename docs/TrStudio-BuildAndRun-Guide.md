@@ -70,13 +70,17 @@ Set `ASPNETCORE_URLS=http://localhost:5099` (etc.) before launching if a port ne
 
 ### Option A — native Mac desktop app (Catalyst, built on the Mac)
 
-**Prerequisites** (TrSetup's Mac roles install all of these): Xcode with licence accepted, .NET 10 SDK, `sudo dotnet workload install maui`, git, and the TechieRag feed PAT (comes with the source checkout's `nuget.config`).
+> ⚠ **BLOCKED as of 2026-07-12 by TrBlazeUI 1.0.7 (TR-011).** The first build attempt on a real Mac failed with `NETSDK1082`: all three TrBlazeUI packages carry a `Microsoft.AspNetCore.App` FrameworkReference, and no ASP.NET Core runtime pack exists for `maccatalyst-arm64`. This blocks the Catalyst `.app` on any Mac regardless of Xcode/workloads (the Windows head is unaffected — Windows runtime packs exist). Fix belongs in TrBlazeUI — see `docs/TrStudio-TrBlazeUI-Feedback.md` TR-011. Until it ships, use Option B (the web head in a browser is feature-identical).
+
+**Prerequisites** (TrSetup's Mac roles install all of these): **full Xcode** with licence accepted (Command Line Tools alone are not enough), .NET 10 SDK, `sudo dotnet workload install maui`, git, and the TechieRag feed PAT (`nuget.config` is **gitignored** — it does *not* come with a copy of the source tree; recreate it from `nuget.config.template`. Note the Desktop head itself doesn't reference TechieRag, so it builds without the PAT — the API does need it).
 
 ```bash
 git clone <TrStudio repo> && cd TrStudio     # or copy the source tree over the LAN (exclude bin/, obj/)
-dotnet build src/TrStudio.Desktop -f net10.0-maccatalyst -c Release
+dotnet build src/TrStudio.Desktop -f net10.0-maccatalyst -c Release -p:EnableWindowsTargeting=true
 open src/TrStudio.Desktop/bin/Release/net10.0-maccatalyst/maccatalyst-arm64/TrStudio.app
 ```
+
+(`-p:EnableWindowsTargeting=true` is required on macOS for **any** command that restores the Desktop project or the solution — its Windows TFM is listed unconditionally and macOS refuses to restore it without the flag, `NETSDK1100`.)
 
 Ad-hoc signing is fine for personal use. The desktop head still needs `TrStudioApi` running somewhere — either the Option B copied binary on the same Mac (default `http://localhost:5102` just works), or point it elsewhere:
 
@@ -115,4 +119,4 @@ The Mac **is** the natural TrStudio host (capability detection targets Apple Sil
 Once TrSetup P3 ships, §4 collapses to: *run TrSetup on the Mac → role "App runner" → app "TrStudio" → Fix all*, and the Option A toolchain (§3) is one more Fix click. This guide stays as the manual reference.
 
 ---
-*Created 2026-07-05; rewritten 2026-07-06 for the unified role-based app (ADR-012): `TrStudio.Desktop` MAUI head added, `TrStudioAdmin` head retired, API moved to :5102. Ports from each head's `launchSettings.json` + `TrStudio.Desktop/MauiProgram.cs`. Clarified 2026-07-10: the plain-.NET-only scope of the `-r osx-arm64` cross-publish made explicit (§ intro + §3 Option B) — the MAUI head is never cross-published; its Mac `.app` is Option A on the Mac. Stale pointer to the (since rewritten) TrSetup guide §1b removed.*
+*Created 2026-07-05; rewritten 2026-07-06 for the unified role-based app (ADR-012): `TrStudio.Desktop` MAUI head added, `TrStudioAdmin` head retired, API moved to :5102. Ports from each head's `launchSettings.json` + `TrStudio.Desktop/MauiProgram.cs`. Clarified 2026-07-10: the plain-.NET-only scope of the `-r osx-arm64` cross-publish made explicit (§ intro + §3 Option B) — the MAUI head is never cross-published; its Mac `.app` is Option A on the Mac. Stale pointer to the (since rewritten) TrSetup guide §1b removed. Updated 2026-07-12 after the source moved to the Mac: Option A marked BLOCKED by TrBlazeUI 1.0.7 TR-011 (`NETSDK1082`, no maccatalyst runtime pack for its `Microsoft.AspNetCore.App` FrameworkReference), `-p:EnableWindowsTargeting=true` added to the Mac commands, and the gitignored-secrets caveat (`nuget.config`, `appsettings.json`) called out. Full Mac dev-run steps: `docs/TrStudio-UsageGuide.md` §How to run — macOS.*

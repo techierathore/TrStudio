@@ -1,11 +1,11 @@
 ---
 project: TrStudio
 stack: .NET 10 / Blazor Web + MAUI Blazor Hybrid / TrBlazeUI / TechieRag / PostgreSQL+PgVector / Dapper + DbUp / Hangfire / AppManager (external identity)
-last_updated: 2026-07-07
+last_updated: 2026-07-12
 current_phase: Handoff — all P1–P10 built + verified; handoff docs finalized (UsageGuide + DevGuide incl. Prompt Studio); awaiting manual UAT (owner sets Released after UAT)
 last_verified_build: PASS
 last_verified_date: 2026-07-07
-last_test_run: 260 tests PASS (259 unit + 1 SignalR integration) — re-run live 2026-07-07 (+29 vs 231; incl. 25 Phase-10)
+last_test_run: 260 tests PASS — re-run on the Mac 2026-07-12 (unit suite, fresh Mac build; previous live run 2026-07-07)
 ---
 
 # TrStudio — Status
@@ -19,7 +19,7 @@ last_test_run: 260 tests PASS (259 unit + 1 SignalR integration) — re-run live
 
 ## Next command to run
 ```
-Manual UAT per docs/TrStudio-UsageGuide.md smoke checklist.
+Mac one-time setup per docs/TrStudio-UsageGuide.md §How to run — macOS (secrets + containers), then Manual UAT per the UsageGuide smoke checklist (web head).
 ```
 Handoff is complete — all buildable REQs (incl. Phase 10 Prompt Studio) are built + verified; handoff docs are finalized (UsageGuide test-plan incl. Prompt Studio, DevGuide 16-Creator-screen map incl. `/prompt-studio`, both library-feedback files consolidated). The only non-Verified rows are external-dependency-gated (Blocked/PARTIAL/Implemented — all degrade cleanly) or deferred-Could/cross-cutting NFR — nothing left to build. **After UAT passes, manually set `current_phase: Released`.** To lift the 3 Blocked: publish AppManager app 4, then `/TechieFlow:agents:verifier *verify FN-012,FN-013,FN-014,FN-015,FN-016`. To light up RAG-005's live LLM path: set `TechieRag:Llm:Source` (+ endpoint/key) or add a real key to a `/admin/registry` text-chat row. For an external end-user manual: `*productguide TrStudio`.
 
@@ -31,6 +31,8 @@ Handoff is complete — all buildable REQs (incl. Phase 10 Prompt Studio) are bu
 - [ ] **Not Started (11)** — cross-cutting NFR-001/002/004/005/006/009 + deferred-`Could` FN-041/042/055/070/071 (behind MVP).
 
 ## Known blockers
+- **Windows→Mac move (2026-07-12) — new-machine environment gaps, not code defects.** The source tree moved to the owner's Mac (`/Volumes/MacD/MyCode/TrStudio`). Present: .NET SDK 10.0.301 + MAUI workload 10.0.20 + TrBlazeUI 1.0.7 in `~/LocalNuGet`. **Progress same day:** the owner supplied `nuget.config` (PAT) → restore green (TechieRag 1.0.5 resolves), **web stack builds 0 err on the Mac** (Api/TrStudio/Engine/Models/UI/Db + both test projects; only the Desktop head's 2 TFMs fail — Catalyst TR-011 + Windows head not buildable on macOS by nature) and **260/260 unit tests PASS on the Mac**. Still missing to RUN: **(a)** `src/TrStudioApi/appsettings.json` (DB conn string + AppManager keys — copy from `appsettings.template.json`); **(b)** a container runtime — no `docker` CLI, so no PgVector DB / `appmanager-api` containers exist on the Mac yet; **(c)** full Xcode (only Command Line Tools; only matters for the Catalyst head once TR-011 is fixed). One-time setup steps: UsageGuide §How to run — macOS.
+- **TrBlazeUI 1.0.7 TR-011 (2026-07-12) — Mac Catalyst desktop head unbuildable.** First build attempt on a real Mac: `dotnet build src/TrStudio.Desktop -f net10.0-maccatalyst` → `NETSDK1082` — all three TrBlazeUI packages carry a `Microsoft.AspNetCore.App` FrameworkReference and no maccatalyst runtime pack exists. Library-side fix required (re-pack with a `Microsoft.AspNetCore.Components.Web` PackageReference). The 2026-07-05 from-Windows "Mac Catalyst compile 0/0" claim never reached runtime-pack resolution — **withdrawn**. Windows head + web head unaffected; the web head is the Mac delivery until TrBlazeUI ships a fix. Logged as TR-011 in docs/TrStudio-TrBlazeUI-Feedback.md.
 - **✅ AppManager auth — RESOLVED + VERIFIED LIVE 2026-07-07.** The `/AuthSvc/*` HTTP 500 (root cause: `System.UnauthorizedAccessException: Access to the path '/keys/rsa-private.pem' is denied` — `RsaEncryptionService` couldn't write its RSA key) was fixed by the owner (made `/keys` writable + restarted `appmanager-api`; its log now shows "generated a 2048-bit keypair and persisted it to /keys/rsa-private.pem"). Re-verified end-to-end: login `admin@appmanager.local`/`Admin@123!` → 200+JWT (Owner); `/auth/me` → 200; `/license` → 200 (`/LicenseSvc/validate`, no license assigned = clean data state); `/register` → created `creator@trstudio.test` (Creator, role 1) → 200, re-login → 200. **FN-012/013/015 + FN-016 Verified.** Only remaining external item: assign a **Premium license** in AppManager to fully exercise Premium tier-gating (FN-014, still PARTIAL).
 - **RunPod API key** (`RunPod:ApiKey`/`EndpointId` empty) — live serverless cold-start / scale-to-zero (FN-028 High tier). Degrades to "not configured".
 - **Real models + host tooling** — ONNX image model (FN-019/021), voice/lip-sync/video models, real detection models (SAFE floors are fail-closed pluggable), a live `ComfyUI:BaseUrl`, HeyGen key (Premium), and ffmpeg on host (FN-054 real export). Synthetic/graceful paths + API contracts are verified.
@@ -62,14 +64,14 @@ Handoff is complete — all buildable REQs (incl. Phase 10 Prompt Studio) are bu
 | 2026-07-07 | verify FN-012,FN-013,FN-015 (+FN-016/014) — live AppManager after owner fixed `/keys` | **3 Blocked → Verified, 0 regressions** · owner fixed AppManager `/keys` RSA-key permission + restarted (log: keypair persisted) · live API :5102 → AppManager :5101: **login** `admin@appmanager.local` → 200+JWT (Owner role 0, landing `/avatar`); **/auth/me** → 200 (`/AuthSvc/validate`); **/license** → 200 (`/LicenseSvc/validate`, no-license clean state); **/register** `creator@trstudio.test` → 200 (Creator role 1) + re-login 200 → **FN-012/013/015 Verified**, **FN-016** login-driven landing Verified, **FN-014** role-resolution now live (Premium tier-gate still needs a license). New tally **82 Verified / 17 Implemented / 4 PARTIAL / 0 Blocked / 11 Not-Started**. | docs/TrStudio-Checklist.md#requirements-status |
 
 ## Library feedback summary
-- TrBlazeUI: **3 major, 5 minor, 1 nice-to-have** (TR-001..009) — docs/TrStudio-TrBlazeUI-Feedback.md (attribute-splat on DataTable/Alert/Checkbox/Switch; FileUpload `FilesChanged` vs documented `OnFilesSelected`; Icon-slot/Empty/Pagination doc gaps).
+- TrBlazeUI: **1 blocker, 3 major, 6 minor, 1 nice-to-have** (TR-001..011) — docs/TrStudio-TrBlazeUI-Feedback.md (**TR-011 blocker 2026-07-12: packages' `Microsoft.AspNetCore.App` FrameworkReference → Mac Catalyst head unbuildable, NETSDK1082**; attribute-splat on DataTable/Alert/Checkbox/Switch; FileUpload `FilesChanged` vs documented `OnFilesSelected`; Icon-slot/Empty/Pagination doc gaps; DataTable narrow-viewport min-content TR-010).
 - TechieRag: **1 major + 3 minor** — docs/TrStudio-TechieRag-Feedback.md (**TR-RAG-001 major: no image/multimodal seam at 1.0.5** — `ChatMessage.Content` is a plain string, blocks native vision for Prompt Studio; worked around with a best-effort OpenAI-compatible multimodal HTTP POST + clean degrade; plus metadata dict type, no server-side metadata/tenant filter on Search, no typed "embeddings unavailable" signal). All worked around; PgVector + RAG + prompt-chat paths functional.
 
 ## Standards compliance (last verifier check)
 - Underscore fields: clean (verifier grep 2026-07-03) · Test-method underscores: clean · `obj`/`a`/`v` prefixes consistent across audited engine + endpoint + UI files.
 
 ## Deferred / future
-- Mac Catalyst desktop head is build-verified only (no Mac in env) — run-verify on a Mac per docs/TrStudio-BuildAndRun-Guide.md.
+- Mac Catalyst desktop head: **blocked by TrBlazeUI TR-011** (2026-07-12, see Known blockers — the earlier "build-verified from Windows" claim is withdrawn); run-verify on the Mac once TrBlazeUI ships the fix, per docs/TrStudio-BuildAndRun-Guide.md §3 Option A.
 - SaaS/multi-tenant tiers, MCP server (FN-071), webhooks (FN-070), digital-twin (FN-041), multi-shot (FN-042), clip extension (FN-055) — `Could`, deferred behind MVP.
 - Cross-cutting NFR-001/002/004/005/006/009 (perf/scale/reliability/security/privacy/extensibility) not yet formally verified as standalone REQs (properties exercised throughout the build).
 
