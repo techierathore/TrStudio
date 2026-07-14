@@ -130,7 +130,7 @@
                 if (vSession is not null)
                 {
                     // Persist the session BEFORE navigating so the next circuit's API calls carry it.
-                    await AuthSession.SetAsync(vSession);
+                    await AuthSession.SetAsync(vSession, objEmail);
                 }
 
                 Navigation.NavigateTo(ResolveLanding(vSession));

@@ -123,7 +123,11 @@ a.bg-primary:hover {
 
 /* ---- Bare (auth) layout ---- */
 .auth-shell {
-  min-height: 100vh;
+  /* --tr-zoom is set by the Mac Catalyst zoom controller (WebViewZoom) to the active CSS `zoom`
+     factor. CSS `zoom` scales this full-height box too, so a plain 100vh renders taller than the
+     window and pushes the centered card below the fold. Dividing by the zoom keeps the shell exactly
+     one viewport tall. On the web head (and Catalyst at 1×) --tr-zoom is unset → 100vh, unchanged. */
+  min-height: calc(100vh / var(--tr-zoom, 1));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -244,6 +248,8 @@ h1:focus {
 .auth-card {
   width: 100%;
   max-width: 392px;
+  /* Mockup .authcard padding (login.html) — without it the fields sit flush against the card edge. */
+  padding: 28px 26px 24px;
 }
 
 .auth-brand {

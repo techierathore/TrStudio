@@ -13,9 +13,13 @@ namespace TrStudioUI.Auth;
 /// <param name="UserId">The AppManager user id — TrStudio's ownership reference.</param>
 /// <param name="Role">The application role resolved for the signed-in user.</param>
 /// <param name="DefaultLandingPath">The setup-gate-aware landing path chosen at sign-in.</param>
+/// <param name="Email">The sign-in email, kept only to identify the session in the shell chip
+/// (the login API returns no profile fields; optional so persisted pre-Email sessions and the
+/// dev seams deserialize/compile unchanged).</param>
 public sealed record AuthSessionState(
     string Token,
     string RefreshToken,
     string UserId,
     UserRole Role,
-    string DefaultLandingPath);
+    string DefaultLandingPath,
+    string? Email = null);

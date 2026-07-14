@@ -10,8 +10,10 @@
     license/tier Card (from LicenseSvc, with an upgrade CTA when gated or degraded to "unavailable").
     Three spend KPI Cards use Progress bars — RunPod GPU, closed-API and total-vs-cap — turning warn
     then danger as spend crosses the cap. A recent-usage DataTable (All/Images/Video/Voice Tabs)
-    lists billed jobs. Per-user: /api/v1/account is owner-scoped server-side; a representative seed and
-    skeleton KPIs keep the page usable while the Phase-9 endpoint is forming.
+    lists billed jobs. Live-only: the profile reads /api/v1/auth/me, spend + license read the
+    owner-scoped /api/v1/account, the cap reads /api/v1/admin/spend when the caller may (hidden
+    otherwise), and recent jobs read /api/v1/generation-log — no representative seed; an unreachable
+    API raises a warning Alert.
 *@
 
 <PageTitle>TrStudio — Account & spend</PageTitle>
@@ -19,6 +21,17 @@
 <div class="acct-page">
 <h1 class="page-title">Account &amp; spend</h1>
 <p class="page-sub">Profile, subscription and usage — identity and licensing are read-only from AppManager.</p>
+
+@if (objApiDown)
+{
+    <div data-testid="api-down-alert" style="margin-bottom:14px">
+        <Alert Variant="AlertVariant.Warning" AccentBorder="true">
+            <LucideIcon Name="circle-alert" Size="16" />
+            <AlertTitle>Couldn't reach the API — data unavailable</AlertTitle>
+            <AlertDescription>Your account snapshot couldn't be loaded. Check that TrStudioApi is running and reload.</AlertDescription>
+        </Alert>
+    </div>
+}
 
 @* ---- Profile + license ---- *@
 <div class="acct-top" data-testid="account-identity">
@@ -71,7 +84,7 @@
             <div class="flex-between" style="margin-bottom:8px">
                 <div class="flex-col" style="gap:4px">
                     <b style="font-size:15px">@objLicense.Name</b>
-                    <span class="muted">@objLicense.CapLabel · closed-API @(objLicense.ClosedApiEnabled ? "enabled" : "disabled")</span>
+                    <span class="muted">@objLicense.StatusMessage</span>
                 </div>
                 <Badge Class="@(objLicense.Gated ? "badge-warn" : "badge-brand")">@objLicense.TierBadge</Badge>
             </div>
@@ -82,7 +95,7 @@
             }
             else
             {
-                <Button Class="acct-cta" OnClick="Upgrade">Upgrade to Studio (higher cap)</Button>
+                <Button Class="acct-cta" OnClick="Upgrade">Manage subscription in AppManager</Button>
             }
         }
     </Card>
@@ -106,11 +119,11 @@
         <Card>
             <div class="flex-between" style="margin-bottom:6px">
                 <h3 class="card-h3" style="margin:0">RunPod (GPU)</h3>
-                <Badge Variant="BadgeVariant.Outline" Class="badge-ok"><span class="dot ok"></span>on track</Badge>
+                <Badge Variant="BadgeVariant.Outline">serverless GPU jobs</Badge>
             </div>
             <div class="acct-kpi-big">@Money(objSpend.RunPodUsd)</div>
-            <div class="muted-sm" style="margin:4px 0 8px">@Pct(objSpend.RunPodUsd, objSpend.GpuBudgetUsd)% of GPU budget · Wan / FLUX / Hunyuan jobs</div>
-            <Progress Value="@PctValue(objSpend.RunPodUsd, objSpend.GpuBudgetUsd)" Class="h-2" IndicatorClass="acct-ind-ok" />
+            <div class="muted-sm" style="margin:4px 0 8px">@Pct(objSpend.RunPodUsd, objSpend.SpentToDateUsd)% of this month's spend</div>
+            <Progress Value="@PctValue(objSpend.RunPodUsd, objSpend.SpentToDateUsd)" Class="h-2" IndicatorClass="acct-ind-ok" />
         </Card>
         <Card>
             <div class="flex-between" style="margin-bottom:6px">
@@ -118,12 +131,12 @@
                 <Badge Variant="BadgeVariant.Outline">HeyGen + aggregators</Badge>
             </div>
             <div class="acct-kpi-big">@Money(objSpend.ClosedApiUsd)</div>
-            <div class="muted-sm" style="margin:4px 0 8px">@Pct(objSpend.ClosedApiUsd, objSpend.ApiBudgetUsd)% of API budget · Premium-tier renders</div>
-            <Progress Value="@PctValue(objSpend.ClosedApiUsd, objSpend.ApiBudgetUsd)" Class="h-2" IndicatorClass="acct-ind-brand" />
+            <div class="muted-sm" style="margin:4px 0 8px">@Pct(objSpend.ClosedApiUsd, objSpend.SpentToDateUsd)% of this month's spend</div>
+            <Progress Value="@PctValue(objSpend.ClosedApiUsd, objSpend.SpentToDateUsd)" Class="h-2" IndicatorClass="acct-ind-brand" />
         </Card>
         <Card Class="@(objSpend.OverCap ? "acct-kpi-danger" : objSpend.NearCap ? "acct-kpi-warn" : null)">
             <div class="flex-between" style="margin-bottom:6px">
-                <h3 class="card-h3" style="margin:0">Total vs cap</h3>
+                <h3 class="card-h3" style="margin:0">@(objSpend.MonthlyCapUsd > 0 ? "Total vs cap" : "Total this month")</h3>
                 @if (objSpend.OverCap)
                 {
                     <Badge Variant="BadgeVariant.Outline" Class="badge-danger"><span class="dot danger"></span>over cap</Badge>
@@ -132,15 +145,23 @@
                 {
                     <Badge Variant="BadgeVariant.Outline" Class="badge-warn"><span class="dot warn"></span>near cap</Badge>
                 }
-                else
+                else if (objSpend.MonthlyCapUsd > 0)
                 {
                     <Badge Variant="BadgeVariant.Outline" Class="badge-ok"><span class="dot ok"></span>on track</Badge>
                 }
             </div>
-            <div class="acct-kpi-big">@Money(objSpend.SpentToDateUsd) <span class="muted" style="font-size:14px;font-weight:500">/ @Money(objSpend.MonthlyCapUsd)</span></div>
-            <div class="muted-sm" style="margin:4px 0 8px">@Pct(objSpend.SpentToDateUsd, objSpend.MonthlyCapUsd)% of monthly cap</div>
-            <Progress Value="@PctValue(objSpend.SpentToDateUsd, objSpend.MonthlyCapUsd)" Class="h-2"
-                      IndicatorClass="@(objSpend.OverCap ? "acct-ind-danger" : objSpend.NearCap ? "acct-ind-warn" : "acct-ind-ok")" />
+            @if (objSpend.MonthlyCapUsd > 0)
+            {
+                <div class="acct-kpi-big">@Money(objSpend.SpentToDateUsd) <span class="muted" style="font-size:14px;font-weight:500">/ @Money(objSpend.MonthlyCapUsd)</span></div>
+                <div class="muted-sm" style="margin:4px 0 8px">@Pct(objSpend.SpentToDateUsd, objSpend.MonthlyCapUsd)% of monthly cap</div>
+                <Progress Value="@PctValue(objSpend.SpentToDateUsd, objSpend.MonthlyCapUsd)" Class="h-2"
+                          IndicatorClass="@(objSpend.OverCap ? "acct-ind-danger" : objSpend.NearCap ? "acct-ind-warn" : "acct-ind-ok")" />
+            }
+            else
+            {
+                <div class="acct-kpi-big">@Money(objSpend.SpentToDateUsd)</div>
+                <div class="muted-sm" style="margin:4px 0 8px">month-to-date · the instance cap is visible to admins</div>
+            }
         </Card>
     }
 </div>
@@ -222,9 +243,8 @@
 </style>
 
 @code {
-    private const string AccountRoute = "/api/v1/account";
-
     private bool objLoading = true;
+    private bool objApiDown;
     private ProfileView objProfile = ProfileView.Empty;
     private LicenseView objLicense = LicenseView.Empty;
     private SpendView objSpend = SpendView.Empty;
@@ -263,40 +283,69 @@
     }
 
     /// <summary>
-    /// Loads the account snapshot (spend + license + profile). Live values render when the
-    /// authenticated call returns them; a representative seed only stands in when there is no session or
-    /// the call yields nothing — keeping the page usable while the Phase-9 account endpoint is forming.
-    /// The license degrades to an "unavailable" card rather than a blank when LicenseSvc is unreachable.
+    /// Loads the live account snapshot: profile (/auth/me), spend + license (/account), the instance
+    /// cap (/admin/spend — admin-readable only; hidden otherwise) and recent jobs (/generation-log).
+    /// Nothing is seeded — a failed core fetch raises the API-down Alert; the license degrades to an
+    /// "unavailable" card rather than a blank when LicenseSvc is unreachable.
     /// </summary>
     /// <param name="aHasSession">Whether a signed-in session is present.</param>
     private async Task TryLoadAccountAsync(bool aHasSession)
     {
-        if (aHasSession)
+        if (!aHasSession)
         {
-            try
-            {
-                var vClient = HttpClientFactory.CreateClient("TrStudioApi");
-                var vResponse = await vClient.GetFromJsonAsync<AccountResponse>(AccountRoute);
-                if (vResponse is not null)
-                {
-                    objProfile = ProfileView.FromResponse(vResponse.Profile);
-                    objLicense = LicenseView.FromResponse(vResponse.License);
-                    objSpend = SpendView.FromResponse(vResponse.Spend);
-                    objJobs.Clear();
-                    objJobs.AddRange((vResponse.RecentJobs ?? new List<AccountJob>()).Select(UsageRow.FromResponse));
-                    if (objJobs.Count > 0)
-                    {
-                        return;
-                    }
-                }
-            }
-            catch
-            {
-                // Endpoint forming or unreachable — fall through to the representative seed.
-            }
+            return;
         }
 
-        SeedRepresentative();
+        var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+
+        try
+        {
+            var vProfile = await vClient.GetFromJsonAsync<UserProfileResponse>($"{ApiRoutes.Auth}/me");
+            objProfile = ProfileView.FromResponse(vProfile);
+
+            var vSummary = await vClient.GetFromJsonAsync<AccountSummaryResponse>(ApiRoutes.Account);
+            objLicense = LicenseView.FromResponse(vSummary?.License);
+            objSpend = SpendView.FromResponse(vSummary?.Spend, 0m);
+        }
+        catch
+        {
+            // API unreachable — never fake data; the warning Alert renders instead.
+            objApiDown = true;
+            return;
+        }
+
+        // The instance cap lives on the admin spend endpoint; non-admin callers simply don't see it.
+        try
+        {
+            var vCap = await vClient.GetFromJsonAsync<SpendSummaryResponse>(ApiRoutes.Spend);
+            if (vCap is { MonthlyCapUsd: > 0 })
+            {
+                var vOver = objSpend.SpentToDateUsd >= vCap.MonthlyCapUsd;
+                objSpend = objSpend with
+                {
+                    MonthlyCapUsd = vCap.MonthlyCapUsd,
+                    RemainingUsd = Math.Max(0m, vCap.MonthlyCapUsd - objSpend.SpentToDateUsd),
+                    NearCap = !vOver && objSpend.SpentToDateUsd >= vCap.MonthlyCapUsd * 0.8m,
+                    OverCap = vOver,
+                };
+            }
+        }
+        catch
+        {
+            // Cap not readable for this role — the total card renders without a cap bar.
+        }
+
+        try
+        {
+            var vLog = await vClient.GetFromJsonAsync<PagedResult<GenerationLogEntry>>($"{ApiRoutes.GenerationLog}?aPage=1&aPageSize=20");
+            objJobs.Clear();
+            objJobs.AddRange((vLog?.Items ?? Array.Empty<GenerationLogEntry>()).Select(UsageRow.FromLog));
+            objSpend = objSpend with { JobCount = vLog?.TotalCount ?? 0 };
+        }
+        catch
+        {
+            // History unavailable — the table stays honestly empty.
+        }
     }
 
     private void ManageInAppManager()
@@ -314,31 +363,14 @@
     /// <summary>The clamped 0..100 progress value of <paramref name="aValue"/> against <paramref name="aCap"/>.</summary>
     private static double PctValue(decimal aValue, decimal aCap) => Math.Clamp((double)Pct(aValue, aCap), 0, 100);
 
-    private void SeedRepresentative()
-    {
-        objProfile = new ProfileView("Techie Rathore", "techierathore@gmail.com", "usr_8f31c2", "Jan 2026", "TR");
-        objLicense = new LicenseView(true, "Creator Pro", "Pro", "$100 / mo spend cap", true, "Renews 15 Jul 2026", false);
-        objSpend = new SpendView(46.20m, 38.70m, 84.90m, 100.00m, 15.10m, 75.00m, 73.00m, true, false, 142);
-        objJobs.Clear();
-        objJobs.AddRange(new[]
-        {
-            new UsageRow("video", "Diwali avatar intro — Kavya", "Hunyuan-Avatar", "High", "4m 02s", "$0.42", "Completed", true),
-            new UsageRow("video", "Product reel teaser", "HeyGen Avatar IV", "Premium", "2m 11s", "$0.90", "Completed", true),
-            new UsageRow("audio", "Ravi (Hindi) voice-over", "IndicF5", "Fast", "0m 21s", "$0.00", "Completed", true),
-            new UsageRow("image", "Diwali poster v3", "FLUX.1", "High", "0m 48s", "$0.06", "Completed", true),
-            new UsageRow("video", "Lip-sync test — MuseTalk", "MuseTalk", "High", "1m 33s", "$0.14", "Failed (OOM)", false),
-            new UsageRow("image", "Arjun headshot", "SDXL (local)", "Fast", "0m 09s", "$0.00", "Completed", true),
-        });
-    }
-
     /// <summary>The AppManager profile projection shown on the identity card.</summary>
     private sealed record ProfileView(string Name, string Email, string UserId, string Joined, string Initials)
     {
         /// <summary>The empty placeholder used before the snapshot loads.</summary>
-        public static ProfileView Empty { get; } = new("—", "—", "—", "—", "TR");
+        public static ProfileView Empty { get; } = new("—", "—", "—", "—", "?");
 
-        /// <summary>Projects the account endpoint's profile block into the view model.</summary>
-        public static ProfileView FromResponse(AccountProfile? aProfile)
+        /// <summary>Projects the current-user endpoint (<c>GET /api/v1/auth/me</c>) into the view model.</summary>
+        public static ProfileView FromResponse(UserProfileResponse? aProfile)
         {
             if (aProfile is null)
             {
@@ -346,76 +378,89 @@
             }
 
             var vName = $"{aProfile.FirstName} {aProfile.LastName}".Trim();
-            vName = string.IsNullOrWhiteSpace(vName) ? (aProfile.Email ?? "—") : vName;
+            vName = string.IsNullOrWhiteSpace(vName) ? aProfile.Email : vName;
             var vInitials = new string(new[] { aProfile.FirstName, aProfile.LastName }
                 .Where(aPart => !string.IsNullOrEmpty(aPart))
-                .Select(aPart => char.ToUpperInvariant(aPart![0]))
+                .Select(aPart => char.ToUpperInvariant(aPart[0]))
                 .ToArray());
-            return new ProfileView(vName, aProfile.Email ?? "—", aProfile.UserId ?? "—",
-                aProfile.JoinedLabel ?? "—", string.IsNullOrEmpty(vInitials) ? "TR" : vInitials);
+            return new ProfileView(vName, aProfile.Email, aProfile.UserId,
+                "—", string.IsNullOrEmpty(vInitials) ? "?" : vInitials);
         }
     }
 
     /// <summary>The AppManager license projection shown on the license/tier card.</summary>
-    private sealed record LicenseView(bool Available, string Name, string TierBadge, string CapLabel,
-        bool ClosedApiEnabled, string RenewalLabel, bool Gated)
+    private sealed record LicenseView(bool Available, string Name, string TierBadge, string StatusMessage,
+        string RenewalLabel, bool Gated)
     {
         /// <summary>The empty placeholder used before the snapshot loads.</summary>
-        public static LicenseView Empty { get; } = new(true, "—", "—", "—", true, "—", false);
+        public static LicenseView Empty { get; } = new(true, "—", "—", "—", "—", false);
 
-        /// <summary>Projects the account endpoint's license block into the view model.</summary>
+        /// <summary>Projects the account endpoint's license block (AppManager LicenseSvc) into the view model.</summary>
         public static LicenseView FromResponse(AccountLicense? aLicense)
         {
-            if (aLicense is null || !aLicense.Available)
+            if (aLicense is null || !aLicense.Available || aLicense.Status is null)
             {
-                return new LicenseView(false, "Unavailable", "—", "—", false, "—", true);
+                return new LicenseView(false, "Unavailable", "—", aLicense?.Message ?? "—", "—", true);
             }
 
-            return new LicenseView(true, aLicense.Name ?? "Creator", aLicense.Tier ?? "Pro",
-                aLicense.CapLabel ?? "spend cap", aLicense.ClosedApiEnabled,
-                aLicense.RenewalLabel ?? "read-only from AppManager", !aLicense.Valid);
+            var vStatus = aLicense.Status;
+            var vRenewal = vStatus.ExpiryDate is null
+                ? "no expiry on file"
+                : $"expires {vStatus.ExpiryDate:d MMM yyyy}{(vStatus.DaysRemaining is null ? string.Empty : $" ({vStatus.DaysRemaining} days)")}";
+            return new LicenseView(true,
+                vStatus.LicenseName ?? (vStatus.HasLicense ? "Licensed" : "No license"),
+                string.IsNullOrWhiteSpace(vStatus.Status) ? "—" : vStatus.Status,
+                string.IsNullOrWhiteSpace(vStatus.Message) ? "AppManager license" : vStatus.Message,
+                vRenewal, !vStatus.IsValid);
         }
     }
 
-    /// <summary>The month-to-date spend projection driving the three KPI cards.</summary>
+    /// <summary>The month-to-date spend projection driving the three KPI cards (cap 0 = unknown/hidden).</summary>
     private sealed record SpendView(decimal RunPodUsd, decimal ClosedApiUsd, decimal SpentToDateUsd,
-        decimal MonthlyCapUsd, decimal RemainingUsd, decimal GpuBudgetUsd, decimal ApiBudgetUsd,
-        bool NearCap, bool OverCap, int JobCount)
+        decimal MonthlyCapUsd, decimal RemainingUsd, bool NearCap, bool OverCap, int JobCount)
     {
         /// <summary>The empty placeholder used before the snapshot loads.</summary>
-        public static SpendView Empty { get; } = new(0, 0, 0, 100, 100, 75, 75, false, false, 0);
+        public static SpendView Empty { get; } = new(0, 0, 0, 0, 0, false, false, 0);
 
-        /// <summary>Projects the account endpoint's spend block into the view model.</summary>
-        public static SpendView FromResponse(AccountSpend? aSpend)
+        /// <summary>Projects the account endpoint's per-channel spend block into the view model.</summary>
+        /// <param name="aSpend">The caller's month-to-date spend by channel.</param>
+        /// <param name="aCapUsd">The instance monthly cap when known; 0 hides the cap chrome.</param>
+        public static SpendView FromResponse(AccountSpendSummary? aSpend, decimal aCapUsd)
         {
             if (aSpend is null)
             {
                 return Empty;
             }
 
-            var vGpuBudget = aSpend.MonthlyCapUsd * 0.75m;
-            var vApiBudget = aSpend.MonthlyCapUsd * 0.75m;
-            return new SpendView(aSpend.RunPodUsd, aSpend.ClosedApiUsd, aSpend.SpentToDateUsd,
-                aSpend.MonthlyCapUsd, aSpend.RemainingUsd, vGpuBudget, vApiBudget,
-                aSpend.NearCap, aSpend.OverCap, aSpend.JobCount);
+            var vRunPod = ChannelTotal(aSpend, "RunPod");
+            var vClosed = ChannelTotal(aSpend, "ClosedApi");
+            var vOver = aCapUsd > 0 && aSpend.MonthToDateUsd >= aCapUsd;
+            var vNear = aCapUsd > 0 && !vOver && aSpend.MonthToDateUsd >= aCapUsd * 0.8m;
+            return new SpendView(vRunPod, vClosed, aSpend.MonthToDateUsd, aCapUsd,
+                aCapUsd > 0 ? Math.Max(0m, aCapUsd - aSpend.MonthToDateUsd) : 0m, vNear, vOver, 0);
         }
+
+        /// <summary>Reads one channel's month-to-date total from the by-channel map (case-insensitive).</summary>
+        private static decimal ChannelTotal(AccountSpendSummary aSpend, string aChannel) =>
+            aSpend.ByChannel.FirstOrDefault(aPair => string.Equals(aPair.Key, aChannel, StringComparison.OrdinalIgnoreCase)).Value;
     }
 
     /// <summary>A recent-usage row for the billed-jobs table.</summary>
     private sealed record UsageRow(string Kind, string Title, string Model, string Tier, string Duration, string Cost, string Outcome, bool Ok)
     {
-        /// <summary>Projects the account endpoint's job row into the usage table model.</summary>
-        public static UsageRow FromResponse(AccountJob aJob) =>
-            new(aJob.Kind ?? "image", aJob.Title ?? "—", aJob.Model ?? "—", aJob.Tier ?? "—",
-                aJob.Duration ?? "—", aJob.Cost ?? "—", aJob.Outcome ?? "Completed", aJob.Ok);
+        /// <summary>
+        /// Projects a generation-log entry into the usage table model. The log carries no media kind,
+        /// so Kind stays empty (rows list under the All tab) rather than inventing one.
+        /// </summary>
+        public static UsageRow FromLog(GenerationLogEntry aEntry)
+        {
+            var vDuration = aEntry.DurationMs is null ? "—" : $"{TimeSpan.FromMilliseconds(aEntry.DurationMs.Value):m\\m\\ ss\\s}";
+            var vCost = aEntry.ActualCost ?? aEntry.CostEstimate;
+            var vOk = string.Equals(aEntry.Outcome, "succeeded", StringComparison.OrdinalIgnoreCase);
+            return new UsageRow(string.Empty,
+                $"{aEntry.ModelId} · {aEntry.CreatedUtc:d MMM}", aEntry.ModelId, aEntry.Tier.ToString(),
+                vDuration, vCost is null ? "$0.00" : vCost.Value.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-US")),
+                string.IsNullOrWhiteSpace(aEntry.Outcome) ? "—" : aEntry.Outcome, vOk);
+        }
     }
-
-    // ---- Loose account-endpoint DTOs (the Phase-9 contract is still forming; unmatched shapes
-    // simply deserialize to nulls and the representative seed renders). ----
-
-    private sealed record AccountResponse(AccountProfile? Profile, AccountLicense? License, AccountSpend? Spend, List<AccountJob>? RecentJobs);
-    private sealed record AccountProfile(string? UserId, string? Email, string? FirstName, string? LastName, string? JoinedLabel);
-    private sealed record AccountLicense(bool Available, bool Valid, string? Name, string? Tier, string? CapLabel, bool ClosedApiEnabled, string? RenewalLabel);
-    private sealed record AccountSpend(decimal RunPodUsd, decimal ClosedApiUsd, decimal SpentToDateUsd, decimal MonthlyCapUsd, decimal RemainingUsd, bool NearCap, bool OverCap, int JobCount);
-    private sealed record AccountJob(string? Kind, string? Title, string? Model, string? Tier, string? Duration, string? Cost, string? Outcome, bool Ok);
 }

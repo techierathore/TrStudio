@@ -7,8 +7,9 @@
     Admin RunPod & ops (REQ-UI-073). Spend guardrail cards (RunPod GPU, closed APIs, total vs the
     monthly cap) with near-cap Alert, a RunPod control card (start/stop, auto-idle-stop Switch,
     cold-start Badge, and a clean "not configured" state), worker-health + queue-depth cards, and a
-    filterable generation-log DataTable with one-click reproduce. Consumes /admin/spend, /admin/runpod
-    and the generation-log endpoint, with a representative fallback while those endpoints are wiring.
+    filterable generation-log DataTable with one-click reproduce. Live-only: /admin/ops supplies the
+    spend + worker/queue/error snapshot, /admin/runpod the control card and the generation-log
+    endpoint the table — no representative fallback; an unreachable API raises a warning Alert.
 *@
 
 <PageTitle>TrStudio — RunPod &amp; Ops</PageTitle>
@@ -21,6 +22,17 @@
             The monthly cap spans all providers.
         </p>
     </div>
+
+    @if (objApiDown)
+    {
+        <div data-testid="api-down-alert">
+            <Alert Variant="AlertVariant.Warning" AccentBorder="true">
+                <LucideIcon Name="circle-alert" Size="16" />
+                <AlertTitle>Couldn't reach the API — data unavailable</AlertTitle>
+                <AlertDescription>Spend, worker health and the generation log couldn't be loaded. Check that TrStudioApi is running and reload.</AlertDescription>
+            </Alert>
+        </div>
+    }
 
     @if (objSpend is not null && objSpend.CapPct >= 80)
     {
@@ -133,8 +145,8 @@
                         <div style="margin-top:12px">
                             <Alert Variant="AlertVariant.Default">
                                 <AlertDescription>
-                                    Endpoint is cold. Next request triggers a ~@(objRunPod.ColdStartSeconds.ToString("0"))s cold-start.
-                                    <Badge Variant="BadgeVariant.Outline" Class="badge-warn">starting</Badge>
+                                    Endpoint is scaled to zero — the next request pays a cold-start penalty.
+                                    <Badge Variant="BadgeVariant.Outline" Class="badge-warn">cold</Badge>
                                 </AlertDescription>
                             </Alert>
                         </div>
@@ -164,30 +176,39 @@
         <Card data-testid="worker-health">
             <CardContent Class="pt-6">
                 <h3 class="card-h3">Worker health</h3>
-                <div class="kv-row">
-                    <span class="kv-lbl">Status</span>
-                    <Badge Variant="BadgeVariant.Outline" Class="badge-ok"><span class="dot ok"></span> healthy</Badge>
-                </div>
-                <div class="kv-row">
-                    <span class="kv-lbl">Active workers</span>
-                    <b>@objWorkerActive / @objWorkerMax max</b>
-                </div>
-                <div class="kv-row">
-                    <span class="kv-lbl">Queue depth</span>
-                    <Badge Variant="BadgeVariant.Outline" Class="badge-brand">@objQueueDepth jobs</Badge>
-                </div>
-                <div class="kv-row">
-                    <span class="kv-lbl">Error rate (24h)</span>
-                    <Badge Variant="BadgeVariant.Outline" Class="badge-ok">0.8%</Badge>
-                </div>
-                <div class="kv-row">
-                    <span class="kv-lbl">Avg cold-start</span>
-                    <b>24.6s</b>
-                </div>
-                <div class="kv-row">
-                    <span class="kv-lbl">Avg job latency</span>
-                    <b>11.2s</b>
-                </div>
+                @if (objOps is null)
+                {
+                    <div class="kpi-lbl" style="margin-top:8px">
+                        Live worker/queue snapshot unavailable — it loads from /api/v1/admin/ops.
+                    </div>
+                }
+                else
+                {
+                    <div class="kv-row">
+                        <span class="kv-lbl">Status</span>
+                        <Badge Variant="BadgeVariant.Outline" Class="@(objOps.Healthy ? "badge-ok" : "badge-warn")">
+                            <span class="dot @(objOps.Healthy ? "ok" : "warn")"></span> @(objOps.Healthy ? "healthy" : "no recent heartbeat")
+                        </Badge>
+                    </div>
+                    <div class="kv-row">
+                        <span class="kv-lbl">Worker servers</span>
+                        <b>@objOps.Workers.Count · @objOps.Workers.Sum(aWorker => aWorker.WorkerCount) workers</b>
+                    </div>
+                    <div class="kv-row">
+                        <span class="kv-lbl">Queue depth</span>
+                        <Badge Variant="BadgeVariant.Outline" Class="badge-brand">@objOps.Queue.TotalEnqueued queued · @objOps.Queue.TotalProcessing running</Badge>
+                    </div>
+                    <div class="kv-row">
+                        <span class="kv-lbl">Error rate (@(objOps.Errors.WindowHours)h)</span>
+                        <Badge Variant="BadgeVariant.Outline" Class="@(objOps.Errors.ErrorRatePct > 5 ? "badge-warn" : "badge-ok")">
+                            @objOps.Errors.ErrorRatePct.ToString("0.0")%
+                        </Badge>
+                    </div>
+                    <div class="kv-row">
+                        <span class="kv-lbl">Outcomes in window</span>
+                        <b>@objOps.Errors.Succeeded ok · @objOps.Errors.Failed failed · @objOps.Errors.Blocked blocked</b>
+                    </div>
+                }
             </CardContent>
         </Card>
     </div>
@@ -246,16 +267,14 @@
 @code {
     private SpendSummary? objSpend;
     private RunPodView? objRunPod;
+    private OpsDashboardResponse? objOps;
     private List<LogRow> objLogRows = new();
     private string objLogFilter = string.Empty;
 
     private bool objSpendLoading = true;
     private bool objRunPodLoading = true;
     private bool objLogLoading = true;
-
-    private int objWorkerActive;
-    private int objWorkerMax = 3;
-    private int objQueueDepth = 2;
+    private bool objApiDown;
 
     /// <summary>The generation-log rows narrowed by the free-text user/model filter.</summary>
     private IEnumerable<LogRow> FilteredLog => string.IsNullOrWhiteSpace(objLogFilter)
@@ -286,21 +305,15 @@
     }
 
     /// <summary>
-    /// Loads the ops data. Spend and RunPod state are enriched from their admin endpoints when
-    /// reachable; while those endpoints are still wiring (or when unauthenticated) a representative
-    /// illustration renders so the guardrail cards and control never show a blank screen. The
-    /// generation log shows a representative sample only when the AUTHENTICATED call returns zero rows.
+    /// Loads the live ops data: the /admin/ops snapshot (spend + worker/queue/error health), the
+    /// /admin/runpod control state and the generation log. Nothing is seeded — failures leave the
+    /// cards in their honest unavailable states and raise the API-down Alert.
     /// </summary>
     /// <param name="aHasSession">Whether a signed-in session is present.</param>
     private async Task LoadAsync(bool aHasSession)
     {
-        objSpend = BuildRepresentativeSpend();
-        objRunPod = BuildRepresentativeRunPod();
-        objLogRows = new List<LogRow>();
-
         if (!aHasSession)
         {
-            objLogRows = BuildRepresentativeLog();
             return;
         }
 
@@ -308,19 +321,24 @@
 
         try
         {
-            var vSpend = await vClient.GetAsync("/api/v1/admin/spend");
-            if (vSpend.IsSuccessStatusCode)
+            var vOps = await vClient.GetAsync(ApiRoutes.AdminOps);
+            if (vOps.IsSuccessStatusCode)
             {
-                var vSummary = await vSpend.Content.ReadFromJsonAsync<SpendSummary>();
-                if (vSummary is not null && vSummary.MonthlyCap > 0)
+                objOps = await vOps.Content.ReadFromJsonAsync<OpsDashboardResponse>();
+                if (objOps is not null)
                 {
-                    objSpend = vSummary;
+                    objSpend = MapSpend(objOps.Spend);
                 }
+            }
+            else
+            {
+                objApiDown = true;
             }
         }
         catch
         {
-            // Spend endpoint not reachable yet — keep the representative guardrail illustration.
+            // API unreachable — never fake data; the warning Alert renders instead.
+            objApiDown = true;
         }
 
         try
@@ -328,22 +346,24 @@
             var vRunPod = await vClient.GetAsync("/api/v1/admin/runpod");
             if (vRunPod.IsSuccessStatusCode)
             {
-                var vStatus = await vRunPod.Content.ReadFromJsonAsync<RunPodView>();
+                var vStatus = await vRunPod.Content.ReadFromJsonAsync<RunPodStatusResponse>();
                 if (vStatus is not null)
                 {
-                    objRunPod = vStatus;
-                    objWorkerActive = vStatus.ActiveWorkers;
-                    if (vStatus.MaxWorkers > 0)
+                    objRunPod = new RunPodView
                     {
-                        objWorkerMax = vStatus.MaxWorkers;
-                    }
-                    objQueueDepth = vStatus.QueueDepth;
+                        Configured = vStatus.Configured,
+                        AutoIdleStop = vStatus.AutoIdleStop,
+                        WorkerState = vStatus.WorkerState,
+                        EndpointName = vStatus.EndpointId ?? "endpoint",
+                        ColdStart = vStatus.ColdStart,
+                    };
                 }
             }
         }
         catch
         {
-            // RunPod ops endpoint not reachable yet — keep the representative control card.
+            // RunPod status unreachable — the control card renders its "not configured" state.
+            objApiDown = true;
         }
 
         try
@@ -352,20 +372,30 @@
             if (vLog.IsSuccessStatusCode)
             {
                 var vPage = await vLog.Content.ReadFromJsonAsync<PagedResult<GenerationLogEntry>>();
-                objLogRows = vPage is { Items.Count: > 0 }
-                    ? vPage.Items.Select(MapLog).ToList()
-                    : BuildRepresentativeLog();
-            }
-            else
-            {
-                objLogRows = BuildRepresentativeLog();
+                objLogRows = (vPage?.Items ?? Array.Empty<GenerationLogEntry>()).Select(MapLog).ToList();
             }
         }
         catch
         {
-            objLogRows = BuildRepresentativeLog();
+            // Log unreachable — the table stays honestly empty.
+            objApiDown = true;
         }
     }
+
+    /// <summary>Maps the live spend summary onto the guardrail-card view (per-channel + cap).</summary>
+    /// <param name="aSpend">The instance month-to-date spend snapshot.</param>
+    private static SpendSummary MapSpend(SpendSummaryResponse aSpend) => new()
+    {
+        RunPodSpend = ChannelTotal(aSpend, "RunPod"),
+        ClosedApiSpend = ChannelTotal(aSpend, "ClosedApi"),
+        TotalSpend = aSpend.SpentToDateUsd,
+        MonthlyCap = aSpend.MonthlyCapUsd,
+        Remaining = aSpend.RemainingUsd,
+    };
+
+    /// <summary>Reads one channel's month-to-date total from the by-channel map (case-insensitive).</summary>
+    private static decimal ChannelTotal(SpendSummaryResponse aSpend, string aChannel) =>
+        aSpend.ByChannel.FirstOrDefault(aPair => string.Equals(aPair.Key, aChannel, StringComparison.OrdinalIgnoreCase)).Value;
 
     private static LogRow MapLog(GenerationLogEntry aEntry)
     {
@@ -396,10 +426,10 @@
         }
         catch
         {
-            // Fall through to the illustrative toast when the endpoint is not reachable.
+            // Fall through to the honest failure toast.
         }
 
-        ToastService.Show($"Reproduce requested for \"{aRow.Model}\".", "Generation log");
+        ToastService.Error($"Couldn't reach the API — \"{aRow.Model}\" wasn't re-queued.", "Generation log");
     }
 
     private Task StartEndpointAsync() => ControlRunPodAsync("start", "Endpoint start requested.");
@@ -420,42 +450,11 @@
         }
         catch
         {
-            // Fall through to the illustrative toast when the ops endpoint is not reachable.
+            // Fall through to the honest failure toast.
         }
 
-        ToastService.Show(aFallbackMessage, "RunPod");
+        ToastService.Error($"Couldn't reach the API — the {aAction} request wasn't sent.", "RunPod");
     }
-
-    private static SpendSummary BuildRepresentativeSpend() => new()
-    {
-        RunPodSpend = 41.20m,
-        ClosedApiSpend = 46.80m,
-        TotalSpend = 88.00m,
-        MonthlyCap = 100.00m,
-        Remaining = 12.00m
-    };
-
-    private static RunPodView BuildRepresentativeRunPod() => new()
-    {
-        Configured = true,
-        AutoIdleStop = true,
-        WorkerState = "scaled to zero",
-        EndpointName = "trstudio-sdxl",
-        ColdStart = true,
-        ColdStartSeconds = 25,
-        ActiveWorkers = 0,
-        MaxWorkers = 3,
-        QueueDepth = 2
-    };
-
-    private static List<LogRow> BuildRepresentativeLog() => new()
-    {
-        new(Guid.NewGuid(), "priya@…", "HeyGen Avatar IV", "premium · 1080p · 22s", "$2.40", "48s", "success", "badge-ok"),
-        new(Guid.NewGuid(), "techierathore@…", "SDXL", "steps 30 · seed 7714", "$0.18", "9.1s", "success", "badge-ok"),
-        new(Guid.NewGuid(), "arjun@…", "Hunyuan-Avatar", "high · 8s clip", "$0.91", "1m 12s", "capped", "badge-warn"),
-        new(Guid.NewGuid(), "priya@…", "FLUX.1 [pro]", "premium · 1:1", "$0.05", "4.3s", "success", "badge-ok"),
-        new(Guid.NewGuid(), "techierathore@…", "MuseTalk", "fast · local Mac · 30s", "$0.00", "18.7s", "failed", "badge-warn")
-    };
 
     private static (string, string) OutcomeTone(string aOutcome) => aOutcome.ToLowerInvariant() switch
     {
@@ -510,18 +509,14 @@
         public double CapPct => MonthlyCap <= 0 ? 0 : (double)(TotalSpend / MonthlyCap) * 100.0;
     }
 
-    /// <summary>RunPod serverless endpoint status and worker snapshot for the control/health cards.</summary>
+    /// <summary>RunPod serverless endpoint status for the control card (from RunPodStatusResponse).</summary>
     private sealed class RunPodView
     {
         public bool Configured { get; set; }
         public bool AutoIdleStop { get; set; }
-        public string WorkerState { get; set; } = "idle";
-        public string EndpointName { get; set; } = "trstudio-endpoint";
+        public string WorkerState { get; set; } = "not-configured";
+        public string EndpointName { get; set; } = "endpoint";
         public bool ColdStart { get; set; }
-        public double ColdStartSeconds { get; set; }
-        public int ActiveWorkers { get; set; }
-        public int MaxWorkers { get; set; }
-        public int QueueDepth { get; set; }
 
         /// <summary>Badge tone reflecting whether the endpoint is warm, cold or scaled to zero.</summary>
         public string StateTone => ColdStart ? "badge-warn" : "badge-ok";

@@ -1,0 +1,186 @@
+@namespace TrStudioUI.Components
+@implements IDisposable
+@inject IHttpClientFactory HttpClientFactory
+
+@*
+    API status indicator (REQ-UI-080 shell amendment — "is TrStudioApi even running?"). A small
+    unobtrusive pill for the shell header: polls GET /health on the API every 30 seconds (plus once
+    on init) through the SAME named "TrStudioApi" HttpClient both heads (web + MAUI hybrid) register,
+    so it reflects the exact base address the app's data calls use. Green dot = online, red = offline,
+    gray = checking; the tooltip carries the base address either way. Fixed min-width so state flips
+    cause no layout shift; colors ride the shared design tokens so both themes render cleanly.
+*@
+
+<span class="api-status api-status-@StateClass" role="status" aria-live="polite"
+      aria-label="@Tooltip" title="@Tooltip" data-testid="api-status">
+    <span class="api-status-dot" aria-hidden="true"></span>
+    <span class="api-status-text">@Text</span>
+</span>
+
+<style>
+    .api-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 84px;
+        justify-content: center;
+        padding: 3px 10px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--card);
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--muted-foreground);
+        user-select: none;
+        white-space: nowrap;
+    }
+
+    .api-status .api-status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: var(--muted-foreground);
+        flex: none;
+    }
+
+    .api-status.api-status-ok .api-status-dot { background: #22c55e; }
+    .api-status.api-status-fail .api-status-dot { background: #ef4444; }
+    .api-status.api-status-fail { color: #ef4444; border-color: rgba(239, 68, 68, .55); }
+</style>
+
+@code {
+    /// <summary>How often the /health endpoint is re-polled.</summary>
+    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(30);
+
+    /// <summary>Per-probe timeout so a hung API reads as offline instead of blocking the loop.</summary>
+    private static readonly TimeSpan ProbeTimeout = TimeSpan.FromSeconds(5);
+
+    private ApiState objState = ApiState.Checking;
+    private string objBaseAddress = string.Empty;
+    private PeriodicTimer? objTimer;
+    private CancellationTokenSource? objStopSource;
+
+    /// <summary>The three indicator states.</summary>
+    private enum ApiState
+    {
+        /// <summary>A probe is in flight and no result has landed yet (gray).</summary>
+        Checking,
+
+        /// <summary>The last /health probe returned 2xx (green).</summary>
+        Online,
+
+        /// <summary>The last /health probe failed or was non-2xx (red).</summary>
+        Offline,
+    }
+
+    /// <summary>The CSS state suffix for the pill.</summary>
+    private string StateClass => objState switch
+    {
+        ApiState.Online => "ok",
+        ApiState.Offline => "fail",
+        _ => "checking",
+    };
+
+    /// <summary>The short pill label.</summary>
+    private string Text => objState == ApiState.Offline ? "API offline" : "API";
+
+    /// <summary>The hover tooltip / accessible label, carrying the probed base address.</summary>
+    private string Tooltip => objState switch
+    {
+        ApiState.Online => $"API online — {objBaseAddress}",
+        ApiState.Offline => $"API offline — {objBaseAddress}",
+        _ => $"Checking API — {objBaseAddress}",
+    };
+
+    /// <summary>
+    /// Starts the poll loop AFTER the first render (interactive circuit/WebView established): one
+    /// immediate probe, then one every 30 seconds until disposal.
+    /// </summary>
+    /// <param name="aFirstRender">Whether this is the component's first render.</param>
+    protected override async Task OnAfterRenderAsync(bool aFirstRender)
+    {
+        if (!aFirstRender)
+        {
+            return;
+        }
+
+        // Capture source + token locally: the layout can dispose this component mid-await (the
+        // anonymous→/login redirect swaps layouts), and touching a disposed CTS throws straight
+        // into the renderer ("An unhandled error has occurred").
+        var vSource = new CancellationTokenSource();
+        objStopSource = vSource;
+        var vToken = vSource.Token;
+        try
+        {
+            await ProbeAsync(vToken);
+            if (!vToken.IsCancellationRequested)
+            {
+                StateHasChanged();
+                _ = PollLoopAsync(vToken);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Disposed mid-probe — nothing left to render.
+        }
+        catch (ObjectDisposedException)
+        {
+            // Disposed between the probe and the loop hand-off — nothing left to render.
+        }
+    }
+
+    /// <summary>Re-probes /health every <see cref="PollInterval"/> until the component is disposed.</summary>
+    /// <param name="aStopToken">Cancelled when the component is disposed.</param>
+    private async Task PollLoopAsync(CancellationToken aStopToken)
+    {
+        objTimer = new PeriodicTimer(PollInterval);
+        try
+        {
+            while (await objTimer.WaitForNextTickAsync(aStopToken))
+            {
+                await ProbeAsync(aStopToken);
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Component disposed — the loop simply ends.
+        }
+        catch (ObjectDisposedException)
+        {
+            // Timer/CTS disposed by a racing Dispose() — the loop simply ends.
+        }
+    }
+
+    /// <summary>Probes GET /health on the shared named client; any failure reads as offline.</summary>
+    /// <param name="aStopToken">Cancelled when the component is disposed.</param>
+    private async Task ProbeAsync(CancellationToken aStopToken)
+    {
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            objBaseAddress = vClient.BaseAddress?.ToString().TrimEnd('/') ?? "(no base address)";
+
+            using var vTimeout = CancellationTokenSource.CreateLinkedTokenSource(aStopToken);
+            vTimeout.CancelAfter(ProbeTimeout);
+            var vResponse = await vClient.GetAsync("/health", vTimeout.Token);
+            objState = vResponse.IsSuccessStatusCode ? ApiState.Online : ApiState.Offline;
+        }
+        catch (OperationCanceledException) when (aStopToken.IsCancellationRequested)
+        {
+            // Disposal — leave the last state untouched.
+        }
+        catch
+        {
+            objState = ApiState.Offline;
+        }
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        objStopSource?.Cancel();
+        objStopSource?.Dispose();
+        objTimer?.Dispose();
+    }
+}

@@ -70,13 +70,13 @@ Set `ASPNETCORE_URLS=http://localhost:5099` (etc.) before launching if a port ne
 
 ### Option A — native Mac desktop app (Catalyst, built on the Mac)
 
-> ⚠ **BLOCKED as of 2026-07-12 by TrBlazeUI 1.0.7 (TR-011).** The first build attempt on a real Mac failed with `NETSDK1082`: all three TrBlazeUI packages carry a `Microsoft.AspNetCore.App` FrameworkReference, and no ASP.NET Core runtime pack exists for `maccatalyst-arm64`. This blocks the Catalyst `.app` on any Mac regardless of Xcode/workloads (the Windows head is unaffected — Windows runtime packs exist). Fix belongs in TrBlazeUI — see `docs/TrStudio-TrBlazeUI-Feedback.md` TR-011. Until it ships, use Option B (the web head in a browser is feature-identical).
+> ✅ **UNBLOCKED same day (2026-07-12): TrBlazeUI 1.0.9 fixed TR-011 and the first Catalyst `TrStudio.app` built 0/0 + launched on the owner's Mac.** (The initial real-Mac attempt on 1.0.7 failed `NETSDK1082` — the packages' `Microsoft.AspNetCore.App` FrameworkReference had no maccatalyst runtime pack; see `docs/TrStudio-TrBlazeUI-Feedback.md` TR-011 for the full analysis.) While the MacCatalyst workload band trails the installed Xcode by a minor version, add `-p:ValidateXcodeVersion=false` to the build (the SDK's own opt-out; a `sudo dotnet workload update` that catches the band up removes the need).
 
 **Prerequisites** (TrSetup's Mac roles install all of these): **full Xcode** with licence accepted (Command Line Tools alone are not enough), .NET 10 SDK, `sudo dotnet workload install maui`, git, and the TechieRag feed PAT (`nuget.config` is **gitignored** — it does *not* come with a copy of the source tree; recreate it from `nuget.config.template`. Note the Desktop head itself doesn't reference TechieRag, so it builds without the PAT — the API does need it).
 
 ```bash
 git clone <TrStudio repo> && cd TrStudio     # or copy the source tree over the LAN (exclude bin/, obj/)
-dotnet build src/TrStudio.Desktop -f net10.0-maccatalyst -c Release -p:EnableWindowsTargeting=true
+dotnet build src/TrStudio.Desktop -f net10.0-maccatalyst -c Release -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false
 open src/TrStudio.Desktop/bin/Release/net10.0-maccatalyst/maccatalyst-arm64/TrStudio.app
 ```
 

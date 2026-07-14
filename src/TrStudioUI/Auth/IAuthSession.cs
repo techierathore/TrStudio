@@ -35,7 +35,8 @@ public interface IAuthSession
     /// session storage. No password is ever stored — only the returned tokens and claims.
     /// </summary>
     /// <param name="aSession">The successful login/register response.</param>
-    Task SetAsync(LoginResponse aSession);
+    /// <param name="aEmail">The sign-in email (shell-chip identity only; not returned by the API).</param>
+    Task SetAsync(LoginResponse aSession, string? aEmail = null);
 
     /// <summary>Clears the session from memory and encrypted session storage (sign-out).</summary>
     Task ClearAsync();

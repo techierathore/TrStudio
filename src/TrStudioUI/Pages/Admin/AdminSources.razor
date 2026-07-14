@@ -475,6 +475,9 @@
             "unauthorized" => ("Unauthorized", "badge-warn", "warn"),
             "unreachable" => ("Unreachable", "badge-warn", "warn"),
             "pending" or "" => ("Pending", "badge-brand", "brand"),
+            // Table default + the value written on create, before Test connection is ever run —
+            // "never probed", not a failure. Show a neutral label, not the raw word with a warn tone.
+            "unknown" => ("Not tested", "badge-brand", "brand"),
             _ => (aSource.Status, "badge-warn", "warn")
         };
     }

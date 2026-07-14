@@ -10,13 +10,25 @@
     detail: project header (Open in Gallery / Rename / Archive), a generation-history DataTable with
     All/Images/Video/Voice Tabs and a per-row Reproduce that carries the stored params, and a
     run-parameters Card with "Reproduce with these params". Per-user: /api/v1/projects and its
-    /history are owner-filtered server-side; a representative seed keeps the page usable offline.
+    /history are owner-filtered server-side; live-only — no representative seed; an unreachable API
+    raises a warning Alert.
 *@
 
 <PageTitle>TrStudio — Projects</PageTitle>
 
 <h1 class="page-title">Projects</h1>
 <p class="page-sub">Folders that keep every generation's full parameter set — pick any past run and reproduce it in one click.</p>
+
+@if (objApiDown)
+{
+    <div data-testid="api-down-alert" style="margin-bottom:14px">
+        <Alert Variant="AlertVariant.Warning" AccentBorder="true">
+            <LucideIcon Name="circle-alert" Size="16" />
+            <AlertTitle>Couldn't reach the API — data unavailable</AlertTitle>
+            <AlertDescription>Your projects couldn't be loaded. Check that TrStudioApi is running and reload.</AlertDescription>
+        </Alert>
+    </div>
+}
 
 <div class="projlayout" data-testid="projects">
 
@@ -174,6 +186,7 @@
     private Guid? objSelectedId;
     private string objSearch = string.Empty;
     private bool objLoading = true;
+    private bool objApiDown;
 
     private readonly List<HistoryRow> objHistory = new();
     private bool objHistoryLoading;
@@ -227,9 +240,9 @@
     }
 
     /// <summary>
-    /// Loads the owner-scoped projects. With no session the list stays empty (the real empty state)
-    /// rather than flashing sample projects; the representative seed only stands in as a genuine
-    /// empty-state illustration once the AUTHENTICATED call succeeds and returns zero rows.
+    /// Loads the owner-scoped projects. With no session the list stays empty (the real empty state).
+    /// Zero rows render the honest empty state — never sample projects — and a failed fetch raises
+    /// the API-down Alert.
     /// </summary>
     /// <param name="aHasSession">Whether a signed-in session is present.</param>
     private async Task TryLoadProjectsAsync(bool aHasSession)
@@ -243,22 +256,13 @@
         {
             var vClient = HttpClientFactory.CreateClient("TrStudioApi");
             var vProjects = await vClient.GetFromJsonAsync<List<ProjectResponse>>(ApiRoutes.Projects);
-            if (vProjects is { Count: > 0 })
-            {
-                objProjects.Clear();
-                objProjects.AddRange(vProjects.Select(aProject => ProjectView.FromResponse(aProject)));
-            }
-            else
-            {
-                // Authenticated, but the owner has no projects yet — a representative sample
-                // illustrates the empty state. This never runs for a 401 (that throws, caught below).
-                SeedRepresentativeProjects();
-            }
+            objProjects.Clear();
+            objProjects.AddRange((vProjects ?? new List<ProjectResponse>()).Select(aProject => ProjectView.FromResponse(aProject)));
         }
         catch
         {
-            // Authenticated call failed (API unreachable) — keep the list empty rather than flashing
-            // sample projects; the empty state renders.
+            // API unreachable — never fake data; the warning Alert renders instead.
+            objApiDown = true;
         }
     }
 
@@ -272,9 +276,8 @@
 
     /// <summary>
     /// Loads the selected project's owner-scoped history (runs post-render, so the bearer token is
-    /// present). Live rows render when the authenticated call returns them; a representative seed only
-    /// stands in as an empty-state illustration when that call succeeds with zero rows — never on a
-    /// failure, which keeps the table empty instead of flashing sample rows.
+    /// present). Zero rows leave the table honestly empty — never sample rows — and a failed fetch
+    /// raises the API-down Alert.
     /// </summary>
     private async Task LoadHistoryAsync(ProjectView aProject)
     {
@@ -295,14 +298,11 @@
                     vIndex++;
                 }
             }
-            else
-            {
-                SeedRepresentativeHistory();
-            }
         }
         catch
         {
-            // Authenticated call failed — keep the table empty rather than flashing sample rows.
+            // API unreachable — the table stays empty and the warning Alert renders.
+            objApiDown = true;
         }
 
         objRun = objHistory.FirstOrDefault();
@@ -312,7 +312,6 @@
     private async Task CreateProjectAsync()
     {
         var vName = $"New project {objProjects.Count + 1}";
-        var vId = Guid.NewGuid();
         try
         {
             var vClient = HttpClientFactory.CreateClient("TrStudioApi");
@@ -322,21 +321,21 @@
                 var vCreated = await vResponse.Content.ReadFromJsonAsync<ProjectResponse>();
                 if (vCreated is not null)
                 {
-                    vId = vCreated.ProjectId;
-                    vName = vCreated.Name;
+                    objProjects.Insert(0, ProjectView.FromResponse(vCreated));
+                    objSelectedId = vCreated.ProjectId;
+                    objHistory.Clear();
+                    objRun = null;
+                    ToastService.Success($"Created \"{vCreated.Name}\".", "Project");
+                    return;
                 }
             }
         }
         catch
         {
-            // Optimistic add for the offline demo flow.
+            // Fall through to the honest failure toast.
         }
 
-        objProjects.Insert(0, new ProjectView(vId, vName, null, 0, DateTime.UtcNow.ToString("d MMM yyyy")));
-        objSelectedId = vId;
-        objHistory.Clear();
-        objRun = null;
-        ToastService.Success($"Created \"{vName}\".", "Project");
+        ToastService.Error("Couldn't reach the API — the project wasn't created.", "Project");
     }
 
     private Task RenameProjectAsync()
@@ -347,7 +346,8 @@
 
     private async Task ArchiveProjectAsync()
     {
-        if (SelectedProject is null)
+        var vProject = SelectedProject;
+        if (vProject is null)
         {
             return;
         }
@@ -355,14 +355,23 @@
         try
         {
             var vClient = HttpClientFactory.CreateClient("TrStudioApi");
-            await vClient.DeleteAsync($"{ApiRoutes.Projects}/{SelectedProject.ProjectId}");
+            var vResponse = await vClient.DeleteAsync($"{ApiRoutes.Projects}/{vProject.ProjectId}");
+            if (vResponse.IsSuccessStatusCode)
+            {
+                objProjects.RemoveAll(aExisting => aExisting.ProjectId == vProject.ProjectId);
+                objSelectedId = null;
+                objHistory.Clear();
+                objRun = null;
+                ToastService.Success($"Archived \"{vProject.Name}\".", "Project");
+                return;
+            }
         }
         catch
         {
-            // Best-effort — needs a session.
+            // Fall through to the honest failure toast.
         }
 
-        ToastService.Success($"Archived \"{SelectedProject.Name}\".", "Project");
+        ToastService.Error("Couldn't reach the API — the project wasn't archived.", "Project");
     }
 
     private void OpenInGallery() => Navigation.NavigateTo("/gallery");
@@ -385,38 +394,6 @@
 
     private void CopyParamsJson()
         => ToastService.Show("Run parameters copied as JSON.", "Copied");
-
-    private void SeedRepresentativeProjects()
-    {
-        objProjects.Clear();
-        objProjects.AddRange(new[]
-        {
-            new ProjectView(Guid.NewGuid(), "Diwali Promo", "Campaign assets for the Diwali 2026 launch.", 18, "1 Jul 2026"),
-            new ProjectView(Guid.NewGuid(), "Product Explainers", "Short product explainer reels.", 11, "28 Jun 2026"),
-            new ProjectView(Guid.NewGuid(), "Hindi Shorts", "Hindi-language social shorts.", 27, "24 Jun 2026"),
-            new ProjectView(Guid.NewGuid(), "Wedding Invite Reels", "Personalised invitation reels.", 6, "12 Jun 2026"),
-        });
-    }
-
-    private void SeedRepresentativeHistory()
-    {
-        objHistory.Clear();
-        objHistory.AddRange(new[]
-        {
-            new HistoryRow(Guid.NewGuid(), "video", "Diwali avatar intro — Kavya", "▶", "art-v", "Hunyuan-Avatar", "RunPod · High", 4821, "1 Jul",
-                "run_01JZK4", "\"Kavya in a festive maroon saree, warm diya lighting, greets viewers for Diwali.\"", "1920×1080 · 24 fps", "CFG 6.5 · 30 steps", "$0.42", "C2PA signed"),
-            new HistoryRow(Guid.NewGuid(), "image", "Diwali poster v3 — rangoli", "IMG", "art-b", "FLUX.1", "Local GPU · Fast", 9012, "30 Jun",
-                "run_01JZC9", "\"Diwali poster with intricate rangoli motif, marigold border, festive typography.\"", "1080×1350", "CFG 4.5 · 28 steps", "free", "C2PA signed"),
-            new HistoryRow(Guid.NewGuid(), "image", "Kavya portrait — warm light", "IMG", "art-a", "SDXL", "Local GPU · Fast", 7734, "29 Jun",
-                "run_01JZB1", "\"Kavya portrait, warm key light, shallow depth of field, photoreal.\"", "1024×1024", "CFG 7.0 · 24 steps", "free", "C2PA signed"),
-            new HistoryRow(Guid.NewGuid(), "audio", "Kavya greeting VO (Hindi)", "VO", "art-v", "IndicF5", "RunPod · High", null, "29 Jun",
-                "run_01JZA7", "\"Warm Hindi greeting inviting viewers to the Diwali sale, upbeat tone.\"", "—", "—", "$0.03", "C2PA signed"),
-            new HistoryRow(Guid.NewGuid(), "video", "Sweet-box teaser 9:16", "▶", "art-v", "HeyGen Avatar IV", "Closed API · Premium", null, "27 Jun",
-                "run_01JZ92", "\"Sweet-box teaser, avatar presenter, vertical 9:16, energetic pacing.\"", "1080×1920", "—", "$0.61", "C2PA signed"),
-            new HistoryRow(Guid.NewGuid(), "image", "Mithai hero shot 3:2", "IMG", "art-c", "FLUX.1", "RunPod · High", 5570, "26 Jun",
-                "run_01JZ80", "\"Mithai spread hero shot, festive props, soft studio light, 3:2.\"", "1500×1000", "CFG 4.0 · 30 steps", "$0.05", "C2PA signed"),
-        });
-    }
 
     /// <summary>A project card/detail projection (API project + asset count + updated label).</summary>
     private sealed record ProjectView(Guid ProjectId, string Name, string? Description, int AssetCount, string UpdatedLabel)
@@ -443,7 +420,7 @@
             return new HistoryRow(
                 aAsset.JobId, aAsset.Kind, $"{aAsset.Kind} · {aAsset.CreatedUtc:d MMM}", vMini, aArt,
                 aAsset.ModelId, aAsset.Kind, aAsset.SeedUsed, aAsset.CreatedUtc.ToString("d MMM"),
-                $"run_{aAsset.JobId.ToString()[..6]}", "Stored parameter set for this run.", vDims, "—", "—", "C2PA signed");
+                $"run_{aAsset.JobId.ToString()[..6]}", "Stored parameter set for this run.", vDims, "—", "—", "—");
         }
     }
 }

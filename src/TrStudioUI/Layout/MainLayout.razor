@@ -1,5 +1,6 @@
 @inherits LayoutComponentBase
 @implements IDisposable
+@using TrStudioUI.Components
 @inject AppShellNavigation Shell
 @inject NavigationManager Navigation
 @inject IAuthSession AuthSession
@@ -7,9 +8,13 @@
 @*
     Shared app shell (REQ-UI-005 / REQ-UI-080) for the one unified TrStudio app:
     collapsible sidebar (SidebarProvider/Sidebar/SidebarInset) + topbar with SidebarTrigger,
-    breadcrumb, theme toggle and user chip. The active surface (creator vs management) is chosen
-    by the signed-in user's role via AppShellNavigation; a Creator reaching an /admin/* route is
-    bounced in-app to <AccessDenied /> instead of the page (REQ-FN-072). Auth screens use EmptyLayout.
+    breadcrumb, API status pill, theme toggle and user chip. The active surface (creator vs
+    management) is chosen by the signed-in user's role via AppShellNavigation; a Creator reaching
+    an /admin/* route is bounced in-app to <AccessDenied /> instead of the page (REQ-FN-072).
+    Auth screens use EmptyLayout. LOGIN GATE (REQ-FN-016 / REQ-UI-080): every route rendered in
+    this shell requires a session — an anonymous visitor is redirected to /login on BOTH heads
+    unless the route is in the anonymous allow-list (auth + dev-seam screens, which all render on
+    EmptyLayout anyway, so the gate can never loop).
 *@
 
 <SidebarProvider DefaultOpen="true" HeightClass="h-screen">
@@ -32,6 +37,7 @@
                 </BreadcrumbList>
             </Breadcrumb>
             <div class="shell-topbar-spacer"></div>
+            <ApiStatusIndicator />
             <ThemeToggle />
             @* Identity chip doubles as the sign-out control: clears the session and returns to /login. *@
             <button type="button" class="shell-userchip brand-gradient" data-testid="user-chip"
@@ -62,9 +68,18 @@
 </div>
 
 @code {
+    /// <summary>
+    /// Base-relative routes an anonymous visitor may stay on (REQ-FN-016): the auth screens, the
+    /// first-run gate and the dev session seams (web /dev/session + desktop /dev/desktop). They all
+    /// render on EmptyLayout, so listing them here is defence-in-depth against a redirect loop.
+    /// </summary>
+    private static readonly string[] AnonymousRoutes =
+        ["login", "register", "forgot-password", "setup-required", "dev/session", "dev/desktop"];
+
     private AppNavItem? objActiveItem;
     private string objUserInitial = "TR";
     private bool objSignedIn;
+    private bool objSessionResolved;
     private bool objAccessDenied;
 
     /// <inheritdoc />
@@ -87,18 +102,67 @@
             return;
         }
 
-        await Shell.InitializeAsync(Navigation.ToBaseRelativePath(Navigation.Uri));
-
         var vState = await AuthSession.GetAsync();
         if (vState is not null && !string.IsNullOrEmpty(vState.UserId))
         {
             objSignedIn = true;
-            var vTrimmed = vState.UserId.Trim();
+            // Identify the session by the sign-in email's initial; the numeric AppManager UserId
+            // is the fallback for pre-Email persisted sessions and the dev seams.
+            var vTrimmed = string.IsNullOrWhiteSpace(vState.Email)
+                ? vState.UserId.Trim()
+                : vState.Email.Trim();
             objUserInitial = char.ToUpperInvariant(vTrimmed[0]).ToString();
+        }
+
+        // Force a role re-read when a session exists but a PRE-login render left the scoped shell
+        // role-less (the gate below redirects /avatar → /login; login then soft-navs back into this
+        // shell with the same scoped AppShellNavigation). Without the force reload the role surface
+        // and the Owner sidebar-footer switch would not render after that soft-nav login.
+        await Shell.InitializeAsync(
+            Navigation.ToBaseRelativePath(Navigation.Uri),
+            aForceReload: objSignedIn && Shell.Role is null);
+
+        objSessionResolved = true;
+        if (RedirectAnonymous())
+        {
+            return;
         }
 
         EvaluateGuard();
         StateHasChanged();
+    }
+
+    /// <summary>
+    /// Login gate (REQ-FN-016 / REQ-UI-080): redirects an anonymous visitor to /login unless the
+    /// current route is in the anonymous allow-list. A client-side navigation (no forceLoad) — the
+    /// same SPA nav both heads use after login — so the Hybrid WebView lands on /login too.
+    /// </summary>
+    /// <returns>True when a redirect to /login was issued.</returns>
+    private bool RedirectAnonymous()
+    {
+        if (objSignedIn || IsAnonymousRoute(Navigation.ToBaseRelativePath(Navigation.Uri)))
+        {
+            return false;
+        }
+
+        Navigation.NavigateTo("/login");
+        return true;
+    }
+
+    /// <summary>Whether the base-relative path (query/hash ignored) is in the anonymous allow-list.</summary>
+    /// <param name="aRelativePath">The base-relative path from <c>NavigationManager.ToBaseRelativePath</c>.</param>
+    /// <returns>True when the route may render without a session.</returns>
+    private static bool IsAnonymousRoute(string aRelativePath)
+    {
+        var vPath = aRelativePath ?? string.Empty;
+        var vQueryIndex = vPath.IndexOfAny(['?', '#']);
+        if (vQueryIndex >= 0)
+        {
+            vPath = vPath[..vQueryIndex];
+        }
+
+        vPath = vPath.Trim('/');
+        return AnonymousRoutes.Contains(vPath, StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>Clears the session and returns to the sign-in screen.</summary>
@@ -115,9 +179,14 @@
         InvokeAsync(StateHasChanged);
     }
 
-    /// <summary>Recomputes the breadcrumb leaf and the route guard when the route changes.</summary>
+    /// <summary>Recomputes the breadcrumb leaf, the login gate and the route guard when the route changes.</summary>
     private void HandleLocationChanged(object? aSender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs aArgs)
     {
+        if (objSessionResolved && RedirectAnonymous())
+        {
+            return;
+        }
+
         UpdateActiveItem();
         EvaluateGuard();
         InvokeAsync(StateHasChanged);

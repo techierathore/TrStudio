@@ -57,14 +57,15 @@ public sealed class AuthSession : IAuthSession
     }
 
     /// <inheritdoc />
-    public async Task SetAsync(LoginResponse aSession)
+    public async Task SetAsync(LoginResponse aSession, string? aEmail = null)
     {
         objState = new AuthSessionState(
             aSession.Token,
             aSession.RefreshToken,
             aSession.UserId,
             aSession.Role,
-            aSession.DefaultLandingPath);
+            aSession.DefaultLandingPath,
+            aEmail);
         objHydrated = true;
 
         try

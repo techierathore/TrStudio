@@ -12,16 +12,28 @@
     cost/eta and a HeyGen Badge on Premium, a closed-API routing Alert whenever a cloud tier is picked,
     a pre-run cost estimate with an over-cap warning, and captions Switch + aspect Select + Export MP4.
 
-    Data follows the enrich-or-seed pattern: the character list enriches from the Phase-5
-    /api/v1/characters endpoint when it is live and the bearer token is hydrated, otherwise a
-    representative seed keeps the studio demonstrable. The render itself rides the shared job spine
-    (POST /api/v1/jobs, task = LipSync); a Blocked result surfaces a safety Alert (SAFE-01..06).
+    Data is live-only: characters load from /api/v1/characters, preset voices from
+    /api/v1/voice/preset-voices and month-to-date spend from /api/v1/account once the bearer token is
+    hydrated — no representative seeds. Empty results render honest empty states; an unreachable API
+    surfaces a warning Alert. The render itself rides the shared job spine (POST /api/v1/jobs,
+    task = LipSync); a Blocked result surfaces a safety Alert (SAFE-01..06).
 *@
 
 <PageTitle>TrStudio — Avatar Studio</PageTitle>
 
 <h1 class="page-title">Avatar Studio</h1>
 <p class="page-sub">Pick a character and voice, write your script, and render a talking-head clip.</p>
+
+@if (objApiDown)
+{
+    <div data-testid="api-down-alert" style="margin-bottom:14px">
+        <Alert Variant="AlertVariant.Warning" AccentBorder="true">
+            <LucideIcon Name="circle-alert" Size="16" />
+            <AlertTitle>Couldn't reach the API — data unavailable</AlertTitle>
+            <AlertDescription>Characters, voices and spend couldn't be loaded. Check that TrStudioApi is running and reload.</AlertDescription>
+        </Alert>
+    </div>
+}
 
 <div class="studio" data-testid="avatar-studio">
 
@@ -67,7 +79,9 @@
             {
                 <div class="avatar-empty" data-testid="character-empty">
                     <LucideIcon Name="user-round" Size="24" />
-                    <div class="muted-sm" style="margin-top:6px">No character selected yet.</div>
+                    <div class="muted-sm" style="margin-top:6px">
+                        @(objCharacters.Count == 0 ? "No characters yet — create your first character." : "No character selected yet.")
+                    </div>
                 </div>
                 <Button Class="w-full mt-3" OnClick="GoToCharacters" data-testid="new-character-cta">
                     <LucideIcon Name="plus" Size="14" />
@@ -78,33 +92,43 @@
 
         <Card>
             <h3 class="card-h3">Voice</h3>
-            <label class="param-label">Preset voice</label>
-            <div data-testid="voice-select">
-                <Select @bind-Value="objVoiceId" TValue="string" Class="w-full">
-                    <SelectTrigger><SelectValue Placeholder="Select a voice" /></SelectTrigger>
-                    <SelectContent>
-                        @foreach (var vVoice in objVoices)
-                        {
-                            <SelectItem Value="@vVoice.Key" Text="@vVoice.Value" TValue="string">@vVoice.Value</SelectItem>
-                        }
-                    </SelectContent>
-                </Select>
-            </div>
-            <div class="flex-between" style="margin-top:10px">
-                <label class="param-label">Language</label>
-                <div class="flex-row" style="gap:6px" data-testid="language-toggle">
-                    @foreach (var vLang in objLanguages)
-                    {
-                        <Button Size="ButtonSize.Small"
-                                Variant="@(vLang == objLanguage ? ButtonVariant.Default : ButtonVariant.Outline)"
-                                OnClick="@(() => objLanguage = vLang)">@vLang</Button>
-                    }
+            @if (objVoices.Count == 0)
+            {
+                <div class="avatar-empty" data-testid="voice-empty">
+                    <LucideIcon Name="mic-off" Size="24" />
+                    <div class="muted-sm" style="margin-top:6px">No voices installed — ask your admin to install a voice model.</div>
                 </div>
-            </div>
-            <Button Variant="ButtonVariant.Outline" Class="w-full mt-3" OnClick="GenerateVoiceAsync" data-testid="generate-voice">
-                <LucideIcon Name="mic" Size="14" />
-                <span>Generate voice</span>
-            </Button>
+            }
+            else
+            {
+                <label class="param-label">Preset voice</label>
+                <div data-testid="voice-select">
+                    <Select @bind-Value="objVoiceId" TValue="string" Class="w-full">
+                        <SelectTrigger><SelectValue Placeholder="Select a voice" /></SelectTrigger>
+                        <SelectContent>
+                            @foreach (var vVoice in objVoices)
+                            {
+                                <SelectItem Value="@vVoice.Key" Text="@vVoice.Value" TValue="string">@vVoice.Value</SelectItem>
+                            }
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div class="flex-between" style="margin-top:10px">
+                    <label class="param-label">Language</label>
+                    <div class="flex-row" style="gap:6px" data-testid="language-toggle">
+                        @foreach (var vLang in objLanguages)
+                        {
+                            <Button Size="ButtonSize.Small"
+                                    Variant="@(vLang == objLanguage ? ButtonVariant.Default : ButtonVariant.Outline)"
+                                    OnClick="@(() => objLanguage = vLang)">@vLang</Button>
+                        }
+                    </div>
+                </div>
+                <Button Variant="ButtonVariant.Outline" Class="w-full mt-3" OnClick="GenerateVoiceAsync" data-testid="generate-voice">
+                    <LucideIcon Name="mic" Size="14" />
+                    <span>Generate voice</span>
+                </Button>
+            }
         </Card>
     </div>
 
@@ -200,13 +224,25 @@
                 <div class="cost-row"><span class="muted-sm">Captions</span><span>@FormatCost(0)</span></div>
                 <div class="cost-row cost-total"><strong>Estimated total</strong><strong>@FormatCost(EstimatedTotal)</strong></div>
             </div>
-            <div style="margin-top:10px">
-                <div class="flex-between">
-                    <span class="muted-sm">Monthly cap</span>
-                    <span class="muted-sm">@FormatCost(objCapUsed) / @FormatCost(objCapLimit)</span>
+            @if (objCapLimit > 0)
+            {
+                <div style="margin-top:10px">
+                    <div class="flex-between">
+                        <span class="muted-sm">Monthly cap</span>
+                        <span class="muted-sm">@FormatCost(objCapUsed) / @FormatCost(objCapLimit)</span>
+                    </div>
+                    <Progress Value="@CapPercent" Class="mt-2" />
                 </div>
-                <Progress Value="@CapPercent" Class="mt-2" />
-            </div>
+            }
+            else
+            {
+                <div style="margin-top:10px">
+                    <div class="flex-between">
+                        <span class="muted-sm">Spent this month</span>
+                        <span class="muted-sm">@FormatCost(objCapUsed)</span>
+                    </div>
+                </div>
+            }
             @if (OverCap)
             {
                 <div data-testid="overcap-alert" style="margin-top:10px">
@@ -285,17 +321,8 @@
 </div>
 
 @code {
-    /// <summary>The Phase-5 characters route (enrich-or-seed; may not be live yet).</summary>
-    private const string CharactersApiRoute = "/api/v1/characters";
-
-    private readonly Dictionary<string, string> objVoices = new()
-    {
-        ["aanya-hi"] = "Aanya (Hindi) — warm",
-        ["rohan-hi"] = "Rohan (Hindi) — narration",
-        ["maya-en"] = "Maya (English IN) — clear",
-        ["kabir-en"] = "Kabir (English IN) — deep",
-    };
-    private string objVoiceId = "maya-en";
+    private Dictionary<string, string> objVoices = new();
+    private string? objVoiceId;
 
     private readonly string[] objLanguages = { "EN", "HI" };
     private string objLanguage = "EN";
@@ -317,14 +344,19 @@
     private string objTier = "Premium";
 
     private const decimal VoiceCost = 0.04m;
-    private readonly decimal objCapUsed = 41.20m;
-    private readonly decimal objCapLimit = 50.00m;
 
-    private List<CharacterSummary> objCharacters = SeedCharacters();
+    /// <summary>Month-to-date spend for the signed-in user (live from /api/v1/account; 0 until loaded).</summary>
+    private decimal objCapUsed;
+
+    /// <summary>The instance monthly cap (live from /api/v1/admin/spend when the caller may read it; 0 = unknown).</summary>
+    private decimal objCapLimit;
+
+    private List<CharacterSummary> objCharacters = new();
     private string? objCharacterId;
     private bool objLoadingCharacters = true;
+    private bool objApiDown;
 
-    private string objScript = "Namaste! This Diwali, light up your home with the all-new Lumina LED range — brighter, smarter, and 40% more efficient. Available now at every Lumina store and online.";
+    private string objScript = string.Empty;
     private bool objCaptions = true;
 
     private bool objRendering;
@@ -350,25 +382,25 @@
     /// <summary>The pre-run cost estimate: render tier + voice synthesis (captions are free).</summary>
     private decimal EstimatedTotal => SelectedTier.Cost + VoiceCost;
 
-    /// <summary>Remaining monthly-cap headroom before this job.</summary>
-    private decimal Headroom => objCapLimit - objCapUsed;
+    /// <summary>Remaining monthly-cap headroom before this job (0 when no cap is known).</summary>
+    private decimal Headroom => objCapLimit > 0 ? objCapLimit - objCapUsed : 0m;
 
-    /// <summary>Whether this job would exceed the monthly cap.</summary>
-    private bool OverCap => EstimatedTotal > Headroom;
+    /// <summary>Whether this job would exceed the monthly cap (never true while the cap is unknown).</summary>
+    private bool OverCap => objCapLimit > 0 && EstimatedTotal > Headroom;
 
-    /// <summary>Whether this job leaves less than $10 of headroom (soft warning).</summary>
-    private bool NearCap => !OverCap && (Headroom - EstimatedTotal) < 10m;
+    /// <summary>Whether this job leaves less than $10 of headroom (soft warning; cap must be known).</summary>
+    private bool NearCap => objCapLimit > 0 && !OverCap && (Headroom - EstimatedTotal) < 10m;
 
     /// <summary>Monthly-cap consumption as a percentage for the Progress bar.</summary>
-    private double CapPercent => (double)(objCapUsed / objCapLimit) * 100;
+    private double CapPercent => objCapLimit > 0 ? (double)(objCapUsed / objCapLimit) * 100 : 0;
 
     /// <summary>A simple eta string derived from the render progress.</summary>
     private string RenderEta => objProgress >= 100 ? "0:00" : $"0:{Math.Max(1, (100 - objProgress) / 2):00}";
 
     /// <summary>
-    /// Enriches the character list from the Phase-5 endpoint AFTER the first interactive render — once
-    /// JS interop is available and <see cref="IAuthSession"/> can hydrate the bearer token. The seed
-    /// list already shows, so the studio renders regardless of whether the endpoint is live yet.
+    /// Loads the live characters, preset voices and spend AFTER the first interactive render — once
+    /// JS interop is available and <see cref="IAuthSession"/> can hydrate the bearer token. Nothing is
+    /// seeded: empty results render honest empty states, and a failed fetch raises the API-down Alert.
     /// </summary>
     /// <param name="aFirstRender">Whether this is the component's first render.</param>
     protected override async Task OnAfterRenderAsync(bool aFirstRender)
@@ -378,8 +410,6 @@
             return;
         }
 
-        objCharacterId ??= objCharacters.FirstOrDefault()?.Id;
-
         // Send-to-studio (REQ-UI-082): pre-fill the script when Prompt Studio routes here with ?prompt=…
         var vPrompt = PromptStudioQuery.ReadPrompt(Navigation.Uri);
         if (vPrompt is not null)
@@ -388,82 +418,162 @@
         }
 
         var vHasSession = await AuthSession.EnsureLoadedAsync();
-        await TryEnrichCharactersAsync(vHasSession);
+        await TryLoadAsync(vHasSession);
         objLoadingCharacters = false;
         StateHasChanged();
     }
 
-    /// <summary>Replaces the seed list only when the authenticated characters endpoint returns rows.</summary>
+    /// <summary>Loads characters, preset voices and spend from the live API; failures raise the Alert.</summary>
     /// <param name="aHasSession">Whether a signed-in session is present.</param>
-    private async Task TryEnrichCharactersAsync(bool aHasSession)
+    private async Task TryLoadAsync(bool aHasSession)
     {
         if (!aHasSession)
         {
             return;
         }
 
+        var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+
         try
         {
-            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
-            var vCharacters = await vClient.GetFromJsonAsync<List<CharacterSummary>>(CharactersApiRoute);
-            if (vCharacters is { Count: > 0 })
-            {
-                objCharacters = vCharacters;
-                if (objCharacters.All(aChar => aChar.Id != objCharacterId))
-                {
-                    objCharacterId = objCharacters[0].Id;
-                }
-            }
+            var vCharacters = await vClient.GetFromJsonAsync<List<CharacterResponse>>(ApiRoutes.Characters);
+            objCharacters = (vCharacters ?? new List<CharacterResponse>())
+                .Select((aChar, aIndex) => ToSummary(aChar, aIndex))
+                .ToList();
+            objCharacterId = objCharacters.FirstOrDefault()?.Id;
+
+            var vVoices = await vClient.GetFromJsonAsync<List<PresetVoiceResponse>>($"{ApiRoutes.Voice}/preset-voices");
+            objVoices = (vVoices ?? new List<PresetVoiceResponse>())
+                .ToDictionary(aVoice => aVoice.VoiceId, aVoice => $"{aVoice.DisplayName} ({aVoice.Language})");
+            objVoiceId = objVoices.Keys.FirstOrDefault();
         }
         catch
         {
-            // Endpoint not live / unreachable — keep the representative seed (enrich-or-seed).
+            // API unreachable — never fake data; the warning Alert renders instead.
+            objApiDown = true;
         }
+
+        // Spend is a secondary read: the user's month-to-date always; the instance cap only when the
+        // caller is allowed to read the admin spend endpoint. Failures leave the cap unknown (hidden).
+        try
+        {
+            var vAccount = await vClient.GetFromJsonAsync<AccountSummaryResponse>(ApiRoutes.Account);
+            objCapUsed = vAccount?.Spend.MonthToDateUsd ?? 0m;
+        }
+        catch
+        {
+            // Spend unavailable — the widget shows $0.00 spent with no cap bar; no fake numbers.
+        }
+
+        try
+        {
+            var vSpend = await vClient.GetFromJsonAsync<SpendSummaryResponse>(ApiRoutes.Spend);
+            objCapLimit = vSpend?.MonthlyCapUsd ?? 0m;
+        }
+        catch
+        {
+            // Non-admin callers can't read the cap — the cap bar stays hidden.
+        }
+    }
+
+    /// <summary>Projects a live character onto the picker summary (initials, ref count, realism).</summary>
+    /// <param name="aChar">The API character.</param>
+    /// <param name="aIndex">Its list position (drives the placeholder face gradient).</param>
+    private static CharacterSummary ToSummary(CharacterResponse aChar, int aIndex)
+    {
+        var vFaces = new[] { "char-face-a", "char-face-b", "char-face-c" };
+        return new CharacterSummary
+        {
+            Id = aChar.CharacterId.ToString(),
+            Name = aChar.Name,
+            Initial = ToInitials(aChar.Name),
+            Seed = aChar.Seed,
+            RefCount = aChar.ReferenceAssets.Count,
+            Photoreal = aChar.Realism == CharacterRealism.Photoreal,
+            FaceClass = vFaces[aIndex % vFaces.Length],
+        };
+    }
+
+    /// <summary>Derives up to two uppercase initials from a display name.</summary>
+    /// <param name="aName">The character's display name.</param>
+    private static string ToInitials(string aName)
+    {
+        var vParts = aName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var vInitials = new string(vParts.Take(2).Select(aPart => char.ToUpperInvariant(aPart[0])).ToArray());
+        return string.IsNullOrEmpty(vInitials) ? "?" : vInitials;
     }
 
     /// <summary>Navigates to the character library.</summary>
     private void GoToCharacters() => Navigation.NavigateTo("/avatar/characters");
 
-    /// <summary>Best-effort voice-preview run over the voice vertical; surfaces a toast either way.</summary>
+    /// <summary>Runs a voice-preview synthesis; the toast reports the real outcome (no fake success).</summary>
     private async Task GenerateVoiceAsync()
     {
+        if (objVoiceId is null)
+        {
+            ToastService.Error("Select a voice before generating.", "No voice");
+            return;
+        }
+
         try
         {
             var vClient = HttpClientFactory.CreateClient("TrStudioApi");
-            await vClient.PostAsJsonAsync($"{ApiRoutes.Voice}/synthesize", new VoiceSynthesizeRequest
+            var vResponse = await vClient.PostAsJsonAsync($"{ApiRoutes.Voice}/synthesize", new VoiceSynthesizeRequest
             {
                 Text = objScript,
                 VoiceId = objVoiceId,
                 Language = objLanguage.ToLowerInvariant(),
             });
+
+            if (vResponse.IsSuccessStatusCode)
+            {
+                ToastService.Success($"Voice preview queued — {objVoices.GetValueOrDefault(objVoiceId, objVoiceId)}.", "Voice");
+                return;
+            }
         }
         catch
         {
-            // Voice endpoint still forming — the preview toast keeps the flow demonstrable.
+            // Fall through to the honest failure toast.
         }
 
-        ToastService.Success($"Voice preview queued — {objVoices.GetValueOrDefault(objVoiceId, objVoiceId)}.", "Voice");
+        ToastService.Error("Couldn't reach the API — the voice preview wasn't queued.", "Voice");
     }
 
-    /// <summary>Best-effort TechieRag script-assist call; reports the tightened hook via a toast.</summary>
+    /// <summary>Runs the TechieRag script-assist and applies the returned script; failures are reported honestly.</summary>
     private async Task ScriptAssistAsync()
     {
         try
         {
             var vClient = HttpClientFactory.CreateClient("TrStudioApi");
-            await vClient.PostAsJsonAsync($"{ApiRoutes.Rag}/script", new ScriptGenerationRequest
+            var vResponse = await vClient.PostAsJsonAsync($"{ApiRoutes.Rag}/script", new ScriptGenerationRequest
             {
                 Brief = objScript,
                 Language = objLanguage.ToLowerInvariant(),
                 Tone = "tighten-hook",
             });
+
+            if (vResponse.IsSuccessStatusCode)
+            {
+                var vResult = await vResponse.Content.ReadFromJsonAsync<ScriptGenerationResponse>();
+                if (!string.IsNullOrWhiteSpace(vResult?.Script))
+                {
+                    objScript = vResult.Script;
+                    ToastService.Show(vResult.Degraded
+                        ? (vResult.Message ?? "Script-assist ran in degraded mode.")
+                        : "Script-assist tightened your opening hook.", "TechieRag");
+                    return;
+                }
+
+                ToastService.Show(vResult?.Message ?? "Script-assist returned no script — configure a text LLM.", "TechieRag");
+                return;
+            }
         }
         catch
         {
-            // RAG endpoint still forming — keep the studio usable.
+            // Fall through to the honest failure toast.
         }
 
-        ToastService.Show("Script-assist tightened your opening hook.", "TechieRag");
+        ToastService.Error("Couldn't reach the API — script-assist is unavailable.", "TechieRag");
     }
 
     /// <summary>
@@ -492,12 +602,18 @@
             await Task.Delay(150);
         }
 
-        var vBlocked = await TrySubmitRenderAsync();
+        var vOutcome = await TrySubmitRenderAsync();
 
         objRendering = false;
         objProgress = 100;
 
-        if (vBlocked)
+        if (vOutcome is null)
+        {
+            ToastService.Error("Couldn't reach the API — the render wasn't submitted.", "Render failed");
+            return;
+        }
+
+        if (vOutcome == true)
         {
             objSafetyBlocked = true;
             ToastService.Error("Render blocked by a safety floor.", "Blocked");
@@ -508,8 +624,12 @@
         ToastService.Success($"Talking-head clip rendered on {SelectedTier.Name} tier.", "Rendered");
     }
 
-    /// <summary>Best-effort spine round-trip; returns true when the job came back Blocked.</summary>
-    private async Task<bool> TrySubmitRenderAsync()
+    /// <summary>
+    /// Submits the render through the shared job spine. Returns true when the job came back Blocked,
+    /// false when it was submitted (and not blocked), or null when the API was unreachable / refused
+    /// the submit — the caller reports that honestly instead of faking a rendered clip.
+    /// </summary>
+    private async Task<bool?> TrySubmitRenderAsync()
     {
         try
         {
@@ -534,13 +654,13 @@
             var vResponse = await vClient.PostAsJsonAsync(ApiRoutes.Jobs, vRequest);
             if (!vResponse.IsSuccessStatusCode)
             {
-                return false;
+                return null;
             }
 
             var vSubmit = await vResponse.Content.ReadFromJsonAsync<JobSubmitResponse>();
             if (vSubmit is null)
             {
-                return false;
+                return null;
             }
 
             for (var vPoll = 0; vPoll < 8; vPoll++)
@@ -553,13 +673,15 @@
 
                 await Task.Delay(200);
             }
+
+            // Submitted and still running after the poll window — not blocked.
+            return false;
         }
         catch
         {
-            // Avatar job path still forming / API down — the preview stands in, no safety block.
+            // API unreachable — the caller reports the failure; nothing is faked.
+            return null;
         }
-
-        return false;
     }
 
     /// <summary>Fires the export action for the rendered clip.</summary>
@@ -572,14 +694,6 @@
     }
 
     private static string FormatCost(decimal aValue) => $"${aValue:0.00}";
-
-    /// <summary>Representative identity-locked characters (used until the endpoint is live).</summary>
-    private static List<CharacterSummary> SeedCharacters() => new()
-    {
-        new CharacterSummary { Id = "aarav", Name = "Aarav Mehta", Initial = "AM", Seed = 48213, RefCount = 6, Photoreal = true, FaceClass = "char-face-a" },
-        new CharacterSummary { Id = "priya", Name = "Priya Kapoor", Initial = "PK", Seed = 91002, RefCount = 8, Photoreal = true, FaceClass = "char-face-b" },
-        new CharacterSummary { Id = "nova", Name = "Nova (mascot)", Initial = "NL", Seed = 33871, RefCount = 5, Photoreal = false, FaceClass = "char-face-c" },
-    };
 
     /// <summary>A render-tier row: cost, eta, provider, closed-API/HeyGen flags and the spine enum.</summary>
     /// <param name="Key">Stable tier key (matches the RadioGroup value).</param>

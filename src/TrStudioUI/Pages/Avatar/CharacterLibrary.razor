@@ -8,9 +8,9 @@
     seed/embedding), each a Card carrying an Avatar, a realism Badge (Photoreal / Stylized) and its
     seed/ref counts. A search box filters the grid; "New Character" opens a create/edit Dialog
     (image-gen prompt, realism RadioGroup, seed lock + LoRA lock); clicking a card opens the
-    character-bible Sheet (TechieRag persona notes, per character). The grid enriches from the Phase-5
-    /api/v1/characters endpoint when it is live, otherwise a representative seed keeps the page
-    demonstrable (enrich-or-seed); skeleton cards show while the first load is in flight.
+    character-bible Sheet (TechieRag persona notes, per character). The grid is live-only from the
+    /api/v1/characters endpoint — no representative seed; an empty account renders the honest empty
+    state and an unreachable API raises a warning Alert. Skeleton cards cover the first load.
 *@
 
 <PageTitle>TrStudio — Characters</PageTitle>
@@ -32,6 +32,17 @@
         </Button>
     </div>
 </div>
+
+@if (objApiDown)
+{
+    <div data-testid="api-down-alert" style="margin-bottom:14px">
+        <Alert Variant="AlertVariant.Warning" AccentBorder="true">
+            <LucideIcon Name="circle-alert" Size="16" />
+            <AlertTitle>Couldn't reach the API — data unavailable</AlertTitle>
+            <AlertDescription>Your characters couldn't be loaded. Check that TrStudioApi is running and reload.</AlertDescription>
+        </Alert>
+    </div>
+}
 
 @if (objLoading)
 {
@@ -230,13 +241,15 @@ else
 </Sheet>
 
 @code {
-    /// <summary>The Phase-5 characters route (enrich-or-seed; may not be live yet).</summary>
+    /// <summary>The characters route (live-only; owner-scoped server-side).</summary>
     private const string CharactersApiRoute = "/api/v1/characters";
 
-    private readonly string[] objLoras = { "None", "priya_v2.safetensors", "aarav_hd.safetensors" };
+    /// <summary>No LoRA registry exists yet, so "None" is the only honest option (no fake model files).</summary>
+    private readonly string[] objLoras = { "None" };
 
-    private List<CharacterCard> objCharacters = SeedCharacters();
+    private List<CharacterCard> objCharacters = new();
     private bool objLoading = true;
+    private bool objApiDown;
     private string objSearch = string.Empty;
 
     private bool objCreateOpen;
@@ -259,9 +272,9 @@ else
                 .ToList();
 
     /// <summary>
-    /// Enriches the grid from the Phase-5 endpoint AFTER the first interactive render — once JS interop
-    /// is available and <see cref="IAuthSession"/> can hydrate the bearer token. The seed grid already
-    /// shows, so the page renders regardless of whether the endpoint is live yet.
+    /// Loads the live grid AFTER the first interactive render — once JS interop is available and
+    /// <see cref="IAuthSession"/> can hydrate the bearer token. Nothing is seeded: an empty account
+    /// renders the honest empty state, and a failed fetch raises the API-down Alert.
     /// </summary>
     /// <param name="aFirstRender">Whether this is the component's first render.</param>
     protected override async Task OnAfterRenderAsync(bool aFirstRender)
@@ -272,14 +285,14 @@ else
         }
 
         var vHasSession = await AuthSession.EnsureLoadedAsync();
-        await TryEnrichCharactersAsync(vHasSession);
+        await TryLoadCharactersAsync(vHasSession);
         objLoading = false;
         StateHasChanged();
     }
 
-    /// <summary>Replaces the seed grid only when the authenticated characters endpoint returns rows.</summary>
+    /// <summary>Loads the owner's characters from the live endpoint; failures raise the Alert, never seeds.</summary>
     /// <param name="aHasSession">Whether a signed-in session is present.</param>
-    private async Task TryEnrichCharactersAsync(bool aHasSession)
+    private async Task TryLoadCharactersAsync(bool aHasSession)
     {
         if (!aHasSession)
         {
@@ -289,16 +302,44 @@ else
         try
         {
             var vClient = HttpClientFactory.CreateClient("TrStudioApi");
-            var vCharacters = await vClient.GetFromJsonAsync<List<CharacterCard>>(CharactersApiRoute);
-            if (vCharacters is { Count: > 0 })
-            {
-                objCharacters = vCharacters;
-            }
+            var vCharacters = await vClient.GetFromJsonAsync<List<CharacterResponse>>(CharactersApiRoute);
+            objCharacters = (vCharacters ?? new List<CharacterResponse>())
+                .Select((aChar, aIndex) => ToCard(aChar, aIndex))
+                .ToList();
         }
         catch
         {
-            // Endpoint not live / unreachable — keep the representative seed (enrich-or-seed).
+            // API unreachable — never fake data; the warning Alert renders instead.
+            objApiDown = true;
         }
+    }
+
+    /// <summary>Projects a live character response onto the grid card model.</summary>
+    /// <param name="aChar">The API character.</param>
+    /// <param name="aIndex">Its list position (drives the placeholder face gradient).</param>
+    private static CharacterCard ToCard(CharacterResponse aChar, int aIndex)
+    {
+        var vFaces = new[] { "char-face-a", "char-face-b", "char-face-c" };
+        return new CharacterCard
+        {
+            Id = aChar.CharacterId.ToString(),
+            Name = aChar.Name,
+            Initial = ToInitials(aChar.Name),
+            Seed = aChar.Seed,
+            RefCount = aChar.ReferenceAssets.Count,
+            Photoreal = aChar.Realism == CharacterRealism.Photoreal,
+            HasLora = !string.IsNullOrWhiteSpace(aChar.LoraRef),
+            FaceClass = vFaces[aIndex % vFaces.Length],
+        };
+    }
+
+    /// <summary>Derives up to two uppercase initials from a display name.</summary>
+    /// <param name="aName">The character's display name.</param>
+    private static string ToInitials(string aName)
+    {
+        var vParts = aName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var vInitials = new string(vParts.Take(2).Select(aPart => char.ToUpperInvariant(aPart[0])).ToArray());
+        return string.IsNullOrEmpty(vInitials) ? "?" : vInitials;
     }
 
     /// <summary>Opens the create dialog with a fresh draft.</summary>
@@ -345,9 +386,9 @@ else
     }
 
     /// <summary>
-    /// Persists the drafted character with a locked identity + realism flag: best-effort POST to the
-    /// Phase-5 endpoint, then optimistically prepends it to the grid so the page stays responsive even
-    /// while the endpoint is still forming (enrich-or-seed).
+    /// Persists the drafted character with a locked identity + realism flag. The card is added only
+    /// when the POST succeeds (using the server's persisted row) — a failed save reports an honest
+    /// error instead of inserting a character that doesn't exist.
     /// </summary>
     private async Task SaveCharacterAsync()
     {
@@ -359,41 +400,40 @@ else
 
         var vSeed = long.TryParse(objDraftSeed, out var vParsed) ? vParsed : Random.Shared.Next(10000, 99999);
         var vHasLora = !string.Equals(objDraftLora, "None", StringComparison.OrdinalIgnoreCase);
-        var vNew = new CharacterCard
-        {
-            Id = Guid.NewGuid().ToString("N")[..8],
-            Name = DeriveName(objDraftPrompt),
-            Initial = "NC",
-            Seed = vSeed,
-            RefCount = 1,
-            Photoreal = objDraftRealism == "photoreal",
-            HasLora = vHasLora,
-            FaceClass = "char-face-a"
-        };
 
         try
         {
             var vClient = HttpClientFactory.CreateClient("TrStudioApi");
             // Body matches CharacterUpsertRequest: name is required; realism is the numeric
             // CharacterRealism enum (Photoreal=0, Stylized=1); loraRef/description are the contract names.
-            await vClient.PostAsJsonAsync(CharactersApiRoute, new
+            var vResponse = await vClient.PostAsJsonAsync(CharactersApiRoute, new
             {
-                name = vNew.Name,
+                name = DeriveName(objDraftPrompt),
                 description = objDraftPrompt,
                 realism = objDraftRealism == "photoreal" ? 0 : 1,
                 seed = vSeed,
                 loraRef = vHasLora ? objDraftLora : null,
                 isAdult = true
             });
+
+            if (vResponse.IsSuccessStatusCode)
+            {
+                var vCreated = await vResponse.Content.ReadFromJsonAsync<CharacterResponse>();
+                if (vCreated is not null)
+                {
+                    objCharacters = objCharacters.Prepend(ToCard(vCreated, objCharacters.Count)).ToList();
+                    objCreateOpen = false;
+                    ToastService.Success($"Character created — identity locked at seed {vCreated.Seed}.", "Character");
+                    return;
+                }
+            }
         }
         catch
         {
-            // Endpoint still forming — the optimistic insert keeps the identity locked client-side.
+            // Fall through to the honest failure toast.
         }
 
-        objCharacters = objCharacters.Prepend(vNew).ToList();
-        objCreateOpen = false;
-        ToastService.Success($"Character created — identity locked at seed {vSeed}.", "Character");
+        ToastService.Error("Couldn't reach the API — the character wasn't created.", "Character");
     }
 
     /// <summary>Derives a short display name from the opening words of the prompt.</summary>
@@ -404,16 +444,6 @@ else
         var vTake = string.Join(' ', vWords.Take(3));
         return string.IsNullOrWhiteSpace(vTake) ? "New character" : vTake;
     }
-
-    /// <summary>Representative identity-locked characters (used until the endpoint is live).</summary>
-    private static List<CharacterCard> SeedCharacters() => new()
-    {
-        new CharacterCard { Id = "aarav", Name = "Aarav Mehta", Initial = "AM", Seed = 48213, RefCount = 6, Photoreal = true, HasLora = false, FaceClass = "char-face-a" },
-        new CharacterCard { Id = "priya", Name = "Priya Kapoor", Initial = "PK", Seed = 91002, RefCount = 8, Photoreal = true, HasLora = true, FaceClass = "char-face-b" },
-        new CharacterCard { Id = "nova", Name = "Nova (mascot)", Initial = "NL", Seed = 33871, RefCount = 5, Photoreal = false, HasLora = false, FaceClass = "char-face-c" },
-        new CharacterCard { Id = "rina", Name = "Dr. Rina Shah", Initial = "DR", Seed = 11247, RefCount = 7, Photoreal = true, HasLora = false, FaceClass = "char-face-a" },
-        new CharacterCard { Id = "kabir", Name = "Kabir Singh", Initial = "KS", Seed = 70559, RefCount = 4, Photoreal = true, HasLora = false, FaceClass = "char-face-b" },
-    };
 
     /// <summary>A library-facing character with its locked identity, realism flag and reference counts.</summary>
     private sealed class CharacterCard

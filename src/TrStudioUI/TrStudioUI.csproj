@@ -23,8 +23,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="[10.0.3]" />
     <!-- IHostEnvironment for the dev-session seam gate; cross-platform (Web + MAUI Hybrid). -->
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="[10.0.0]" />
-    <PackageReference Include="TrBlazeUI.Components" Version="[1.0.7]" />
-    <PackageReference Include="TrBlazeUI.Icons.Lucide" Version="[1.0.7]" />
+    <PackageReference Include="TrBlazeUI.Components" Version="[1.0.9]" />
+    <PackageReference Include="TrBlazeUI.Icons.Lucide" Version="[1.0.9]" />
   </ItemGroup>
 
   <ItemGroup>

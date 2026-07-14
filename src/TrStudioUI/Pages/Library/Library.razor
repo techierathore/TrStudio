@@ -10,8 +10,8 @@
     Scripts / Style presets / Voice presets) filter a preset Card grid; each card carries a type tag,
     a clamped snippet or param summary, tag Badges, a use-count, and "Use in {Studio}" (routes to the
     right studio with the preset applied) + Edit. "New preset" and Edit open a Sheet form. Per-user:
-    /api/v1/presets is owner-filtered server-side; a representative seed keeps the page usable while
-    the Phase-9 endpoint is forming. An empty state covers over-narrow filters.
+    /api/v1/presets is owner-filtered server-side; live-only — no representative seed; an unreachable
+    API raises a warning Alert. An empty state covers both an empty library and over-narrow filters.
 *@
 
 <PageTitle>TrStudio — Library</PageTitle>
@@ -19,6 +19,17 @@
 <div class="library-page">
 <h1 class="page-title">Library</h1>
 <p class="page-sub">Reusable prompts, scripts and style/voice presets — save once from any studio, reuse everywhere. Private to your account.</p>
+
+@if (objApiDown)
+{
+    <div data-testid="api-down-alert" style="margin-bottom:14px">
+        <Alert Variant="AlertVariant.Warning" AccentBorder="true">
+            <LucideIcon Name="circle-alert" Size="16" />
+            <AlertTitle>Couldn't reach the API — data unavailable</AlertTitle>
+            <AlertDescription>Your presets couldn't be loaded. Check that TrStudioApi is running and reload.</AlertDescription>
+        </Alert>
+    </div>
+}
 
 <div class="lib-toolbar" data-testid="library-toolbar">
     <div class="lib-search">
@@ -183,6 +194,7 @@ else
 
     private readonly List<PresetView> objPresets = new();
     private bool objLoading = true;
+    private bool objApiDown;
     private string objSearch = string.Empty;
     private string objTypeTab = "all";
 
@@ -228,41 +240,46 @@ else
     }
 
     /// <summary>
-    /// Loads the owner-scoped presets. Live rows render when the authenticated call returns them; a
-    /// representative seed only stands in when there is no session or the call yields nothing — keeping
-    /// the page usable while the Phase-9 preset endpoint is forming.
+    /// Loads the owner-scoped presets from the live endpoint. Zero rows render the honest empty state
+    /// — never sample presets — and a failed fetch raises the API-down Alert.
     /// </summary>
     /// <param name="aHasSession">Whether a signed-in session is present.</param>
     private async Task TryLoadPresetsAsync(bool aHasSession)
     {
-        if (aHasSession)
+        if (!aHasSession)
         {
-            try
-            {
-                var vClient = HttpClientFactory.CreateClient("TrStudioApi");
-                var vPresets = await vClient.GetFromJsonAsync<List<PresetView>>(PresetsRoute);
-                if (vPresets is { Count: > 0 })
-                {
-                    objPresets.Clear();
-                    // Normalize the API type vocab (style-preset/voice-preset) back to the short UI vocab
-                    // (style/voice) the tabs, CSS type tags and studio-routing switch match on; the API
-                    // carries no tags field, so coalesce to an empty list to keep the card render null-safe.
-                    objPresets.AddRange(vPresets.Select(aPreset => aPreset with
-                    {
-                        Type = FromApiType(aPreset.Type),
-                        Tags = aPreset.Tags ?? new List<string>(),
-                    }));
-                    return;
-                }
-            }
-            catch
-            {
-                // Endpoint forming or unreachable — fall through to the representative seed.
-            }
+            return;
         }
 
-        SeedRepresentative();
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vPresets = await vClient.GetFromJsonAsync<List<PresetResponse>>(PresetsRoute);
+            objPresets.Clear();
+            objPresets.AddRange((vPresets ?? new List<PresetResponse>()).Select(FromResponse));
+        }
+        catch
+        {
+            // API unreachable — never fake data; the warning Alert renders instead.
+            objApiDown = true;
+        }
     }
+
+    /// <summary>
+    /// Projects an API preset onto the card model: the wire type vocab (style-preset/voice-preset)
+    /// normalizes back to the short UI vocab (style/voice) the tabs, CSS type tags and studio routing
+    /// match on; Content becomes the snippet and the tags fold out of Description (where saves put them).
+    /// </summary>
+    /// <param name="aPreset">The API preset response.</param>
+    private static PresetView FromResponse(PresetResponse aPreset) => new(
+        aPreset.PresetId,
+        aPreset.Name,
+        FromApiType(aPreset.Type),
+        aPreset.Content,
+        string.IsNullOrWhiteSpace(aPreset.Description)
+            ? new List<string>()
+            : aPreset.Description.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(),
+        aPreset.UseCount);
 
     private bool Matches(PresetView aPreset)
     {
@@ -309,8 +326,6 @@ else
         }
 
         var vTags = objFormTags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
-        var vId = objEditingId ?? Guid.NewGuid();
-        var vSaved = new PresetView(vId, objFormName.Trim(), objFormType, objFormSnippet.Trim(), vTags, 0);
 
         try
         {
@@ -319,38 +334,44 @@ else
             // the upsert lands instead of 400-ing; tags fold into Description (the API has no tags field).
             var vRequest = new PresetUpsertRequest
             {
-                Type = ToApiType(vSaved.Type),
-                Name = vSaved.Name,
+                Type = ToApiType(objFormType),
+                Name = objFormName.Trim(),
                 Description = vTags.Count > 0 ? string.Join(", ", vTags) : null,
-                Content = vSaved.Snippet,
+                Content = objFormSnippet.Trim(),
             };
 
-            if (objEditingId is null)
+            var vResponse = objEditingId is null
+                ? await vClient.PostAsJsonAsync(PresetsRoute, vRequest)
+                : await vClient.PutAsJsonAsync($"{PresetsRoute}/{objEditingId}", vRequest);
+
+            if (vResponse.IsSuccessStatusCode)
             {
-                await vClient.PostAsJsonAsync(PresetsRoute, vRequest);
-            }
-            else
-            {
-                await vClient.PutAsJsonAsync($"{PresetsRoute}/{vId}", vRequest);
+                var vPersisted = await vResponse.Content.ReadFromJsonAsync<PresetResponse>();
+                var vSaved = vPersisted is not null
+                    ? FromResponse(vPersisted)
+                    : new PresetView(objEditingId ?? Guid.NewGuid(), vRequest.Name, objFormType, vRequest.Content, vTags, 0);
+
+                var vExisting = objPresets.FindIndex(aPreset => aPreset.PresetId == vSaved.PresetId);
+                if (vExisting >= 0)
+                {
+                    objPresets[vExisting] = vSaved;
+                }
+                else
+                {
+                    objPresets.Insert(0, vSaved);
+                }
+
+                objSheetOpen = false;
+                ToastService.Success($"Saved \"{vSaved.Name}\".", "Preset");
+                return;
             }
         }
         catch
         {
-            // Optimistic save for the offline demo flow — the card updates locally either way.
+            // Fall through to the honest failure toast.
         }
 
-        var vExisting = objPresets.FindIndex(aPreset => aPreset.PresetId == vId);
-        if (vExisting >= 0)
-        {
-            objPresets[vExisting] = vSaved with { UseCount = objPresets[vExisting].UseCount };
-        }
-        else
-        {
-            objPresets.Insert(0, vSaved);
-        }
-
-        objSheetOpen = false;
-        ToastService.Success($"Saved \"{vSaved.Name}\".", "Preset");
+        ToastService.Error("Couldn't reach the API — the preset wasn't saved.", "Preset");
     }
 
     /// <summary>Maps the short UI preset type onto the API's wire vocab (style→style-preset, voice→voice-preset).</summary>
@@ -370,32 +391,6 @@ else
         "voice-preset" => "voice",
         _ => aType,
     };
-
-    private void SeedRepresentative()
-    {
-        objPresets.Clear();
-        objPresets.AddRange(new[]
-        {
-            new PresetView(Guid.NewGuid(), "Kavya portrait — warm festive light", "prompt",
-                "\"photoreal portrait of a young Indian woman, warm diya light, bokeh marigold garlands, editorial lens, 85mm, soft rim light…\"",
-                new List<string> { "portrait", "diwali", "SDXL" }, 14),
-            new PresetView(Guid.NewGuid(), "Diwali greeting — Hindi 30s", "script",
-                "\"Is Diwali, apno ko dijiye mithaas ka tohfa. Hamare haath se bane laddoo aur barfi, ghar tak pahunchenge…\" (62 words · HI)",
-                new List<string> { "hindi", "festival", "30s" }, 6),
-            new PresetView(Guid.NewGuid(), "Product reel look — saree line", "style",
-                "FLUX.1 · guidance 4.5 · steps 28 · 4:5 · film-grain LUT · bg-remove off — the locked look for all catalog shots.",
-                new List<string> { "e-commerce", "FLUX.1", "4:5" }, 22),
-            new PresetView(Guid.NewGuid(), "Ravi — Hindi narrator", "voice",
-                "IndicF5 · warm · speed 1.0",
-                new List<string> { "hindi", "preset voice", "no consent needed" }, 31),
-            new PresetView(Guid.NewGuid(), "Rangoli poster motif", "prompt",
-                "\"top-down rangoli mandala, vivid pigment powder, marigold accents, symmetric, festive poster background, negative: text, watermark…\"",
-                new List<string> { "poster", "FLUX.1" }, 9),
-            new PresetView(Guid.NewGuid(), "Product explainer — EN opener", "script",
-                "\"Meet the easiest way to bring festive sweets home. Handmade, small-batch, and delivered fresh — here's how it works…\" (48 words · EN)",
-                new List<string> { "english", "explainer" }, 4),
-        });
-    }
 
     /// <summary>A reusable Library preset (prompt/script/style/voice) with its reuse routing.</summary>
     private sealed record PresetView(Guid PresetId, string Name, string Type, string Snippet, List<string> Tags, int UseCount)

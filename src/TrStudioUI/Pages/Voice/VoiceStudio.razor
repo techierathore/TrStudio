@@ -12,14 +12,26 @@
     that becomes "playable" after a Generate run (or a clean "voice model not installed" Alert when the
     selected voice has no local model). Cloning opens a Dialog whose FileUpload takes a sample; a
     real-person clone must clear the consent AlertDialog gate (SAFE-02/03) before it can proceed, while
-    a synthetic/character voice skips the gate. The preset list enriches from the API when reachable and
-    otherwise falls back to a representative seed so the studio always renders (enrich-or-seed).
+    a synthetic/character voice skips the gate. The preset list is live-only from
+    /api/v1/voice/preset-voices — no representative seed; an empty catalog renders the honest
+    "no voices installed" state and an unreachable API raises a warning Alert.
 *@
 
 <PageTitle>TrStudio — Voice Studio</PageTitle>
 
 <h1 class="page-title">Voice Studio</h1>
 <p class="page-sub">Generate narration with preset or cloned voices — EN / HI / Hinglish.</p>
+
+@if (objApiDown)
+{
+    <div data-testid="api-down-alert" style="margin-bottom:14px">
+        <Alert Variant="AlertVariant.Warning" AccentBorder="true">
+            <LucideIcon Name="circle-alert" Size="16" />
+            <AlertTitle>Couldn't reach the API — data unavailable</AlertTitle>
+            <AlertDescription>The preset-voice catalog couldn't be loaded. Check that TrStudioApi is running and reload.</AlertDescription>
+        </Alert>
+    </div>
+}
 
 <div class="voice-studio" data-testid="voice-studio">
 
@@ -90,6 +102,16 @@
 
         <Card>
             <h3 class="card-h3">Voice picker</h3>
+            @if (objVoicesLoaded && objVoices.Count == 0)
+            {
+                <div class="emptystate" style="text-align:center;padding:18px 8px" data-testid="voice-catalog-empty">
+                    <LucideIcon Name="mic-off" Size="22" />
+                    <div style="font-weight:600;margin-top:8px">No voices installed</div>
+                    <div class="muted-sm" style="margin-top:4px">Ask your admin to install a voice model from the Model Library.</div>
+                </div>
+            }
+            else
+            {
             <label class="param-label">Preset voice</label>
             <div data-testid="voice-combobox">
                 <Combobox TItem="PresetVoice"
@@ -120,6 +142,7 @@
                         <Badge Variant="BadgeVariant.Secondary">no model</Badge>
                     }
                 </div>
+            }
             }
         </Card>
 
@@ -181,7 +204,7 @@
                             <LucideIcon Name="@(objPlaying ? "pause" : "play")" Size="14" />
                             <span>@(objPlaying ? "Pause" : "Play")</span>
                         </Button>
-                        <span class="muted-sm">@(objHasAudio ? "0:09 / 0:21" : "No clip yet")</span>
+                        <span class="muted-sm">@(objHasAudio ? "Clip ready" : "No clip yet")</span>
                     </div>
                     <Button Variant="ButtonVariant.Outline" OnClick="ExportAsync" Disabled="@(!objHasAudio)" data-testid="voice-export">
                         <LucideIcon Name="download" Size="14" />
@@ -289,12 +312,14 @@
         30, 60, 90, 45, 75, 100, 55, 35, 80, 50, 65, 95, 40, 70, 30, 85, 50, 60, 42, 78,
     };
 
-    private List<PresetVoice> objVoices = SeedVoices();
+    private List<PresetVoice> objVoices = new();
+    private bool objVoicesLoaded;
+    private bool objApiDown;
     private string? objSelectedVoiceId;
 
     private string objLanguage = "hi";
     private string objEmotion = "Warm narration";
-    private string objScript = "नमस्ते! आज हम TrStudio में आपका स्वागत करते हैं। This is a sample Hinglish narration for the avatar intro.";
+    private string objScript = string.Empty;
     private double objSpeed = 1.0;
     private double objPitch;
 
@@ -321,11 +346,11 @@
     private bool SpeedSupported => SelectedVoice?.SupportsSpeed ?? true;
 
     /// <summary>
-    /// Enriches the preset list from the voice API AFTER the first interactive render — once JS interop
+    /// Loads the preset list from the voice API AFTER the first interactive render — once JS interop
     /// is available and <see cref="IAuthSession"/> can hydrate the bearer token. Loading here (not in
     /// <c>OnInitializedAsync</c>, which runs during prerender before the token exists) avoids a wasted
-    /// anonymous 401. The seed list is already on screen, so the studio renders regardless of whether
-    /// the endpoint is live yet.
+    /// anonymous 401. Nothing is seeded: an empty catalog renders the honest "no voices installed"
+    /// state, and a failed fetch raises the API-down Alert.
     /// </summary>
     /// <param name="aFirstRender">Whether this is the component's first render.</param>
     protected override async Task OnAfterRenderAsync(bool aFirstRender)
@@ -335,19 +360,15 @@
             return;
         }
 
-        objSelectedVoiceId ??= objVoices.FirstOrDefault()?.Id;
         var vHasSession = await AuthSession.EnsureLoadedAsync();
-        await TryEnrichVoicesAsync(vHasSession);
+        await TryLoadVoicesAsync(vHasSession);
+        objVoicesLoaded = true;
         StateHasChanged();
     }
 
-    /// <summary>
-    /// Best-effort enrichment: replaces the seed list only when the authenticated preset endpoint
-    /// returns a non-empty list. Any failure (endpoint still forming, API down, 401) leaves the
-    /// representative seed in place so the studio stays demonstrable.
-    /// </summary>
+    /// <summary>Loads the live preset-voice catalog; failures raise the Alert, never a seed list.</summary>
     /// <param name="aHasSession">Whether a signed-in session is present.</param>
-    private async Task TryEnrichVoicesAsync(bool aHasSession)
+    private async Task TryLoadVoicesAsync(bool aHasSession)
     {
         if (!aHasSession)
         {
@@ -358,18 +379,13 @@
         {
             var vClient = HttpClientFactory.CreateClient("TrStudioApi");
             var vVoices = await vClient.GetFromJsonAsync<List<PresetVoiceResponse>>($"{VoiceApiRoute}/preset-voices");
-            if (vVoices is { Count: > 0 })
-            {
-                objVoices = vVoices.Select(MapPresetVoice).ToList();
-                if (objVoices.All(aVoice => aVoice.Id != objSelectedVoiceId))
-                {
-                    objSelectedVoiceId = objVoices[0].Id;
-                }
-            }
+            objVoices = (vVoices ?? new List<PresetVoiceResponse>()).Select(MapPresetVoice).ToList();
+            objSelectedVoiceId = objVoices.FirstOrDefault()?.Id;
         }
         catch
         {
-            // Endpoint not live / unreachable — keep the seed list (enrich-or-seed).
+            // API unreachable — never fake data; the warning Alert renders instead.
+            objApiDown = true;
         }
     }
 
@@ -440,18 +456,39 @@
             await Task.Delay(140);
         }
 
-        await TrySynthesizeAsync(vVoice);
+        var vResult = await TrySynthesizeAsync(vVoice);
 
         objProgress = 100;
         objGenerating = false;
+
+        if (vResult is null)
+        {
+            ToastService.Error("Couldn't reach the API — nothing was synthesized.", "Voice");
+            return;
+        }
+
+        if (vResult.AssetId is null)
+        {
+            // The API answered but produced no audio (e.g. model-not-installed) — report its reason.
+            ToastService.Error(vResult.Message ?? "No voice model produced audio for this request.", "Voice");
+            return;
+        }
+
         objHasAudio = true;
         objPlaying = true;
-        ToastService.Success($"Narration ready — {vVoice.Name}.", "Generated");
+        if (vResult.Degraded)
+        {
+            ToastService.Show(vResult.Message ?? "Synthesis ran in degraded mode.", "Voice");
+        }
+        else
+        {
+            ToastService.Success($"Narration ready — {vVoice.Name}.", "Generated");
+        }
     }
 
-    /// <summary>Best-effort synthesize round-trip; a failure is swallowed and the placeholder clip stands in.</summary>
+    /// <summary>Synthesize round-trip; returns the API result, or null when the call failed.</summary>
     /// <param name="aVoice">The voice to synthesize with.</param>
-    private async Task TrySynthesizeAsync(PresetVoice aVoice)
+    private async Task<VoiceSynthesizeResponse?> TrySynthesizeAsync(PresetVoice aVoice)
     {
         try
         {
@@ -465,11 +502,18 @@
                 Speed = SpeedSupported ? objSpeed : 1.0d,
             };
 
-            await vClient.PostAsJsonAsync($"{VoiceApiRoute}/synthesize", vRequest);
+            var vResponse = await vClient.PostAsJsonAsync($"{VoiceApiRoute}/synthesize", vRequest);
+            if (!vResponse.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await vResponse.Content.ReadFromJsonAsync<VoiceSynthesizeResponse>();
         }
         catch
         {
-            // Endpoint still forming / API down — the placeholder waveform keeps the studio usable.
+            // API unreachable — the caller reports the failure; nothing is faked.
+            return null;
         }
     }
 
@@ -512,7 +556,7 @@
         await CreateCloneAsync();
     }
 
-    /// <summary>Submits the clone best-effort and reports the outcome.</summary>
+    /// <summary>Submits the clone and reports the real outcome — no optimistic success on failure.</summary>
     private async Task CreateCloneAsync()
     {
         try
@@ -525,20 +569,25 @@
                 consentConfirmed = !objCloneSynthetic,
             };
 
-            await vClient.PostAsJsonAsync($"{VoiceApiRoute}/clone", vRequest);
+            var vResponse = await vClient.PostAsJsonAsync($"{VoiceApiRoute}/clone", vRequest);
+            if (vResponse.IsSuccessStatusCode)
+            {
+                objCloneOpen = false;
+                objSampleName = null;
+                ToastService.Success(
+                    objCloneSynthetic
+                        ? "Synthetic voice clone queued."
+                        : "Consent recorded — real-person voice clone queued.",
+                    "Clone");
+                return;
+            }
         }
         catch
         {
-            // Endpoint still forming — surface success optimistically; the queue reconciles server-side.
+            // Fall through to the honest failure toast.
         }
 
-        objCloneOpen = false;
-        objSampleName = null;
-        ToastService.Success(
-            objCloneSynthetic
-                ? "Synthetic voice clone queued."
-                : "Consent recorded — real-person voice clone queued.",
-            "Clone");
+        ToastService.Error("Couldn't reach the API — the clone wasn't queued.", "Clone");
     }
 
     /// <summary>Fires the export action for the current clip.</summary>
@@ -547,16 +596,6 @@
         ToastService.Success("Exported narration as WAV.", "Export");
         return Task.CompletedTask;
     }
-
-    /// <summary>Representative preset catalog covering EN / HI / Hinglish and the capability gates.</summary>
-    private static List<PresetVoice> SeedVoices() => new()
-    {
-        new PresetVoice("aanya-hi", "Aanya (Hindi)", "IndicF5", "female · warm", "A", "voice-av-a", true, true, true),
-        new PresetVoice("ravi-hi", "Ravi (Hindi)", "IndicF5", "male · narrator", "R", "voice-av-b", true, true, true),
-        new PresetVoice("emma-en", "Emma (English)", "XTTS v2", "female · bright", "E", "voice-av-c", true, true, true),
-        new PresetVoice("kabir-hinglish", "Kabir (Hinglish)", "Piper", "male · neutral", "K", "voice-av-b", false, false, true),
-        new PresetVoice("my-clone", "My cloned voice", "Custom (XTTS v2)", "pending consent", "+", "voice-av-x", true, true, false),
-    };
 
     /// <summary>
     /// A selectable preset voice. Routing (engine/provider) is a display detail hidden behind the single

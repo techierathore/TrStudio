@@ -6,10 +6,11 @@
 
 @*
     Admin Hardware & guided setup (REQ-UI-070). Readiness summary cards (GPU / memory /
-    MPS-CoreML / disk) with ready/warn Badges, a guided-setup stepper (ONNX, MuseTalk,
-    isolated Python + ComfyUI, network volume) with live Progress, and a low-disk Warning
-    Alert linking to the Model Library. Consumes the capabilities + setup endpoints, with a
-    representative fallback while those admin endpoints are being wired.
+    MPS-CoreML / disk) with ready/warn Badges, a guided-setup stepper (ONNX, isolated Python,
+    managed ComfyUI, network volume) with live Progress, and a low-disk Warning Alert (shown only
+    when the live capability report actually flags low disk) linking to the Model Library. The
+    stepper's step DEFINITIONS are static config; every step STATE comes from the live
+    /api/v1/admin/setup snapshot — no fake progress/versions; an unreachable API raises a warning Alert.
 *@
 
 <PageTitle>TrStudio — Hardware &amp; Setup</PageTitle>
@@ -22,6 +23,17 @@
             system Python.
         </p>
     </div>
+
+    @if (objApiDown)
+    {
+        <div data-testid="api-down-alert">
+            <Alert Variant="AlertVariant.Warning" AccentBorder="true">
+                <LucideIcon Name="circle-alert" Size="16" />
+                <AlertTitle>Couldn't reach the API — data unavailable</AlertTitle>
+                <AlertDescription>Host capabilities and setup state couldn't be loaded. Check that TrStudioApi is running and reload.</AlertDescription>
+            </Alert>
+        </div>
+    }
 
     @if (objCapabilitiesLoading)
     {
@@ -114,32 +126,41 @@
         </CardContent>
     </Card>
 
-    <div data-testid="low-disk-alert">
-        <Alert Variant="AlertVariant.Warning" AccentBorder="true">
-            <LucideIcon Name="alert-triangle" Size="16" />
-            <AlertTitle>Disk space low</AlertTitle>
-            <AlertDescription>
-                The 24 GB Hunyuan-Avatar checkpoint exceeds local free space — attach a network volume
-                before installing from the <a href="/admin/models">Model Library</a>.
-            </AlertDescription>
-        </Alert>
-    </div>
+    @if (objLowDisk)
+    {
+        <div data-testid="low-disk-alert">
+            <Alert Variant="AlertVariant.Warning" AccentBorder="true">
+                <LucideIcon Name="alert-triangle" Size="16" />
+                <AlertTitle>Disk space low</AlertTitle>
+                <AlertDescription>
+                    Only @objFreeDiskGb.ToString("0") GB of @objTotalDiskGb.ToString("0") GB is free on this node —
+                    large checkpoints may not fit. Attach a network volume before installing from the
+                    <a href="/admin/models">Model Library</a>.
+                </AlertDescription>
+            </Alert>
+        </div>
+    }
 </div>
 
 @code {
     private List<CapabilityCard> objCapabilityCards = new();
     private List<SetupStepRow> objSteps = new();
     private bool objCapabilitiesLoading = true;
+    private bool objApiDown;
+    private bool objLowDisk;
+    private double objFreeDiskGb;
+    private double objTotalDiskGb;
 
     private int objCompletedSteps => objSteps.Count(aStep => aStep.DotClass == "done");
 
     /// <inheritdoc />
     protected override void OnInitialized()
     {
-        // The guided-setup stepper is static provisioning scaffolding (no host detection), so it is
-        // safe to render immediately. The capability cards are host-specific and must NOT be seeded
-        // with sample hardware — they load from the authenticated report after the first render.
-        SeedSteps();
+        // The guided-setup stepper's step DEFINITIONS (keys/titles) are static provisioning config, so
+        // they are safe to render immediately — but every step STATE (done/running/progress) is live
+        // data and starts neutral until the authenticated GET /admin/setup snapshot replaces it. The
+        // capability cards are host-specific and load from the authenticated report after first render.
+        InitializeStepDefinitions();
     }
 
     /// <summary>
@@ -180,6 +201,7 @@
             var vResponse = await vClient.GetAsync(ApiRoutes.Capabilities);
             if (!vResponse.IsSuccessStatusCode)
             {
+                objApiDown = true;
                 return;
             }
 
@@ -191,8 +213,9 @@
         }
         catch
         {
-            // Endpoint not reachable / unauthenticated — keep the cards empty (the unavailable note
-            // renders) rather than showing a sample hardware profile.
+            // API unreachable — keep the cards empty (the unavailable note renders) and raise the
+            // warning Alert; never a sample hardware profile.
+            objApiDown = true;
         }
     }
 
@@ -204,6 +227,11 @@
             : 0.0;
         var vLowDisk = aReport.FreeDiskGb < aReport.TotalDiskGb * 0.25;
 
+        // Drive the page-level low-disk Alert from the LIVE report only (never a canned warning).
+        objLowDisk = vLowDisk;
+        objFreeDiskGb = aReport.FreeDiskGb;
+        objTotalDiskGb = aReport.TotalDiskGb;
+
         objCapabilityCards = new List<CapabilityCard>
         {
             new("GPU cores", aReport.GpuCoreCount is > 0 ? $"{aReport.GpuCoreCount}-core" : "—", aReport.OsDescription, false, null),
@@ -214,26 +242,26 @@
     }
 
     /// <summary>
-    /// Seeds the guided-setup stepper with a representative fallback (shown only until the live
-    /// <c>GET /admin/setup</c> snapshot loads, or when it is unreachable). The three provisioning
-    /// steps carry the real backend step keys so their run button targets the actual endpoint even
-    /// in the fallback; the network-volume row has no backing step and stays disabled.
+    /// Initializes the stepper with the static step DEFINITIONS only (legitimate provisioning config:
+    /// the real backend step keys + titles) in a neutral not-yet-checked state — no fake versions,
+    /// completion ticks or progress. The live <c>GET /admin/setup</c> snapshot supplies every state.
+    /// The network-volume row has no backing step and stays disabled.
     /// </summary>
-    private void SeedSteps()
+    private void InitializeStepDefinitions()
     {
         objSteps = new List<SetupStepRow>
         {
-            new() { StepKey = "OnnxRuntime", Title = "ONNX Runtime", Detail = "CoreML execution provider installed · v1.20.1", DotClass = "done", DotLabel = "✓", ActionLabel = "Reinstall", Disabled = false, Progress = null },
-            new() { StepKey = "PythonEnv", Title = "Isolated Python environment", Detail = "python-build-standalone venv (python 3.11) provisioned", DotClass = "done", DotLabel = "✓", ActionLabel = "Verify", Disabled = false, Progress = null },
-            new() { StepKey = "ComfyUi", Title = "Managed ComfyUI", Detail = "Provisioning ComfyUI core… installing dependencies", DotClass = "run", DotLabel = "3", ActionLabel = "Logs", Disabled = false, Progress = 64.0 },
-            new() { StepKey = string.Empty, Title = "Network volume mount", Detail = "For large checkpoints (SDXL, Hunyuan-Avatar) — unlocks after ComfyUI", DotClass = "", DotLabel = "4", ActionLabel = "Start", Disabled = true, Progress = null }
+            new() { StepKey = "OnnxRuntime", Title = "ONNX Runtime", Detail = "State not loaded yet.", DotClass = "", DotLabel = "1", ActionLabel = "Start", Disabled = false, Progress = null },
+            new() { StepKey = "PythonEnv", Title = "Isolated Python environment", Detail = "State not loaded yet.", DotClass = "", DotLabel = "2", ActionLabel = "Start", Disabled = false, Progress = null },
+            new() { StepKey = "ComfyUi", Title = "Managed ComfyUI", Detail = "State not loaded yet.", DotClass = "", DotLabel = "3", ActionLabel = "Start", Disabled = false, Progress = null },
+            new() { StepKey = string.Empty, Title = "Network volume mount", Detail = "For large checkpoints — no backing setup step yet", DotClass = "", DotLabel = "4", ActionLabel = "Start", Disabled = true, Progress = null }
         };
     }
 
     /// <summary>
-    /// Loads the live guided-setup snapshot (<c>GET /api/v1/admin/setup</c>) and replaces the seeded
-    /// stepper with the real per-step state. With no session, or when the endpoint is unreachable,
-    /// the representative stepper stays in place.
+    /// Loads the live guided-setup snapshot (<c>GET /api/v1/admin/setup</c>) and replaces the neutral
+    /// stepper with the real per-step state. When the endpoint is unreachable the steps stay in their
+    /// neutral state and the API-down Alert renders.
     /// </summary>
     /// <param name="aHasSession">Whether a signed-in session is present.</param>
     private async Task TryLoadSetupAsync(bool aHasSession)
@@ -249,6 +277,7 @@
             var vResponse = await vClient.GetAsync(ApiRoutes.Setup);
             if (!vResponse.IsSuccessStatusCode)
             {
+                objApiDown = true;
                 return;
             }
 
@@ -260,7 +289,8 @@
         }
         catch
         {
-            // Setup endpoint not reachable / unauthenticated — keep the representative stepper.
+            // API unreachable — the neutral stepper stays and the warning Alert renders.
+            objApiDown = true;
         }
     }
 
@@ -344,10 +374,10 @@
         }
         catch
         {
-            // Setup endpoint not reachable — fall through to the illustrative toast.
+            // Fall through to the honest failure toast.
         }
 
-        ToastService.Show($"{aStep.Title}: {aStep.ActionLabel} requested.", "Guided setup");
+        ToastService.Error($"Couldn't reach the API — “{aStep.Title}” wasn't started.", "Guided setup");
     }
 
     private sealed record CapabilityCard(string Label, string Value, string Detail, bool Warn, double? Progress);

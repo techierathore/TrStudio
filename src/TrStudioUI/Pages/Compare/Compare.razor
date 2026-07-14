@@ -11,8 +11,9 @@
     drives result panes: each shows a preview with a duration chip, model/provider·tier/seed/provenance
     Badges and cost/duration/resolution rows, plus per-pane Reproduce/Export/Open-in-Gallery. A
     parameter-diff DataTable marks the rows that differ, with a "N differ" badge and a show-identical
-    toggle. Per-user: the compare set is owner-filtered server-side; a representative seed keeps the
-    page usable while the endpoint is forming. Fewer than two picks shows an empty state to Gallery.
+    toggle. Per-user: the slot options come from the owner-scoped /api/v1/assets listing and the
+    param sets from GET /api/v1/compare?assetIds= — live-only, no representative seed; an unreachable
+    API raises a warning Alert. Fewer than two picks shows an empty state to Gallery.
 *@
 
 <PageTitle>TrStudio — Compare</PageTitle>
@@ -27,6 +28,17 @@
 
 <h1 class="page-title">Compare</h1>
 <p class="page-sub">Side-by-side across models, seeds and providers — differing parameters are highlighted so you can see exactly what changed between runs.</p>
+
+@if (objApiDown)
+{
+    <div data-testid="api-down-alert" style="margin-bottom:14px">
+        <Alert Variant="AlertVariant.Warning" AccentBorder="true">
+            <LucideIcon Name="circle-alert" Size="16" />
+            <AlertTitle>Couldn't reach the API — data unavailable</AlertTitle>
+            <AlertDescription>Your assets couldn't be loaded for comparison. Check that TrStudioApi is running and reload.</AlertDescription>
+        </Alert>
+    </div>
+}
 
 @if (objLoading)
 {
@@ -48,7 +60,7 @@ else
         @foreach (var vSlot in objSlots)
         {
             <span class="cmp-slottag">@vSlot.Tag</span>
-            <Select @bind-Value="vSlot.AssetId" @bind-Value:after="StateHasChanged" TValue="string" Class="cmp-slot-select">
+            <Select @bind-Value="vSlot.AssetId" @bind-Value:after="OnSlotsChangedAsync" TValue="string" Class="cmp-slot-select">
                 <SelectTrigger><SelectValue Placeholder="Pick an asset" /></SelectTrigger>
                 <SelectContent>
                     @foreach (var vAsset in objAssets)
@@ -60,7 +72,7 @@ else
         }
         @if (objSlots.Count < 3)
         {
-            <Button Variant="ButtonVariant.Outline" OnClick="AddThird" data-testid="add-third-btn">
+            <Button Variant="ButtonVariant.Outline" OnClick="AddThirdAsync" data-testid="add-third-btn">
                 <LucideIcon Name="plus" Size="14" />
                 Add third
             </Button>
@@ -104,15 +116,17 @@ else
                     <div class="cmp-pane-title">@vPane.Tag — @vPane.Title</div>
                     <div class="cmp-badges">
                         <Badge Class="badge-brand">@vPane.Model</Badge>
-                        <Badge Variant="BadgeVariant.Outline">@vPane.Tier · @vPane.Provider</Badge>
+                        @if (vPane.Tier != "—" || vPane.Provider != "—")
+                        {
+                            <Badge Variant="BadgeVariant.Outline">@vPane.Tier · @vPane.Provider</Badge>
+                        }
                         <Badge Variant="BadgeVariant.Outline">seed @vPane.SeedLabel</Badge>
-                        <Badge Variant="BadgeVariant.Outline" Class="badge-ok">provenance ✓</Badge>
                     </div>
                     <div class="kv"><span class="muted">Cost</span><b>@vPane.Cost</b></div>
-                    <div class="kv"><span class="muted">Duration</span><b>@vPane.RenderTime</b></div>
+                    <div class="kv"><span class="muted">Created</span><b>@vPane.Created</b></div>
                     <div class="kv"><span class="muted">Resolution</span><b>@vPane.Resolution</b></div>
                     <div class="cmp-acts">
-                        <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => Reproduce(vPane))">Reproduce</Button>
+                        <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => ReproduceAsync(vPane))">Reproduce</Button>
                         <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => Export(vPane))">Export</Button>
                         <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => Navigation.NavigateTo("/gallery"))">Open in Gallery</Button>
                     </div>
@@ -173,8 +187,13 @@ else
     private const string CompareRoute = "/api/v1/compare";
 
     private readonly List<CompareAsset> objAssets = new();
+
+    /// <summary>Per-asset generation params from the live compare endpoint, keyed by asset id.</summary>
+    private readonly Dictionary<string, Dictionary<string, string>> objParamsByAsset = new();
+
     private readonly List<Slot> objSlots = new() { new Slot("A"), new Slot("B") };
     private bool objLoading = true;
+    private bool objApiDown;
     private string objViewMode = "side";
     private bool objSyncPlayback = true;
     private bool objShowIdentical;
@@ -223,39 +242,82 @@ else
     }
 
     /// <summary>
-    /// Loads the compare set from <c>?assetIds=</c> (owner-filtered server-side). Live rows fill the
-    /// slots when the authenticated call returns them; a representative seed only stands in as a
-    /// usable-page illustration when there is no session or the call yields nothing — never leaving the
-    /// page blank while the Phase-9 endpoint is still forming.
+    /// Loads the owner-scoped asset options (the slot Selects), pre-assigns the slots from
+    /// <c>?assetIds=</c> when the Gallery handed a set across, then fetches the picked assets' live
+    /// param sets. No seed data: an empty library renders the honest empty state, and a failed fetch
+    /// raises the API-down Alert.
     /// </summary>
     /// <param name="aHasSession">Whether a signed-in session is present.</param>
     private async Task TryLoadCompareAsync(bool aHasSession)
     {
-        var vAssetIds = ReadAssetIdsFromQuery();
-
-        if (aHasSession)
+        if (!aHasSession)
         {
-            try
-            {
-                var vClient = HttpClientFactory.CreateClient("TrStudioApi");
-                var vQuery = vAssetIds.Count > 0 ? $"?assetIds={Uri.EscapeDataString(string.Join(',', vAssetIds))}" : string.Empty;
-                var vRows = await vClient.GetFromJsonAsync<List<CompareAsset>>($"{CompareRoute}{vQuery}");
-                if (vRows is { Count: > 0 })
-                {
-                    objAssets.Clear();
-                    objAssets.AddRange(vRows);
-                    AssignSlots();
-                    return;
-                }
-            }
-            catch
-            {
-                // Endpoint forming or unreachable — fall through to the representative seed.
-            }
+            return;
         }
 
-        SeedRepresentative();
-        AssignSlots();
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vPage = await vClient.GetFromJsonAsync<PagedResult<AssetResponse>>($"{ApiRoutes.Assets}?aPageSize=100");
+            objAssets.Clear();
+            var vArts = new[] { "art-a", "art-b", "art-c", "art-v" };
+            var vIndex = 0;
+            foreach (var vAsset in vPage?.Items ?? Array.Empty<AssetResponse>())
+            {
+                objAssets.Add(CompareAsset.FromResponse(vAsset, vArts[vIndex % vArts.Length]));
+                vIndex++;
+            }
+        }
+        catch
+        {
+            // API unreachable — never fake data; the warning Alert renders instead.
+            objApiDown = true;
+            return;
+        }
+
+        AssignSlots(ReadAssetIdsFromQuery());
+        await RefreshComparedParamsAsync();
+    }
+
+    /// <summary>
+    /// Fetches the picked assets' generation params from the live compare endpoint
+    /// (<c>GET /api/v1/compare?assetIds=</c>) so the diff table reflects the stored run parameters.
+    /// Runs whenever the slot picks change; fewer than two picks clears nothing and fetches nothing.
+    /// </summary>
+    private async Task RefreshComparedParamsAsync()
+    {
+        var vIds = objSlots.Select(aSlot => aSlot.AssetId)
+            .Where(aId => !string.IsNullOrEmpty(aId))
+            .Distinct()
+            .ToList();
+
+        if (vIds.Count < 2)
+        {
+            return;
+        }
+
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vResponse = await vClient.GetFromJsonAsync<CompareResponse>(
+                $"{CompareRoute}?assetIds={Uri.EscapeDataString(string.Join(',', vIds))}");
+            foreach (var vEntry in vResponse?.Assets ?? new List<CompareAssetEntry>())
+            {
+                objParamsByAsset[vEntry.Asset.AssetId.ToString()] = vEntry.Params;
+            }
+        }
+        catch
+        {
+            // Compare endpoint unreachable — the diff table shows only the asset-level rows.
+            objApiDown = true;
+        }
+    }
+
+    /// <summary>Re-fetches the compared param sets after a slot pick changes.</summary>
+    private async Task OnSlotsChangedAsync()
+    {
+        await RefreshComparedParamsAsync();
+        StateHasChanged();
     }
 
     /// <summary>Reads the comma-separated <c>assetIds</c> query parameter, if present.</summary>
@@ -280,16 +342,23 @@ else
         return new List<string>();
     }
 
-    /// <summary>Fills the A/B (and any added) slots with the first available assets.</summary>
-    private void AssignSlots()
+    /// <summary>Fills the A/B (and any added) slots — from the Gallery's ?assetIds= set when present, otherwise the first available assets.</summary>
+    /// <param name="aRequestedIds">Asset ids handed across from the Gallery, in slot order.</param>
+    private void AssignSlots(List<string> aRequestedIds)
     {
-        for (var vIndex = 0; vIndex < objSlots.Count && vIndex < objAssets.Count; vIndex++)
+        var vOrdered = aRequestedIds
+            .Where(aId => objAssets.Any(aAsset => aAsset.AssetId == aId))
+            .Concat(objAssets.Select(aAsset => aAsset.AssetId))
+            .Distinct()
+            .ToList();
+
+        for (var vIndex = 0; vIndex < objSlots.Count && vIndex < vOrdered.Count; vIndex++)
         {
-            objSlots[vIndex].AssetId = objAssets[vIndex].AssetId;
+            objSlots[vIndex].AssetId = vOrdered[vIndex];
         }
     }
 
-    private void AddThird()
+    private async Task AddThirdAsync()
     {
         if (objSlots.Count >= 3)
         {
@@ -300,46 +369,58 @@ else
         var vNext = objAssets.FirstOrDefault(aAsset => objSlots.All(aExisting => aExisting.AssetId != aAsset.AssetId));
         vSlot.AssetId = vNext?.AssetId;
         objSlots.Add(vSlot);
+        await RefreshComparedParamsAsync();
     }
 
-    private void Reproduce(CompareAsset aPane)
-        => ToastService.Success($"Reproducing \"{aPane.Title}\" ({aPane.Model}) with its stored params.", "Reproduce");
+    /// <summary>One-click reproduce for a pane via the generation-log reproduce endpoint.</summary>
+    /// <param name="aPane">The pane whose run to reproduce.</param>
+    private async Task ReproduceAsync(CompareAsset aPane)
+    {
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vResponse = await vClient.PostAsync($"{ApiRoutes.GenerationLog}/{aPane.JobId}/reproduce", content: null);
+            if (vResponse.IsSuccessStatusCode)
+            {
+                ToastService.Success($"Reproducing \"{aPane.Title}\" ({aPane.Model}) with its stored params.", "Reproduce");
+                return;
+            }
+        }
+        catch
+        {
+            // Fall through to the honest failure toast.
+        }
+
+        ToastService.Error("Couldn't reach the API — the reproduce wasn't submitted.", "Reproduce");
+    }
 
     private void Export(CompareAsset aPane)
         => ToastService.Success($"Exporting \"{aPane.Title}\".", "Export");
 
-    /// <summary>Builds the parameter comparison between two panes, flagging the rows that differ.</summary>
-    private static List<DiffRow> BuildDiff(CompareAsset aA, CompareAsset aB) => new()
+    /// <summary>
+    /// Builds the parameter comparison between two panes: the asset-level rows (model / seed /
+    /// resolution / cost) plus the union of both runs' stored parameter keys from the live compare
+    /// endpoint, flagging the rows that differ.
+    /// </summary>
+    private List<DiffRow> BuildDiff(CompareAsset aA, CompareAsset aB)
     {
-        DiffRow.Of("Model", aA.Model, aB.Model),
-        DiffRow.Of("Provider · tier", $"{aA.Provider} · {aA.Tier}", $"{aB.Provider} · {aB.Tier}"),
-        DiffRow.Of("Resolution", aA.Resolution, aB.Resolution),
-        DiffRow.Of("Cost", aA.Cost, aB.Cost),
-        DiffRow.Of("Character", aA.Character, aB.Character),
-        DiffRow.Of("Voice", aA.Voice, aB.Voice),
-        DiffRow.Of("Script", aA.Script, aB.Script),
-        DiffRow.Of("Seed", aA.SeedLabel, aB.SeedLabel),
-        DiffRow.Of("Captions", aA.Captions, aB.Captions),
-    };
+        var vParamsA = objParamsByAsset.GetValueOrDefault(aA.AssetId) ?? new Dictionary<string, string>();
+        var vParamsB = objParamsByAsset.GetValueOrDefault(aB.AssetId) ?? new Dictionary<string, string>();
 
-    private void SeedRepresentative()
-    {
-        objAssets.Clear();
-        objAssets.AddRange(new[]
+        var vRows = new List<DiffRow>
         {
-            new CompareAsset("A", "a1", "Diwali avatar intro — Kavya", "Hunyuan-Avatar", "RunPod serverless", "High",
-                4821, "$0.31", "92 s render", "1080×1920 (9:16)", "0:24", true, "art-v",
-                "Kavya (synthetic · photoreal · identity locked)", "Ravi (Hindi) — IndicF5, speed 1.0",
-                "\"Is Diwali, apno ko dijiye mithaas ka tohfa…\" (HI, 62 words)", "Hindi · burn-in"),
-            new CompareAsset("B", "a2", "Diwali avatar intro — Kavya", "MuseTalk v1", "Mac local (MPS)", "Fast",
-                4821, "$0.00 (local)", "141 s render", "720×1280 (9:16)", "0:24", true, "art-v",
-                "Kavya (synthetic · photoreal · identity locked)", "Ravi (Hindi) — IndicF5, speed 1.0",
-                "\"Is Diwali, apno ko dijiye mithaas ka tohfa…\" (HI, 62 words)", "Hindi · burn-in"),
-            new CompareAsset("C", "a3", "Product reel teaser — saree line", "HeyGen Avatar IV", "Closed API", "Premium",
-                null, "$0.61", "68 s render", "1080×1920 (9:16)", "0:18", true, "art-v",
-                "Kavya (synthetic · photoreal · identity locked)", "Ravi (Hindi) — IndicF5, speed 1.0",
-                "\"Sweet-box teaser, energetic pacing…\" (EN, 40 words)", "English · burn-in"),
-        });
+            DiffRow.Of("Model", aA.Model, aB.Model),
+            DiffRow.Of("Seed", aA.SeedLabel, aB.SeedLabel),
+            DiffRow.Of("Resolution", aA.Resolution, aB.Resolution),
+            DiffRow.Of("Cost", aA.Cost, aB.Cost),
+        };
+
+        foreach (var vKey in vParamsA.Keys.Union(vParamsB.Keys).OrderBy(aKey => aKey, StringComparer.OrdinalIgnoreCase))
+        {
+            vRows.Add(DiffRow.Of(vKey, vParamsA.GetValueOrDefault(vKey, string.Empty), vParamsB.GetValueOrDefault(vKey, string.Empty)));
+        }
+
+        return vRows;
     }
 
     /// <summary>A compare slot (A/B/C) holding the picked asset id.</summary>
@@ -354,17 +435,27 @@ else
         public string? AssetId { get; set; }
     }
 
-    /// <summary>A compare pane's full projection over an asset plus provenance chrome.</summary>
+    /// <summary>A compare pane's display projection over a live owner-scoped asset.</summary>
     private sealed record CompareAsset(
-        string Tag, string AssetId, string Title, string Model, string Provider, string Tier,
-        long? Seed, string Cost, string RenderTime, string Resolution, string? Duration, bool IsVideo,
-        string Art, string Character, string Voice, string Script, string Captions)
+        string Tag, string AssetId, Guid JobId, string Title, string Model, string Provider, string Tier,
+        long? Seed, string Cost, string Created, string Resolution, string? Duration, bool IsVideo, string Art)
     {
         /// <summary>The seed as a display label, or an em dash when the run used no seed.</summary>
         public string SeedLabel => Seed?.ToString() ?? "—";
 
         /// <summary>The option label shown in the A/B slot selects.</summary>
         public string OptionLabel => $"{Title} ({Model}{(Seed is null ? string.Empty : $" · seed {Seed}")})";
+
+        /// <summary>Projects a live owner-scoped asset into a compare pane model.</summary>
+        public static CompareAsset FromResponse(AssetResponse aAsset, string aArt)
+        {
+            var vDims = aAsset is { Width: not null, Height: not null } ? $"{aAsset.Width}×{aAsset.Height}" : "—";
+            return new CompareAsset(
+                string.Empty, aAsset.AssetId.ToString(), aAsset.JobId,
+                $"{aAsset.Kind} · {aAsset.CreatedUtc:d MMM}", aAsset.ModelId, "—", "—",
+                aAsset.SeedUsed, "—", aAsset.CreatedUtc.ToString("d MMM yyyy"), vDims,
+                null, aAsset.Kind == "video", aArt);
+        }
     }
 
     /// <summary>A parameter-diff row: the parameter, both values, and whether they differ.</summary>

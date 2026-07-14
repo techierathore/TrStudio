@@ -10,13 +10,25 @@
     type/model/project filter bar that narrows the grid, selectable Cards carrying a provenance
     Badge, a bulk-export Toolbar showing the live selection count, and a detail Sheet that shows a
     run's full params with a one-click reproduce (generation-log reproduce endpoint) and a compare
-    hand-off. Skeleton tiles cover load; an empty state covers over-narrow filters.
+    hand-off. Skeleton tiles cover load; honest empty states cover a genuinely empty library and
+    over-narrow filters — no representative seed; an unreachable API raises a warning Alert.
 *@
 
 <PageTitle>TrStudio — Gallery</PageTitle>
 
 <h1 class="page-title">My Library</h1>
 <p class="page-sub">Your assets only — content is private per user. Every output is reusable as a new input, with one-click reproduce from provenance history.</p>
+
+@if (objApiDown)
+{
+    <div data-testid="api-down-alert" style="margin-bottom:14px">
+        <Alert Variant="AlertVariant.Warning" AccentBorder="true">
+            <LucideIcon Name="circle-alert" Size="16" />
+            <AlertTitle>Couldn't reach the API — data unavailable</AlertTitle>
+            <AlertDescription>Your assets couldn't be loaded. Check that TrStudioApi is running and reload.</AlertDescription>
+        </Alert>
+    </div>
+}
 
 <div class="filterbar" data-testid="filter-bar">
     <div class="filterbar-search">
@@ -93,8 +105,12 @@ else if (Filtered.Count == 0)
 {
     <Card Class="emptystate" data-testid="empty-state">
         <div class="emptyicon"><LucideIcon Name="layout-grid" Size="22" /></div>
-        <h3 style="margin:0 0 4px">No assets match these filters</h3>
-        <div class="muted-sm" style="margin-bottom:14px">Try clearing a filter, or generate something new in a studio.</div>
+        <h3 style="margin:0 0 4px">@(objAssets.Count == 0 ? "No assets yet" : "No assets match these filters")</h3>
+        <div class="muted-sm" style="margin-bottom:14px">
+            @(objAssets.Count == 0
+                ? "Generate something in a studio — every output lands here, private to your account."
+                : "Try clearing a filter, or generate something new in a studio.")
+        </div>
         <Button OnClick="@(() => Navigation.NavigateTo("/image"))">Go to Image Studio</Button>
     </Card>
 }
@@ -159,6 +175,7 @@ else
 @code {
     private readonly List<GalleryAsset> objAssets = new();
     private bool objLoading = true;
+    private bool objApiDown;
     private bool objSheetOpen;
     private GalleryAsset? objDetail;
 
@@ -211,8 +228,8 @@ else
 
     /// <summary>
     /// Loads the owner-scoped asset page. With no session the grid stays empty (the real empty/login
-    /// state) rather than flashing sample data; the representative seed only stands in as a genuine
-    /// empty-state illustration once the AUTHENTICATED call succeeds and returns zero rows.
+    /// state). Zero rows render the honest empty state — never sample data — and a failed fetch
+    /// raises the API-down Alert.
     /// </summary>
     /// <param name="aHasSession">Whether a signed-in session is present.</param>
     private async Task TryLoadAssetsAsync(bool aHasSession)
@@ -226,9 +243,9 @@ else
         {
             var vClient = HttpClientFactory.CreateClient("TrStudioApi");
             var vPage = await vClient.GetFromJsonAsync<PagedResult<AssetResponse>>($"{ApiRoutes.Assets}?aPageSize=100");
+            objAssets.Clear();
             if (vPage is { Items.Count: > 0 })
             {
-                objAssets.Clear();
                 var vArts = new[] { "art-a", "art-b", "art-c", "art-v" };
                 var vIndex = 0;
                 foreach (var vAsset in vPage.Items)
@@ -237,17 +254,11 @@ else
                     vIndex++;
                 }
             }
-            else
-            {
-                // Authenticated, but the owner's library is empty — a representative sample illustrates
-                // the empty state. This never runs for a 401 (that throws and is caught below).
-                SeedRepresentative();
-            }
         }
         catch
         {
-            // Authenticated call failed (API unreachable) — keep the grid empty rather than flashing
-            // sample data; the empty state renders.
+            // API unreachable — never fake data; the warning Alert renders instead.
+            objApiDown = true;
         }
     }
 
@@ -336,22 +347,6 @@ else
         {
             // Requires a session — the toast still confirms the intent for the demo flow.
         }
-    }
-
-    private void SeedRepresentative()
-    {
-        objAssets.Clear();
-        objAssets.AddRange(new[]
-        {
-            new GalleryAsset(Guid.NewGuid(), Guid.NewGuid(), "video", "Diwali avatar intro — Kavya", "Hunyuan-Avatar", "Hunyuan-Avatar · seed 4821", null, 4821, "1920×1080", "Diwali Promo", "1 Jul 2026", "VIDEO 16:9", string.Empty, "art-v"),
-            new GalleryAsset(Guid.NewGuid(), Guid.NewGuid(), "image", "Kavya portrait — warm light", "SDXL", "SDXL · local GPU", "badge-ok", 7734, "1024×1024", "Diwali Promo", "29 Jun 2026", "IMAGE 1:1", "Kavya · portrait", "art-a"),
-            new GalleryAsset(Guid.NewGuid(), Guid.NewGuid(), "video", "Product reel teaser — saree line", "HeyGen Avatar IV", "HeyGen Avatar IV · closed API", "badge-warn", null, "1080×1920", "Product Explainers", "27 Jun 2026", "VIDEO 9:16", string.Empty, "art-v"),
-            new GalleryAsset(Guid.NewGuid(), Guid.NewGuid(), "image", "Diwali poster v3 — rangoli motif", "FLUX.1", "FLUX.1 · seed 9012", null, 9012, "1080×1350", "Diwali Promo", "30 Jun 2026", "IMAGE 4:5", "Festival poster", "art-b"),
-            new GalleryAsset(Guid.NewGuid(), Guid.NewGuid(), "audio", "Ravi (Hindi) voice-over take 2", "IndicF5", "IndicF5 · Hindi", null, null, "—", "Hindi Shorts", "26 Jun 2026", "AUDIO", "◍ ◍ ◍ ◍", "art-v"),
-            new GalleryAsset(Guid.NewGuid(), Guid.NewGuid(), "video", "Lip-sync test — MuseTalk", "MuseTalk", "MuseTalk · seed 1133", null, 1133, "1280×720", null, "24 Jun 2026", "VIDEO 16:9", string.Empty, "art-v"),
-            new GalleryAsset(Guid.NewGuid(), Guid.NewGuid(), "image", "Arjun headshot — studio grey", "SDXL", "SDXL · local GPU", "badge-ok", 5521, "1024×1024", "Product Explainers", "22 Jun 2026", "IMAGE 1:1", "Arjun · headshot", "art-c"),
-            new GalleryAsset(Guid.NewGuid(), Guid.NewGuid(), "image", "Sweet-box hero shot — Diwali", "FLUX.1", "FLUX.1 · seed 5570", null, 5570, "1500×1000", "Diwali Promo", "20 Jun 2026", "IMAGE 3:2", "Mithai spread", "art-b"),
-        });
     }
 
     /// <summary>A gallery card's display projection over an asset (owner-scoped) plus provenance chrome.</summary>

@@ -71,7 +71,7 @@ public sealed class MauiAuthSession : IAuthSession
     }
 
     /// <inheritdoc />
-    public async Task SetAsync(LoginResponse aSession)
+    public async Task SetAsync(LoginResponse aSession, string? aEmail = null)
     {
         ArgumentNullException.ThrowIfNull(aSession);
 
@@ -80,7 +80,8 @@ public sealed class MauiAuthSession : IAuthSession
             aSession.RefreshToken,
             aSession.UserId,
             aSession.Role,
-            aSession.DefaultLandingPath);
+            aSession.DefaultLandingPath,
+            aEmail);
         objHydrated = true;
 
         await objGate.WaitAsync().ConfigureAwait(false);
