@@ -18,6 +18,9 @@ sends history + the new message via `ILlmProvider.ChatAsync(IReadOnlyList<ChatMe
 Package pinned: **TechieRag 1.0.5** (`net10.0`).
 
 ### TR-RAG-001. No image / multimodal input seam on `ILlmProvider`
+
+> ✅ **Closed 2026-10-18** — fixed in TechieRag 1.1.7. `ChatMessage.UserWithImages(text, images)` and the `ChatContentPart` / `ChatImage` model are present; every built-in provider that supports vision (OpenAI-compatible, LM Studio, Anthropic, Gemini, Ollama) encodes the parts in its own wire format.
+
 - **Severity:** Major (blocks the BRD-90 vision path through the library; text chat is unaffected).
 - **Repro:** Configure a vision-capable OpenAI-compatible model. There is no way to attach image bytes:
   `ChatMessage.Content` is a single `string` (no content-parts / image-url list), `LlmCompletionOptions`
