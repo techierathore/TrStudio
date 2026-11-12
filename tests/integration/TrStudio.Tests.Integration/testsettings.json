@@ -1,0 +1,16 @@
+{
+  "Host": {
+    "DotnetRoot": ""
+  },
+  "Venice": {
+    "BaseUrl": "",
+    "ApiKey": "",
+    "Models": {
+      "TextToImage": "",
+      "ImageToImage": "",
+      "Upscale": "",
+      "TextToVideo": "",
+      "ImageToVideo": ""
+    }
+  }
+}

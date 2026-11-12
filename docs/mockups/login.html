@@ -121,9 +121,9 @@ tr.sel td{background:var(--sel)}
 </style>
 </head>
 <body>
-<button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode" style="position:fixed;top:14px;right:14px;z-index:60"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
+<button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode" style="position:fixed;top:14px;right:14px;z-index:60" onclick="/* switches light and dark: page script */" data-testid="icon-btn-toggle-dark-mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
 <div class="authwrap">
-  <div class="card authcard">
+  <div class="card authcard" data-testid="card-1">
     <div class="brandblock">
       <div class="logo">TR</div>
       <div>
@@ -134,23 +134,24 @@ tr.sel td{background:var(--sel)}
 
     <div class="field">
       <label class="label" for="email">Email</label>
-      <input class="input" id="email" type="email" value="techierathore@gmail.com" placeholder="you@studio.com">
+      <input class="input" id="email" type="email" value="owner@studio.example" placeholder="you@studio.com" data-testid="field-email">
     </div>
 
     <div class="field">
-      <div class="fieldrow"><label class="label" for="pwd">Password</label><a href="forgot-password.html">Forgot password?</a></div>
-      <input class="input" id="pwd" type="password" value="············" placeholder="••••••••">
+      <div class="fieldrow"><label class="label" for="pwd">Password</label><a href="forgot-password.html" data-testid="link-forgot-password">Forgot password?</a></div>
+      <input class="input" id="pwd" type="password" value="············" placeholder="••••••••" data-testid="field-pwd">
     </div>
 
-    <button class="btn brand full" id="signinBtn" type="button">
+    <a class="btn brand full" id="signinBtn" href="avatar-studio.html" data-testid="sign-in">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>
       Sign in
-    </button>
+    </a>
 
     <div class="divline">AppManager</div>
     <div class="authnote">Your identity and license are managed by AppManager. TrStudio never stores your password — only your AppManager userId.</div>
 
-    <div class="authswitch">New to TrStudio? <a href="register.html">Create an account</a></div>
+    <div class="authswitch" style="margin-top:6px">Workspace not set up yet? <a href="setup-required.html" data-testid="setup-required-link">See the setup gate</a></div>
+    <div class="authswitch">New to TrStudio? <a href="register.html" data-testid="link-create-an-account">Create an account</a></div>
   </div>
 </div>
 <script>
@@ -173,18 +174,6 @@ tr.sel td{background:var(--sel)}
     if(sg&&sg.parentElement){Array.prototype.forEach.call(sg.parentElement.querySelectorAll('button,.tabbtn'),function(x){x.classList.remove('active');});sg.classList.add('active');}
     var ib=e.target.closest&&e.target.closest('[data-act]');
     if(ib&&!ib.disabled){ib.disabled=true;ib.style.opacity=.7;ib.textContent='Working…';setTimeout(function(){ib.textContent='Done ✓';},700);}
-  });
-})();
-</script>
-<script>
-/* page script — mock sign-in redirect (BRD-84 demo): the role comes from the
-   AppManager account, so this mock signs in as the owner → creator landing */
-(function(){
-  var btn=document.getElementById('signinBtn');
-  btn.addEventListener('click',function(){
-    if(btn.disabled)return;
-    btn.disabled=true;btn.style.opacity=.85;btn.textContent='Signing in…';
-    setTimeout(function(){location.href='avatar-studio.html';},700);
   });
 })();
 </script>

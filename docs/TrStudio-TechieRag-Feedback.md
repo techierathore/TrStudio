@@ -1,84 +1,65 @@
-# TrStudio → TechieRag library feedback
+# TechieRag feedback — found while building TrStudio
 
-One entry per gap/observation found while integrating TechieRag. This file goes to the TechieRag team
-(per CLAUDE.md "Verification"). Do not silently work around library issues — record them here.
+| | |
+|---|---|
+| App | TrStudio |
+| Upstream | TechieRag |
+| Updated | 2026-11-12 |
 
 ## Summary
-- 0 blockers, 1 major, 3 minor. Major (RAG-005): **no image / multimodal input seam** on `ILlmProvider` at 1.0.5 (`TR-RAG-001`). Minor (all under RAG-004): (1) `IngestTextAsync` metadata is `Dictionary<string,object>?` vs the reference's `<string,string>?`; (2) no metadata/tenant filter on `SearchAsync` (must over-fetch + re-filter in-process); (3) embedding-provider outage surfaces as an unwrapped `HttpRequestException` (no typed "embeddings unavailable" signal).
-- Impact: all worked around; RAG-004 + RAG-005 acceptance met. RAG-005 text chat uses `ILlmProvider.ChatAsync` (confirmed present at 1.0.5); vision falls back to a direct OpenAI-compatible multimodal POST. Package pinned **TechieRag 1.0.5** (`net10.0`).
-- Last consolidated: 2026-07-07
 
-## RAG-005 — Prompt Studio chat (direct chat-completion, no RAG), Phase 10
+4 entries: 0 blocking now, 3 filed and not blocking, 1 fixed upstream.
 
-Context: `PromptChatService` (ADR-013) drives the picked `text-chat` registry LLM through TechieRag's
-**direct chat-completion** path (no RAG/vector retrieval). Because 1.0.5's shared client exposes no
-per-call endpoint override, each call builds a fresh `TechieRagBuilder` client from the row's own
-endpoint/key/model (a `UseSqliteVec` temp store satisfies `Build()` but is never ingested/searched) and
-sends history + the new message via `ILlmProvider.ChatAsync(IReadOnlyList<ChatMessage>, options, ct)`.
-Package pinned: **TechieRag 1.0.5** (`net10.0`).
+Nothing is blocked. The prompt-chat picture input (TR-RAG-001) was fixed in TechieRag 1.1.7 and closed on 2026-10-18. The three minor character-bible gaps (TR-RAG-002 to TR-RAG-004) are all worked around in TrStudio; the character bible and prompt chat both meet their acceptance lines. TrStudio pins TechieRag 1.0.5 (`net10.0`).
 
-### TR-RAG-001. No image / multimodal input seam on `ILlmProvider`
+## Entries
 
-> ✅ **Closed 2026-10-18** — fixed in TechieRag 1.1.7. `ChatMessage.UserWithImages(text, images)` and the `ChatContentPart` / `ChatImage` model are present; every built-in provider that supports vision (OpenAI-compatible, LM Studio, Anthropic, Gemini, Ollama) encodes the parts in its own wire format.
+### TR-RAG-001 — No way to send a picture to a language model through `ILlmProvider`
 
-- **Severity:** Major (blocks the BRD-90 vision path through the library; text chat is unaffected).
-- **Repro:** Configure a vision-capable OpenAI-compatible model. There is no way to attach image bytes:
-  `ChatMessage.Content` is a single `string` (no content-parts / image-url list), `LlmCompletionOptions`
-  has no image field, and `ILlmProvider` has no image/multimodal overload. Verified by reflection over
-  `TechieRag.dll` 1.0.5 (`ChatMessage`, `LlmCompletionOptions`, `ILlmProvider` members).
-- **Expected:** a way to pass an image (bytes + media type, or a data/HTTP URL) alongside the text of a
-  user turn — e.g. `ChatMessage.User(text, images)` or content-parts — so vision models can be driven
-  through `ChatAsync`.
-- **Actual:** image input is impossible via the TechieRag API; only text turns can be sent.
-- **Workaround:** for a vision-capable **OpenAI-compatible** endpoint, `PromptChatService` bypasses
-  TechieRag for the image case and POSTs a standard multimodal chat-completion directly over
-  `HttpClient` (a `content` array with an `image_url` data-URI). Non-OpenAI-compatible families
-  (Anthropic/Gemini) degrade cleanly with a clear message. Non-vision rows are rejected up front (BRD-90).
-- **Suggested fix:** add multimodal content support to `ChatMessage` / `ILlmProvider.ChatAsync` (content
-  parts with text + image url/bytes), mirroring the OpenAI/Anthropic multimodal message shape.
+Fixed upstream: closed 2026-10-18, fixed in TechieRag 1.1.7 (`ChatMessage.UserWithImages(text, images)` with `ChatContentPart` / `ChatImage`; every built-in vision provider encodes the parts in its own wire format).
 
-Note: `ILlmProvider.ChatAsync` (multi-turn text) **is** present at 1.0.5 — the AI reference doc's "v2"
-signatures for text chat match the shipped assembly; only the multimodal/image seam is missing.
+- **Severity:** major
+- **Blocks:** no — text chat worked; the picture case posted directly to the model, and the work carried on
+- **Repro:** configure a vision-capable OpenAI-compatible model and look for a way to attach image bytes: `ChatMessage.Content` is one `string`, `LlmCompletionOptions` has no image field, `ILlmProvider` has no image overload (checked by reflection over `TechieRag.dll` 1.0.5)
+- **Expected:** a way to pass an image (bytes and media type, or a data or web address) with the text of a user turn, so vision models work through `ChatAsync`
+- **Actual:** only text turns can be sent
+- **Encountered in:** REQ-RAG-005 (Prompt studio, BRD-90)
+- **Workaround:** for an OpenAI-compatible vision endpoint, `PromptChatService` posts a multimodal chat-completion directly over `HttpClient` (a `content` array with an `image_url` data address); Anthropic and Gemini rows degrade with a clear message; non-vision rows are refused up front
+- **Suggested fix:** content parts (text plus image address or bytes) on `ChatMessage` and `ILlmProvider.ChatAsync`, mirroring the OpenAI and Anthropic multimodal message shape
 
-## RAG-004 — Character bible (PgVector), Phase 5
+### TR-RAG-002 — `IngestTextAsync` metadata type differs from the reference document
 
-Context: per-character persona notes are the durable source of truth in Postgres
-(`"CharacterBibleEntry"`, owner + character scoped) and are additionally indexed into PgVector via
-TechieRag for semantic script-assist retrieval (`CharacterBibleService`). Package pinned:
-**TechieRag 1.0.5** (`net10.0`).
+- **Severity:** minor
+- **Blocks:** no — the dictionary value type was changed to `object` and the work carried on
+- **Repro:** call `IngestTextAsync(text, documentId, metadata, ct)` with a `Dictionary<string, string>` as `.techierag/TechieRag-AI-Reference.md` (written for v2.0) documents
+- **Expected:** the shipped signature matches the reference: `Dictionary<string, string>?`
+- **Actual:** 1.0.5 takes `Dictionary<string, object>?`; compile error, and `SearchResult.Chunk.Metadata` values come back as `object`, so callers must call `?.ToString()` before parsing (for example `Guid.TryParse`)
+- **Encountered in:** REQ-RAG-004 character bible, `CharacterBibleService`
+- **Workaround:** values typed as `object` and converted to text on read
+- **Suggested fix:** align the reference document with the shipped signature, or standardise on `Dictionary<string, string>` for metadata
 
-### 1. `IngestTextAsync` metadata parameter type
-- **Observed:** `IngestTextAsync(text, documentId, metadata, ct)` takes
-  `Dictionary<string, object>?` in 1.0.5, whereas the bundled AI reference
-  (`.techierag/TechieRag-AI-Reference.md`, generated for v2.0) documents
-  `Dictionary<string, string>?`.
-- **Impact:** compile error until the dictionary value type was changed to `object`; retrieved
-  `SearchResult.Chunk.Metadata` values also come back as `object`, so callers must `?.ToString()`
-  before parsing (e.g. `Guid.TryParse`).
-- **Ask:** align the reference doc with the shipped signature, or standardise on
-  `Dictionary<string,string>` for metadata (string metadata is the common case for scoping filters).
+### TR-RAG-003 — `SearchAsync` cannot filter by metadata such as owner or character
 
-### 2. No metadata/tenant filter on `SearchAsync`
-- **Observed:** `SearchAsync(query, topK, documentFilter, ct)` only accepts a `documentFilter`
-  (document-id scoped); there is no metadata predicate (e.g. filter by `characterId` / `userId`).
-- **Impact:** for owner + character scoped retrieval we must over-fetch and re-apply the
-  owner/character filter in-process against the persisted rows (defence-in-depth for BRD-81). Fine at
-  small scale but does not push the tenant filter down into the vector store.
-- **Ask:** a metadata equality filter on `SearchAsync` (and/or a per-collection/namespace scope) so
-  multi-tenant vector retrieval can be scoped server-side.
+- **Severity:** minor
+- **Blocks:** no — results are over-fetched and filtered in memory, and the work carried on
+- **Repro:** call `SearchAsync(query, topK, documentFilter, ct)` and try to limit results to one `characterId` or `userId`
+- **Expected:** a metadata equality filter, or a per-collection scope, applied inside the vector store
+- **Actual:** only `documentFilter` (document id) exists
+- **Encountered in:** REQ-RAG-004 character bible (owner and character scoping, BRD-81)
+- **Workaround:** fetch more results and re-apply the owner and character filter against the stored rows
+- **Suggested fix:** a metadata filter on `SearchAsync`, so a multi-user vector search is scoped on the server
 
-### 3. Embedding-provider outage surfaces as an unwrapped transport exception
-- **Observed:** with the default Ollama embedding endpoint unreachable (`localhost:11434` refused),
-  `InitializeAsync` / `SearchAsync` / `IngestTextAsync` throw the raw
-  `HttpRequestException`/`SocketException` from `OllamaEmbeddingProvider.EmbedAsync`.
-- **Impact:** we wrap every TechieRag call in try/catch and degrade to a deterministic keyword match
-  over the persisted entries (this is the RAG-004 "degrades without an embedding model" path, working
-  as intended on our side). But every caller must know to catch broadly.
-- **Ask:** a typed `TechieRagEmbeddingUnavailableException` (or a `TryX`/health probe) so callers can
-  branch on "embeddings unavailable" without catching `Exception`.
+### TR-RAG-004 — An embedding-service outage surfaces as a raw network exception
 
-### Status
-- RAG-004 acceptance met regardless of the above: bible entries persist per character (owner-scoped),
-  the retrieval path is wired through TechieRag/PgVector, and it degrades cleanly to keyword matching
-  when no embedding model is running. `UsePgVector` is confirmed present in 1.0.5 and is wired onto
-  the app Postgres connection (`RagModule`).
+- **Severity:** minor
+- **Blocks:** no — every TechieRag call is wrapped and falls back to keyword matching, and the work carried on
+- **Repro:** stop the default Ollama embedding endpoint (`localhost:11434` refused) and call `InitializeAsync`, `SearchAsync` or `IngestTextAsync`
+- **Expected:** a typed signal that embeddings are unavailable
+- **Actual:** the raw `HttpRequestException` / `SocketException` from `OllamaEmbeddingProvider.EmbedAsync` reaches the caller
+- **Encountered in:** REQ-RAG-004 character bible ("degrades without an embedding model" path)
+- **Workaround:** broad try/catch around every TechieRag call and a keyword match over the stored entries
+- **Suggested fix:** a typed `TechieRagEmbeddingUnavailableException`, or a health check or `TryX` method
+
+#### Detail
+
+The character bible keeps per-character notes in Postgres (`"CharacterBibleEntry"`, owner and character scoped) and also indexes them into PgVector through TechieRag (`UsePgVector` on the app's Postgres connection, `RagModule`) for script-assist search. Prompt Studio (ADR-013) builds a fresh `TechieRagBuilder` client per call from the picked registry row's endpoint, key and model, because 1.0.5's shared client has no per-call endpoint override; a temporary `UseSqliteVec` store satisfies `Build()` and is never used. `ILlmProvider.ChatAsync` for multi-turn text is present at 1.0.5 and matches the reference.

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TrStudio — Usage Guide (Run · Test Users · UAT Plan)</title>
+<title>TrStudio — Usage Guide</title>
 <script>
 /* Resolve the theme BEFORE first paint (no flash). Saved choice wins; otherwise
    pick by time of day — light 07:00–19:00 local, softened dark at night. */
@@ -102,370 +102,359 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </style>
 </head>
 <body>
-<button id="themeToggle" class="theme-toggle" title="Toggle light / dark">☾ Dark</button>
-<div class="layout">
-  <nav class="side">
-    <h1>TrStudio — Usage Guide</h1>
-    <div class="sub">Run · Test Users · UAT Plan — Last rendered: 2026-07-12</div>
-    <div class="group">Contents</div>
-    <ol>
-      <li><a href="#quick-start">Quick start</a></li>
-      <li><a href="#test-users">Test users</a></li>
-      <li><a href="#who-lands-where">Who lands where</a></li>
-      <li><a href="#prerequisites">Prerequisites</a></li>
-      <li><a href="#which-projects-to-run">Which projects to run</a></li>
-      <li><a href="#how-to-run-windows-visual-studio">Run — Windows · Visual Studio</a></li>
-      <li><a href="#how-to-run-windows-command-line">Run — Windows · CLI</a></li>
-      <li><a href="#how-to-run-macos-apple-silicon">Run — macOS</a></li>
-      <li class="h3"><a href="#one-time-setup-new-mac">One-time setup (new Mac)</a></li>
-      <li class="h3"><a href="#run-the-web-app-mac-cli">Run the web app (Mac CLI)</a></li>
-      <li class="h3"><a href="#run-the-maui-desktop-head-mac-catalyst">Run the MAUI head (Catalyst)</a></li>
-      <li class="h3"><a href="#mac-troubleshooting">Mac troubleshooting</a></li>
-      <li><a href="#troubleshooting-startup-both-platforms">Troubleshooting startup</a></li>
-      <li><a href="#test-automated">Test (automated)</a></li>
-      <li><a href="#uat-plan-screen-by-screen">UAT plan — screen by screen</a></li>
-      <li><a href="#how-to-walkthroughs-creator-flows">How-to walkthroughs (creator flows)</a></li>
-      <li><a href="#smoke-checklist-quick-capability-pass">Smoke checklist</a></li>
-      <li><a href="#known-limitations">Known limitations</a></li>
-    </ol>
-  </nav>
+<button id="themeToggle" class="theme-toggle" title="Toggle light / dark">&#9790; Dark</button>
+<div class="layout no-toc">
   <main>
-    <h1>TrStudio — Usage Guide (Run · Test Users · UAT Plan)</h1>
-    <div class="subtitle">How to run and test TrStudio on Windows and macOS.</div>
+    <h1>TrStudio — Usage Guide</h1>
+    <div class="subtitle">Rendered 2026-11-12 &middot; source <code>TrStudio-UsageGuide.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
       <ol>
-        <li><a href="#quick-start">Quick start</a></li>
         <li><a href="#test-users">Test users</a></li>
-        <li><a href="#who-lands-where">Who lands where</a></li>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#which-projects-to-run">Which projects to run</a></li>
-        <li><a href="#how-to-run-windows-visual-studio">How to run — Windows · Visual Studio</a></li>
-        <li><a href="#how-to-run-windows-command-line">How to run — Windows · command line</a></li>
-        <li><a href="#how-to-run-macos-apple-silicon">How to run — macOS (Apple Silicon)</a></li>
-        <li><a href="#troubleshooting-startup-both-platforms">Troubleshooting startup (both platforms)</a></li>
-        <li><a href="#test-automated">Test (automated)</a></li>
-        <li><a href="#uat-plan-screen-by-screen">UAT plan — screen by screen</a></li>
-        <li><a href="#how-to-walkthroughs-creator-flows">How-to walkthroughs (creator flows)</a></li>
-        <li><a href="#smoke-checklist-quick-capability-pass">Smoke checklist (quick capability pass)</a></li>
+        <li><a href="#execution-guide">Execution guide</a></li>
+        <li><a href="#how-to-test-screen-by-screen">How to test, screen by screen</a></li>
+        <li class="h3"><a href="#register-register">Register (/register)</a></li>
+        <li class="h3"><a href="#login-login">Login (/login)</a></li>
+        <li class="h3"><a href="#forgot-password-forgot-password">Forgot password (/forgot-password)</a></li>
+        <li class="h3"><a href="#setup-required-setup-required">Setup required (/setup-required)</a></li>
+        <li class="h3"><a href="#admin-hardware-setup-admin-setup">Admin — Hardware &amp;amp; setup (/admin/setup)</a></li>
+        <li class="h3"><a href="#admin-model-sources-admin-sources">Admin — Model Sources (/admin/sources)</a></li>
+        <li class="h3"><a href="#admin-model-library-admin-models">Admin — Model Library (/admin/models)</a></li>
+        <li class="h3"><a href="#admin-model-provider-registry-admin-registry">Admin — Model &amp;amp; Provider Registry (/admin/registry)</a></li>
+        <li class="h3"><a href="#admin-comfyui-import-debug-admin-comfy-import">Admin — ComfyUI import &amp;amp; debug (/admin/comfy/import)</a></li>
+        <li class="h3"><a href="#admin-runpod-ops-admin-ops">Admin — RunPod &amp;amp; ops (/admin/ops)</a></li>
+        <li class="h3"><a href="#admin-content-policy-nsfw-admin-policy">Admin — Content policy (NSFW) (/admin/policy)</a></li>
+        <li class="h3"><a href="#avatar-studio-avatar">Avatar studio (/avatar)</a></li>
+        <li class="h3"><a href="#character-library-avatar-characters">Character library (/avatar/characters)</a></li>
+        <li class="h3"><a href="#image-studio-image">Image studio (/image)</a></li>
+        <li class="h3"><a href="#voice-studio-voice">Voice studio (/voice)</a></li>
+        <li class="h3"><a href="#video-studio-video">Video studio (/video)</a></li>
+        <li class="h3"><a href="#prompt-studio-prompt-studio">Prompt studio (/prompt-studio)</a></li>
+        <li class="h3"><a href="#gallery-gallery">Gallery (/gallery)</a></li>
+        <li class="h3"><a href="#projects-projects">Projects (/projects)</a></li>
+        <li class="h3"><a href="#comparison-compare">Comparison (/compare)</a></li>
+        <li class="h3"><a href="#library-library">Library (/library)</a></li>
+        <li class="h3"><a href="#account-spend-account">Account &amp;amp; spend (/account)</a></li>
+        <li><a href="#automated-tests">Automated tests</a></li>
         <li><a href="#known-limitations">Known limitations</a></li>
+        <li><a href="#platform-notes">Platform notes</a></li>
       </ol>
     </div>
-
-    <blockquote>
-      <p>How to <strong>run and test</strong> TrStudio on Windows and macOS. Agents (smoke/verify) and human UAT use the SAME test users and walkthrough below (enforced by <code>.tfcore/tasks/_smoke-test-policy.md</code>).</p>
-      <p><strong>Looking for an end-user manual to share with customers?</strong> That is the <strong>Product Guide</strong> (<code>*productguide TrStudio</code> generates it — screenshot-illustrated, task-oriented, no internal test details). This document is the internal run/test reference.</p>
-    </blockquote>
-
-    <h2 id="quick-start">Quick start<a class="anchor-link" href="#quick-start">#</a></h2>
-
-    <table>
-      <thead><tr><th>I want to…</th><th>Do this</th></tr></thead>
-      <tbody>
-        <tr><td>Run the app on <strong>Windows</strong></td><td><a href="#how-to-run-windows-visual-studio">Windows · Visual Studio</a> or <a href="#how-to-run-windows-command-line">Windows · CLI</a></td></tr>
-        <tr><td>Run the app on <strong>macOS</strong></td><td><a href="#how-to-run-macos-apple-silicon">macOS</a> (one-time setup, then two commands)</td></tr>
-        <tr><td>Run the <strong>native Mac desktop app</strong></td><td><a href="#run-the-maui-desktop-head-mac-catalyst">MAUI desktop head (Mac Catalyst)</a></td></tr>
-        <tr><td>Test it</td><td>Log in with a <a href="#test-users">test user</a> and follow the <a href="#uat-plan-screen-by-screen">UAT plan</a> or the <a href="#smoke-checklist-quick-capability-pass">smoke checklist</a></td></tr>
-      </tbody>
-    </table>
-
-    <h2 id="test-users">Test users<a class="anchor-link" href="#test-users">#</a></h2>
-
-    <p>Identity is delegated to <strong>AppManager</strong>; TrStudio stores only the AppManager <code>userId</code> — no local passwords. Real AppManager login is the primary path; the dev seam (<code>/dev/session</code>, needs <code>AllowDevSymmetricTokens=true</code>) remains for role-switching smokes.</p>
-
-    <table>
-      <thead><tr><th>#</th><th>Email</th><th>Password</th><th>Role</th><th>Exists?</th></tr></thead>
-      <tbody>
-        <tr><td>1</td><td>admin@appmanager.local</td><td><code>Admin@123!</code></td><td>Superadmin / Owner (Creator + Operator, all tiers)</td><td>✅ pre-existing — never create or overwrite</td></tr>
-        <tr><td>2</td><td>creator@trstudio.test</td><td><code>TrStudio!Creator1</code></td><td>Standard creator (Fast + High)</td><td>✅</td></tr>
-        <tr><td>3</td><td>admin@trstudio.test</td><td><code>TrStudio!Admin1</code></td><td>Operator / Admin</td><td>⬜ create in AppManager when needed</td></tr>
-        <tr><td>4</td><td>premium@trstudio.test</td><td><code>TrStudio!Premium1</code></td><td>Premium creator</td><td>⬜ register, then assign a Premium license in AppManager (exercises FN-014)</td></tr>
-      </tbody>
-    </table>
-
-    <h2 id="who-lands-where">Who lands where<a class="anchor-link" href="#who-lands-where">#</a></h2>
-
-    <p>Per BRD-84 (role landing) and BRD-85 (first-run setup gate): on every login the app checks <em>≥1 enabled model source AND ≥1 ready registry model</em>; until then it is un-set-up.</p>
-
-    <table>
-      <thead><tr><th>Role</th><th>Lands on</th><th>While setup is incomplete</th></tr></thead>
-      <tbody>
-        <tr><td>Superadmin / Owner (1)</td><td>Avatar studio <code>/avatar</code>; switches to the management surface via the sidebar footer link</td><td>Guided setup <code>/admin/setup</code></td></tr>
-        <tr><td>Operator / Admin (3)</td><td>Ops dashboard <code>/admin/ops</code></td><td>Hardware &amp; readiness <code>/admin/setup/hardware</code> → guided setup</td></tr>
-        <tr><td>Creators (2, 4)</td><td>Avatar studio <code>/avatar</code></td><td><code>/setup-required</code> — "ask your admin"</td></tr>
-      </tbody>
-    </table>
-
-    <ul>
-      <li><strong>Creator surface</strong>: Avatar studio → Characters · Image · Video · Voice · Prompt studios → Gallery · Projects · Account (Comparison + Library open from the Gallery toolbar).</li>
-      <li><strong>Management surface</strong> (<code>/admin/*</code>, role-gated): Hardware &amp; Setup · RunPod &amp; Ops · Model Sources · Model Library · Registry &amp; Providers · ComfyUI Import · Content Policy.</li>
-      <li>The <strong>Owner</strong> sees both and an in-app switch (sidebar footer).</li>
-    </ul>
-
-    <h2 id="prerequisites">Prerequisites<a class="anchor-link" href="#prerequisites">#</a></h2>
-
-    <ul>
-      <li><strong>.NET 10 SDK</strong> (+ the <strong>.NET MAUI workload</strong> for the desktop head — <code>dotnet workload list</code> should show <code>maui</code>)</li>
-      <li><strong>The two dependency services</strong> — PostgreSQL+PgVector and AppManager. Run them as local containers, <strong>or</strong> point at another machine's containers over the LAN (see the macOS section). If either is down, startup/login fails.</li>
-      <li><strong>Two gitignored secrets files</strong> — recreate on every new machine (they never travel with the source):
-        <ul>
-          <li><code>nuget.config</code> ← from <code>nuget.config.template</code> + your GitHub PAT (<code>read:packages</code>). Without it: <code>NU1101: TechieRag</code>.</li>
-          <li><code>src/TrStudioApi/appsettings.json</code> ← from <code>appsettings.template.json</code> + DB connection string + the <code>AppManager</code> block.</li>
-        </ul>
-      </li>
-    </ul>
-
-    <h2 id="which-projects-to-run">Which projects to run<a class="anchor-link" href="#which-projects-to-run">#</a></h2>
-
-    <p>Start <strong><code>TrStudioApi</code> first</strong> (backend, http://localhost:5102 — <code>/swagger</code>, <code>/health</code>), then ONE UI head:</p>
-
-    <table>
-      <thead><tr><th>Head</th><th>Project</th><th>Where</th></tr></thead>
-      <tbody>
-        <tr><td><strong>Web</strong></td><td><code>src/TrStudio</code> (Blazor Web)</td><td>http://localhost:5099</td></tr>
-        <tr><td><strong>Desktop</strong></td><td><code>src/TrStudio.Desktop</code> (MAUI Blazor Hybrid — Windows + Mac Catalyst)</td><td>native window</td></tr>
-      </tbody>
-    </table>
-
-    <p>Everything else in <code>TrStudio.slnx</code> is a library (<code>TrStudio.Engine</code>, <code>TrStudio.Models</code>, <code>TrStudioUI</code> RCL, <code>TrStudioDb</code>). Both heads render the same <code>TrStudioUI</code> screens and are feature-identical.</p>
-
-    <h2 id="how-to-run-windows-visual-studio">How to run — Windows · Visual Studio<a class="anchor-link" href="#how-to-run-windows-visual-studio">#</a></h2>
-
-    <ol>
-      <li>Start the dependency containers and confirm both are up:
-        <pre><code class="language-powershell">docker start WinPgVectorDb appmanager-api
-docker ps        # expect both "Up" (5432 and 5101)</code></pre>
-      </li>
-      <li>Open <code>TrStudio.slnx</code> (VS 2022 17.10+). Solution → <strong>Configure Startup Projects… → Multiple startup projects</strong>: <code>TrStudioApi</code> + <code>TrStudio</code> = Start (API on top). For the desktop app use <code>TrStudioApi</code> + <code>TrStudio.Desktop</code> instead (framework <code>net10.0-windows10.0.19041.0</code>).</li>
-      <li>F5 → wait for the API console to log <code>Application started</code>, then open <strong>http://localhost:5099</strong> and log in as a test user.</li>
-    </ol>
-
-    <h2 id="how-to-run-windows-command-line">How to run — Windows · command line<a class="anchor-link" href="#how-to-run-windows-command-line">#</a></h2>
-
-    <pre><code class="language-powershell">docker start WinPgVectorDb appmanager-api
-dotnet run --project src/TrStudioApi   --urls http://localhost:5102   # terminal 1 — wait for "Application started"
-dotnet run --project src/TrStudio      --urls http://localhost:5099   # terminal 2
-# desktop head instead of web: dotnet build src/TrStudio.Desktop -f net10.0-windows10.0.19041.0</code></pre>
-
-    <h2 id="how-to-run-macos-apple-silicon">How to run — macOS (Apple Silicon)<a class="anchor-link" href="#how-to-run-macos-apple-silicon">#</a></h2>
-
-    <h3 id="one-time-setup-new-mac">One-time setup (new Mac)<a class="anchor-link" href="#one-time-setup-new-mac">#</a></h3>
-
-    <ol>
-      <li><strong>Secrets</strong> — <code>cp nuget.config.template nuget.config</code> and <code>cp src/TrStudioApi/appsettings.template.json src/TrStudioApi/appsettings.json</code>, then fill both in.</li>
-      <li><strong>Dependency services</strong> — either:
-        <ul>
-          <li><strong>Local containers</strong>: install Docker Desktop / OrbStack; run a PgVector Postgres (<code>docker run -d --name MacPgVectorDb -p 5432:5432 -e POSTGRES_USER=… -e POSTGRES_PASSWORD=… -e POSTGRES_DB=trstudio -v macpgvector-data:/var/lib/postgresql/data pgvector/pgvector:pg16</code>) and your <code>appmanager-api</code> image on :5101 (keep its <code>/keys</code> volume writable); <strong>or</strong></li>
-          <li><strong>Reuse the Windows box's containers over the LAN</strong> (no local Docker): point <code>ConnectionStrings:Default</code> at <code>Host=&lt;windows-ip&gt;;Port=5432;…</code> directly, and keep <code>AppManager:BaseUrl</code> = <code>https://localhost:5101/</code> bridged by the loopback relay — <code>python3 tools/appmanager-forward.py &amp;</code> (edit the target IP inside if it changes). The BaseUrl <strong>must stay localhost</strong>: the self-signed-cert relaxation is loopback-only by design (NFR-05). Trade-off: the Windows machine must be on.</li>
-        </ul>
-      </li>
-      <li><strong>(Desktop head only) Full Xcode</strong> — Command Line Tools are not enough: install Xcode, <code>sudo xcode-select -s /Applications/Xcode.app/Contents/Developer</code>, accept the licence.</li>
-    </ol>
-
-    <blockquote><p>No Visual Studio on the Mac — use the CLI, VS Code, or Rider.</p></blockquote>
-
-    <h3 id="run-the-web-app-mac-cli">Run the web app (Mac CLI)<a class="anchor-link" href="#run-the-web-app-mac-cli">#</a></h3>
-
-    <pre><code class="language-bash">python3 tools/appmanager-forward.py &amp;                          # only for the LAN-containers setup
-dotnet restore TrStudio.slnx -p:EnableWindowsTargeting=true    # flag: the Desktop head also targets Windows
-dotnet run --project src/TrStudioApi   --urls http://localhost:5102   # terminal 1 — wait for "Application started"
-dotnet run --project src/TrStudio      --urls http://localhost:5099   # terminal 2</code></pre>
-    <p>Open http://localhost:5099 and log in as a test user.</p>
-
-    <h3 id="run-the-maui-desktop-head-mac-catalyst">Run the MAUI desktop head (Mac Catalyst)<a class="anchor-link" href="#run-the-maui-desktop-head-mac-catalyst">#</a></h3>
-
-    <pre><code class="language-bash">dotnet build src/TrStudio.Desktop -f net10.0-maccatalyst -c Release -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false
+<table>
+<thead><tr><th></th><th></th></tr></thead>
+<tbody>
+<tr><td>App</td><td>TrStudio</td></tr>
+<tr><td>Kind</td><td>app</td></tr>
+<tr><td>Size</td><td>Large</td></tr>
+<tr><td>Date</td><td>2026-11-12</td></tr>
+</tbody>
+</table>
+<p>How to run and test TrStudio on Windows and macOS. The smoke and verify agents and the owner's acceptance testing use the same test users and the same walkthrough below. The end-user manual is the Product Guide (<code>*productguide TrStudio</code>); this is the internal run and test reference.</p>
+<h2 id="test-users">Test users<a class="anchor-link" href="#test-users">#</a></h2>
+<p>Identity comes from AppManager; TrStudio stores only the AppManager <code>userId</code>, never a password. The users were registered through AppManager's register call (<code>node .tfcore/utils/tf-register-test-users.mjs</code>, run by the owner); user 1 is AppManager's own superadmin. Each password lives in the git-ignored <code>tests/verify/testsettings.Local.json</code>, laid over the committed <code>tests/verify/testsettings.json</code>; it is never written here. The developer sign-in page (<code>/dev/session</code>, needs <code>AllowDevSymmetricTokens=true</code>) stays for switching roles in smoke runs.</p>
+<table>
+<thead><tr><th>#</th><th>User</th><th>Password source</th><th>Role</th><th>Exists</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>admin@appmanager.local</td><td><code>TestUsers:1:Password</code> in the git-ignored <code>tests/verify/testsettings.Local.json</code></td><td>Owner (superadmin: Creator and Operator, all tiers); the owner walkthrough. Never create or overwrite it</td><td>yes</td></tr>
+<tr><td>2</td><td>creator@trstudio.test</td><td><code>TestUsers:2:Password</code> in the git-ignored <code>tests/verify/testsettings.Local.json</code></td><td>Standard creator (Fast and High); the second user, for the isolation checks</td><td>yes</td></tr>
+<tr><td>3</td><td>admin@trstudio.test</td><td><code>TestUsers:3:Password</code> in the git-ignored <code>tests/verify/testsettings.Local.json</code></td><td>Operator; the unattended-run user for verify and smoke runs</td><td>no — register when needed</td></tr>
+<tr><td>4</td><td>premium@trstudio.test</td><td><code>TestUsers:4:Password</code> in the git-ignored <code>tests/verify/testsettings.Local.json</code></td><td>Premium creator (exercises REQ-FN-014)</td><td>no — register, then assign a Premium licence in AppManager</td></tr>
+</tbody>
+</table>
+<p>A verify test never creates, deletes or changes an account on a shared AppManager; the register-creates-an-account path is verified by hand once per release and recorded in the checklist with the date, and the automated row checks only the form's validation and the email-already-in-use path using test user 1. The Register test signs in as test user 1 before it submits anything; the test users are registered only by the owner, with <code>node .tfcore/utils/tf-register-test-users.mjs</code>.</p>
+<p><strong>Who lands where</strong> (BRD-84 role landing, BRD-85 first-run gate: setup is complete when at least one model source is enabled and at least one registry model is ready):</p>
+<table>
+<thead><tr><th>Role</th><th>Lands on</th><th>While setup is incomplete</th></tr></thead>
+<tbody>
+<tr><td>Owner (1)</td><td>Avatar studio <code>/avatar</code>; a sidebar-footer link switches to the management screens</td><td>Guided setup <code>/admin/setup</code></td></tr>
+<tr><td>Operator (3)</td><td>RunPod &amp; ops <code>/admin/ops</code></td><td>Hardware &amp; readiness <code>/admin/setup/hardware</code>, then guided setup</td></tr>
+<tr><td>Creators (2, 4)</td><td>Avatar studio <code>/avatar</code></td><td><code>/setup-required</code> ("ask your admin")</td></tr>
+</tbody>
+</table>
+<h2 id="execution-guide">Execution guide<a class="anchor-link" href="#execution-guide">#</a></h2>
+<p>Prerequisites: .NET 10 SDK (plus the .NET MAUI workload for the desktop head); PostgreSQL with PgVector and AppManager running (local containers, or another machine's over the LAN); two git-ignored files recreated on every machine: <code>nuget.config</code> from <code>nuget.config.template</code> plus a GitHub token with <code>read:packages</code> (without it: <code>NU1101: TechieRag</code>), and <code>src/TrStudioApi/appsettings.json</code> from <code>appsettings.template.json</code> plus the database connection string and the <code>AppManager</code> block. Keys can go in Visual Studio user secrets instead of <code>appsettings.json</code>. Ports come from each project's <code>launchSettings.json</code> (API 5102, web 5099); no setting is read from an environment variable.</p>
+<pre><code>docker start WinPgVectorDb appmanager-api
+dotnet restore TrStudio.slnx -p:EnableWindowsTargeting=true
+dotnet build TrStudio.slnx -p:EnableWindowsTargeting=true
+dotnet run --project src/TrStudioApi --urls http://localhost:5102
+dotnet run --project src/TrStudio --urls http://localhost:5099</code></pre>
+<p>The database migrates itself (DbUp) when <code>TrStudioApi</code> starts; wait for <code>Application started</code> before starting the web head. Open http://localhost:5099 and sign in as user 1. <code>http://localhost:5102/health</code> answers <code>{"status":"ok"}</code>; <code>/swagger</code> lists the API.</p>
+<p>In Visual Studio: open <code>TrStudio.slnx</code>, set multiple startup projects <code>TrStudioApi</code> then <code>TrStudio</code> (or <code>TrStudio.Desktop</code>, framework <code>net10.0-windows10.0.19041.0</code>), and press F5.</p>
+<p><strong>Phase 2 (Venice):</strong> sign in as user 1 or 3, open Admin — Model &amp; Provider Registry, add provider <code>Venice</code> with address <code>https://api.venice.ai/api/v1</code> and the Venice API key (stored encrypted in the database, never in appsettings), press Test connection, then add one registry row per Venice model and task.</p>
+<h2 id="how-to-test-screen-by-screen">How to test, screen by screen<a class="anchor-link" href="#how-to-test-screen-by-screen">#</a></h2>
+<p>Screens degrade cleanly where a model, key or service is missing; those steps are marked "needs".</p>
+<h3 id="register-register">Register (<code>/register</code>)<a class="anchor-link" href="#register-register">#</a></h3>
+<ul>
+<li><strong>Sign in as:</strong> nobody; then user 1 for the email-in-use path
+</li>
+<li><strong>Steps:</strong> 1) open Register 2) submit a mismatched password 3) submit user 1's email
+</li>
+<li><strong>Expected:</strong> field error on mismatch; "email already in use" alert; no account is created by the test
+</li>
+<li><strong>Covers:</strong> REQ-UI-002, BRD-83
+</li>
+</ul>
+<h3 id="login-login">Login (<code>/login</code>)<a class="anchor-link" href="#login-login">#</a></h3>
+<ul>
+<li><strong>Sign in as:</strong> users 1 to 4
+</li>
+<li><strong>Steps:</strong> 1) open any screen signed out 2) sign in 3) note the landing screen
+</li>
+<li><strong>Expected:</strong> signed-out visits go to <code>/login</code>; each role lands as in the table above; bad credentials show a danger alert
+</li>
+<li><strong>Covers:</strong> REQ-UI-001, REQ-FN-012, REQ-FN-016, BRD-57, BRD-84
+</li>
+</ul>
+<h3 id="forgot-password-forgot-password">Forgot password (<code>/forgot-password</code>)<a class="anchor-link" href="#forgot-password-forgot-password">#</a></h3>
+<ul>
+<li><strong>Sign in as:</strong> nobody
+</li>
+<li><strong>Steps:</strong> 1) open Forgot password 2) submit an email
+</li>
+<li><strong>Expected:</strong> the same confirmation for any email (no hint whether it exists); the reset itself is AppManager's
+</li>
+<li><strong>Covers:</strong> REQ-UI-003, BRD-57
+</li>
+</ul>
+<h3 id="setup-required-setup-required">Setup required (<code>/setup-required</code>)<a class="anchor-link" href="#setup-required-setup-required">#</a></h3>
+<ul>
+<li><strong>Sign in as:</strong> user 2 before setup, then user 1
+</li>
+<li><strong>Steps:</strong> 1) sign in as user 2 2) sign in as user 1, enable a source and install a model 3) sign in as user 2 again
+</li>
+<li><strong>Expected:</strong> user 2 first sees only Setup required; after setup lands on <code>/avatar</code>
+</li>
+<li><strong>Covers:</strong> REQ-UI-004, REQ-FN-017, BRD-85
+</li>
+</ul>
+<h3 id="admin-hardware-setup-admin-setup"><a id="admin--hardware--setup-adminsetup"></a>Admin — Hardware &amp; setup (<code>/admin/setup</code>)<a class="anchor-link" href="#admin-hardware-setup-admin-setup">#</a></h3>
+<ul>
+<li><strong>Sign in as:</strong> user 3
+</li>
+<li><strong>Steps:</strong> 1) open <code>/admin/setup/hardware</code> 2) open <code>/admin/setup</code> 3) run a setup step
+</li>
+<li><strong>Expected:</strong> live GPU, CPU, memory, MPS and disk with a verdict; steps run (unknown step 400, running step 409); needs a host environment to finish provisioning
+</li>
+<li><strong>Covers:</strong> REQ-UI-070, REQ-FN-008 to REQ-FN-010, BRD-8 to BRD-10
+</li>
+</ul>
+<h3 id="admin-model-sources-admin-sources"><a id="admin--model-sources-adminsources"></a>Admin — Model Sources (<code>/admin/sources</code>)<a class="anchor-link" href="#admin-model-sources-admin-sources">#</a></h3>
+<ul>
+<li><strong>Sign in as:</strong> user 3
+</li>
+<li><strong>Steps:</strong> 1) add a Hugging Face, a Civitai and a custom source 2) press Test connection 3) reload
+</li>
+<li><strong>Expected:</strong> tokens stored encrypted and never shown again; the model library lists from enabled sources
+</li>
+<li><strong>Covers:</strong> REQ-UI-074, BRD-82
+</li>
+</ul>
+<h3 id="admin-model-library-admin-models"><a id="admin--model-library-adminmodels"></a>Admin — Model Library (<code>/admin/models</code>)<a class="anchor-link" href="#admin-model-library-admin-models">#</a></h3>
+<ul>
+<li><strong>Sign in as:</strong> user 3
+</li>
+<li><strong>Steps:</strong> 1) search 2) install a model 3) pause, resume, cancel
+</li>
+<li><strong>Expected:</strong> size, memory and licence shown; the install queue follows each action; needs a reachable model to download
+</li>
+<li><strong>Covers:</strong> REQ-UI-076, REQ-FN-011, BRD-11
+</li>
+</ul>
+<h3 id="admin-model-provider-registry-admin-registry"><a id="admin--model--provider-registry-adminregistry"></a>Admin — Model &amp; Provider Registry (<code>/admin/registry</code>)<a class="anchor-link" href="#admin-model-provider-registry-admin-registry">#</a></h3>
+<ul>
+<li><strong>Sign in as:</strong> user 3
+</li>
+<li><strong>Steps:</strong> 1) add a registry row with a parameters schema 2) open Image studio 3) on the providers panel add a HeyGen or aggregator key
+</li>
+<li><strong>Expected:</strong> the studio renders the new row's controls with no code change; keys are masked on read (<code>****2345</code>); edits persist across reload
+</li>
+<li><strong>Covers:</strong> REQ-UI-071, REQ-FN-006, REQ-FN-007, BRD-6, BRD-7, BRD-73, BRD-77
+</li>
+</ul>
+<h3 id="admin-comfyui-import-debug-admin-comfy-import"><a id="admin--comfyui-import--debug-admincomfyimport"></a>Admin — ComfyUI import &amp; debug (<code>/admin/comfy/import</code>)<a class="anchor-link" href="#admin-comfyui-import-debug-admin-comfy-import">#</a></h3>
+<ul>
+<li><strong>Sign in as:</strong> user 3
+</li>
+<li><strong>Steps:</strong> 1) import API-format workflow JSON (invalid gives 400) 2) map inputs and save as a model 3) try to enable it before a passing smoke
+</li>
+<li><strong>Expected:</strong> the graph is hidden; the sandbox gate gives 409, then 200 after the smoke; versions pin; a live run needs <code>ComfyUI:BaseUrl</code>
+</li>
+<li><strong>Covers:</strong> REQ-UI-072, BRD-34 to BRD-41
+</li>
+</ul>
+<h3 id="admin-runpod-ops-admin-ops"><a id="admin--runpod--ops-adminops"></a>Admin — RunPod &amp; ops (<code>/admin/ops</code>)<a class="anchor-link" href="#admin-runpod-ops-admin-ops">#</a></h3>
+<ul>
+<li><strong>Sign in as:</strong> user 3
+</li>
+<li><strong>Steps:</strong> 1) register a RunPod endpoint 2) set a monthly cap 3) submit a job over the cap
+</li>
+<li><strong>Expected:</strong> spend tracked across RunPod and closed APIs; over cap gives 402 and a near-cap alert; a non-admin gets 403; a cold start needs a RunPod key
+</li>
+<li><strong>Covers:</strong> REQ-UI-073, REQ-FN-028, BRD-12, BRD-13, BRD-15, BRD-75
+</li>
+</ul>
+<h3 id="admin-content-policy-nsfw-admin-policy"><a id="admin--content-policy-nsfw-adminpolicy"></a>Admin — Content policy (NSFW) (<code>/admin/policy</code>)<a class="anchor-link" href="#admin-content-policy-nsfw-admin-policy">#</a></h3>
+<ul>
+<li><strong>Sign in as:</strong> user 1 in personal mode
+</li>
+<li><strong>Steps:</strong> 1) switch Unrestricted on 2) confirm 3) submit a minor or public-figure prompt
+</li>
+<li><strong>Expected:</strong> the switch moves only after confirmation; synthetic adult content allowed; the floors still block with 403; the switch is forced off in multi-user mode
+</li>
+<li><strong>Covers:</strong> REQ-UI-075, BRD-79, BRD-80
+</li>
+</ul>
+<h3 id="avatar-studio-avatar">Avatar studio (<code>/avatar</code>)<a class="anchor-link" href="#avatar-studio-avatar">#</a></h3>
+<ul>
+<li><strong>Sign in as:</strong> user 1
+</li>
+<li><strong>Steps:</strong> 1) pick a character and a voice 2) write a script, optionally Script-assist 3) pick Fast, High or Premium and Render
+</li>
+<li><strong>Expected:</strong> the cost estimate shows first; one control routes to three providers (Premium shows a HeyGen badge); captions give valid SRT; preview is a placeholder until lip-sync models or a HeyGen key are supplied
+</li>
+<li><strong>Covers:</strong> REQ-UI-010, REQ-FN-037, REQ-FN-039, BRD-27 to BRD-33, BRD-53, BRD-63
+</li>
+</ul>
+<h3 id="character-library-avatar-characters"><a id="character-library-avatarcharacters"></a>Character library (<code>/avatar/characters</code>)<a class="anchor-link" href="#character-library-avatar-characters">#</a></h3>
+<ul>
+<li><strong>Sign in as:</strong> user 1
+</li>
+<li><strong>Steps:</strong> 1) New Character 2) fill the prompt, choose Photoreal or Stylized, Create character 3) open the card's Character Bible
+</li>
+<li><strong>Expected:</strong> the card appears only on success and persists for this user; the bible loads its entries; the realism flag feeds the safety floor
+</li>
+<li><strong>Covers:</strong> REQ-UI-011, REQ-RAG-004, BRD-27, BRD-55
+</li>
+</ul>
+<h3 id="image-studio-image">Image studio (<code>/image</code>)<a class="anchor-link" href="#image-studio-image">#</a></h3>
+<ul>
+<li><strong>Sign in as:</strong> user 2
+</li>
+<li><strong>Steps:</strong> 1) pick a model and type a prompt 2) Generate 3) generate again with the same seed
+</li>
+<li><strong>Expected:</strong> parameters render from the registry schema; tiles carry a seed badge; the same seed reproduces a byte-identical result; real pixels need an installed ONNX model. Venice rows (phase 2) carry a "Cloud · Venice" badge
+</li>
+<li><strong>Covers:</strong> REQ-UI-020, REQ-FN-019 to REQ-FN-023, BRD-16 to BRD-21
+</li>
+</ul>
+<h3 id="voice-studio-voice">Voice studio (<code>/voice</code>)<a class="anchor-link" href="#voice-studio-voice">#</a></h3>
+<ul>
+<li><strong>Sign in as:</strong> user 2
+</li>
+<li><strong>Steps:</strong> 1) pick language and voice, type text, Generate voice 2) Clone a voice with a sample, without ticking "synthetic"
+</li>
+<li><strong>Expected:</strong> English and Hindi behind one control; the real-person clone is blocked (403) until consent is recorded; real audio needs a voice model
+</li>
+<li><strong>Covers:</strong> REQ-UI-030, REQ-FN-031 to REQ-FN-034, BRD-22 to BRD-26, BRD-62
+</li>
+</ul>
+<h3 id="video-studio-video">Video studio (<code>/video</code>)<a class="anchor-link" href="#video-studio-video">#</a></h3>
+<ul>
+<li><strong>Sign in as:</strong> user 2
+</li>
+<li><strong>Steps:</strong> 1) choose Image to Video (first and last frames) or Text to Video 2) set duration, motion, aspect and tier 3) Generate, then trim, join and export
+</li>
+<li><strong>Expected:</strong> a foreign asset as a frame gives 400; a placeholder clip appears; generation needs a video model or key, export needs ffmpeg
+</li>
+<li><strong>Covers:</strong> REQ-UI-040, REQ-FN-053, BRD-42 to BRD-46
+</li>
+</ul>
+<h3 id="prompt-studio-prompt-studio">Prompt studio (<code>/prompt-studio</code>)<a class="anchor-link" href="#prompt-studio-prompt-studio">#</a></h3>
+<ul>
+<li><strong>Sign in as:</strong> user 1
+</li>
+<li><strong>Steps:</strong> 1) New chat, pick a model (seed: GPT-4o with vision, Llama-3 text only) 2) Send a message 3) Copy, Save to Library, Send to Studio
+</li>
+<li><strong>Expected:</strong> sessions persist per user (another user gets 404); a picture on a text-only model gives 400; without a configured model the reply is labelled synthetic
+</li>
+<li><strong>Covers:</strong> REQ-UI-081, REQ-UI-082, REQ-RAG-005, BRD-88 to BRD-92
+</li>
+</ul>
+<h3 id="gallery-gallery">Gallery (<code>/gallery</code>)<a class="anchor-link" href="#gallery-gallery">#</a></h3>
+<ul>
+<li><strong>Sign in as:</strong> user 2, then user 4
+</li>
+<li><strong>Steps:</strong> 1) filter the grid 2) open an asset's details and Reproduce 3) as user 4, open user 2's asset address
+</li>
+<li><strong>Expected:</strong> only the signed-in user's assets; reproduce reuses every parameter; user 4 gets 404
+</li>
+<li><strong>Covers:</strong> REQ-UI-050, BRD-47, BRD-51, BRD-81
+</li>
+</ul>
+<h3 id="projects-projects">Projects (<code>/projects</code>)<a class="anchor-link" href="#projects-projects">#</a></h3>
+<ul>
+<li><strong>Sign in as:</strong> user 2
+</li>
+<li><strong>Steps:</strong> 1) open a project 2) select a run in the history 3) Reproduce with these params
+</li>
+<li><strong>Expected:</strong> run parameters show prompt, model, tier, seed and cost; the run reproduces in one click
+</li>
+<li><strong>Covers:</strong> REQ-UI-051, BRD-48
+</li>
+</ul>
+<h3 id="comparison-compare">Comparison (<code>/compare</code>)<a class="anchor-link" href="#comparison-compare">#</a></h3>
+<ul>
+<li><strong>Sign in as:</strong> user 2
+</li>
+<li><strong>Steps:</strong> 1) open two assets from Gallery's Compare 2) switch side-by-side and overlay
+</li>
+<li><strong>Expected:</strong> a parameter table highlights the differing values ("N differ")
+</li>
+<li><strong>Covers:</strong> REQ-UI-052, BRD-49
+</li>
+</ul>
+<h3 id="library-library">Library (<code>/library</code>)<a class="anchor-link" href="#library-library">#</a></h3>
+<ul>
+<li><strong>Sign in as:</strong> user 2
+</li>
+<li><strong>Steps:</strong> 1) save a prompt, style and voice preset 2) reload 3) Use in Studio
+</li>
+<li><strong>Expected:</strong> all four preset types save (201) and persist; Use in Studio opens the right studio pre-filled
+</li>
+<li><strong>Covers:</strong> REQ-UI-053, BRD-50
+</li>
+</ul>
+<h3 id="account-spend-account"><a id="account--spend-account"></a>Account &amp; spend (<code>/account</code>)<a class="anchor-link" href="#account-spend-account">#</a></h3>
+<ul>
+<li><strong>Sign in as:</strong> user 4
+</li>
+<li><strong>Steps:</strong> 1) open Account 2) compare the spend cards with recent jobs
+</li>
+<li><strong>Expected:</strong> spend by channel against the cap; licence state from AppManager
+</li>
+<li><strong>Covers:</strong> REQ-UI-060, BRD-52, BRD-58
+</li>
+</ul>
+<h2 id="automated-tests">Automated tests<a class="anchor-link" href="#automated-tests">#</a></h2>
+<pre><code>dotnet test
+dotnet test tests/integration/TrStudio.Tests.Integration --filter Category=Live
+npx playwright test</code></pre>
+<p><code>dotnet test</code> runs the unit tests and the SignalR integration test. The paid Venice live tests (<code>Category=Live</code>, one per task type) are left out of that run by default (the integration project sets <code>--filter Category!=Live</code>); the second line runs only them. The Playwright specs in <code>tests/verify/</code> need a running API on 5102 and web head on 5099. Tests read their settings from <code>testsettings.json</code> beside them, overlaid by the git-ignored <code>testsettings.Local.json</code>; never environment variables. The Venice live tests read <code>tests/integration/TrStudio.Tests.Integration/testsettings.Local.json</code> (keys <code>Venice:BaseUrl</code>, <code>Venice:ApiKey</code>, optional <code>Venice:Models:&lt;Task&gt;</code>; an empty model picks the cheapest listed) and each is skipped with "Venice key not set in testsettings.Local.json" when the key is empty. <code>Host:DotnetRoot</code> in the same file optionally names the .NET folder the SignalR test boots the API with.</p>
+<h2 id="known-limitations">Known limitations<a class="anchor-link" href="#known-limitations">#</a></h2>
+<ul>
+<li>Studios run real jobs (seeds, routing, cost, safety, per-user storage) but show placeholder previews: a gradient tile with the real seed, a placeholder waveform or timeline clip. Upscale, Export MP4 or WAV and Remove background only show a message today.
+</li>
+<li>Without a model, key or host the backend returns a synthetic development asset: image pixels and provisioning (REQ-FN-009 to REQ-FN-011, REQ-FN-019, REQ-FN-021), voice (REQ-FN-031, REQ-FN-033 to REQ-FN-035), lip-sync and HeyGen (REQ-FN-037, REQ-FN-038), ComfyUI live runs (REQ-FN-045 to REQ-FN-047), video (REQ-FN-051, REQ-FN-053), ffmpeg export (REQ-FN-054), RunPod cold start (REQ-FN-028), language-model paths (REQ-RAG-001, REQ-RAG-002, REQ-RAG-005).
+</li>
+<li>Premium tier gating (REQ-FN-014) needs a Premium licence on user 4.
+</li>
+<li>Data residency and retention (REQ-NFR-010) are deployment settings.
+</li>
+<li>Not built (could-haves): digital twin, multi-shot, clip extension, webhooks, MCP server.
+</li>
+<li>Every studio needs at least one enabled model source and one ready registry model; the development seed provides <code>stub-echo</code> and <code>onnx-sdxl-local</code>.
+</li>
+<li>Library feedback: TrBlazeUI TR-011 fixed upstream and not yet re-checked here, TR-012 open; TechieRag TR-RAG-002 to TR-RAG-004 open, none blocking.
+</li>
+</ul>
+<h2 id="platform-notes">Platform notes<a class="anchor-link" href="#platform-notes">#</a></h2>
+<p><strong>Windows:</strong> containers <code>WinPgVectorDb</code> (5432) and <code>appmanager-api</code> (5101); <code>docker ps</code> should show both up. Desktop head: <code>dotnet build src/TrStudio.Desktop -f net10.0-windows10.0.19041.0</code>.</p>
+<p><strong>macOS (Apple Silicon):</strong> no Visual Studio; use the command line, VS Code or Rider. Either run local containers (a <code>pgvector/pgvector:pg16</code> Postgres with database <code>trstudio</code>, and the <code>appmanager-api</code> image on 5101 with a writable <code>/keys</code> volume), or reuse the Windows machine's containers: point <code>ConnectionStrings:Default</code> at <code>Host=&lt;windows-ip&gt;;Port=5432;…</code> and keep <code>AppManager:BaseUrl</code> at <code>https://localhost:5101/</code>, bridged by <code>python3 tools/appmanager-forward.py &amp;</code>. The address must stay localhost because the self-signed certificate is accepted on loopback only (NFR-005); the Windows machine must then be on. The desktop head needs full Xcode (<code>sudo xcode-select -s /Applications/Xcode.app/Contents/Developer</code>, licence accepted) and TrBlazeUI 1.0.9 or later:</p>
+<pre><code>dotnet build src/TrStudio.Desktop -f net10.0-maccatalyst -c Release -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false
 open src/TrStudio.Desktop/bin/Release/net10.0-maccatalyst/maccatalyst-arm64/TrStudio.app</code></pre>
-
-    <ul>
-      <li><code>-p:ValidateXcodeVersion=false</code> is needed only while the installed MacCatalyst workload band trails your Xcode by a minor version (<code>sudo dotnet workload update</code> removes the need once a matching band ships).</li>
-      <li>Start <code>TrStudioApi</code> first; point the app elsewhere with <code>TrStudioApiBaseUrl=http://&lt;host&gt;:5102</code>.</li>
-      <li>Zoom the whole UI with <strong>⌘+ / ⌘− / ⌘0</strong> (in / out / actual size) — click once inside the window first so it has focus. The level persists across restarts, and the default auto-scales up on high-DPI / native-4K displays so text is readable out of the box.</li>
-      <li>Requires TrBlazeUI ≥ 1.0.9 (1.0.7 could not build for Catalyst — TR-011, fixed).</li>
-    </ul>
-
-    <h3 id="mac-troubleshooting">Mac troubleshooting<a class="anchor-link" href="#mac-troubleshooting">#</a></h3>
-
-    <ul>
-      <li><code>NETSDK1100 …targeting Windows</code> on solution-level commands → add <code>-p:EnableWindowsTargeting=true</code>.</li>
-      <li><code>NU1101: TechieRag</code> → <code>nuget.config</code> missing or PAT invalid.</li>
-      <li><code>requires Xcode X.Y (current X.Z)</code> → <code>sudo dotnet workload update</code>, or build with <code>-p:ValidateXcodeVersion=false</code>.</li>
-      <li>Login 503 <code>APPMANAGER_UNREACHABLE</code> / "SSL connection could not be established" → <code>AppManager:BaseUrl</code> points at a LAN IP; use <code>https://localhost:5101/</code> + <code>tools/appmanager-forward.py</code> (NFR-05 loopback rule).</li>
-      <li>Login HTTP 500 / <code>UPSTREAM_ERROR</code> → the AppManager container's <code>/keys</code> volume isn't writable.</li>
-    </ul>
-
-    <h2 id="troubleshooting-startup-both-platforms">Troubleshooting startup (both platforms)<a class="anchor-link" href="#troubleshooting-startup-both-platforms">#</a></h2>
-
-    <ul>
-      <li><strong>DB/login errors at launch</strong> → a dependency service is down (<code>docker ps</code>) or only one project was started. The shell header shows an <strong>API status pill</strong>; the API logs <code>Verify PostgreSQL is running…</code> when it can't reach Postgres.</li>
-      <li><strong>App loads but actions fail / data won't save</strong> → the API isn't on :5102 — check <code>http://localhost:5102/health</code> (expect <code>{"status":"ok"}</code>) and the header pill.</li>
-    </ul>
-
-    <h2 id="test-automated">Test (automated)<a class="anchor-link" href="#test-automated">#</a></h2>
-
-    <pre><code class="language-bash">dotnet test        # 260 tests (259 unit + 1 SignalR integration)</code></pre>
-    <p>Headless Playwright verify specs: <code>tests/verify/</code> — <code>npx playwright test</code> against a running stack (API :5102 + web :5099).</p>
-
-    <h2 id="uat-plan-screen-by-screen">UAT plan — screen by screen<a class="anchor-link" href="#uat-plan-screen-by-screen">#</a></h2>
-
-    <blockquote><p>Internal acceptance script (one entry per screen: user → steps → expected → BRD coverage). Screens degrade cleanly where a model/key/service isn't supplied — those spots are marked ⚠.</p></blockquote>
-
-    <h3 id="register-register-covers-brd-83">Register (<code>/register</code>) — covers BRD-83<a class="anchor-link" href="#register-register-covers-brd-83">#</a></h3>
-    <p>As nobody: register a new account → created via the AppManager API (no local password), redirect to login.</p>
-
-    <h3 id="login-login-covers-brd-57-brd-84">Login (<code>/login</code>) — covers BRD-57, BRD-84<a class="anchor-link" href="#login-login-covers-brd-57-brd-84">#</a></h3>
-    <p>As users 1–4: log in → JWT session via AppManager; each role lands per the table above; first run routes to the setup gate. Signed-out visitors are redirected to <code>/login</code> from any screen.</p>
-
-    <h3 id="forgot-password-forgot-password-covers-brd-57">Forgot password (<code>/forgot-password</code>) — covers BRD-57<a class="anchor-link" href="#forgot-password-forgot-password-covers-brd-57">#</a></h3>
-    <p>Submit an email → enumeration-safe confirmation; reset handled by AppManager.</p>
-
-    <h3 id="first-run-gate-setup-required-setup-required-covers-brd-85">First-run gate &amp; Setup-required (<code>/setup-required</code>) — covers BRD-85<a class="anchor-link" href="#first-run-gate-setup-required-setup-required-covers-brd-85">#</a></h3>
-    <p>User 2 before setup → <code>/setup-required</code> only. User 1 → guided setup; enable a source + install a model; user 2 then lands on <code>/avatar</code>.</p>
-
-    <h3 id="admin-hardware-readiness-admin-setup-hardware-covers-brd-8">Admin — Hardware &amp; readiness (<code>/admin/setup/hardware</code>) — covers BRD-8<a class="anchor-link" href="#admin-hardware-readiness-admin-setup-hardware-covers-brd-8">#</a></h3>
-    <p>User 3: readiness summary reflects live host capabilities (GPU/CPU/memory/MPS/disk) with a verdict.</p>
-
-    <h3 id="admin-guided-setup-admin-setup-covers-brd-9-brd-10">Admin — Guided setup (<code>/admin/setup</code>) — covers BRD-9, BRD-10<a class="anchor-link" href="#admin-guided-setup-admin-setup-covers-brd-9-brd-10">#</a></h3>
-    <p>User 3: wizard drives ONNX Runtime install + isolated Python/ComfyUI provisioning (400 unknown / 409 already-running). ⚠ real provisioning needs a host GPU/env.</p>
-
-    <h3 id="admin-model-sources-admin-sources-covers-brd-82">Admin — Model sources (<code>/admin/sources</code>) — covers BRD-82<a class="anchor-link" href="#admin-model-sources-admin-sources-covers-brd-82">#</a></h3>
-    <p>User 3: add Hugging Face / Civitai / custom-URL sources → tokens stored encrypted (never echoed), Test connection works, Model library lists from enabled sources.</p>
-
-    <h3 id="admin-model-library-admin-models-covers-brd-11">Admin — Model library (<code>/admin/models</code>) — covers BRD-11<a class="anchor-link" href="#admin-model-library-admin-models-covers-brd-11">#</a></h3>
-    <p>User 3: browse + one-click install with pause/resume/cancel; size/VRAM/licence shown. ⚠ real download needs a reachable model.</p>
-
-    <h3 id="admin-registry-admin-registry-covers-brd-6-brd-77">Admin — Registry (<code>/admin/registry</code>) — covers BRD-6, BRD-77<a class="anchor-link" href="#admin-registry-admin-registry-covers-brd-6-brd-77">#</a></h3>
-    <p>User 3: add a registry row with a params schema → the model is usable from the studios with <strong>controls auto-rendered from the schema</strong> (no code change).</p>
-
-    <h3 id="admin-providers-admin-providers-covers-brd-7-brd-73">Admin — Providers (<code>/admin/providers</code>) — covers BRD-7, BRD-73<a class="anchor-link" href="#admin-providers-admin-providers-covers-brd-7-brd-73">#</a></h3>
-    <p>User 3: add HeyGen/aggregator keys → encrypted at rest, masked on read (<code>****2345</code>), selectable per model.</p>
-
-    <h3 id="admin-runpod-cost-admin-ops-covers-brd-12-13-15-75">Admin — RunPod &amp; cost (<code>/admin/ops</code>) — covers BRD-12/13/15/75<a class="anchor-link" href="#admin-runpod-cost-admin-ops-covers-brd-12-13-15-75">#</a></h3>
-    <p>User 3: register a RunPod endpoint; spend tracked across RunPod + closed APIs; over-cap → HTTP 402; near-cap alert; non-admin → 403. ⚠ live cold-start needs <code>RunPod:ApiKey</code>.</p>
-
-    <h3 id="admin-comfyui-import-admin-comfy-import-admin-comfy-debug-covers-brd-34-41">Admin — ComfyUI import (<code>/admin/comfy/import</code>, <code>/admin/comfy/debug</code>) — covers BRD-34..41<a class="anchor-link" href="#admin-comfyui-import-admin-comfy-import-admin-comfy-debug-covers-brd-34-41">#</a></h3>
-    <p>User 3: import API-format workflow JSON (invalid → 400) → map inputs → save-as-model <strong>hides the graph</strong> → sandbox gate blocks go-live before a passing smoke (409→200) → version-pin works. ⚠ live run needs <code>ComfyUI:BaseUrl</code>.</p>
-
-    <h3 id="admin-content-policy-nsfw-admin-policy-covers-brd-79-brd-80">Admin — Content policy / NSFW (<code>/admin/policy</code>) — covers BRD-79, BRD-80<a class="anchor-link" href="#admin-content-policy-nsfw-admin-policy-covers-brd-79-brd-80">#</a></h3>
-    <p>User 1 (owner, personal mode): the Unrestricted toggle sits behind a confirmation gate; synthetic-adult allowed; real-person/photoreal-of-real refused; <strong>CSAM + minor + public-figure floors still fire (403)</strong>; forced off in multi-user mode.</p>
-
-    <h3 id="image-studio-image-image-batch-covers-brd-16-21">Image studio (<code>/image</code>, <code>/image/batch</code>) — covers BRD-16..21<a class="anchor-link" href="#image-studio-image-image-batch-covers-brd-16-21">#</a></h3>
-    <p>User 2: prompt → generate → I2I/inpaint → ControlNet → upscale → seed grid → 9:16 export with background removal. Params render from the registry schema; same seed reproduces <strong>byte-identical</strong>. ⚠ real pixels need an installed ONNX model.</p>
-
-    <h3 id="voice-studio-voice-voice-clone-covers-brd-22-26-brd-62">Voice studio (<code>/voice</code>, <code>/voice/clone</code>) — covers BRD-22..26, BRD-62<a class="anchor-link" href="#voice-studio-voice-voice-clone-covers-brd-22-26-brd-62">#</a></h3>
-    <p>User 2: EN + HI generation behind one language control; synthetic-voice clone ungated; <strong>real-person clone blocked until consent is recorded</strong> (403). ⚠ real synthesis needs a voice model.</p>
-
-    <h3 id="avatar-studio-avatar-avatar-characters-covers-brd-27-31-33-53-55-63">Avatar studio (<code>/avatar</code>, <code>/avatar/characters</code>) — covers BRD-27..31/33/53/55/63<a class="anchor-link" href="#avatar-studio-avatar-avatar-characters-covers-brd-27-31-33-53-55-63">#</a></h3>
-    <p>User 1: create a photoreal character (identity lock) → script → voice → animate at Fast/High/Premium (<strong>one control, 3 providers</strong>) → captions (valid SRT) → export with provenance. Realism flag feeds the safety floor. ⚠ live lip-sync/HeyGen needs models/keys.</p>
-
-    <h3 id="video-studio-video-video-edit-covers-brd-42-46">Video studio (<code>/video</code>, <code>/video/edit</code>) — covers BRD-42..46<a class="anchor-link" href="#video-studio-video-video-edit-covers-brd-42-46">#</a></h3>
-    <p>User 2: I2V/T2V with duration/motion/aspect; first/last-frame conditioning (foreign asset → 400); interpolate/upscale; trim/join + audio; MP4 export at 16:9/9:16/1:1/4:5. ⚠ generation needs a video model/key; real export needs ffmpeg.</p>
-
-    <h3 id="prompt-studio-prompt-studio-covers-brd-88-92">Prompt studio (<code>/prompt-studio</code>) — covers BRD-88..92<a class="anchor-link" href="#prompt-studio-prompt-studio-covers-brd-88-92">#</a></h3>
-    <p>User 1: pick a <code>text-chat</code> LLM (admin-configured on <code>/admin/registry</code>; dev-seed: GPT-4o vision + Llama-3 text-only) → chat to craft a prompt → image attach only on vision-capable models (non-vision + image → 400) → Copy / Save-to-Library / Send-to-Studio → sessions persist per user (cross-user → 404); tokens accrue to <code>SpendChannel.LlmText</code>. ⚠ without a configured LLM it degrades to a labeled synthetic reply.</p>
-
-    <h3 id="workspace-gallery-projects-compare-library-account-covers-brd-47-52-brd-58">Workspace (<code>/gallery</code>, <code>/projects</code>, <code>/compare</code>, <code>/library</code>, <code>/account</code>) — covers BRD-47..52, BRD-58<a class="anchor-link" href="#workspace-gallery-projects-compare-library-account-covers-brd-47-52-brd-58">#</a></h3>
-    <p>User 2 (+4 for spend/license): reuse assets, one-click reproduce, param-diff comparison, presets, bulk export with provenance headers, spend by channel + license state.</p>
-
-    <h3 id="safety-floors-covers-brd-60-61-64-65">Safety floors — covers BRD-60/61/64/65<a class="anchor-link" href="#safety-floors-covers-brd-60-61-64-65">#</a></h3>
-    <p>User 1: blocked-class input → <strong>403 before enqueue</strong> + audit-logged; public-figure impersonation blocked by default; every job (allowed + blocked) in the audit trail.</p>
-
-    <h3 id="per-user-isolation-covers-brd-81">Per-user isolation — covers BRD-81<a class="anchor-link" href="#per-user-isolation-covers-brd-81">#</a></h3>
-    <p>User 2 creates an asset → user 4 cannot see or fetch it (server-side filter; cross-user GET → 404).</p>
-
-    <h2 id="how-to-walkthroughs-creator-flows">How-to walkthroughs (creator flows)<a class="anchor-link" href="#how-to-walkthroughs-creator-flows">#</a></h2>
-
-    <p>Step-by-step click paths for the main creation tasks, using the on-screen labels exactly as they appear. Do these signed in as the <strong>Owner</strong> (<code>admin@appmanager.local</code>) — the Owner reaches every studio directly.</p>
-
-    <blockquote>
-      <p><strong>Read this first — what "Generate" actually shows today.</strong> These flows are wired end-to-end (real jobs, real seeds, real per-user persistence, real safety/consent gates), <strong>but the studios do not yet paint the finished pixels/audio/video on screen.</strong> On this build each studio animates a progress bar, runs the job, then shows a <strong>placeholder preview</strong> — a gradient image tile (with its real <strong>seed</strong> badge), a placeholder waveform, or a placeholder timeline clip — plus a green success toast. When no real model/key/host is configured, the backend also returns a <strong>synthetic-dev</strong> asset rather than a real render. So a successful UAT pass here means <em>"the flow, controls, routing, cost, safety and persistence all work"</em> — not <em>"a photo of my prompt appeared."</em> Real outputs light up when the corresponding model/key/host is supplied (see <strong>Known limitations</strong>). Buttons labelled <strong>Upscale</strong>, <strong>Export MP4 / WAV</strong>, and <strong>Remove background</strong> are UI stubs today (they toast, they don't produce a file).</p>
-      <p><strong>Prerequisite for every studio:</strong> at least one <strong>enabled</strong> model source (<code>/admin/sources</code>) <strong>and</strong> one ready registry model. A plain Creator with neither is held on <code>/setup-required</code>; the Owner is not gated but still needs a ready model for the picker (the dev seed provides <code>stub-echo</code> / <code>onnx-sdxl-local</code>).</p>
-    </blockquote>
-
-    <h3 id="a-create-an-image-from-text-text-image-image">A. Create an image from text (text → image) — <code>/image</code><a class="anchor-link" href="#a-create-an-image-from-text-text-image-image">#</a></h3>
-    <ol>
-      <li>Open <strong>Image studio</strong> (left nav → Studio, or go to <code>/image</code>).</li>
-      <li>In the left <strong>Model</strong> card, open <strong>Select a model</strong> and pick a text-to-image model (e.g. the seeded SDXL row). The <strong>Parameters</strong> card now auto-renders that model's controls.</li>
-      <li>In the center <strong>Canvas</strong>, type your prompt into the <strong>Prompt</strong> box. Optionally set <strong>Negative prompt</strong>, <strong>Width/Height</strong>, <strong>Steps</strong>, <strong>Guidance scale</strong> in Parameters, and leave <strong>Seed</strong> empty ("Random when empty") for a fresh seed.</li>
-      <li>Click <strong>Generate</strong>.</li>
-      <li><strong>What you'll see:</strong> a progress bar, then result tile(s) each stamped with a <code>#seed</code> badge and a toast like <em>"3 result(s) ready — seeds …"</em>. Re-entering the <strong>same seed</strong> and generating again reproduces a byte-identical result (this is the reproducibility check, FN-023).</li>
-    </ol>
-
-    <h3 id="b-edit-transform-an-image-from-a-prompt-img2img-inpaint-controlnet-image">B. Edit / transform an image from a prompt (img2img · inpaint · ControlNet) — <code>/image</code><a class="anchor-link" href="#b-edit-transform-an-image-from-a-prompt-img2img-inpaint-controlnet-image">#</a></h3>
-    <ol>
-      <li>On <strong>Image studio</strong>, upload your starting image in the <strong>Conditioning (ControlNet)</strong> card's reference upload, and pick a control tab — <strong>Pose</strong>, <strong>Depth</strong>, or <strong>Edges</strong>.</li>
-      <li>In the <strong>Canvas</strong> toolbar choose an edit tool — <strong>Brush</strong>, <strong>Mask</strong>, <strong>Inpaint</strong>, or <strong>Erase</strong> (these set the active edit mode).</li>
-      <li>Adjust the <strong>Prompt</strong> to describe the change, then click <strong>Generate</strong>.</li>
-      <li><strong>What you'll see:</strong> same placeholder-tile behaviour as flow A — the source/mask/control settings are carried into the job (uploads go to <code>/api/v1/images/uploads</code>, owner-scoped), but the rendered preview is synthetic until real ControlNet weights/model are installed.</li>
-    </ol>
-
-    <h3 id="c-create-an-avatar-character-talking-head-avatar-characters-then-avatar">C. Create an avatar (character → talking-head) — <code>/avatar/characters</code> then <code>/avatar</code><a class="anchor-link" href="#c-create-an-avatar-character-talking-head-avatar-characters-then-avatar">#</a></h3>
-    <p><strong>Step 1 — make the character</strong> (<code>/avatar/characters</code>):</p>
-    <ol>
-      <li>Click <strong>New Character</strong> (or the empty-state <strong>Create a character</strong>).</li>
-      <li>In the <strong>New Character</strong> dialog fill <strong>Image-gen prompt</strong>, pick <strong>Realism</strong> → <strong>Photoreal</strong> or <strong>Stylized</strong>, optionally set <strong>Seed lock</strong> and <strong>LoRA</strong> (only <strong>None</strong> is wired today).</li>
-      <li>Click <strong>Create character</strong> — the card is added only on success (it persists, owner-scoped). Click the card to open its <strong>Character Bible</strong>.</li>
-    </ol>
-    <p><strong>Step 2 — render the avatar</strong> (<code>/avatar</code>, the default landing):</p>
-    <ol>
-      <li>In the left <strong>Character</strong> card pick your character (or <strong>Change character</strong>).</li>
-      <li>In the <strong>Voice</strong> card choose a <strong>Preset voice</strong> and <strong>Language</strong> (EN/HI); click <strong>Generate voice</strong> to preview.</li>
-      <li>Type the spoken lines in the <strong>Script</strong> box; optionally click <strong>Script-assist (TechieRag)</strong>.</li>
-      <li>Choose a <strong>Render tier</strong> — <strong>Fast</strong>, <strong>High</strong>, or <strong>Premium</strong> (Premium shows a <strong>HeyGen</strong> badge + a "Routed to HeyGen (closed API)" notice; needs a HeyGen key + Premium licence).</li>
-      <li>Check the <strong>Cost estimate</strong>, then click <strong>Render</strong>. Optionally set <strong>Burn-in captions</strong> / <strong>Aspect ratio</strong> and <strong>Export MP4</strong>.</li>
-      <li><strong>What you'll see:</strong> live character/voice/spend data; render shows progress then a <strong>playable placeholder</strong> preview + success toast (no real talking-head video yet — lip-sync/HeyGen are model/key-gated). A safety-blocked script surfaces the SAFE floor alert. Captions produce a valid SRT.</li>
-    </ol>
-
-    <h3 id="d-generate-speech-text-voice-voice">D. Generate speech (text → voice) — <code>/voice</code><a class="anchor-link" href="#d-generate-speech-text-voice-voice">#</a></h3>
-    <ol>
-      <li>Open <strong>Voice studio</strong>. Pick a <strong>Language</strong> (English/Hindi/Hinglish) and, if enabled for the voice, an <strong>Emotion / style</strong>.</li>
-      <li>Open the <strong>Voice picker</strong> and select a voice (a ready voice shows a <strong>ready</strong> badge; a <strong>no model</strong> badge means it can't synthesize).</li>
-      <li>Type into <strong>Text to speak</strong>, adjust <strong>Speed</strong>/<strong>Pitch</strong> if supported, then click <strong>Generate voice</strong>.</li>
-      <li><strong>What you'll see:</strong> progress → a placeholder <strong>waveform</strong> marked playable + a success (or "degraded mode") toast; real audio playback and <strong>Export WAV</strong> are stubs until a voice model is installed. To test the consent gate: <strong>Clone a voice</strong> → upload a sample → <em>without</em> ticking "synthetic/character voice" you must pass <strong>I confirm recorded consent</strong> or it's blocked (403).</li>
-    </ol>
-
-    <h3 id="e-generate-video-image-video-text-video-video">E. Generate video (image→video / text→video) — <code>/video</code><a class="anchor-link" href="#e-generate-video-image-video-text-video-video">#</a></h3>
-    <ol>
-      <li>Open <strong>Video studio</strong>. Choose the <strong>Mode</strong> tab — <strong>Image → Video</strong> (upload First/Last <strong>Conditioning frames</strong>) or <strong>Text → Video</strong> (fill the <strong>Prompt</strong>).</li>
-      <li>Set <strong>Duration</strong>, <strong>Motion strength</strong>, <strong>Aspect ratio</strong>, and a <strong>Quality tier</strong> (Fast/High/Premium — the cloud provider is shown as a badge).</li>
-      <li>Click <strong>Generate from frame</strong> / <strong>Generate from prompt</strong>.</li>
-      <li><strong>What you'll see:</strong> progress → a <strong>placeholder timeline clip</strong> + success toast. Edit tools (<strong>Trim/Join/Reframe/Split</strong>), <strong>Interpolate</strong>, <strong>Upscale to 1080p</strong>, and <strong>Export MP4</strong> are best-effort/stub — real generation needs a video model/key and real export needs ffmpeg on the host.</li>
-    </ol>
-
-    <h3 id="f-craft-a-prompt-with-ai-then-send-it-to-a-studio-prompt-studio">F. Craft a prompt with AI, then send it to a studio — <code>/prompt-studio</code><a class="anchor-link" href="#f-craft-a-prompt-with-ai-then-send-it-to-a-studio-prompt-studio">#</a></h3>
-    <ol>
-      <li>Open <strong>Prompt studio</strong>. Start a <strong>New chat</strong>; pick a <strong>Model</strong> (dev seed: <strong>GPT-4o</strong> vision, <strong>Llama-3</strong> text-only). A badge shows whether image attach is on.</li>
-      <li>Type what you want in the composer and click <strong>Send</strong> (attaching an image to a text-only model is correctly rejected).</li>
-      <li>On a reply use <strong>Copy</strong>, <strong>Save to Library</strong>, or <strong>Send to Studio → Image / Avatar / Video Studio</strong> (this opens that studio pre-filled with the prompt).</li>
-      <li><strong>What you'll see:</strong> a real per-user chat (sessions persist, cross-user blocked). Without a configured LLM the reply is a labelled <code>[DEV SYNTHETIC PROMPT-CHAT]</code> + a "Degraded" toast; token usage still accrues.</li>
-    </ol>
-
-    <h2 id="smoke-checklist-quick-capability-pass">Smoke checklist (quick capability pass)<a class="anchor-link" href="#smoke-checklist-quick-capability-pass">#</a></h2>
-
-    <ul>
-      <li>☐ Signed-out visit to any screen redirects to <code>/login</code>; each role lands on its default page (BRD-84); fresh install routes to setup (BRD-85)</li>
-      <li>☐ API status pill in the header reflects the backend (stop the API → pill goes red)</li>
-      <li>☐ Admin: hardware readiness renders live host capabilities</li>
-      <li>☐ Creator: generate + reproduce one image (byte-identical seed)</li>
-      <li>☐ Creator: EN + HI speech; real-person clone is consent-gated</li>
-      <li>☐ Owner: one avatar spec routes across Fast / High / Premium</li>
-      <li>☐ Admin: ComfyUI import → save-as-model (graph hidden) → sandbox gate 409 before smoke</li>
-      <li>☐ A safety floor fires (403 before enqueue) + audit trail + provenance on export</li>
-      <li>☐ Prompt studio: crafted prompt back; Copy / Save-to-Library / Send-to-Studio; image on a text-only model blocked</li>
-      <li>☐ Second user cannot see the first user's assets</li>
-    </ul>
-
-    <h2 id="known-limitations">Known limitations<a class="anchor-link" href="#known-limitations">#</a></h2>
-
-    <ul>
-      <li><strong>Model/service-gated execution</strong> (degrades cleanly, no rebuild needed): real image pixels + provisioning (FN-009/010/011/019/021), voice synthesis (FN-031/033..035), lip-sync/HeyGen (FN-037/038), ComfyUI live run (FN-045..047), video generate/interpolate/upscale (FN-051/053), ffmpeg export (FN-054), RunPod cold-start (FN-028), TechieRag LLM paths (RAG-001/002/005). Supply the model/key/service to light each up.</li>
-      <li><strong>Premium tier-gating</strong> (FN-014) needs a Premium license assigned in AppManager (test user 4).</li>
-      <li><strong>DPDP residency/retention</strong> (NFR-010) are deployment config.</li>
-      <li><strong>Deferred (Could)</strong>: digital-twin, multi-shot, clip extension, webhooks, MCP server.</li>
-      <li><strong>Library feedback</strong>: TrBlazeUI TR-001..011 and TechieRag TR-RAG-001+3 — see <code>docs/TrStudio-TrBlazeUI-Feedback.md</code> / <code>docs/TrStudio-TechieRag-Feedback.md</code>.</li>
-    </ul>
-
+<p><code>-p:ValidateXcodeVersion=false</code> is needed only while the MacCatalyst workload trails Xcode (<code>sudo dotnet workload update</code> removes it). Start <code>TrStudioApi</code> first. The desktop head still reads <code>TrStudioApiBaseUrl</code> from an environment variable to reach another host; that is an open item against the settings-file rule. Zoom with Cmd+ / Cmd− / Cmd0 after clicking inside the window; the level persists and scales up on high-density displays.</p>
+<p><strong>Troubleshooting:</strong> <code>NETSDK1100 …targeting Windows</code> → add <code>-p:EnableWindowsTargeting=true</code>. <code>NU1101: TechieRag</code> → <code>nuget.config</code> missing or token invalid. <code>requires Xcode X.Y</code> → <code>sudo dotnet workload update</code>. Login 503 <code>APPMANAGER_UNREACHABLE</code> or an SSL error → <code>AppManager:BaseUrl</code> points at a LAN address; use localhost and the relay. Login 500 <code>UPSTREAM_ERROR</code> → AppManager's <code>/keys</code> volume is not writable. Errors at launch → a container is down or only one project started; the header's API status pill turns red when the API is unreachable, and the API logs <code>Verify PostgreSQL is running…</code> when it cannot reach Postgres.</p>
   </main>
 </div>
 

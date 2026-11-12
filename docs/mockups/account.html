@@ -115,94 +115,95 @@ tr.sel td{background:var(--sel)}
 </head>
 <body>
 <div class="app">
-<aside class="side">
+<aside class="side" data-testid="sidebar">
   <div class="brand"><div class="logo">TR</div>TrStudio</div>
   <div class="navgroup">Studios</div>
   <nav class="nav">
-    <a href="avatar-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Avatar Studio</a>
-    <a href="character-library.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Characters</a>
-    <a href="image-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Image Studio</a>
-    <a href="video-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>Video Studio</a>
-    <a href="voice-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 19v3"/></svg>Voice Studio</a>
-    <a href="prompt-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>Prompt Studio</a>
+    <a href="avatar-studio.html" data-testid="nav-avatar-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Avatar Studio</a>
+    <a href="character-library.html" data-testid="nav-character-library"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Characters</a>
+    <a href="image-studio.html" data-testid="nav-image-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Image Studio</a>
+    <a href="video-studio.html" data-testid="nav-video-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>Video Studio</a>
+    <a href="voice-studio.html" data-testid="nav-voice-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 19v3"/></svg>Voice Studio</a>
+    <a href="prompt-studio.html" data-testid="nav-prompt-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>Prompt Studio</a>
   </nav>
   <div class="navgroup">Workspace</div>
   <nav class="nav">
-    <a href="gallery.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Gallery</a>
-    <a href="projects.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Projects</a>
-    <a href="library.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Library</a>
-    <a href="account.html" class="active"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/></svg>Account</a>
+    <a href="gallery.html" data-testid="nav-gallery"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Gallery</a>
+    <a href="projects.html" data-testid="nav-projects"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Projects</a>
+    <a href="library.html" data-testid="nav-library"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Library</a>
+    <a href="account.html" class="active" data-testid="nav-account"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/></svg>Account</a>
   </nav>
   <div class="sidefoot">
-    <a href="admin-hardware.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudioAdmin</a>
+    <a href="admin-hardware.html" data-testid="link-switch-to-trstudioadmin"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudioAdmin</a>
+    <a href="login.html" data-testid="nav-sign-out"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>Sign out</a>
   </div>
 </aside>
-<div class="main">
-<header class="top">
+<div class="main" data-testid="main">
+<header class="top" data-testid="topbar">
   <span class="crumb">TrStudio</span><span class="crumb">/</span><span class="crumb here">Account</span>
   <span class="spacer"></span>
-  <span class="badge warn"><span class="dot warn"></span>$84.90 / $100.00 cap</span>
-  <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
-  <div class="userchip">TR</div>
+  <span class="badge warn" data-testid="badge-status"><span class="dot warn"></span>$84.90 / $100.00 cap</span>
+  <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode" onclick="/* switches light and dark: page script */" data-testid="icon-btn-toggle-dark-mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
+  <div class="userchip" data-testid="user-chip">TR</div>
 </header>
-<div class="content">
+<div class="content" data-testid="content">
   <h1 class="h">Account &amp; spend</h1>
   <p class="sub">Profile, subscription and usage — identity and licensing are read-only from AppManager.</p>
 
   <!-- Profile + license -->
   <div class="grid" style="grid-template-columns:1.4fr 1fr;margin-bottom:14px">
-    <div class="card">
+    <div class="card" data-testid="card-profile">
       <h3>Profile</h3>
       <div class="row">
         <span class="avatar">TR</span>
         <div class="col" style="gap:2px">
           <b style="font-size:15px">Techie Rathore</b>
-          <span class="muted">techierathore@gmail.com</span>
+          <span class="muted">owner@studio.example</span>
           <span class="muted" style="font-size:12px">AppManager userId · usr_8f31c2 · joined Jan 2026</span>
         </div>
         <span class="spacer"></span>
-        <button class="btn outline">Manage in AppManager
+        <button class="btn outline" onclick="alert('Manage in AppManager: done in the built app')" data-testid="btn-manage-in-appmanager">Manage in AppManager
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>
         </button>
       </div>
     </div>
-    <div class="card">
+    <div class="card" data-testid="card-license-tier">
       <h3>License &amp; tier</h3>
       <div class="row" style="justify-content:space-between;margin-bottom:8px">
         <div class="col" style="gap:4px"><b style="font-size:15px">Creator Pro</b><span class="muted">$100 / mo spend cap · closed-API enabled</span></div>
-        <span class="badge primary">Pro</span>
+        <span class="badge primary" data-testid="badge-pro">Pro</span>
       </div>
       <div class="muted" style="font-size:12px;margin-bottom:12px">Renews 15 Jul 2026 · read-only from AppManager LicenseSvc</div>
-      <button class="btn brand" style="width:100%;justify-content:center">Upgrade to Studio (higher cap)</button>
+      <button class="btn brand" style="width:100%;justify-content:center" onclick="alert('Upgrade to Studio (higher cap): done in the built app')" data-testid="btn-upgrade-to-studio-higher-cap">Upgrade to Studio (higher cap)</button>
     </div>
   </div>
 
   <!-- Spend KPIs -->
   <div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px">
-    <div class="card kpi">
-      <div class="row" style="justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">RunPod (GPU)</h3><span class="badge ok"><span class="dot ok"></span>on track</span></div>
+    <div class="card kpi" data-testid="card-runpod-gpu">
+      <div class="row" style="justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">RunPod (GPU)</h3><span class="badge ok" data-testid="badge-status-2"><span class="dot ok"></span>on track</span></div>
       <b>$46.20</b>
       <div class="muted" style="margin:4px 0 8px">62% of GPU budget · Wan / FLUX / Hunyuan jobs</div>
-      <div class="prog ok"><i style="width:62%"></i></div>
+      <div class="prog ok" data-testid="progress"><i style="width:62%"></i></div>
     </div>
-    <div class="card kpi">
-      <div class="row" style="justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">Closed APIs</h3><span class="badge">HeyGen + aggregators</span></div>
+    <div class="card kpi" data-testid="card-closed-apis">
+      <div class="row" style="justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">Closed APIs</h3><span class="badge" data-testid="badge-heygen-aggregators">HeyGen + aggregators</span></div>
       <b>$38.70</b>
       <div class="muted" style="margin:4px 0 8px">53% of API budget · Premium-tier renders</div>
-      <div class="prog"><i style="width:53%"></i></div>
+      <div class="prog" data-testid="progress-2"><i style="width:53%"></i></div>
     </div>
-    <div class="card kpi" style="border-color:var(--warn-bd)">
-      <div class="row" style="justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">Total vs cap</h3><span class="badge warn"><span class="dot warn"></span>near cap</span></div>
+    <div class="card kpi" style="border-color:var(--warn-bd)" data-testid="card-total-vs-cap">
+      <div class="row" style="justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">Total vs cap</h3><span class="badge warn" data-testid="badge-status-3"><span class="dot warn"></span>near cap</span></div>
       <b>$84.90 <span class="muted" style="font-size:14px;font-weight:500">/ $100.00</span></b>
       <div class="muted" style="margin:4px 0 8px">85% of monthly cap</div>
-      <div class="prog warn"><i style="width:85%"></i></div>
+      <div class="prog warn" data-testid="progress-3"><i style="width:85%"></i></div>
     </div>
   </div>
 
-  <div class="alert warn" style="margin-bottom:14px">You are at <b>85%</b> of your $100 monthly cap. New paid jobs over the remaining <b>$15.10</b> will be blocked until the cycle resets on 1 Aug 2026. Local-GPU jobs remain free.</div>
+  <div class="alert warn" style="margin-bottom:14px" data-testid="alert-warn">You are at <b>85%</b> of your $100 monthly cap. New paid jobs over the remaining <b>$15.10</b> will be blocked until the cycle resets on 1 Aug 2026. Local-GPU jobs remain free.</div>
 
   <!-- Spend split -->
-  <div class="card" style="margin-bottom:14px">
+  <div class="card" style="margin-bottom:14px" data-testid="card-spend-split-runpod-vs-closed-api">
     <div class="row" style="justify-content:space-between">
       <h3 style="margin:0">Spend split — RunPod vs closed APIs</h3>
       <span class="muted" style="font-size:12px">cycle: 1 Jul – 31 Jul 2026</span>
@@ -217,20 +218,20 @@ tr.sel td{background:var(--sel)}
   </div>
 
   <!-- Usage table -->
-  <div class="card">
+  <div class="card" data-testid="card-recent-jobs">
     <div class="row" style="justify-content:space-between;margin-bottom:10px">
       <h3 style="margin:0">Recent jobs</h3>
-      <div class="seg"><button class="active">All</button><button>Images</button><button>Video</button><button>Voice</button></div>
+      <div class="seg"><button class="active" onclick="/* selects this option: page script */" data-testid="btn-all">All</button><button onclick="/* selects this option: page script */" data-testid="btn-images">Images</button><button onclick="/* selects this option: page script */" data-testid="btn-video">Video</button><button onclick="/* selects this option: page script */" data-testid="btn-voice">Voice</button></div>
     </div>
-    <table>
+    <table data-testid="table-1">
       <thead><tr><th>Job</th><th>Model</th><th>Tier</th><th>Duration</th><th>Cost</th><th>Outcome</th></tr></thead>
       <tbody>
-        <tr><td>Diwali avatar intro — Kavya</td><td>Hunyuan-Avatar</td><td>High</td><td>4m 02s</td><td>$0.42</td><td><span class="row" style="gap:7px"><span class="dot ok"></span>Completed</span></td></tr>
-        <tr><td>Product reel teaser</td><td>HeyGen Avatar IV</td><td>Premium</td><td>2m 11s</td><td>$0.90</td><td><span class="row" style="gap:7px"><span class="dot ok"></span>Completed</span></td></tr>
-        <tr><td>Ravi (Hindi) voice-over</td><td>IndicF5</td><td>Fast</td><td>0m 21s</td><td>$0.00</td><td><span class="row" style="gap:7px"><span class="dot ok"></span>Completed</span></td></tr>
-        <tr><td>Diwali poster v3</td><td>FLUX.1</td><td>High</td><td>0m 48s</td><td>$0.06</td><td><span class="row" style="gap:7px"><span class="dot ok"></span>Completed</span></td></tr>
-        <tr><td>Lip-sync test — MuseTalk</td><td>MuseTalk</td><td>High</td><td>1m 33s</td><td>$0.14</td><td><span class="row" style="gap:7px"><span class="dot danger"></span>Failed (OOM)</span></td></tr>
-        <tr><td>Arjun headshot</td><td>SDXL (local)</td><td>Fast</td><td>0m 09s</td><td>$0.00</td><td><span class="row" style="gap:7px"><span class="dot ok"></span>Completed</span></td></tr>
+        <tr data-tf-sample><td>Diwali avatar intro — Kavya</td><td>Hunyuan-Avatar</td><td>High</td><td>4m 02s</td><td>$0.42</td><td><span class="row" style="gap:7px"><span class="dot ok"></span>Completed</span></td></tr>
+        <tr data-tf-sample><td>Product reel teaser</td><td>HeyGen Avatar IV</td><td>Premium</td><td>2m 11s</td><td>$0.90</td><td><span class="row" style="gap:7px"><span class="dot ok"></span>Completed</span></td></tr>
+        <tr data-tf-sample><td>Ravi (Hindi) voice-over</td><td>IndicF5</td><td>Fast</td><td>0m 21s</td><td>$0.00</td><td><span class="row" style="gap:7px"><span class="dot ok"></span>Completed</span></td></tr>
+        <tr data-tf-sample><td>Diwali poster v3</td><td>FLUX.1</td><td>High</td><td>0m 48s</td><td>$0.06</td><td><span class="row" style="gap:7px"><span class="dot ok"></span>Completed</span></td></tr>
+        <tr data-tf-sample><td>Lip-sync test — MuseTalk</td><td>MuseTalk</td><td>High</td><td>1m 33s</td><td>$0.14</td><td><span class="row" style="gap:7px"><span class="dot danger"></span>Failed (OOM)</span></td></tr>
+        <tr data-tf-sample><td>Arjun headshot</td><td>SDXL (local)</td><td>Fast</td><td>0m 09s</td><td>$0.00</td><td><span class="row" style="gap:7px"><span class="dot ok"></span>Completed</span></td></tr>
       </tbody>
     </table>
     <div class="muted" style="margin-top:10px;font-size:12px">Showing 6 of 142 jobs this cycle · spend tracked against RunPod + closed APIs; local-GPU runs are $0.00.</div>

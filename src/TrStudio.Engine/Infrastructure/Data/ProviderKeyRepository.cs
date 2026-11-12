@@ -27,7 +27,7 @@ public class ProviderKeyRepository : IProviderKeyRepository
     public async Task<IReadOnlyList<ProviderKeyInfo>> ListAsync(CancellationToken aCancellationToken = default)
     {
         const string vSql =
-            "SELECT \"ProviderName\", \"IsEnabled\" FROM \"ProviderKey\" ORDER BY \"ProviderName\"";
+            "SELECT \"ProviderName\", \"IsEnabled\", \"BaseUrl\" FROM \"ProviderKey\" ORDER BY \"ProviderName\"";
 
         using var vConnection = await objConnectionFactory.CreateOpenConnectionAsync(aCancellationToken).ConfigureAwait(false);
         var vRows = await vConnection.QueryAsync<ProviderKeyInfo>(
@@ -70,6 +70,30 @@ public class ProviderKeyRepository : IProviderKeyRepository
         var vAffected = await vConnection.ExecuteAsync(new CommandDefinition(
             vSql, new { aProviderName, aIsEnabled }, cancellationToken: aCancellationToken)).ConfigureAwait(false);
         return vAffected > 0;
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> SetBaseUrlAsync(string aProviderName, string? aBaseUrl, CancellationToken aCancellationToken = default)
+    {
+        const string vSql =
+            "UPDATE \"ProviderKey\" SET \"BaseUrl\" = @aBaseUrl, \"UpdatedUtc\" = now() " +
+            "WHERE \"ProviderName\" = @aProviderName";
+
+        using var vConnection = await objConnectionFactory.CreateOpenConnectionAsync(aCancellationToken).ConfigureAwait(false);
+        var vAffected = await vConnection.ExecuteAsync(new CommandDefinition(
+            vSql, new { aProviderName, aBaseUrl }, cancellationToken: aCancellationToken)).ConfigureAwait(false);
+        return vAffected > 0;
+    }
+
+    /// <inheritdoc />
+    public async Task<ProviderKeyInfo?> GetInfoAsync(string aProviderName, CancellationToken aCancellationToken = default)
+    {
+        const string vSql =
+            "SELECT \"ProviderName\", \"IsEnabled\", \"BaseUrl\" FROM \"ProviderKey\" WHERE \"ProviderName\" = @aProviderName";
+
+        using var vConnection = await objConnectionFactory.CreateOpenConnectionAsync(aCancellationToken).ConfigureAwait(false);
+        return await vConnection.QuerySingleOrDefaultAsync<ProviderKeyInfo>(
+            new CommandDefinition(vSql, new { aProviderName }, cancellationToken: aCancellationToken)).ConfigureAwait(false);
     }
 
     /// <inheritdoc />

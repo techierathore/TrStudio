@@ -216,39 +216,39 @@ async function sweep(page: Page, meta: ScreenMeta): Promise<Result> {
 }
 
 const CREATOR_SCREENS: ScreenMeta[] = [
-  { route: '/avatar', req: 'UI-010', role: 'Owner' },
-  { route: '/avatar/characters', req: 'UI-011', role: 'Owner' },
-  { route: '/image', req: 'UI-020', role: 'Owner' },
-  { route: '/voice', req: 'UI-030', role: 'Owner' },
-  { route: '/video', req: 'UI-040', role: 'Owner' },
-  { route: '/gallery', req: 'UI-050', role: 'Owner' },
-  { route: '/projects', req: 'UI-051', role: 'Owner' },
-  { route: '/compare', req: 'UI-052', role: 'Owner' },
-  { route: '/library', req: 'UI-053', role: 'Owner' },
-  { route: '/account', req: 'UI-060', role: 'Owner' },
+  { route: '/avatar', req: 'REQ-UI-010', role: 'Owner' },
+  { route: '/avatar/characters', req: 'REQ-UI-011', role: 'Owner' },
+  { route: '/image', req: 'REQ-UI-020', role: 'Owner' },
+  { route: '/voice', req: 'REQ-UI-030', role: 'Owner' },
+  { route: '/video', req: 'REQ-UI-040', role: 'Owner' },
+  { route: '/gallery', req: 'REQ-UI-050', role: 'Owner' },
+  { route: '/projects', req: 'REQ-UI-051', role: 'Owner' },
+  { route: '/compare', req: 'REQ-UI-052', role: 'Owner' },
+  { route: '/library', req: 'REQ-UI-053', role: 'Owner' },
+  { route: '/account', req: 'REQ-UI-060', role: 'Owner' },
 ];
 
 const ADMIN_SCREENS: ScreenMeta[] = [
-  { route: '/admin/setup', req: 'UI-070', role: 'Operator' },
-  { route: '/admin/registry', req: 'UI-071', role: 'Operator' },
-  { route: '/admin/comfy/import', req: 'UI-072', role: 'Operator' },
-  { route: '/admin/ops', req: 'UI-073', role: 'Operator' },
-  { route: '/admin/sources', req: 'UI-074', role: 'Operator' },
-  { route: '/admin/policy', req: 'UI-075', role: 'Operator' },
-  { route: '/admin/models', req: 'UI-076', role: 'Operator' },
-  { route: '/admin/setup/hardware', req: 'UI-070', role: 'Operator' },
-  { route: '/admin/comfy/debug', req: 'UI-072', role: 'Operator' },
+  { route: '/admin/setup', req: 'REQ-UI-070', role: 'Operator' },
+  { route: '/admin/registry', req: 'REQ-UI-071', role: 'Operator' },
+  { route: '/admin/comfy/import', req: 'REQ-UI-072', role: 'Operator' },
+  { route: '/admin/ops', req: 'REQ-UI-073', role: 'Operator' },
+  { route: '/admin/sources', req: 'REQ-UI-074', role: 'Operator' },
+  { route: '/admin/policy', req: 'REQ-UI-075', role: 'Operator' },
+  { route: '/admin/models', req: 'REQ-UI-076', role: 'Operator' },
+  { route: '/admin/setup/hardware', req: 'REQ-UI-070', role: 'Operator' },
+  { route: '/admin/comfy/debug', req: 'REQ-UI-072', role: 'Operator' },
 ];
 
 const AUTH_SCREENS: ScreenMeta[] = [
-  { route: '/login', req: 'UI-001', role: 'None' },
-  { route: '/register', req: 'UI-002', role: 'None' },
-  { route: '/forgot-password', req: 'UI-003', role: 'None' },
-  { route: '/setup-required', req: 'UI-004', role: 'None' },
+  { route: '/login', req: 'REQ-UI-001', role: 'None' },
+  { route: '/register', req: 'REQ-UI-002', role: 'None' },
+  { route: '/forgot-password', req: 'REQ-UI-003', role: 'None' },
+  { route: '/setup-required', req: 'REQ-UI-004', role: 'None' },
 ];
 
 test.describe.serial('UI sweep', () => {
-  test('Creator surface as Owner', async ({ browser }) => {
+  test('REQ-UI-010 REQ-UI-011 REQ-UI-020 REQ-UI-030 REQ-UI-040 REQ-UI-050 REQ-UI-051 REQ-UI-052 REQ-UI-053 REQ-UI-060 creator screens render as Owner', async ({ browser }) => {
     const ctx = await browser.newContext();
     const page = await establishSession(ctx, tokens.Owner);
     for (const s of CREATOR_SCREENS) {
@@ -257,7 +257,7 @@ test.describe.serial('UI sweep', () => {
     await ctx.close();
   });
 
-  test('Admin surface as Operator', async ({ browser }) => {
+  test('REQ-UI-070 REQ-UI-071 REQ-UI-072 REQ-UI-073 REQ-UI-074 REQ-UI-075 REQ-UI-076 admin screens render as Operator', async ({ browser }) => {
     const ctx = await browser.newContext();
     const page = await establishSession(ctx, tokens.Operator);
     for (const s of ADMIN_SCREENS) {
@@ -266,7 +266,7 @@ test.describe.serial('UI sweep', () => {
     await ctx.close();
   });
 
-  test('Auth screens (no login)', async ({ browser }) => {
+  test('REQ-UI-001 REQ-UI-002 REQ-UI-003 REQ-UI-004 sign-in screens render signed out', async ({ browser }) => {
     const ctx = await browser.newContext();
     const page = await ctx.newPage();
     for (const s of AUTH_SCREENS) {
@@ -275,7 +275,7 @@ test.describe.serial('UI sweep', () => {
     await ctx.close();
   });
 
-  test('Role-gate: Creator to /admin/registry', async ({ browser }) => {
+  test('REQ-FN-072 REQ-UI-080 Creator is refused the admin registry', async ({ browser }) => {
     const ctx = await browser.newContext();
     const page = await establishSession(ctx, tokens.Creator);
     await page.setViewportSize({ width: 1280, height: 800 });

@@ -99,6 +99,16 @@ public static class SpineEndpoints
             // problem rather than being silently enqueued.
             return Results.Problem(statusCode: StatusCodes.Status402PaymentRequired, title: "SPEND_CAP_EXCEEDED", detail: vException.Message);
         }
+        catch (TrStudio.Engine.Domain.Venice.VeniceApiException vException)
+        {
+            // Phase 2 (BRD-119): Venice refused the price call before anything was sent; its own text is
+            // returned word for word and the job is already recorded as Failed with the same text.
+            return Results.Problem(
+                statusCode: StatusCodes.Status502BadGateway,
+                title: "PROVIDER_FAILED",
+                detail: vException.Message,
+                extensions: new Dictionary<string, object?> { ["hint"] = vException.RemediationHint, ["providerStatus"] = vException.StatusCode });
+        }
         catch (ArgumentException vException)
         {
             return Results.BadRequest(new { error = vException.Message });

@@ -24,4 +24,20 @@
     <ProjectReference Include="..\..\..\src\TrStudio.Models\TrStudio.Models.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Pure Video studio picker rules (REQ-UI-089..092, REQ-FN-081); linked, depends only on TrStudio.Models. -->
+    <Compile Include="..\..\..\src\TrStudioUI\Pages\Video\VideoModelFilter.cs" Link="Linked\VideoModelFilter.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Pure Image-studio list rules (phase 2, Venice); linked so the test project needs no Razor reference. -->
+    <Compile Include="..\..\..\src\TrStudioUI\Pages\Image\ImageModelFilter.cs" Link="Venice\Linked\ImageModelFilter.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Pure UI display helper (no Razor deps), compiled in so its rules are unit-tested. -->
+    <Compile Include="..\..\..\src\TrStudioUI\Pages\Projects\VeniceRunDetailsFormat.cs" Link="Venice\Ui\VeniceRunDetailsFormat.cs" />
+    <Compile Include="..\..\..\src\TrStudioApi\Endpoints\AssetContentTypes.cs" Link="Venice\Linked\AssetContentTypes.cs" />
+  </ItemGroup>
+
 </Project>

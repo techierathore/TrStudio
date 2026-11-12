@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TrBlazeUI.Components.Toast;
@@ -42,15 +43,14 @@ public static class MauiProgram
         vBuilder.Services.AddSingleton<IAuthSession, MauiAuthSession>();
         vBuilder.Services.AddTransient<MauiAuthTokenHandler>();
 
-        // Named TrStudioApi HttpClient — BaseAddress = the API reachable from the desktop process
-        // (dev default http://localhost:5102; override with the TrStudioApiBaseUrl env var). The
-        // bearer handler stamps the signed-in user's token so owner-scoped screen calls authenticate.
-        var vApiBaseUrl = Environment.GetEnvironmentVariable("TrStudioApiBaseUrl");
-        if (string.IsNullOrWhiteSpace(vApiBaseUrl))
-        {
-            vApiBaseUrl = "http://localhost:5102";
-        }
+        // Settings come from appsettings.json shipped inside the app (section Desktop), never from
+        // environment variables (owner decision 5A, REQ-NFR-015). Also exposed as IConfiguration.
+        var vSettings = DesktopSettings.Load();
+        vBuilder.Configuration.AddInMemoryCollection(vSettings.ToConfiguration());
 
+        // Named TrStudioApi HttpClient — BaseAddress = Desktop:ApiBaseUrl (default http://localhost:5102).
+        // The bearer handler stamps the signed-in user's token so owner-scoped screen calls authenticate.
+        var vApiBaseUrl = vSettings.ApiBaseUrl;
         vBuilder.Services.AddHttpClient("TrStudioApi", aClient => aClient.BaseAddress = new Uri(vApiBaseUrl))
             .AddHttpMessageHandler<MauiAuthTokenHandler>();
 
@@ -67,14 +67,14 @@ public static class MauiProgram
 
         var vApp = vBuilder.Build();
 
-        // Dev-only: a native-window smoke can boot straight into a role via the TrStudioDevRole env
-        // var (Creator/Operator/Owner), optionally deep-linking a route via TrStudioDevStartPath. The
+        // Dev-only: a native-window smoke can boot straight into a role via Desktop:DevRole
+        // (Creator/Operator/Owner), optionally deep-linking a route via Desktop:DevStartPath. The
         // session is pre-seeded SYNCHRONOUSLY here — before the WebView's first render — so the shell
         // initialises on the correct role and the initializer only needs a client-side nav (no reload).
-        // Read directly: a MAUI bootstrap launch flag, not the API's IConfiguration surface; DEBUG-only.
+        // DEBUG-only: inert in Release.
         if (DesktopDevSession.IsEnabled)
         {
-            var vRequestedRole = Environment.GetEnvironmentVariable("TrStudioDevRole");
+            var vRequestedRole = vSettings.DevRole;
             if (!string.IsNullOrWhiteSpace(vRequestedRole))
             {
                 var vRole = DesktopDevSession.ParseRole(vRequestedRole);
@@ -83,7 +83,7 @@ public static class MauiProgram
                     vSession.Seed(DesktopDevSession.BuildDevState(vRole));
                 }
 
-                var vStartPath = Environment.GetEnvironmentVariable("TrStudioDevStartPath");
+                var vStartPath = vSettings.DevStartPath;
                 DesktopDevSession.RequestedNavPath = string.IsNullOrWhiteSpace(vStartPath)
                     ? DesktopDevSession.LandingFor(vRole)
                     : vStartPath;

@@ -71,4 +71,19 @@ public class RegistryModel
     /// Always false for generation models.
     /// </summary>
     public bool VisionCapable { get; set; }
+
+    /// <summary>
+    /// The provider's own model id (e.g. a Venice model id), so one provider model
+    /// can back one registry row per task (ADR-014, BRD-96). Admin-only: never sent to creators.
+    /// </summary>
+    public string? ProviderModelId { get; set; }
+
+    /// <summary>Whether the model takes a reference (or source) picture (BRD-97); the studios filter on it.</summary>
+    public bool TakesReferencePicture { get; set; }
+
+    /// <summary>Whether the model keeps a fixed character from a reference set (BRD-97); the studios filter on it.</summary>
+    public bool KeepsFixedCharacter { get; set; }
+
+    /// <summary>The most input pictures the model accepts in one call, when the provider states a limit.</summary>
+    public int? MaxInputImages { get; set; }
 }

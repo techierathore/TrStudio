@@ -133,149 +133,163 @@ tr.sel td{background:var(--sel)}
 </head>
 <body>
 <div class="app">
-<aside class="side">
+<aside class="side" data-testid="sidebar">
   <div class="brand"><div class="logo">TR</div>TrStudio</div>
   <div class="navgroup">Studios</div>
   <nav class="nav">
-    <a href="avatar-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Avatar Studio</a>
-    <a href="character-library.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Characters</a>
-    <a href="image-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Image Studio</a>
-    <a href="video-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>Video Studio</a>
-    <a href="voice-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 19v3"/></svg>Voice Studio</a>
-    <a href="prompt-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>Prompt Studio</a>
+    <a href="avatar-studio.html" data-testid="nav-avatar-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Avatar Studio</a>
+    <a href="character-library.html" data-testid="nav-character-library"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Characters</a>
+    <a href="image-studio.html" data-testid="nav-image-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Image Studio</a>
+    <a href="video-studio.html" data-testid="nav-video-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>Video Studio</a>
+    <a href="voice-studio.html" data-testid="nav-voice-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 19v3"/></svg>Voice Studio</a>
+    <a href="prompt-studio.html" data-testid="nav-prompt-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>Prompt Studio</a>
   </nav>
   <div class="navgroup">Workspace</div>
   <nav class="nav">
-    <a href="gallery.html" class="active"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Gallery</a>
-    <a href="projects.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Projects</a>
-    <a href="library.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Library</a>
-    <a href="account.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/></svg>Account</a>
+    <a href="gallery.html" class="active" data-testid="nav-gallery"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Gallery</a>
+    <a href="projects.html" data-testid="nav-projects"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Projects</a>
+    <a href="library.html" data-testid="nav-library"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Library</a>
+    <a href="account.html" data-testid="nav-account"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/></svg>Account</a>
   </nav>
   <div class="sidefoot">
-    <a href="admin-hardware.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudioAdmin</a>
+    <a href="admin-hardware.html" data-testid="link-switch-to-trstudioadmin"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudioAdmin</a>
+    <a href="login.html" data-testid="nav-sign-out"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>Sign out</a>
   </div>
 </aside>
-<div class="main">
-<header class="top">
+<div class="main" data-testid="main">
+<header class="top" data-testid="topbar">
   <span class="crumb">TrStudio</span><span class="crumb">/</span><span class="crumb here">Gallery</span>
   <span class="spacer"></span>
-  <span class="badge ok"><span class="dot ok"></span>$38.40 / $100.00 cap</span>
-  <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
-  <div class="userchip">TR</div>
+  <span class="badge ok" data-testid="badge-status"><span class="dot ok"></span>$38.40 / $100.00 cap</span>
+  <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode" onclick="/* switches light and dark: page script */" data-testid="icon-btn-toggle-dark-mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
+  <div class="userchip" data-testid="user-chip">TR</div>
 </header>
-<div class="content">
+<div class="content" data-testid="content">
   <h1 class="h">My Library</h1>
   <p class="sub">Your assets only — content is private per user. Every output is reusable as a new input, with one-click reproduce from provenance history.</p>
 
   <!-- Filter bar -->
   <div class="filterbar">
-    <input class="input" placeholder="Search prompts, seeds, titles…">
-    <select class="select"><option>Type: All</option><option>Images</option><option>Videos</option><option>Audio</option></select>
-    <select class="select"><option>Model: All</option><option>SDXL</option><option>FLUX.1</option><option>Hunyuan-Avatar</option><option>MuseTalk</option><option>HeyGen Avatar IV</option><option>XTTS v2</option><option>IndicF5</option></select>
-    <select class="select"><option>Project: All</option><option>Diwali Promo</option><option>Product Explainers</option><option>Hindi Shorts</option></select>
+    <input class="input" placeholder="Search prompts, seeds, titles…" data-testid="field-search-prompts-seeds-tit">
+    <select class="select" data-testid="field-2"><option>Type: All</option><option>Images</option><option>Videos</option><option>Audio</option></select>
+    <select class="select" data-testid="field-3"><option>Model: All</option><option>SDXL</option><option>FLUX.1</option><option>Hunyuan-Avatar</option><option>MuseTalk</option><option>HeyGen Avatar IV</option><option>XTTS v2</option><option>IndicF5</option></select>
+    <select class="select" data-testid="field-4"><option>Project: All</option><option>Diwali Promo</option><option>Product Explainers</option><option>Hindi Shorts</option></select>
     <span class="spacer"></span>
-    <div class="seg"><button class="active">Grid</button><button>List</button></div>
+    <div class="seg"><button class="active" onclick="/* selects this option: page script */" data-testid="btn-grid">Grid</button><button onclick="/* selects this option: page script */" data-testid="btn-list">List</button></div>
   </div>
   <div class="chips">
-    <span class="badge brand">Type: Videos <b>✕</b></span>
-    <span class="badge brand">Model: Hunyuan-Avatar <b>✕</b></span>
-    <span class="badge brand">Last 30 days <b>✕</b></span>
-    <button type="button" class="muted" style="font-size:12px;background:none;border:none;padding:0;cursor:pointer;font-family:inherit">Clear all</button>
+    <span class="badge brand" data-testid="badge-type-videos">Type: Videos <b>✕</b></span>
+    <span class="badge brand" data-testid="badge-model-hunyuan-avatar">Model: Hunyuan-Avatar <b>✕</b></span>
+    <span class="badge brand" data-testid="badge-last-30-days">Last 30 days <b>✕</b></span>
+    <button type="button" class="muted" style="font-size:12px;background:none;border:none;padding:0;cursor:pointer;font-family:inherit" onclick="alert('Clear all: done in the built app')" data-testid="btn-clear-all">Clear all</button>
   </div>
 
   <!-- Bulk selection / export toolbar -->
   <div class="exportbar">
-    <span class="badge primary">3 selected</span>
+    <span class="badge primary" data-testid="badge-3-selected">3 selected</span>
     <span class="muted">of 24 assets</span>
     <span class="spacer"></span>
-    <a class="btn outline" href="compare.html" style="text-decoration:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M21 3 3 21"/></svg>Compare</a>
-    <button class="btn outline" data-act><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Reproduce</button>
-    <button class="btn brand"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>Export selected</button>
+    <a class="btn outline" href="compare.html" style="text-decoration:none" data-testid="link-compare"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M21 3 3 21"/></svg>Compare</a>
+    <button class="btn outline" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Reproduce</button>
+    <button class="btn brand" onclick="alert('Export selected: done in the built app')" data-testid="btn-export-selected"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>Export selected</button>
   </div>
 
   <!-- Asset grid -->
   <div class="assets">
-    <div class="card asset">
+    <div class="card asset" data-testid="card-1">
       <div class="thumb pv"><span class="selbox on">✓</span><span class="typechip">VIDEO 16:9</span><span class="playbtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span><span class="durchip">0:24</span></div>
       <div class="meta">
         <div class="t">Diwali avatar intro — Kavya</div>
-        <span class="badge">Hunyuan-Avatar · seed 4821</span>
-        <div class="acts"><button class="btn ghost" data-act>Reuse as input</button><button class="btn ghost" data-act>Reproduce</button></div>
+        <span class="badge" data-testid="badge-hunyuan-avatar-seed-4821">Hunyuan-Avatar · seed 4821</span>
+        <div class="acts"><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reuse-as-input">Reuse as input</button><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-2">Reproduce</button></div>
       </div>
     </div>
-    <div class="card asset">
+    <div class="card asset" data-testid="card-2">
       <div class="thumb pa"><span class="selbox on">✓</span><span class="typechip">IMAGE 1:1</span>Kavya · portrait</div>
       <div class="meta">
         <div class="t">Kavya portrait — warm light</div>
-        <span class="badge ok">SDXL · local GPU</span>
-        <div class="acts"><button class="btn ghost" data-act>Reuse as input</button><button class="btn ghost" data-act>Reproduce</button></div>
+        <span class="badge ok" data-testid="badge-sdxl-local-gpu">SDXL · local GPU</span>
+        <div class="acts"><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reuse-as-input-2">Reuse as input</button><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-3">Reproduce</button></div>
       </div>
     </div>
-    <div class="card asset">
+    <div class="card asset" data-testid="card-3">
       <div class="thumb pv"><span class="selbox on">✓</span><span class="typechip">VIDEO 9:16</span><span class="playbtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span><span class="durchip">0:15</span></div>
       <div class="meta">
         <div class="t">Product reel teaser — saree line</div>
-        <span class="badge warn">HeyGen Avatar IV · closed API</span>
-        <div class="acts"><button class="btn ghost" data-act>Reuse as input</button><button class="btn ghost" data-act>Reproduce</button></div>
+        <span class="badge warn" data-testid="badge-heygen-avatar-iv-closed">HeyGen Avatar IV · closed API</span>
+        <div class="acts"><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reuse-as-input-3">Reuse as input</button><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-4">Reproduce</button></div>
       </div>
     </div>
-    <div class="card asset">
+    <div class="card asset" data-testid="card-4">
       <div class="thumb pb"><span class="selbox"></span><span class="typechip">IMAGE 4:5</span>Festival poster</div>
       <div class="meta">
         <div class="t">Diwali poster v3 — rangoli motif</div>
-        <span class="badge">FLUX.1 · seed 9012</span>
-        <div class="acts"><button class="btn ghost" data-act>Reuse as input</button><button class="btn ghost" data-act>Reproduce</button></div>
+        <span class="badge" data-testid="badge-flux-1-seed-9012">FLUX.1 · seed 9012</span>
+        <div class="acts"><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reuse-as-input-4">Reuse as input</button><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-5">Reproduce</button></div>
       </div>
     </div>
-    <div class="card asset">
+    <div class="card asset" data-testid="card-5">
       <div class="thumb pv"><span class="selbox"></span><span class="typechip">AUDIO</span><span class="wave"><i style="height:10px"></i><i style="height:22px"></i><i style="height:32px"></i><i style="height:16px"></i><i style="height:28px"></i><i style="height:12px"></i><i style="height:24px"></i><i style="height:8px"></i></span><span class="durchip">0:21</span></div>
       <div class="meta">
         <div class="t">Ravi (Hindi) voice-over take 2</div>
-        <span class="badge">IndicF5 · Hindi</span>
-        <div class="acts"><button class="btn ghost" data-act>Reuse as input</button><button class="btn ghost" data-act>Reproduce</button></div>
+        <span class="badge" data-testid="badge-indicf5-hindi">IndicF5 · Hindi</span>
+        <div class="acts"><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reuse-as-input-5">Reuse as input</button><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-6">Reproduce</button></div>
       </div>
     </div>
-    <div class="card asset">
+    <div class="card asset" data-testid="card-6">
       <div class="thumb pv"><span class="selbox"></span><span class="typechip">VIDEO 16:9</span><span class="playbtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span><span class="durchip">0:08</span></div>
       <div class="meta">
         <div class="t">Lip-sync test — MuseTalk</div>
-        <span class="badge">MuseTalk · seed 1133</span>
-        <div class="acts"><button class="btn ghost" data-act>Reuse as input</button><button class="btn ghost" data-act>Reproduce</button></div>
+        <span class="badge" data-testid="badge-musetalk-seed-1133">MuseTalk · seed 1133</span>
+        <div class="acts"><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reuse-as-input-6">Reuse as input</button><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-7">Reproduce</button></div>
       </div>
     </div>
-    <div class="card asset">
+    <div class="card asset" data-testid="card-7">
       <div class="thumb pc"><span class="selbox"></span><span class="typechip">IMAGE 1:1</span>Arjun · headshot</div>
       <div class="meta">
         <div class="t">Arjun headshot — studio grey</div>
-        <span class="badge ok">SDXL · local GPU</span>
-        <div class="acts"><button class="btn ghost" data-act>Reuse as input</button><button class="btn ghost" data-act>Reproduce</button></div>
+        <span class="badge ok" data-testid="badge-sdxl-local-gpu-2">SDXL · local GPU</span>
+        <div class="acts"><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reuse-as-input-7">Reuse as input</button><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-8">Reproduce</button></div>
       </div>
     </div>
-    <div class="card asset">
+    <div class="card asset" data-testid="card-8">
       <div class="thumb pb"><span class="selbox"></span><span class="typechip">IMAGE 3:2</span>Mithai spread</div>
       <div class="meta">
         <div class="t">Sweet-box hero shot — Diwali</div>
-        <span class="badge">FLUX.1 · seed 5570</span>
-        <div class="acts"><button class="btn ghost" data-act>Reuse as input</button><button class="btn ghost" data-act>Reproduce</button></div>
+        <span class="badge" data-testid="badge-flux-1-seed-5570">FLUX.1 · seed 5570</span>
+        <div class="acts"><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reuse-as-input-8">Reuse as input</button><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-9">Reproduce</button></div>
       </div>
     </div>
     <!-- loading skeleton tiles -->
-    <div class="card asset">
+    <div class="card asset" data-testid="card-9">
       <div class="thumb"><span class="muted">loading…</span></div>
       <div class="meta"><div class="skel" style="width:80%;margin-bottom:8px"></div><div class="skel" style="width:55%"></div></div>
     </div>
-    <div class="card asset">
+    <div class="card asset" data-testid="card-10">
       <div class="thumb"><span class="muted">loading…</span></div>
       <div class="meta"><div class="skel" style="width:70%;margin-bottom:8px"></div><div class="skel" style="width:45%"></div></div>
     </div>
   </div>
 
   <!-- Empty state (filters too narrow) -->
-  <div class="card emptystate">
+  <div class="card emptystate" data-testid="card-no-assets-match-these-filters">
     <div class="emptyicon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
     <h3 style="margin:0 0 4px">No assets match these filters</h3>
     <div class="muted" style="margin-bottom:14px">Try clearing a filter, or generate something new in a studio.</div>
-    <button class="btn brand">Go to Image Studio</button>
+    <button class="btn brand" onclick="alert('Go to Image Studio: done in the built app')" data-testid="btn-go-to-image-studio">Go to Image Studio</button>
+  </div>
+
+  <!-- Asset details sheet, drawn open -->
+  <div class="card" style="margin-top:16px;max-width:420px" data-tf-state="sheet-open" data-testid="card-asset-details">
+    <h3 style="margin:0 0 8px">Asset details</h3>
+    <div class="kv"><span class="muted">Title</span><b>Diya lantern still</b></div>
+    <div class="kv"><span class="muted">Model</span><b>Z-Image Turbo</b></div>
+    <div class="kv"><span class="muted">Seed</span><b>284913</b></div>
+    <div data-tf-phase="2" data-testid="venice-asset-details">
+      <div class="kv"><span class="muted">Provider</span><b><span class="badge brand" style="font-size:10.5px" data-testid="badge-provider-venice">Venice</span></b></div>
+      <div class="kv"><span class="muted">Venice price</span><b data-testid="venice-price">$0.01</b></div>
+    </div>
+    <button class="btn outline" style="margin-top:10px" onclick="alert('Reproduce: re-runs these parameters in the studio')" data-testid="btn-reproduce">Reproduce</button>
   </div>
 </div>
 </div>

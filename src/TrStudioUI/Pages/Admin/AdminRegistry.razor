@@ -9,6 +9,9 @@
     the declarative params-schema editor (key/type/required/default rows with validation), and
     a Provider-keys panel of masked write-only Password inputs with an enabled Switch. Consumes
     the registry + provider-key endpoints with a representative fallback while unauthenticated.
+    Phase 2 (REQ-UI-083/084/097): Venice provider card (address, masked key, enabled, Test
+    connection), Provider / Provider model id / Fill from Venice and two ability checkboxes in the
+    edit sheet, and a Venice badge in the table. No Venice address, key or model id lives in code.
 *@
 
 <PageTitle>TrStudio — Registry &amp; Providers</PageTitle>
@@ -41,7 +44,18 @@
                         </CellTemplate>
                     </DataTableColumn>
                     <DataTableColumn TData="RegistryRow" TValue="string" Property="@(r => r.Task)" Header="task" Sortable Filterable />
-                    <DataTableColumn TData="RegistryRow" TValue="string" Property="@(r => r.Provider)" Header="provider" Sortable Filterable />
+                    <DataTableColumn TData="RegistryRow" TValue="string" Property="@(r => r.Provider)" Header="provider" Sortable Filterable>
+                        <CellTemplate Context="objRow">
+                            @if (objRow.IsVenice)
+                            {
+                                <Badge Variant="BadgeVariant.Outline" Class="badge-brand" data-testid="badge-venice">Venice</Badge>
+                            }
+                            else
+                            {
+                                @objRow.Provider
+                            }
+                        </CellTemplate>
+                    </DataTableColumn>
                     <DataTableColumn TData="RegistryRow" TValue="string" Property="@(r => r.Tier)" Header="tier" Sortable>
                         <CellTemplate Context="objRow">
                             <Badge Variant="BadgeVariant.Outline" Class="@objRow.TierTone">@objRow.Tier</Badge>
@@ -84,6 +98,46 @@
                                Placeholder="Enter a new key to replace" />
                     </div>
                 }
+                <div data-testid="provider-venice">
+                    <div class="flex-between">
+                        <div class="flex-row">
+                            <Label>Venice</Label>
+                            <Badge Variant="BadgeVariant.Outline" Class="badge-brand" data-testid="badge-cloud-venice">Cloud</Badge>
+                        </div>
+                        <div class="flex-row">
+                            <span class="kpi-lbl" style="font-size:11px">@(objVenice.Enabled ? "enabled" : "disabled")</span>
+                            <Switch @bind-Checked="objVenice.Enabled" AriaLabel="Enable Venice" data-testid="switch-venice" />
+                        </div>
+                    </div>
+                    <Field Class="mt-2">
+                        <FieldLabel>Address</FieldLabel>
+                        <FieldContent>
+                            <Input @bind-Value="objVenice.BaseUrl" Placeholder="https://… (Venice API address)" data-testid="field-venice-address" />
+                        </FieldContent>
+                    </Field>
+                    <Field Class="mt-2">
+                        <FieldLabel>API key</FieldLabel>
+                        <FieldContent>
+                            <Input Type="InputType.Password" @bind-Value="objVenice.NewKey"
+                                   Placeholder="@(string.IsNullOrEmpty(objVenice.MaskedKey) ? "Enter the Venice key" : objVenice.MaskedKey)"
+                                   data-testid="field-venice-key" />
+                        </FieldContent>
+                    </Field>
+                    <div class="flex-row mt-2">
+                        <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="TestVeniceAsync"
+                                Disabled="@objVenice.Testing" data-testid="btn-test-connection">
+                            @(objVenice.Testing ? "Testing…" : "Test connection")
+                        </Button>
+                        @if (objVenice.Connected == true)
+                        {
+                            <Badge Variant="BadgeVariant.Outline" Class="badge-ok" data-testid="badge-connected">Connected</Badge>
+                        }
+                    </div>
+                    @if (objVenice.Connected == false && !string.IsNullOrWhiteSpace(objVenice.Message))
+                    {
+                        <div class="field-err" style="margin-top:6px" data-testid="venice-error">@objVenice.Message</div>
+                    }
+                </div>
                 <Alert Variant="AlertVariant.Default">
                     <AlertDescription>
                         Keys are write-only — saved values are masked and cannot be read back.
@@ -176,6 +230,48 @@
             }
             else
             {
+            <div class="flex-row" style="align-items:flex-start" data-testid="venice-model-fields">
+                <Field Class="grow">
+                    <FieldLabel>Provider</FieldLabel>
+                    <FieldContent>
+                        <Select @bind-Value="objEditProvider" TValue="string" Class="w-full" data-testid="field-provider">
+                            <SelectTrigger><SelectValue Placeholder="Select provider" /></SelectTrigger>
+                            <SelectContent>
+                                @foreach (var vProvider in objProviderOptions)
+                                {
+                                    <SelectItem Value="@vProvider.Value" Text="@vProvider.Label" TValue="string">@vProvider.Label</SelectItem>
+                                }
+                            </SelectContent>
+                        </Select>
+                    </FieldContent>
+                </Field>
+                <Field Class="grow">
+                    <FieldLabel>Provider model id</FieldLabel>
+                    <FieldContent>
+                        <div class="flex-row">
+                            <Input @bind-Value="objEditProviderModelId" Placeholder="e.g. the Venice model id" data-testid="field-provider-model-id" />
+                            <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="FillFromVeniceAsync"
+                                    Disabled="@(!objEditIsVenice || objFilling)" data-testid="btn-fill-from-venice">
+                                @(objFilling ? "Filling…" : "Fill from Venice")
+                            </Button>
+                        </div>
+                    </FieldContent>
+                </Field>
+            </div>
+            <div class="flex-row" data-testid="model-abilities">
+                <div class="flex-row">
+                    <Checkbox @bind-Checked="objEditTakesReference" Id="takes-reference-picture" data-testid="field-takes-reference-picture" />
+                    <Label For="takes-reference-picture">Takes a reference picture</Label>
+                </div>
+                <div class="flex-row">
+                    <Checkbox @bind-Checked="objEditKeepsCharacter" Id="keeps-fixed-character" data-testid="field-keeps-fixed-character" />
+                    <Label For="keeps-fixed-character">Keeps a fixed character</Label>
+                </div>
+            </div>
+            @if (objFillError is not null)
+            {
+                <div class="field-err" data-testid="venice-fill-error">@objFillError</div>
+            }
             <div>
                 <div class="flex-between">
                     <Label>Params schema</Label>
@@ -207,6 +303,12 @@
                         <button type="button" class="params-del" aria-label="Remove row" @onclick="@(() => RemoveParamRow(vParam))">✕</button>
                     }
                 </div>
+                @foreach (var vEnum in objParams.Where(aParam => aParam.Values is { Length: > 0 }))
+                {
+                    <div class="kpi-lbl" style="font-size:11px;margin-top:4px" data-testid="param-values">
+                        @vEnum.Key: @string.Join(", ", vEnum.Values!)
+                    </div>
+                }
                 @if (objSchemaError is not null)
                 {
                     <div class="field-err" data-testid="schema-error">⚠ @objSchemaError</div>
@@ -251,6 +353,49 @@
 
     /// <summary>True while the edit sheet is showing a text-chat row, which swaps the params grid for the LLM fields.</summary>
     private bool objEditIsTextChat => string.Equals(objEditTask, "text-chat", StringComparison.Ordinal);
+
+    /// <summary>The Venice provider card state (address, masked key, enabled, last test result) — REQ-UI-083.</summary>
+    private readonly VeniceProviderState objVenice = new();
+
+    /// <summary>The provider kind (enum name) chosen in the edit sheet — REQ-UI-084.</summary>
+    private string? objEditProvider;
+
+    /// <summary>The provider's own model id for the row (e.g. a Venice model id); typed by the admin, never hard-coded.</summary>
+    private string objEditProviderModelId = string.Empty;
+
+    /// <summary>Whether the row takes a reference picture (studios filter on it).</summary>
+    private bool objEditTakesReference;
+
+    /// <summary>Whether the row keeps a fixed character (studios filter on it).</summary>
+    private bool objEditKeepsCharacter;
+
+    /// <summary>The most input pictures the row accepts, as filled from Venice; null when not stated.</summary>
+    private int? objEditMaxInputImages;
+
+    /// <summary>The exact generation task filled from Venice; used on save over the coarse category mapping.</summary>
+    private GenerationTaskType? objEditExactTask;
+
+    /// <summary>True while a Fill-from-Venice lookup is in flight.</summary>
+    private bool objFilling;
+
+    /// <summary>Venice's own text when Fill from Venice fails; null otherwise.</summary>
+    private string? objFillError;
+
+    /// <summary>True when the edit sheet's provider is Venice, which enables Fill from Venice.</summary>
+    private bool objEditIsVenice => string.Equals(objEditProvider, nameof(ProviderKind.Venice), StringComparison.Ordinal);
+
+    /// <summary>Provider choices for the edit sheet (text-chat rows pin their own provider).</summary>
+    private static readonly (string Value, string Label)[] objProviderOptions =
+    {
+        (nameof(ProviderKind.OnnxLocal), "local (Mac)"),
+        (nameof(ProviderKind.ComfyUi), "ComfyUI"),
+        (nameof(ProviderKind.RunPod), "RunPod"),
+        (nameof(ProviderKind.HeyGen), "HeyGen"),
+        (nameof(ProviderKind.ClosedApi), "Cloud API"),
+        (nameof(ProviderKind.Voice), "Voice"),
+        (nameof(ProviderKind.StubEcho), "Stub (dev)"),
+        (nameof(ProviderKind.Venice), "Venice")
+    };
 
     /// <summary>The full backing model being edited (preserves fields the sheet doesn't surface); null for a new row.</summary>
     private RegistryModel? objEditModel;
@@ -334,6 +479,10 @@
             if (vKeys.IsSuccessStatusCode)
             {
                 var vInfos = await vKeys.Content.ReadFromJsonAsync<List<ProviderKeyInfo>>();
+                var vVeniceInfo = vInfos?.FirstOrDefault(aInfo =>
+                    string.Equals(aInfo.ProviderName, nameof(ProviderKind.Venice), StringComparison.OrdinalIgnoreCase));
+                objVenice.Load(vVeniceInfo);
+                vInfos = vInfos?.Where(aInfo => !ReferenceEquals(aInfo, vVeniceInfo)).ToList();
                 if (vInfos is { Count: > 0 })
                 {
                     // The raw secret never leaves the key store, so the password field starts empty
@@ -360,8 +509,12 @@
         var (vSafety, vSafetyTone) = aModel.SafetyClass == SafetyClass.RealPersonGated
             ? ("gated", "badge-warn")
             : ("general", "");
-        return new RegistryRow(aModel.Id, aModel.DisplayName, aModel.Task.ToString(), aModel.Task.ToString().ToLowerInvariant(),
-            aModel.ProviderKind.ToString(), vTier, vTierTone, aModel.License, vSafety, vSafetyTone);
+        var vIsVenice = aModel.ProviderKind == ProviderKind.Venice;
+        var vSubtitle = vIsVenice && !string.IsNullOrWhiteSpace(aModel.ProviderModelId)
+            ? $"{aModel.ProviderModelId} · {aModel.Task}"
+            : aModel.Task.ToString();
+        return new RegistryRow(aModel.Id, aModel.DisplayName, vSubtitle, aModel.Task.ToString().ToLowerInvariant(),
+            aModel.ProviderKind.ToString(), vTier, vTierTone, aModel.License, vSafety, vSafetyTone, vIsVenice);
     }
 
     /// <summary>
@@ -391,6 +544,13 @@
         objEditChatModel = string.Empty;
         objEditVision = false;
         objEditApiKey = string.Empty;
+        objEditProvider = nameof(ProviderKind.ComfyUi);
+        objEditProviderModelId = string.Empty;
+        objEditTakesReference = false;
+        objEditKeepsCharacter = false;
+        objEditMaxInputImages = null;
+        objEditExactTask = null;
+        objFillError = null;
         objParams = new List<ParamRow> { new() { Key = string.Empty, Type = "string", Required = false, Default = null } };
         objSheetOpen = true;
     }
@@ -407,13 +567,24 @@
         objEditChatModel = objEditModel?.ChatModel ?? string.Empty;
         objEditVision = objEditModel?.VisionCapable ?? false;
         objEditApiKey = string.Empty;
+        objEditProvider = (objEditModel?.ProviderKind ?? ProviderKind.ComfyUi).ToString();
+        objEditProviderModelId = objEditModel?.ProviderModelId ?? string.Empty;
+        objEditTakesReference = objEditModel?.TakesReferencePicture ?? false;
+        objEditKeepsCharacter = objEditModel?.KeepsFixedCharacter ?? false;
+        objEditMaxInputImages = objEditModel?.MaxInputImages;
+        objEditExactTask = null;
+        objFillError = null;
         objParams = objEditModel is { Params.Count: > 0 }
             ? objEditModel.Params.Select(aSpec => new ParamRow
             {
                 Key = aSpec.Key,
                 Type = aSpec.Type,
                 Required = aSpec.Required,
-                Default = aSpec.DefaultValue
+                Default = aSpec.DefaultValue,
+                Values = aSpec.Values,
+                Min = aSpec.Min,
+                Max = aSpec.Max,
+                Label = aSpec.Label
             }).ToList()
             : new List<ParamRow>
             {
@@ -476,9 +647,33 @@
                 Key = aRow.Key,
                 Type = aRow.Type,
                 Required = aRow.Required,
-                DefaultValue = aRow.Default
+                DefaultValue = aRow.Default,
+                Values = aRow.Values,
+                Min = aRow.Min,
+                Max = aRow.Max,
+                Label = aRow.Label
             })
             .ToList();
+
+        if (!objEditIsTextChat)
+        {
+            // Provider, provider model id and abilities (REQ-UI-084). A task filled from Venice wins
+            // over the coarse category mapping so e.g. text-to-video is not saved as image-to-video.
+            if (Enum.TryParse<ProviderKind>(objEditProvider, out var vKind))
+            {
+                vModel.ProviderKind = vKind;
+            }
+
+            if (objEditExactTask is { } vExactTask && string.Equals(CategoryFor(vExactTask), objEditTask, StringComparison.Ordinal))
+            {
+                vModel.Task = vExactTask;
+            }
+
+            vModel.ProviderModelId = string.IsNullOrWhiteSpace(objEditProviderModelId) ? null : objEditProviderModelId.Trim();
+            vModel.TakesReferencePicture = objEditTakesReference;
+            vModel.KeepsFixedCharacter = objEditKeepsCharacter;
+            vModel.MaxInputImages = objEditMaxInputImages;
+        }
 
         if (objEditIsTextChat)
         {
@@ -570,6 +765,21 @@
             }
         }
 
+        if (objVenice.IsDirty)
+        {
+            var vVeniceError = await SaveVeniceAsync();
+            if (vVeniceError is null)
+            {
+                vSaved++;
+            }
+            else
+            {
+                vFailed = true;
+                objVenice.Connected = false;
+                objVenice.Message = vVeniceError;
+            }
+        }
+
         if (vFailed && vSaved == 0)
         {
             ToastService.Error("Couldn't store provider keys — check your admin session and try again.", "Save failed");
@@ -642,12 +852,251 @@
         IsEnabled = aModel.IsEnabled,
         Endpoint = aModel.Endpoint,
         ChatModel = aModel.ChatModel,
-        VisionCapable = aModel.VisionCapable
+        VisionCapable = aModel.VisionCapable,
+        ProviderModelId = aModel.ProviderModelId,
+        TakesReferencePicture = aModel.TakesReferencePicture,
+        KeepsFixedCharacter = aModel.KeepsFixedCharacter,
+        MaxInputImages = aModel.MaxInputImages
     };
+
+    /// <summary>
+    /// Fill from Venice (REQ-UI-097): looks the typed provider model id up in Venice's own model list via
+    /// <c>POST /api/v1/admin/registry/venice/fill</c> and fills task, abilities, durations and sizes into
+    /// the sheet. Nothing is saved — the admin checks the values, then presses Save.
+    /// </summary>
+    private async Task FillFromVeniceAsync()
+    {
+        objFillError = null;
+        if (string.IsNullOrWhiteSpace(objEditProviderModelId))
+        {
+            objFillError = "Enter the Venice model id first.";
+            return;
+        }
+
+        objFilling = true;
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vResponse = await vClient.PostAsJsonAsync(ApiRoutes.VeniceFill,
+                new VeniceFillRequest { ProviderModelId = objEditProviderModelId.Trim() });
+            if (!vResponse.IsSuccessStatusCode)
+            {
+                objFillError = await ReadErrorTextAsync(vResponse) ?? $"Fill from Venice failed (HTTP {(int)vResponse.StatusCode}).";
+                return;
+            }
+
+            var vFill = await vResponse.Content.ReadFromJsonAsync<VeniceFillResponse>();
+            if (vFill is null)
+            {
+                objFillError = "Venice returned no details for this model.";
+                return;
+            }
+
+            ApplyFill(vFill);
+            ToastService.Show("Filled from Venice — check the values, then Save.", "Not saved yet");
+        }
+        catch (Exception vEx)
+        {
+            objFillError = $"Couldn't reach the server: {vEx.Message}";
+        }
+        finally
+        {
+            objFilling = false;
+        }
+    }
+
+    /// <summary>Copies a Fill-from-Venice answer into the edit sheet (unsaved).</summary>
+    /// <param name="aFill">The fill answer.</param>
+    private void ApplyFill(VeniceFillResponse aFill)
+    {
+        if (string.IsNullOrWhiteSpace(objEditName))
+        {
+            objEditName = aFill.DisplayName;
+        }
+
+        objEditProviderModelId = aFill.ProviderModelId;
+        objEditExactTask = aFill.Task;
+        objEditTask = CategoryFor(aFill.Task);
+        objEditTakesReference = aFill.TakesReferencePicture;
+        objEditKeepsCharacter = aFill.KeepsFixedCharacter;
+        objEditMaxInputImages = aFill.MaxInputImages;
+
+        // Drop the placeholder blank row, then upsert the enum specs the fill answer maps onto.
+        objParams.RemoveAll(aRow => string.IsNullOrWhiteSpace(aRow.Key));
+        SetEnumParam("duration", aFill.Durations);
+        SetEnumParam("resolution", aFill.Resolutions);
+        SetEnumParam("aspectRatio", aFill.AspectRatios);
+    }
+
+    /// <summary>Adds, replaces or removes one enum param row so it carries exactly the given values.</summary>
+    /// <param name="aKey">The params-schema key.</param>
+    /// <param name="aValues">The allowed values; empty removes the row.</param>
+    private void SetEnumParam(string aKey, string[] aValues)
+    {
+        var vExisting = objParams.FirstOrDefault(aRow => string.Equals(aRow.Key, aKey, StringComparison.Ordinal));
+        if (aValues.Length == 0)
+        {
+            if (vExisting is not null)
+            {
+                objParams.Remove(vExisting);
+            }
+
+            return;
+        }
+
+        if (vExisting is null)
+        {
+            vExisting = new ParamRow { Key = aKey };
+            objParams.Add(vExisting);
+        }
+
+        vExisting.Type = "enum";
+        vExisting.Values = aValues;
+        if (string.IsNullOrWhiteSpace(vExisting.Default) || !aValues.Contains(vExisting.Default))
+        {
+            vExisting.Default = aValues[0];
+        }
+    }
+
+    /// <summary>
+    /// Test connection (REQ-UI-083): saves any unsaved Venice address/key/enabled change first, then
+    /// calls <c>POST /api/v1/admin/providers/keys/Venice/test</c> and shows Connected or Venice's own text.
+    /// </summary>
+    private async Task TestVeniceAsync()
+    {
+        objVenice.Testing = true;
+        objVenice.Connected = null;
+        objVenice.Message = null;
+        try
+        {
+            if (objVenice.IsDirty)
+            {
+                var vSaveError = await SaveVeniceAsync();
+                if (vSaveError is not null)
+                {
+                    objVenice.Connected = false;
+                    objVenice.Message = vSaveError;
+                    return;
+                }
+            }
+
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vResponse = await vClient.PostAsync(
+                $"{ApiRoutes.Providers}/keys/{Uri.EscapeDataString(nameof(ProviderKind.Venice))}/test", content: null);
+            if (!vResponse.IsSuccessStatusCode)
+            {
+                objVenice.Connected = false;
+                objVenice.Message = await ReadErrorTextAsync(vResponse) ?? $"Test failed (HTTP {(int)vResponse.StatusCode}).";
+                return;
+            }
+
+            var vResult = await vResponse.Content.ReadFromJsonAsync<ProviderTestConnectionResponse>();
+            objVenice.Connected = vResult?.Connected ?? false;
+            objVenice.Message = vResult?.Message;
+        }
+        catch (Exception vEx)
+        {
+            objVenice.Connected = false;
+            objVenice.Message = $"Couldn't reach the server: {vEx.Message}";
+        }
+        finally
+        {
+            objVenice.Testing = false;
+        }
+    }
+
+    /// <summary>
+    /// Saves the Venice card via <c>PUT /api/v1/admin/providers/keys</c>. A blank key keeps the stored
+    /// one and updates only the address or enabled flag.
+    /// </summary>
+    /// <returns>Null on success; otherwise the server's error text.</returns>
+    private async Task<string?> SaveVeniceAsync()
+    {
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vResponse = await vClient.PutAsJsonAsync(ApiRoutes.Providers + "/keys", new ProviderKeyUpsertRequest
+            {
+                ProviderName = nameof(ProviderKind.Venice),
+                ApiKey = objVenice.NewKey.Trim(),
+                IsEnabled = objVenice.Enabled,
+                BaseUrl = string.IsNullOrWhiteSpace(objVenice.BaseUrl) ? null : objVenice.BaseUrl.Trim()
+            });
+            if (!vResponse.IsSuccessStatusCode)
+            {
+                return await ReadErrorTextAsync(vResponse) ?? $"Couldn't save Venice (HTTP {(int)vResponse.StatusCode}).";
+            }
+
+            objVenice.Load(await vResponse.Content.ReadFromJsonAsync<ProviderKeyInfo>());
+            return null;
+        }
+        catch (Exception vEx)
+        {
+            return $"Couldn't reach the server: {vEx.Message}";
+        }
+    }
+
+    /// <summary>Reads <c>error</c> (plain error body) or <c>detail</c> (problem body) from a failed response.</summary>
+    /// <param name="aResponse">The failed response.</param>
+    /// <returns>The server's text, or null when the body carries none.</returns>
+    private static async Task<string?> ReadErrorTextAsync(HttpResponseMessage aResponse)
+    {
+        try
+        {
+            using var vDoc = System.Text.Json.JsonDocument.Parse(await aResponse.Content.ReadAsStringAsync());
+            foreach (var vName in new[] { "detail", "error", "message", "title" })
+            {
+                if (vDoc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object
+                    && vDoc.RootElement.TryGetProperty(vName, out var vValue)
+                    && vValue.ValueKind == System.Text.Json.JsonValueKind.String)
+                {
+                    return vValue.GetString();
+                }
+            }
+        }
+        catch
+        {
+            // Not JSON — fall back to the caller's generic text.
+        }
+
+        return null;
+    }
 
     private sealed record RegistryRow(
         string Id, string Name, string Subtitle, string Task, string Provider,
-        string Tier, string TierTone, string License, string Safety, string SafetyTone);
+        string Tier, string TierTone, string License, string Safety, string SafetyTone, bool IsVenice = false);
+
+    /// <summary>UI-only state of the Venice provider card; the address and masked key come from the database.</summary>
+    private sealed class VeniceProviderState
+    {
+        public string BaseUrl { get; set; } = string.Empty;
+        public string MaskedKey { get; private set; } = string.Empty;
+        public string NewKey { get; set; } = string.Empty;
+        public bool Enabled { get; set; }
+        public bool Testing { get; set; }
+        public bool? Connected { get; set; }
+        public string? Message { get; set; }
+
+        private string objStoredBaseUrl = string.Empty;
+        private bool objStoredEnabled;
+
+        /// <summary>True when the card holds an address, key or enabled change not yet saved.</summary>
+        public bool IsDirty => !string.IsNullOrWhiteSpace(NewKey)
+            || !string.Equals(BaseUrl.Trim(), objStoredBaseUrl, StringComparison.Ordinal)
+            || Enabled != objStoredEnabled;
+
+        /// <summary>Loads the stored values (null when Venice is not set up yet) and clears the typed key.</summary>
+        /// <param name="aInfo">The stored provider row, masked.</param>
+        public void Load(ProviderKeyInfo? aInfo)
+        {
+            objStoredBaseUrl = aInfo?.BaseUrl ?? string.Empty;
+            objStoredEnabled = aInfo?.IsEnabled ?? false;
+            BaseUrl = objStoredBaseUrl;
+            Enabled = objStoredEnabled;
+            MaskedKey = aInfo?.MaskedKey ?? string.Empty;
+            NewKey = string.Empty;
+        }
+    }
 
     private sealed class ProviderKeyRow
     {
@@ -669,5 +1118,9 @@
         public string Type { get; set; } = "string";
         public bool Required { get; set; }
         public string? Default { get; set; }
+        public string[]? Values { get; set; }
+        public double? Min { get; set; }
+        public double? Max { get; set; }
+        public string? Label { get; set; }
     }
 }

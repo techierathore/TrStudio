@@ -66,9 +66,9 @@ body{margin:0;font-family:var(--sans);background:var(--wash),var(--bg);color:var
 </style>
 </head>
 <body>
-<button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode" style="position:fixed;top:14px;right:14px;z-index:60"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
+<button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode" style="position:fixed;top:14px;right:14px;z-index:60" onclick="/* switches light and dark: page script */" data-testid="icon-btn-toggle-dark-mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
 <div class="authwrap">
-  <div class="card gatecard">
+  <div class="card gatecard" data-testid="card-trstudio-isn-t-set-up-yet">
     <div class="logo">TR</div>
 
     <div class="illus">
@@ -77,16 +77,16 @@ body{margin:0;font-family:var(--sans);background:var(--wash),var(--bg);color:var
       <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>
     </div>
 
-    <span class="badge warn" style="margin-bottom:10px"><span class="dot warn"></span>Waiting for admin setup</span>
+    <span class="badge warn" style="margin-bottom:10px" data-testid="badge-status"><span class="dot warn"></span>Waiting for admin setup</span>
     <h1 class="headline">TrStudio isn't set up yet</h1>
     <p class="gatecopy">No model sources or models are configured on this install, so the studios can't generate anything yet. Ask your admin to complete setup in TrStudioAdmin — or sign in with an admin account to do it yourself.</p>
 
     <div class="gatebtns">
-      <a class="btn brand" href="login.html">
+      <a class="btn brand" href="login.html" data-testid="link-sign-in-as-admin">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>
         Sign in as admin
       </a>
-      <button class="btn outline" type="button" data-act>
+      <button class="btn outline" type="button" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-check-again">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
         Check again
       </button>

@@ -6,6 +6,7 @@ using TrStudio.Engine.Domain.Progress;
 using TrStudio.Engine.Domain.Providers;
 using TrStudio.Engine.Domain.Registry;
 using TrStudio.Engine.Domain.Safety;
+using TrStudio.Engine.Domain.Venice;
 using TrStudio.Models.Contracts;
 using TrStudio.Models.Entities;
 using TrStudio.Models.Enums;
@@ -150,7 +151,25 @@ public class JobOrchestrator : IJobOrchestrator
         // REQ-FN-029/NFR-007: estimate the job's cost from the registry cost block BEFORE it runs,
         // then check it against the monthly spend cap (a billed submit that would exceed the cap is
         // blocked with an actionable message; one that merely nears the cap is warned).
-        vJob.CostEstimate = await objCostEstimator.EstimateAsync(vJob, aCancellationToken).ConfigureAwait(false);
+        // Phase 2 (owner decision 1A): a Venice row is priced by Venice's own stated price — the clip
+        // quote or the listed picture price — read here, AFTER the safety floors and BEFORE anything is
+        // sent, so the monthly cap below refuses an over-cap Venice job with nothing sent (REQ-FN-085).
+        if (vModel.ProviderKind == ProviderKind.Venice)
+        {
+            try
+            {
+                vJob.CostEstimate = await vProvider.EstimateCostAsync(vJob, aCancellationToken).ConfigureAwait(false);
+            }
+            catch (VeniceApiException vException)
+            {
+                await RecordProviderFailureAsync(vJob, vException.Message, vException.RemediationHint, aCancellationToken).ConfigureAwait(false);
+                throw;
+            }
+        }
+        else
+        {
+            vJob.CostEstimate = await objCostEstimator.EstimateAsync(vJob, aCancellationToken).ConfigureAwait(false);
+        }
 
         var vGuard = await objSpendLedger.EvaluateAsync(vJob.CostEstimate ?? 0m, aCancellationToken).ConfigureAwait(false);
         if (vGuard.WouldExceed && objCostOptions.BlockOverCap)
@@ -279,6 +298,31 @@ public class JobOrchestrator : IJobOrchestrator
             FailureMessage = aFailureMessage,
             CreatedUtc = DateTime.UtcNow
         }, aCancellationToken);
+
+    /// <summary>
+    /// Persists a job whose provider refused the price call as Failed, with the provider's own text,
+    /// and writes a "failed" log row so Projects shows the reason (BRD-119).
+    /// </summary>
+    private async Task RecordProviderFailureAsync(GenerationJob aJob, string aMessage, string aHint, CancellationToken aCancellationToken)
+    {
+        aJob.State = JobState.Failed;
+        aJob.FailureMessage = aMessage;
+        aJob.RemediationHint = aHint;
+        aJob.CompletedUtc = DateTime.UtcNow;
+        await objJobRepository.InsertAsync(aJob, aCancellationToken).ConfigureAwait(false);
+        await objLogRepository.InsertAsync(new GenerationLogEntry
+        {
+            LogId = Guid.NewGuid(),
+            JobId = aJob.JobId,
+            UserId = aJob.UserId,
+            ModelId = aJob.ModelId,
+            Tier = aJob.Tier,
+            ParamsJson = aJob.ParamsJson,
+            Outcome = "failed",
+            FailureMessage = aMessage,
+            CreatedUtc = DateTime.UtcNow
+        }, aCancellationToken).ConfigureAwait(false);
+    }
 
     private static void ValidateParams(RegistryModel aModel, string aParamsJson)
     {

@@ -30,6 +30,7 @@ public static class WorkspaceEndpoints
         var vAssets = aApp.MapGroup(ApiRoutes.Assets).WithTags("Assets");
         vAssets.MapGet("", ListAssetsAsync).WithName("ListAssets");
         vAssets.MapGet("{aAssetId:guid}", GetAssetAsync).WithName("GetAsset");
+        vAssets.MapGet("{aAssetId:guid}/content", GetAssetContentAsync).WithName("GetAssetContent");
 
         var vProjects = aApp.MapGroup(ApiRoutes.Projects).WithTags("Projects");
         vProjects.MapGet("", ListProjectsAsync).WithName("ListProjects");
@@ -47,6 +48,7 @@ public static class WorkspaceEndpoints
     private static async Task<IResult> ListAssetsAsync(
         ClaimsPrincipal aUser,
         IAssetRepository aAssetRepository,
+        IGenerationLogRepository aLogRepository,
         CancellationToken aCancellationToken,
         string? aSearch = null,
         string? aKind = null,
@@ -74,7 +76,7 @@ public static class WorkspaceEndpoints
         var vPage = await aAssetRepository.ListAsync(vFilter, vUserId, aCancellationToken);
         return Results.Ok(new PagedResult<AssetResponse>
         {
-            Items = vPage.Items.Select(ToAssetResponse).ToList(),
+            Items = await WithRunInfoAsync(vPage.Items.Select(ToAssetResponse).ToList(), vUserId, aLogRepository, aCancellationToken),
             TotalCount = vPage.TotalCount,
             Page = vPage.Page,
             PageSize = vPage.PageSize
@@ -82,6 +84,34 @@ public static class WorkspaceEndpoints
     }
 
     private static async Task<IResult> GetAssetAsync(
+        Guid aAssetId,
+        ClaimsPrincipal aUser,
+        IAssetRepository aAssetRepository,
+        IGenerationLogRepository aLogRepository,
+        CancellationToken aCancellationToken)
+    {
+        var vUserId = ResolveUserId(aUser);
+        if (vUserId is null)
+        {
+            return Results.Unauthorized();
+        }
+
+        var vAsset = await aAssetRepository.GetAsync(aAssetId, vUserId, aCancellationToken);
+        if (vAsset is null)
+        {
+            return Results.NotFound();
+        }
+
+        var vEnriched = await WithRunInfoAsync(new List<AssetResponse> { ToAssetResponse(vAsset) }, vUserId, aLogRepository, aCancellationToken);
+        return Results.Ok(vEnriched[0]);
+    }
+
+    /// <summary>
+    /// Returns the stored file of one of the caller's own assets (owner-filtered, BRD-81), so a studio
+    /// can show the picture a provider returned (REQ-UI-086). 404 when the asset is not the caller's or
+    /// its file is missing.
+    /// </summary>
+    private static async Task<IResult> GetAssetContentAsync(
         Guid aAssetId,
         ClaimsPrincipal aUser,
         IAssetRepository aAssetRepository,
@@ -94,7 +124,13 @@ public static class WorkspaceEndpoints
         }
 
         var vAsset = await aAssetRepository.GetAsync(aAssetId, vUserId, aCancellationToken);
-        return vAsset is null ? Results.NotFound() : Results.Ok(ToAssetResponse(vAsset));
+        if (vAsset is null || string.IsNullOrWhiteSpace(vAsset.StoragePath) || !File.Exists(vAsset.StoragePath))
+        {
+            return Results.NotFound();
+        }
+
+        var vBytes = await File.ReadAllBytesAsync(vAsset.StoragePath, aCancellationToken);
+        return Results.File(vBytes, AssetContentTypes.FromPath(vAsset.StoragePath));
     }
 
     // ---- Projects (REQ-FN-026) ------------------------------------------------------------
@@ -225,6 +261,7 @@ public static class WorkspaceEndpoints
         ClaimsPrincipal aUser,
         IProjectRepository aProjectRepository,
         IAssetRepository aAssetRepository,
+        IGenerationLogRepository aLogRepository,
         CancellationToken aCancellationToken,
         int aPage = 1,
         int aPageSize = 50)
@@ -248,11 +285,43 @@ public static class WorkspaceEndpoints
         var vHistory = await aAssetRepository.ListAsync(vFilter, vUserId, aCancellationToken);
         return Results.Ok(new PagedResult<AssetResponse>
         {
-            Items = vHistory.Items.Select(ToAssetResponse).ToList(),
+            Items = await WithRunInfoAsync(vHistory.Items.Select(ToAssetResponse).ToList(), vUserId, aLogRepository, aCancellationToken),
             TotalCount = vHistory.TotalCount,
             Page = vHistory.Page,
             PageSize = vHistory.PageSize
         });
+    }
+
+    /// <summary>
+    /// Attaches each asset's run details from the generation log — provider kind, price, price source
+    /// and failure text (phase 2, REQ-FN-082; owner-filtered, BRD-81). The latest log row per job wins.
+    /// </summary>
+    private static async Task<List<AssetResponse>> WithRunInfoAsync(
+        List<AssetResponse> aAssets,
+        string aUserId,
+        IGenerationLogRepository aLogRepository,
+        CancellationToken aCancellationToken)
+    {
+        var vJobIds = aAssets.Select(aAsset => aAsset.JobId).Distinct().ToList();
+        var vEntries = await aLogRepository.ListByJobsAsync(vJobIds, aUserId, aCancellationToken);
+        var vByJob = new Dictionary<Guid, GenerationLogEntry>();
+        foreach (var vEntry in vEntries)
+        {
+            vByJob[vEntry.JobId] = vEntry;
+        }
+
+        foreach (var vAsset in aAssets)
+        {
+            if (vByJob.TryGetValue(vAsset.JobId, out var vLog))
+            {
+                vAsset.ProviderKind = vLog.ProviderKind;
+                vAsset.ActualCost = vLog.ActualCost;
+                vAsset.PriceSource = vLog.PriceSource;
+                vAsset.FailureMessage = vLog.FailureMessage;
+            }
+        }
+
+        return aAssets;
     }
 
     private static AssetResponse ToAssetResponse(GeneratedAsset aAsset) => new()

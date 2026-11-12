@@ -14,4 +14,10 @@ public class ProviderKeyInfo
 
     /// <summary>Masked rendering of the key for display (e.g. "sk-****abcd"). Never the raw key.</summary>
     public string MaskedKey { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The provider's API base address as entered on Registry &amp; providers (e.g. Venice's);
+    /// null for providers that need none. Not a secret.
+    /// </summary>
+    public string? BaseUrl { get; set; }
 }

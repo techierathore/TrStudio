@@ -1,126 +1,52 @@
-# TrStudio Coding Standards
+# TrStudio — Coding Standards
 
-**Last Updated:** 2026-06-28
-**Status:** Authoritative for all code under `src/`/`source/` and `tests/`. Conformance enforced via repo-root `.editorconfig` + verifier grep checks in §"Enforcement".
+| | |
+|---|---|
+| App | TrStudio |
+| Stack answer set | dotnet |
+| Date | 2026-11-12 |
 
-> **Instance-field convention for this project: `obj` prefix.** Greenfield — no existing code to detect from; defaulted to `obj` (the framework default, and consistent with the `objIsBold`-style examples in the source requirements). All instance fields use the `obj` prefix; see "Fields, Parameters, Locals" below.
+## Standards applied
 
-## Database Naming Conventions
+| File | Applies | Notes |
+|---|---|---|
+| `.tfcore/standards/coding-standards-core.md` | yes | every project |
+| `.tfcore/standards/coding-standards-dotnet.md` | yes | .NET 10, Blazor Web, MAUI Blazor Hybrid (Windows and Mac Catalyst heads) |
 
-### Tables and Columns
-- PascalCase: `CustomerOrder` NOT `customer_order`
-- Singular: `CustomerOrder` NOT `CustomerOrders`
-- **NEVER use underscores** in any DB object name
-- FK columns: `{TableName}Id` (e.g., `CustomerId`)
-- PK: `{TableName}Id` (e.g., `UserId`)
+The naming table (`a` parameters, `v` locals, PascalCase properties and constants, no underscores anywhere, short PascalCase test names), the database names (singular PascalCase tables, `{Table}Id` keys, verb-prefixed procedures, `IX`/`Pk`/`Fk`/`Uc` constraint names), the file rules, XML documentation on public members, testing, logging and security all come from those two files and are not repeated here.
 
-> **PostgreSQL note (TrStudio uses Postgres + PgVector, Dapper + DbUp — no EF Core).** Postgres folds *unquoted* identifiers to lower-case, so in DbUp SQL scripts (`TrStudioDb`) and Dapper queries, **quote PascalCase identifiers** (`"CustomerOrder"`, `"CustomerId"`) so the schema matches these standards; do not switch to snake_case. Dapper SQL is always **parameterized** (`@aCustomerId`) — never string-concatenated. Vector columns use the `pgvector` type directly in the scripts. DbUp scripts are ordered, embedded, and idempotent where practical; they run on `TrStudioApi` startup.
+Per-project choices the stack file leaves open:
 
-### Stored Procedures & Functions
-- PascalCase verb prefix: `GetCustomerOrders`, `InsertOrder`, `CalculateTotal`
-- Action prefixes: Get / Insert / Update / Delete / Calculate
+| Choice | Decision |
+|---|---|
+| Instance-field prefix | `obj` prefix on instance fields (e.g. `private readonly ILogger<X> objLogger;`), chosen at day-1 on 2026-06-28 (the framework default) |
+| Data access | Dapper with DbUp migrations; no Entity Framework Core |
+| Database | PostgreSQL with PgVector |
 
-### Indexes & Constraints
-- Index: `IX{Table}{Column}` · PK: `Pk{Table}` · FK: `Fk{Table}{Ref}` · Unique: `Uc{Table}{Column}`
+## Project rules
 
-## C# Conventions
+Rules that hold in this project only.
 
-### Classes & Interfaces
-- PascalCase for classes; `I` prefix for interfaces; descriptive names.
-- Async methods end with `Async`.
-
-### Fields, Parameters, Locals
-
-**NEVER use underscores** anywhere in any identifier.
-
-| Kind | Convention | Example |
-|------|-----------|---------|
-| **Instance fields** | `obj` prefix + PascalCase tail (no underscores) | `private readonly ILogger<X> objLogger;`<br>`private readonly HttpClient objHttpClient;`<br>`private string objCachedPublicKey;` |
-| **Static / `const` fields** | PascalCase, no prefix | `private const string CachePrefix = "…";` |
-| **Method parameters** | `a` prefix + PascalCase | `LoginAsync(string aEmail, string aPassword)` |
-| **Local variables** | `v` prefix + PascalCase | `var vResponse = await …` |
-| **Booleans** | same prefix + `Is`/`Has`/`Can` | `IsAuthenticated`, `vIsValid`, `aHasAccess` |
-| **Properties** | PascalCase, no prefix | `public string ConnectionString { get; set; }` |
-| **Constants** | PascalCase, no underscores | `MaxRetryCount` NOT `MAX_RETRY_COUNT` |
-| **Test methods** | Short PascalCase, no underscores — full scenario in XML `<summary>` | `LoginRejectsBadPassword` not `Login_BadPassword_ReturnsUnauthorized` |
-
-**Rejected forms:** `_underscore` field prefixes, snake_case anywhere, Hungarian prefixes (`strName`), underscores in test method names.
-
-### Controller-action parameters
-The `a`-prefix applies uniformly to `[FromRoute]`/`[FromQuery]`/`[FromBody]`. Parameter name flows through to OpenAPI. Body DTO **property** names stay PascalCase no prefix; only the parameter symbol holding the deserialized DTO gets the `a` prefix.
-
-### Environment Variables
-**PascalCase, no separators.** `TrStudioBaseUrl` NOT `TRSTUDIO_BASE_URL` and NOT `TrStudio__BaseUrl`. Use a custom configuration provider mapping PascalCase env vars → `:`-nested config paths. Read via `IConfiguration["Section:Key"]` only — never `Environment.GetEnvironmentVariable(...)`. **Secrets** (HeyGen API key, AppManager API key/secret, GitHub PAT, provider keys) are read through `IConfiguration` and stored encrypted (see Architecture §5) — never hardcoded, never logged.
-
-### File Structure
-```csharp
-using System;
-
-namespace TrStudio.Services.Example;
-
-public class DatabaseService
-{
-    private readonly ILogger<DatabaseService> objLogger;
-    private readonly IConfiguration objConfiguration;
-
-    public DatabaseService(ILogger<DatabaseService> aLogger, IConfiguration aConfiguration)
-    {
-        objLogger = aLogger;
-        objConfiguration = aConfiguration;
-    }
-
-    public string ConnectionString { get; set; }
-
-    public async Task<DataTable> GetDataAsync(string aQueryName)
-    {
-        var vConnString = objConfiguration.GetConnectionString("Default");
-        var vResult = await ExecuteQueryAsync(vConnString, aQueryName);
-        return vResult;
-    }
-}
-```
-
-### Best Practices
-- One class per file. File name matches class.
-- File-scoped namespaces. Nullable reference types enabled.
-- Methods small (<20 lines). Single responsibility.
-- Max 3 nesting levels. Early returns for validation.
-- ConfigureAwait(false) in libraries.
-- StringBuilder for loop concatenation. Dispose IDisposable. Cache expensive ops.
-
-### XML Documentation (MANDATORY on public members)
-`<summary>`, `<remarks>`, `<param>`, `<returns>`, `<exception>` — all required.
-
-### Testing
-- Short PascalCase test name, no underscores. Full scenario in XML `<summary>`.
-- Arrange-Act-Assert. One assertion per test where practical.
-
-### Security
-- Never hardcode credentials. Parameterized queries. Validate inputs. Log security events.
-- Provider API keys (HeyGen, aggregator) and AppManager credentials are stored **encrypted** at rest; never written to logs or URLs (NFR-05).
+| Rule | Why | Since |
+|---|---|---|
+| In DbUp scripts (`TrStudioDb`) and Dapper queries, quote PascalCase identifiers (`"CustomerOrder"`, `"CustomerId"`); never switch to snake_case | Postgres folds unquoted names to lower case, which would break the PascalCase schema | 2026-06-28 |
+| Dapper SQL is always parameterized (`@aCustomerId`), never built by joining strings | SQL injection; the per-user owner filter must be a parameter | 2026-06-28 |
+| Vector columns use the `pgvector` type directly in the DbUp scripts | One datastore for relational and vector data (Architecture ADR-002, ADR-003) | 2026-06-28 |
+| DbUp scripts are ordered, embedded and idempotent where practical; they run when `TrStudioApi` starts | The schema is always current on boot | 2026-06-28 |
+| Provider API keys (HeyGen, aggregator, RunPod, Venice) and AppManager credentials are stored encrypted at rest (`AesGcmKeyStore`), shown masked, and never written to logs or URLs | The security requirement for keys (BRD non-functional, Security) | 2026-06-28 |
+| Settings come from appsettings files, Visual Studio user secrets or the database (admin screens), read through `IConfiguration["Section:Key"]`; never from environment variables, and never `Environment.GetEnvironmentVariable(...)` | One place to look for every setting; environment variables are invisible and differ per machine | 2026-11-12 |
+| Tests read their settings from `testsettings.json` in the folder beside the tests (committed, every key with an empty value), overlaid by the git-ignored `testsettings.Local.json` holding this machine's real values; a test that needs a missing value is skipped with a line naming the key | Live tests run anywhere without leaking keys, and never depend on environment variables | 2026-11-12 |
+| Settings that differ only between machines (ports, base addresses) go in `launchSettings.json` or `appsettings.Development.json`, never in environment variables | Same reason as above | 2026-11-12 |
 
 ## Enforcement
 
-### .editorconfig (machine-checkable)
-- File-scoped namespaces (`warning`)
-- Async-method `Async` suffix (`warning`)
-- `var` for locals (`warning`)
-- Nullable reference types enabled
-- No `_` prefix on private fields (`warning` via custom naming rule)
+- **Editor configuration:** `.editorconfig` at the repository root carries the machine-checkable subset (file-scoped namespaces, `Async` suffix, `var` for locals, nullable enabled, no `_` prefix on private fields).
+- **Analyzers:** none beyond the .NET SDK defaults.
+- **Verifier checks:** the standards check runs the greps listed in the stack file's Enforcement section (underscore-prefixed fields, underscores in test method names, fields missing the `obj` prefix), plus:
 
-### Verifier grep checks
 ```bash
-# Forbidden underscore-prefix fields
-grep -rE "private(\s+readonly)?\s+\w+\s+_[a-z]" src/ source/ 2>/dev/null
-
-# Forbidden test-method underscores
-grep -rE "public\s+(async\s+)?Task\s+\w+_\w+\s*\(" tests/
-
-# Field missing obj prefix
-grep -rE "private(\s+readonly)?\s+\w+\s+(?!obj)[A-Z]\w+\s*[;=]" src/ source/ 2>/dev/null | grep -v "static\|const"
+# settings read from environment variables (project rule above)
+grep -rn "GetEnvironmentVariable\|AddEnvironmentVariables\|process\.env" src/ tests/ --include=*.cs --include=*.ts
 ```
 
-### Severity
-- **Error**: file-scoped namespace, underscore field prefix
-- **Warning**: nullable, async suffix
-- **Info**: consider fixing
+Known exceptions today: `src/TrStudio.Desktop/MauiProgram.cs` reads `TrStudioApiBaseUrl`, `TrStudioDevRole` and `TrStudioDevStartPath` from environment variables, and `tests/integration/TrStudio.Tests.Integration/LiveApiFixture.cs` reads `DOTNET_ROOT` and `HOME` to locate the .NET SDK. They are open items, not permitted patterns.

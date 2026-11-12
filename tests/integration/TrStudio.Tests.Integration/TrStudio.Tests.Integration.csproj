@@ -5,6 +5,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <!-- The paid Venice live tests (Category=Live, REQ-NFR-012) stay out of the normal run;
+         a command-line filter Category=Live (which wins over this default) runs them. -->
+    <VSTestTestCaseFilter Condition="'$(VSTestTestCaseFilter)' == ''">Category!=Live</VSTestTestCaseFilter>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +25,14 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\TrStudio.Models\TrStudio.Models.csproj" />
+    <!-- The Venice live tests drive the real VeniceClient (REQ-NFR-012). -->
+    <ProjectReference Include="..\..\..\src\TrStudio.Engine\TrStudio.Engine.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Test settings beside the tests: the committed template and this machine's git-ignored overlay. -->
+    <None Update="testsettings.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="testsettings.Local.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

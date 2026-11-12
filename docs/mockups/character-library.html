@@ -129,39 +129,40 @@ tr.sel td{background:var(--sel)}
 </head>
 <body>
 <div class="app">
-  <aside class="side">
+  <aside class="side" data-testid="sidebar">
     <div class="brand"><div class="logo">TR</div>TrStudio</div>
     <div class="navgroup">Studios</div>
     <nav class="nav">
-      <a href="avatar-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Avatar Studio</a>
-    <a class="active" href="character-library.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Characters</a>
-    <a href="image-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Image Studio</a>
-    <a href="video-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>Video Studio</a>
-    <a href="voice-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 19v3"/></svg>Voice Studio</a>
-    <a href="prompt-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>Prompt Studio</a>
+      <a href="avatar-studio.html" data-testid="nav-avatar-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Avatar Studio</a>
+    <a class="active" href="character-library.html" data-testid="nav-character-library"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Characters</a>
+    <a href="image-studio.html" data-testid="nav-image-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Image Studio</a>
+    <a href="video-studio.html" data-testid="nav-video-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>Video Studio</a>
+    <a href="voice-studio.html" data-testid="nav-voice-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 19v3"/></svg>Voice Studio</a>
+    <a href="prompt-studio.html" data-testid="nav-prompt-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>Prompt Studio</a>
   </nav>
   <div class="navgroup">Workspace</div>
   <nav class="nav">
-    <a href="gallery.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Gallery</a>
-    <a href="projects.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Projects</a>
-    <a href="library.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Library</a>
-    <a href="account.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/></svg>Account</a>
+    <a href="gallery.html" data-testid="nav-gallery"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Gallery</a>
+    <a href="projects.html" data-testid="nav-projects"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Projects</a>
+    <a href="library.html" data-testid="nav-library"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Library</a>
+    <a href="account.html" data-testid="nav-account"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/></svg>Account</a>
   </nav>
   <div class="sidefoot">
-    <a href="admin-hardware.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudioAdmin</a>
+    <a href="admin-hardware.html" data-testid="link-switch-to-trstudioadmin"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudioAdmin</a>
+    <a href="login.html" data-testid="nav-sign-out"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>Sign out</a>
   </div>
 </aside>
 
-  <div class="main">
-    <header class="top">
+  <div class="main" data-testid="main">
+    <header class="top" data-testid="topbar">
       <span class="crumb">TrStudio</span><span class="crumb">/</span><span class="crumb here">Characters</span>
       <span class="spacer"></span>
-      <span class="badge">7 characters</span>
-      <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
-      <div class="userchip">TR</div>
+      <span class="badge" data-testid="badge-7-characters">7 characters</span>
+      <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode" onclick="/* switches light and dark: page script */" data-testid="icon-btn-toggle-dark-mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
+      <div class="userchip" data-testid="user-chip">TR</div>
     </header>
 
-    <div class="content">
+    <div class="content" data-testid="content">
       <div class="row" style="align-items:flex-start;margin-bottom:16px">
         <div>
           <h1 class="h">Character Library</h1>
@@ -170,9 +171,9 @@ tr.sel td{background:var(--sel)}
         <span class="spacer"></span>
         <div class="searchbox">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-          <input class="input" placeholder="Search characters…">
+          <input class="input" placeholder="Search characters…" data-testid="field-search-characters">
         </div>
-        <button class="btn brand" id="btnNew">
+        <button class="btn brand" id="btnNew" onclick="alert('New Character: done in the built app')" data-testid="btn-new-character">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
           New Character
         </button>
@@ -180,43 +181,43 @@ tr.sel td{background:var(--sel)}
 
       <div class="cardgrid">
         <!-- real cards -->
-        <div class="card charcard">
+        <div class="card charcard" data-testid="card-1">
           <div class="facethumb fA">AM</div>
           <div style="margin-top:10px;font-weight:600">Aarav Mehta</div>
           <div class="muted" style="font-size:12px">seed 48213 · 6 refs</div>
-          <div style="margin-top:6px"><span class="badge ok">Photoreal</span></div>
+          <div style="margin-top:6px"><span class="badge ok" data-testid="badge-photoreal">Photoreal</span></div>
         </div>
-        <div class="card charcard">
+        <div class="card charcard" data-testid="card-2">
           <div class="facethumb fB">PK</div>
           <div style="margin-top:10px;font-weight:600">Priya Kapoor</div>
           <div class="muted" style="font-size:12px">seed 91002 · 8 refs · LoRA</div>
-          <div style="margin-top:6px"><span class="badge ok">Photoreal</span></div>
+          <div style="margin-top:6px"><span class="badge ok" data-testid="badge-photoreal-2">Photoreal</span></div>
         </div>
-        <div class="card charcard">
+        <div class="card charcard" data-testid="card-3">
           <div class="facethumb fC">NL</div>
           <div style="margin-top:10px;font-weight:600">Nova (mascot)</div>
           <div class="muted" style="font-size:12px">seed 33871 · 5 refs</div>
-          <div style="margin-top:6px"><span class="badge warn">Stylized</span></div>
+          <div style="margin-top:6px"><span class="badge warn" data-testid="badge-stylized">Stylized</span></div>
         </div>
-        <div class="card charcard">
+        <div class="card charcard" data-testid="card-4">
           <div class="facethumb fA">DR</div>
           <div style="margin-top:10px;font-weight:600">Dr. Rina Shah</div>
           <div class="muted" style="font-size:12px">seed 11247 · 7 refs</div>
-          <div style="margin-top:6px"><span class="badge ok">Photoreal</span></div>
+          <div style="margin-top:6px"><span class="badge ok" data-testid="badge-photoreal-3">Photoreal</span></div>
         </div>
-        <div class="card charcard">
+        <div class="card charcard" data-testid="card-5">
           <div class="facethumb fB">KS</div>
           <div style="margin-top:10px;font-weight:600">Kabir Singh</div>
           <div class="muted" style="font-size:12px">seed 70559 · 4 refs</div>
-          <div style="margin-top:6px"><span class="badge ok">Photoreal</span></div>
+          <div style="margin-top:6px"><span class="badge ok" data-testid="badge-photoreal-4">Photoreal</span></div>
         </div>
         <!-- loading skeleton cards -->
-        <div class="card charcard">
+        <div class="card charcard" data-testid="card-6">
           <div class="skel" style="aspect-ratio:3/4;height:auto"></div>
           <div class="skel" style="height:14px;margin-top:10px;width:70%"></div>
           <div class="skel" style="height:11px;margin-top:6px;width:50%"></div>
         </div>
-        <div class="card charcard">
+        <div class="card charcard" data-testid="card-7">
           <div class="skel" style="aspect-ratio:3/4;height:auto"></div>
           <div class="skel" style="height:14px;margin-top:10px;width:60%"></div>
           <div class="skel" style="height:11px;margin-top:6px;width:45%"></div>
@@ -224,13 +225,13 @@ tr.sel td{background:var(--sel)}
       </div>
 
       <!-- empty state (shown for a filtered/new project) -->
-      <div class="card emptybox">
+      <div class="card emptybox" data-testid="card-new-character">
         <div class="emptyicon">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
         </div>
         <div style="font-weight:600">No characters in "Diwali Promo" yet</div>
         <div class="muted" style="margin:4px 0 12px">Create an identity-locked character to reuse across every studio.</div>
-        <button class="btn brand" id="btnNew2">Create a character</button>
+        <button class="btn brand" id="btnNew2" onclick="alert('Create a character: done in the built app')" data-testid="btn-create-a-character">Create a character</button>
       </div>
     </div>
   </div>
@@ -242,10 +243,10 @@ tr.sel td{background:var(--sel)}
   <div class="dlghead">
     <h3>New Character</h3>
     <span class="spacer"></span>
-    <button class="btn ghost dlg-close" style="padding:4px 8px" aria-label="Close">✕</button>
+    <button class="btn ghost dlg-close" style="padding:4px 8px" aria-label="Close" onclick="alert('✕: done in the built app')" data-testid="btn-action">✕</button>
   </div>
   <label class="label">Image-gen prompt</label>
-  <textarea rows="3">Indian woman, late 20s, soft studio lighting, natural makeup, warm smile, neutral background, photoreal portrait</textarea>
+  <textarea rows="3" data-testid="field-image-gen-prompt">Indian woman, late 20s, soft studio lighting, natural makeup, warm smile, neutral background, photoreal portrait</textarea>
 
   <label class="label" style="margin-top:12px">Realism</label>
   <div class="row">
@@ -256,34 +257,34 @@ tr.sel td{background:var(--sel)}
   <div class="row" style="margin-top:12px">
     <div style="flex:1">
       <label class="label">Seed lock</label>
-      <input class="input" value="91002">
+      <input class="input" value="91002" data-testid="field-seed-lock">
     </div>
     <div style="flex:1">
       <label class="label">LoRA</label>
-      <select class="select"><option>None</option><option selected>priya_v2.safetensors</option></select>
+      <select class="select" data-testid="field-lora"><option>None</option><option selected>priya_v2.safetensors</option></select>
     </div>
   </div>
 
   <div class="row" style="margin-top:16px">
     <span class="spacer"></span>
-    <button class="btn outline dlg-close">Cancel</button>
-    <button class="btn brand" data-act="Create character">Create character</button>
+    <button class="btn outline dlg-close" onclick="alert('Cancel: done in the built app')" data-testid="btn-cancel">Cancel</button>
+    <button class="btn brand" data-act="Create character" onclick="/* shows Working then Done: page script */" data-testid="btn-create-character">Create character</button>
   </div>
 </div>
 
 <!-- Character bible sheet (opens by clicking a character card) -->
 <div class="sheet" id="sheetBible">
-  <div class="dlghead"><h3>Character Bible</h3><span class="spacer"></span><span class="badge brand">Priya Kapoor</span><button class="btn ghost" id="sheetClose" style="padding:4px 8px;margin-left:8px" aria-label="Close">✕</button></div>
+  <div class="dlghead"><h3>Character Bible</h3><span class="spacer"></span><span class="badge brand" data-testid="badge-priya-kapoor">Priya Kapoor</span><button class="btn ghost" id="sheetClose" style="padding:4px 8px;margin-left:8px" aria-label="Close" onclick="alert('✕: done in the built app')" data-testid="btn-action-2">✕</button></div>
   <div class="muted" style="font-size:12px;margin-bottom:14px">Persona notes (TechieRag / PgVector) used by script-assist.</div>
-  <div class="card" style="margin-bottom:12px">
+  <div class="card" style="margin-bottom:12px" data-testid="card-voice-tone">
     <h3>Voice &amp; tone</h3>
     <div class="muted" style="font-size:13px">Warm, upbeat, conversational Hinglish. Avoids slang. Uses "aap" for respect.</div>
   </div>
-  <div class="card" style="margin-bottom:12px">
+  <div class="card" style="margin-bottom:12px" data-testid="card-wording-rules">
     <h3>Wording rules</h3>
     <div class="muted" style="font-size:13px">Never over-promises. Always ends with a clear single CTA. Keeps sentences under 14 words.</div>
   </div>
-  <div class="card">
+  <div class="card" data-testid="card-reference-embeddings">
     <h3>Reference embeddings</h3>
     <div class="kv muted">8 reference images · 1 LoRA · last indexed 2026-06-21</div>
   </div>

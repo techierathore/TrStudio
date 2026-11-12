@@ -16,7 +16,7 @@ TrStudio is now a **unified role-based app** (ADR-012 / BRD-87): one shared comp
 | `src/TrStudio` | plain .NET web app (Blazor Server) | **Web head** — full app in the browser | `http://localhost:5099` |
 | `src/TrStudio.Desktop` | **MAUI Blazor Hybrid** | **Desktop head** — same UI in a native window | Windows unpackaged exe · Mac Catalyst `.app` |
 
-Because both heads host the same `TrStudioUI` RCL, they are feature-identical — the desktop head is a nicer window around the exact same screens. Both talk to `TrStudioApi` over HTTP (the desktop head defaults to `http://localhost:5102`; override with the `TrStudioApiBaseUrl` environment variable).
+Because both heads host the same `TrStudioUI` RCL, they are feature-identical — the desktop head is a nicer window around the exact same screens. Both talk to `TrStudioApi` over HTTP (the desktop head defaults to `http://localhost:5102`). The desktop head still reads an override from the `TrStudioApiBaseUrl` environment variable; that is an open item, because settings belong in settings files, never environment variables.
 
 **Distribution consequence (per TrSetup guide §1b):**
 - `TrStudioApi` and the `TrStudio` web head are plain .NET → **Option B works**: cross-publish on Windows, copy the folder to the Mac, run — no .NET on the Mac needed.
@@ -66,7 +66,7 @@ xattr -dr com.apple.quarantine TrStudioApi TrStudio     # clear Gatekeeper quara
 open http://localhost:5099
 ```
 
-Set `ASPNETCORE_URLS=http://localhost:5099` (etc.) before launching if a port needs to be explicit. If Gatekeeper still complains, allow once via System Settings → Privacy & Security.
+If a port needs to be explicit, set it in the published `appsettings.json` (`Kestrel:Endpoints:Http:Url`, for example `http://localhost:5099`) or pass `--urls http://localhost:5099`; do not use environment variables. If Gatekeeper still complains, allow once via System Settings → Privacy & Security.
 
 ### Option A — native Mac desktop app (Catalyst, built on the Mac)
 
@@ -90,7 +90,7 @@ TrStudioApiBaseUrl=http://<windows-ip>:5102 open src/TrStudio.Desktop/bin/Releas
 
 **Mix-and-match tip:** the fastest good setup on the Mac is *Option B for the API* (no toolchain needed) + *Option A for the desktop head* (one build once TrSetup has installed the toolchain). Until then, Option B alone gives you everything in the browser.
 
-**Secrets caution (both options):** `appsettings.json` travels inside the publish folders. Keep real keys (RunPod, HeyGen, AppManager) out of the copied files — supply them on the Mac via environment variables (`RunPod__ApiKey=…` style) or a local `appsettings.Production.json` that never leaves the machine.
+**Secrets caution (both options):** `appsettings.json` travels inside the publish folders. Keep real keys (RunPod, HeyGen, AppManager) out of the copied files — supply them on the Mac in a local `appsettings.Production.json` that never leaves the machine (git-ignored), or in user secrets on a development machine. Provider keys (RunPod, HeyGen, aggregator, Venice) entered on Admin — Model & Provider Registry are stored encrypted in the database and need no file at all. Never use environment variables.
 
 ## 4. Mac runtime prerequisites (what TrStudio needs to actually generate)
 
@@ -100,10 +100,10 @@ TrSetup's "app runner" role will install all of these; manual list until then:
 |---|---|---|---|
 | 1 | PostgreSQL 16+ running | `psql --version` / port 5432 | `brew install postgresql@16 && brew services start postgresql@16` |
 | 2 | **PgVector extension** | `CREATE EXTENSION IF NOT EXISTS vector;` succeeds | `brew install pgvector` |
-| 3 | `trstudio` database + user matching the connection string | API starts without DB errors | create DB/user per `TrStudioApi/appsettings.json` (`ConnectionStrings:Default` — override the password via env var rather than editing the copied file) |
+| 3 | `trstudio` database + user matching the connection string | API starts without DB errors | create DB/user per `TrStudioApi/appsettings.json` (`ConnectionStrings:Default` — keep the real password in the local `appsettings.Production.json` or user secrets, not in the copied file) |
 | 4 | ffmpeg on PATH | `ffmpeg -version` | `brew install ffmpeg` |
 | 5 | Isolated Python + **ComfyUI** | Admin → Hardware & readiness shows green | **TrSetup installs the runtime**; model/workflow provisioning then runs inside the app's **admin area guided setup** (`/admin/*`, role-gated) — that part stays in the app |
-| 6 | API keys present (only for the tiers you use) | Admin → Provider config | `RunPod:ApiKey` (High tier), HeyGen key (Premium), AppManager key (identity) — env vars preferred |
+| 6 | API keys present (only for the tiers you use) | Admin → Provider config | `RunPod:ApiKey` (High tier), HeyGen key (Premium), AppManager key (identity) — in user secrets or the local `appsettings.Production.json`; provider keys entered on Admin — Model & Provider Registry are stored encrypted in the database |
 | 7 | Disk space for models | — | ~400 GB free is the BRD reference for a full local library; less is fine for light use |
 
 The Mac **is** the natural TrStudio host (capability detection targets Apple Silicon/MPS) — Fast-tier local generation only works on a machine with MPS, i.e. this Mac, not the Windows box.

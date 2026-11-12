@@ -20,6 +20,7 @@ public static class SpendChannels
         ProviderKind.ComfyUi => SpendChannel.RunPod,
         ProviderKind.ClosedApi => SpendChannel.ClosedApi,
         ProviderKind.HeyGen => SpendChannel.ClosedApi,
+        ProviderKind.Venice => SpendChannel.ClosedApi,
         _ => SpendChannel.Local
     };
 }

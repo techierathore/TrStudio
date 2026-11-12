@@ -1,0 +1,40 @@
+<!-- tf-schema
+doc: phases
+file: docs/TrStudio-Phases.md
+header: App, Kind, Size, Date
+section: Phases | required
+budget: S 300 600 | M 300 600 | L 300 600
+rule: phases-table
+-->
+<!-- Authoring notes (agent only; never visible text).
+     Large projects only. One row per phase; each phase fits Medium on its own (at most 20 screens,
+     100 requirements). Phase 1 keeps the plain file names (docs/TrStudio-BRD.md, -Checklist, -UIDesign,
+     -DevGuide); phase 2 onward are docs/TrStudio-P2-BRD.md and so on. BRD-N and REQ- ids run on across
+     phases and are never reused, so the ranges never overlap. An item added to an earlier phase after a
+     later phase exists takes the next free id and the row gets a second range: "BRD-1 to BRD-73, BRD-111 to BRD-118". Every screen sits in exactly one phase;
+     the screens of a phase are exactly the "### Screen:" entries of that phase's UIDesign.
+     Status is planned, building, done or kept-whole. kept-whole is only for a phase finished before the
+     size cap that the owner chose to keep as one document: its cap and word maximum then WARN, not FAIL. The phase being worked is appPhase in core-config.yaml
+     (bash .tfcore/utils/tf-day1-files.sh TrStudio --phase N); handoff moves it on.
+     tf-doc-check.sh --app TrStudio refuses a screen in two phases, an id in two phases, a BRD id outside
+     its phase's range, and a phase row without its BRD file. -->
+
+# TrStudio — Phases
+
+| | |
+|---|---|
+| App | TrStudio |
+| Kind | app |
+| Size | Large |
+| Date | 2026-11-12 |
+
+## Phases
+
+| Phase | Name | Screens | BRD range | Status |
+|---|---|---|---|---|
+| 1 | Studio and platform (built July 2026) | Register, Login, Forgot password, Setup required (first-run gate), Avatar studio, Character library, Image studio, Voice studio, Video studio, Prompt studio, Gallery, Projects, Comparison, Library, Account & spend, Admin — Hardware & setup, Admin — Model Sources, Admin — Model Library, Admin — Model & Provider Registry, Admin — ComfyUI import & debug, Admin — RunPod & ops, Admin — Content policy (NSFW) | BRD-1 to BRD-92 | kept-whole |
+| 2 | Venice cloud provider | — | BRD-93 to BRD-123 | planned |
+
+Phase 1 is larger than one phase may be (22 screens, 114 checklist rows). It was written and built before the size rule, so it is kept as one document; its size is reported, not refused.
+
+Phase 2 adds no new screen. It adds Venice controls to five phase-1 screens: Admin — Model & Provider Registry, Image studio, Video studio, Projects and Gallery. In their mockups those controls are marked as phase 2, so checking phase 1 does not ask for them.

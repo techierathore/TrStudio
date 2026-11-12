@@ -42,12 +42,13 @@ public sealed class LiveApiFixture : IAsyncLifetime
             UseShellExecute = false
         };
         vStartInfo.ArgumentList.Add(vApiDll);
-        vStartInfo.Environment["ASPNETCORE_URLS"] = BaseAddress;
-        vStartInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "Production";
-        // Enable the local HS256 dev-token fallback so the test's self-signed bearer token is
-        // accepted without a live AppManager (Program.cs: AppManager:AllowDevSymmetricTokens).
-        vStartInfo.Environment["AppManager__AllowDevSymmetricTokens"] = "true";
-        vStartInfo.Environment["AppManager__UseRemoteTokenValidation"] = "false";
+        // Settings go to the API as command-line configuration, never environment variables
+        // (Coding Standards, 2026-11-12). Enable the local HS256 dev-token fallback so the test's
+        // self-signed bearer token is accepted without a live AppManager (AppManager:AllowDevSymmetricTokens).
+        vStartInfo.ArgumentList.Add($"--urls={BaseAddress}");
+        vStartInfo.ArgumentList.Add("--environment=Production");
+        vStartInfo.ArgumentList.Add("--AppManager:AllowDevSymmetricTokens=true");
+        vStartInfo.ArgumentList.Add("--AppManager:UseRemoteTokenValidation=false");
 
         objProcess = new Process { StartInfo = vStartInfo, EnableRaisingEvents = true };
         objProcess.OutputDataReceived += (_, aArgs) => { if (aArgs.Data is not null) { lock (objOutput) { objOutput.AppendLine(aArgs.Data); } } };
@@ -161,7 +162,8 @@ public sealed class LiveApiFixture : IAsyncLifetime
     {
         var vExecutable = OperatingSystem.IsWindows() ? "dotnet.exe" : "dotnet";
 
-        var vRoot = Environment.GetEnvironmentVariable("DOTNET_ROOT");
+        // Host:DotnetRoot from testsettings(.Local).json — never an environment variable (REQ-NFR-014).
+        var vRoot = TestSettings.Get("Host:DotnetRoot");
         if (!string.IsNullOrWhiteSpace(vRoot))
         {
             var vCandidate = Path.Combine(vRoot, vExecutable);
@@ -178,7 +180,7 @@ public sealed class LiveApiFixture : IAsyncLifetime
             return vProcessPath;
         }
 
-        var vHome = Environment.GetEnvironmentVariable("HOME");
+        var vHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         if (!string.IsNullOrWhiteSpace(vHome))
         {
             var vHomeCandidate = Path.Combine(vHome, ".dotnet", vExecutable);

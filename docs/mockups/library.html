@@ -102,95 +102,96 @@ body{margin:0;font-family:var(--sans);background:var(--wash),var(--bg);color:var
 </head>
 <body>
 <div class="app">
-<aside class="side">
+<aside class="side" data-testid="sidebar">
   <div class="brand"><div class="logo">TR</div>TrStudio</div>
   <div class="navgroup">Studios</div>
   <nav class="nav">
-    <a href="avatar-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Avatar Studio</a>
-    <a href="character-library.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Characters</a>
-    <a href="image-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Image Studio</a>
-    <a href="video-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>Video Studio</a>
-    <a href="voice-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 19v3"/></svg>Voice Studio</a>
+    <a href="avatar-studio.html" data-testid="nav-avatar-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Avatar Studio</a>
+    <a href="character-library.html" data-testid="nav-character-library"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Characters</a>
+    <a href="image-studio.html" data-testid="nav-image-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Image Studio</a>
+    <a href="video-studio.html" data-testid="nav-video-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>Video Studio</a>
+    <a href="voice-studio.html" data-testid="nav-voice-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 19v3"/></svg>Voice Studio</a>
   </nav>
   <div class="navgroup">Workspace</div>
   <nav class="nav">
-    <a href="gallery.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Gallery</a>
-    <a href="projects.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Projects</a>
-    <a href="library.html" class="active"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Library</a>
-    <a href="account.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/></svg>Account</a>
+    <a href="gallery.html" data-testid="nav-gallery"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Gallery</a>
+    <a href="projects.html" data-testid="nav-projects"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Projects</a>
+    <a href="library.html" class="active" data-testid="nav-library"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Library</a>
+    <a href="account.html" data-testid="nav-account"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/></svg>Account</a>
   </nav>
   <div class="sidefoot">
-    <a href="admin-hardware.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudioAdmin</a>
+    <a href="admin-hardware.html" data-testid="link-switch-to-trstudioadmin"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudioAdmin</a>
+    <a href="login.html" data-testid="nav-sign-out"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>Sign out</a>
   </div>
 </aside>
-<div class="main">
-<header class="top">
+<div class="main" data-testid="main">
+<header class="top" data-testid="topbar">
   <span class="crumb">TrStudio</span><span class="crumb">/</span><span class="crumb here">Library</span>
   <span class="spacer"></span>
-  <span class="badge ok"><span class="dot ok"></span>$38.40 / $100.00 cap</span>
-  <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
-  <div class="userchip">TR</div>
+  <span class="badge ok" data-testid="badge-status"><span class="dot ok"></span>$38.40 / $100.00 cap</span>
+  <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode" onclick="/* switches light and dark: page script */" data-testid="icon-btn-toggle-dark-mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
+  <div class="userchip" data-testid="user-chip">TR</div>
 </header>
-<div class="content">
+<div class="content" data-testid="content">
   <h1 class="h">Library</h1>
   <p class="sub">Reusable prompts, scripts and style/voice presets — save once from any studio, reuse everywhere. Private to your account.</p>
 
   <!-- Toolbar: search + type tabs + save -->
   <div class="toolbar">
-    <input class="input" placeholder="Search prompts, scripts, presets…">
+    <input class="input" placeholder="Search prompts, scripts, presets…" data-testid="field-search-prompts-scripts-p">
     <div class="seg">
-      <button class="active">All</button><button>Prompts</button><button>Scripts</button><button>Style presets</button><button>Voice presets</button>
+      <button class="active" onclick="/* selects this option: page script */" data-testid="btn-all">All</button><button onclick="/* selects this option: page script */" data-testid="btn-prompts">Prompts</button><button onclick="/* selects this option: page script */" data-testid="btn-scripts">Scripts</button><button onclick="/* selects this option: page script */" data-testid="btn-style-presets">Style presets</button><button onclick="/* selects this option: page script */" data-testid="btn-voice-presets">Voice presets</button>
     </div>
     <span class="spacer"></span>
-    <button class="btn brand"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>New preset</button>
+    <button class="btn brand" onclick="alert('New preset: done in the built app')" data-testid="btn-new-preset"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>New preset</button>
   </div>
 
   <!-- Preset grid -->
   <div class="presets">
-    <div class="card preset">
+    <div class="card preset" data-testid="card-1">
       <div class="head"><span class="typetag prompt">PROMPT</span><div class="t">Kavya portrait — warm festive light</div></div>
       <div class="snippet">"photoreal portrait of a young Indian woman, warm diya light, bokeh marigold garlands, editorial lens, 85mm, soft rim light…"</div>
-      <div class="tags"><span class="badge">portrait</span><span class="badge">diwali</span><span class="badge">SDXL</span></div>
-      <div class="acts"><button class="btn ghost" data-act>Use in Image Studio</button><button class="btn ghost" data-act>Edit</button><span class="usecount">used 14×</span></div>
+      <div class="tags"><span class="badge" data-testid="badge-portrait">portrait</span><span class="badge" data-testid="badge-diwali">diwali</span><span class="badge" data-testid="badge-sdxl">SDXL</span></div>
+      <div class="acts"><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-use-in-image-studio">Use in Image Studio</button><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-edit">Edit</button><span class="usecount">used 14×</span></div>
     </div>
-    <div class="card preset">
+    <div class="card preset" data-testid="card-2">
       <div class="head"><span class="typetag script">SCRIPT</span><div class="t">Diwali greeting — Hindi 30s</div></div>
       <div class="snippet">"Is Diwali, apno ko dijiye mithaas ka tohfa. Hamare haath se bane laddoo aur barfi, ghar tak pahunchenge…" (62 words · HI)</div>
-      <div class="tags"><span class="badge">hindi</span><span class="badge">festival</span><span class="badge">30s</span></div>
-      <div class="acts"><button class="btn ghost" data-act>Use in Avatar Studio</button><button class="btn ghost" data-act>Edit</button><span class="usecount">used 6×</span></div>
+      <div class="tags"><span class="badge" data-testid="badge-hindi">hindi</span><span class="badge" data-testid="badge-festival">festival</span><span class="badge" data-testid="badge-30s">30s</span></div>
+      <div class="acts"><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-use-in-avatar-studio">Use in Avatar Studio</button><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-edit-2">Edit</button><span class="usecount">used 6×</span></div>
     </div>
-    <div class="card preset">
+    <div class="card preset" data-testid="card-3">
       <div class="head"><span class="typetag style">STYLE</span><div class="t">Product reel look — saree line</div></div>
       <div class="snippet">FLUX.1 · guidance 4.5 · steps 28 · 4:5 · film-grain LUT · bg-remove off — the locked look for all catalog shots.</div>
-      <div class="tags"><span class="badge">e-commerce</span><span class="badge">FLUX.1</span><span class="badge">4:5</span></div>
-      <div class="acts"><button class="btn ghost" data-act>Use in Image Studio</button><button class="btn ghost" data-act>Edit</button><span class="usecount">used 22×</span></div>
+      <div class="tags"><span class="badge" data-testid="badge-e-commerce">e-commerce</span><span class="badge" data-testid="badge-flux-1">FLUX.1</span><span class="badge" data-testid="badge-4-5">4:5</span></div>
+      <div class="acts"><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-use-in-image-studio-2">Use in Image Studio</button><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-edit-3">Edit</button><span class="usecount">used 22×</span></div>
     </div>
-    <div class="card preset">
+    <div class="card preset" data-testid="card-4">
       <div class="head"><span class="typetag voice">VOICE</span><div class="t">Ravi — Hindi narrator</div></div>
       <div class="row" style="gap:8px"><span class="wave"><i style="height:8px"></i><i style="height:16px"></i><i style="height:22px"></i><i style="height:12px"></i><i style="height:19px"></i><i style="height:9px"></i><i style="height:15px"></i></span><span class="muted" style="font-size:12px">IndicF5 · warm · speed 1.0</span></div>
-      <div class="tags"><span class="badge">hindi</span><span class="badge brand">preset voice</span><span class="badge ok">no consent needed</span></div>
-      <div class="acts"><button class="btn ghost" data-act>Use in Voice Studio</button><button class="btn ghost" data-act>Edit</button><span class="usecount">used 31×</span></div>
+      <div class="tags"><span class="badge" data-testid="badge-hindi-2">hindi</span><span class="badge brand" data-testid="badge-preset-voice">preset voice</span><span class="badge ok" data-testid="badge-no-consent-needed">no consent needed</span></div>
+      <div class="acts"><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-use-in-voice-studio">Use in Voice Studio</button><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-edit-4">Edit</button><span class="usecount">used 31×</span></div>
     </div>
-    <div class="card preset">
+    <div class="card preset" data-testid="card-5">
       <div class="head"><span class="typetag prompt">PROMPT</span><div class="t">Rangoli poster motif</div></div>
       <div class="snippet">"top-down rangoli mandala, vivid pigment powder, marigold accents, symmetric, festive poster background, negative: text, watermark…"</div>
-      <div class="tags"><span class="badge">poster</span><span class="badge">FLUX.1</span></div>
-      <div class="acts"><button class="btn ghost" data-act>Use in Image Studio</button><button class="btn ghost" data-act>Edit</button><span class="usecount">used 9×</span></div>
+      <div class="tags"><span class="badge" data-testid="badge-poster">poster</span><span class="badge" data-testid="badge-flux-1-2">FLUX.1</span></div>
+      <div class="acts"><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-use-in-image-studio-3">Use in Image Studio</button><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-edit-5">Edit</button><span class="usecount">used 9×</span></div>
     </div>
-    <div class="card preset">
+    <div class="card preset" data-testid="card-6">
       <div class="head"><span class="typetag script">SCRIPT</span><div class="t">Product explainer — EN opener</div></div>
       <div class="snippet">"Meet the easiest way to bring festive sweets home. Handmade, small-batch, and delivered fresh — here's how it works…" (48 words · EN)</div>
-      <div class="tags"><span class="badge">english</span><span class="badge">explainer</span></div>
-      <div class="acts"><button class="btn ghost" data-act>Use in Avatar Studio</button><button class="btn ghost" data-act>Edit</button><span class="usecount">used 4×</span></div>
+      <div class="tags"><span class="badge" data-testid="badge-english">english</span><span class="badge" data-testid="badge-explainer">explainer</span></div>
+      <div class="acts"><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-use-in-avatar-studio-2">Use in Avatar Studio</button><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-edit-6">Edit</button><span class="usecount">used 4×</span></div>
     </div>
   </div>
 
   <!-- Empty state -->
-  <div class="card emptystate">
+  <div class="card emptystate" data-testid="card-no-presets-yet">
     <div class="emptyicon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
     <h3 style="margin:0 0 4px">No presets yet</h3>
     <div class="muted" style="margin-bottom:14px">Save a prompt from any studio composer, a script from the Avatar studio, or a voice/style setup — it lands here for reuse.</div>
-    <a class="btn brand" href="image-studio.html" style="text-decoration:none">Go to Image Studio</a>
+    <a class="btn brand" href="image-studio.html" style="text-decoration:none" data-testid="link-go-to-image-studio">Go to Image Studio</a>
   </div>
 </div>
 </div>

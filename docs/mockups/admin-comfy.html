@@ -117,37 +117,38 @@ tr.sel td{background:var(--sel)}
 </head>
 <body>
 <div class="app">
-<aside class="side">
-  <div class="brand"><div class="logo">TR</div><div>TrStudioAdmin <span class="badge" style="font-size:10px;padding:1px 7px;vertical-align:middle">admin</span></div></div>
+<aside class="side" data-testid="sidebar">
+  <div class="brand"><div class="logo">TR</div><div>TrStudioAdmin <span class="badge" style="font-size:10px;padding:1px 7px;vertical-align:middle" data-testid="badge-admin">admin</span></div></div>
   <div class="navgroup">Environment</div>
   <nav class="nav">
-    <a href="admin-hardware.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M9 2v2M15 20v2M9 20v2M2 15h2M2 9h2M20 15h2M20 9h2"/></svg>Hardware &amp; Setup</a>
-    <a href="admin-ops.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 1 0-.4-8.98 6 6 0 1 0-11.6 2.2A3.5 3.5 0 0 0 6.5 19z"/></svg>RunPod &amp; Ops</a>
+    <a href="admin-hardware.html" data-testid="nav-admin-hardware"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M9 2v2M15 20v2M9 20v2M2 15h2M2 9h2M20 15h2M20 9h2"/></svg>Hardware &amp; Setup</a>
+    <a href="admin-ops.html" data-testid="nav-admin-ops"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 1 0-.4-8.98 6 6 0 1 0-11.6 2.2A3.5 3.5 0 0 0 6.5 19z"/></svg>RunPod &amp; Ops</a>
   </nav>
   <div class="navgroup">Models</div>
   <nav class="nav">
-    <a href="admin-sources.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Model Sources</a>
-    <a href="admin-models.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>Model Library</a>
-    <a href="admin-registry.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>Registry &amp; Providers</a>
-    <a class="active" href="admin-comfy.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>ComfyUI Import</a>
+    <a href="admin-sources.html" data-testid="nav-admin-sources"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Model Sources</a>
+    <a href="admin-models.html" data-testid="nav-admin-models"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>Model Library</a>
+    <a href="admin-registry.html" data-testid="nav-admin-registry"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>Registry &amp; Providers</a>
+    <a class="active" href="admin-comfy.html" data-testid="nav-admin-comfy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>ComfyUI Import</a>
   </nav>
   <div class="navgroup">Governance</div>
   <nav class="nav">
-    <a href="admin-policy.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Content Policy</a>
+    <a href="admin-policy.html" data-testid="nav-admin-policy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Content Policy</a>
   </nav>
   <div class="sidefoot">
-    <a href="avatar-studio.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudio</a>
+    <a href="avatar-studio.html" data-testid="link-switch-to-trstudio"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudio</a>
+    <a href="login.html" data-testid="nav-sign-out"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>Sign out</a>
   </div>
 </aside>
-<div class="main">
-<header class="top">
+<div class="main" data-testid="main">
+<header class="top" data-testid="topbar">
   <span class="crumb">Admin</span><span class="crumb">/</span><span class="crumb here">ComfyUI Import</span>
   <span class="spacer"></span>
-  <span class="badge mono">workflow: sdxl_portrait.api.json</span>
-  <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
-  <div class="userchip">TR</div>
+  <span class="badge mono" data-testid="badge-workflow-sdxl-portrait-a">workflow: sdxl_portrait.api.json</span>
+  <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode" onclick="/* switches light and dark: page script */" data-testid="icon-btn-toggle-dark-mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
+  <div class="userchip" data-testid="user-chip">TR</div>
 </header>
-<div class="content">
+<div class="content" data-testid="content">
   <div>
     <h1 class="h">ComfyUI Import &amp; Debug</h1>
     <p class="sub">Import an API-format workflow, map inputs to registry params, smoke-test, then save as a registry model. The graph stays hidden from end users.</p>
@@ -156,54 +157,54 @@ tr.sel td{background:var(--sel)}
   <div class="work">
     <!-- LEFT: import -->
     <div class="grid">
-      <div class="card">
+      <div class="card" data-testid="card-import-workflow">
         <h3>Import workflow</h3>
         <div class="drop">⬆ Drag &amp; drop <b>workflow_api.json</b><br><span style="font-size:12px">or click to browse</span></div>
         <div class="muted" style="text-align:center;font-size:11.5px;margin:8px 0">— or paste JSON —</div>
-        <textarea rows="8" class="mono">{
+        <textarea rows="8" class="mono" data-testid="field-1">{
   "3": {"class_type":"KSampler", ...},
   "4": {"class_type":"CheckpointLoaderSimple", ...},
   "6": {"class_type":"CLIPTextEncode", ...},
   "10":{"class_type":"FaceDetailer", ...}
 }</textarea>
-        <button class="btn outline" style="width:100%;margin-top:8px;justify-content:center" data-act="Parse">Parse workflow</button>
-        <div class="alert" style="margin-top:10px;font-size:12px">Parsed <b>12 nodes</b> · 4 parameterizable inputs detected.</div>
+        <button class="btn outline" style="width:100%;margin-top:8px;justify-content:center" data-act="Parse" onclick="/* shows Working then Done: page script */" data-testid="btn-parse-workflow">Parse workflow</button>
+        <div class="alert" style="margin-top:10px;font-size:12px" data-testid="alert-info">Parsed <b>12 nodes</b> · 4 parameterizable inputs detected.</div>
       </div>
     </div>
 
     <!-- CENTER: mapping -->
-    <div class="card">
-      <div class="row"><h3 style="margin:0">Input → registry param mapping</h3><span class="spacer"></span><span class="badge brand">4 inputs</span></div>
-      <table style="margin-top:10px">
+    <div class="card" data-testid="card-input-registry-param-mapping">
+      <div class="row"><h3 style="margin:0">Input → registry param mapping</h3><span class="spacer"></span><span class="badge brand" data-testid="badge-4-inputs">4 inputs</span></div>
+      <table style="margin-top:10px" data-testid="table-1">
         <thead><tr><th>node input</th><th>param key</th><th>type</th><th>req</th><th>default</th></tr></thead>
         <tbody>
-          <tr>
+          <tr data-tf-sample>
             <td>6.text<div class="muted" style="font-size:11px">CLIPTextEncode</div></td>
-            <td><input class="input" value="prompt" style="padding:5px 8px"></td>
-            <td><select class="select" style="padding:5px 8px"><option>string</option><option>int</option><option>float</option><option>file</option></select></td>
-            <td><div class="toggle on"></div></td>
-            <td><input class="input" placeholder="—" style="padding:5px 8px"></td>
+            <td><input class="input" value="prompt" style="padding:5px 8px" data-testid="field-2"></td>
+            <td><select class="select" style="padding:5px 8px" data-testid="field-3"><option>string</option><option>int</option><option>float</option><option>file</option></select></td>
+            <td><div class="toggle on" data-testid="switch"></div></td>
+            <td><input class="input" placeholder="—" style="padding:5px 8px" data-testid="field-4"></td>
           </tr>
-          <tr>
+          <tr data-tf-sample>
             <td>3.seed<div class="muted" style="font-size:11px">KSampler</div></td>
-            <td><input class="input" value="seed" style="padding:5px 8px"></td>
-            <td><select class="select" style="padding:5px 8px"><option>int</option><option>string</option></select></td>
-            <td><div class="toggle"></div></td>
-            <td><input class="input" value="-1" style="padding:5px 8px"></td>
+            <td><input class="input" value="seed" style="padding:5px 8px" data-testid="field-5"></td>
+            <td><select class="select" style="padding:5px 8px" data-testid="field-6"><option>int</option><option>string</option></select></td>
+            <td><div class="toggle" data-testid="switch-2"></div></td>
+            <td><input class="input" value="-1" style="padding:5px 8px" data-testid="field-7"></td>
           </tr>
-          <tr>
+          <tr data-tf-sample>
             <td>3.steps<div class="muted" style="font-size:11px">KSampler</div></td>
-            <td><input class="input" value="steps" style="padding:5px 8px"></td>
-            <td><select class="select" style="padding:5px 8px"><option>int</option></select></td>
-            <td><div class="toggle"></div></td>
-            <td><input class="input" value="30" style="padding:5px 8px"></td>
+            <td><input class="input" value="steps" style="padding:5px 8px" data-testid="field-8"></td>
+            <td><select class="select" style="padding:5px 8px" data-testid="field-9"><option>int</option></select></td>
+            <td><div class="toggle" data-testid="switch-3"></div></td>
+            <td><input class="input" value="30" style="padding:5px 8px" data-testid="field-10"></td>
           </tr>
-          <tr>
+          <tr data-tf-sample>
             <td>10.image<div class="muted" style="font-size:11px">FaceDetailer</div></td>
-            <td><input class="input" value="ref_image" style="padding:5px 8px"></td>
-            <td><select class="select" style="padding:5px 8px"><option>file</option><option>string</option></select></td>
-            <td><div class="toggle"></div></td>
-            <td><input class="input" placeholder="—" style="padding:5px 8px"></td>
+            <td><input class="input" value="ref_image" style="padding:5px 8px" data-testid="field-11"></td>
+            <td><select class="select" style="padding:5px 8px" data-testid="field-12"><option>file</option><option>string</option></select></td>
+            <td><div class="toggle" data-testid="switch-4"></div></td>
+            <td><input class="input" placeholder="—" style="padding:5px 8px" data-testid="field-13"></td>
           </tr>
         </tbody>
       </table>
@@ -211,19 +212,19 @@ tr.sel td{background:var(--sel)}
 
     <!-- RIGHT: run/debug -->
     <div class="grid">
-      <div class="card">
-        <div class="row"><h3 style="margin:0">Run / debug</h3><span class="spacer"></span><button class="btn brand">▶ Run</button></div>
-        <div class="prog" style="margin:10px 0"><i style="width:72%"></i></div>
+      <div class="card" data-testid="card-run-debug">
+        <div class="row"><h3 style="margin:0">Run / debug</h3><span class="spacer"></span><button class="btn brand" onclick="alert('▶ Run: done in the built app')" data-testid="btn-run">▶ Run</button></div>
+        <div class="prog" style="margin:10px 0" data-testid="progress"><i style="width:72%"></i></div>
         <div class="muted" style="font-size:11.5px;margin-bottom:8px">Executing node 9 of 12 · live WebSocket preview</div>
         <div class="nstat"><span class="ic ok">✓</span> CheckpointLoaderSimple <span class="spacer muted">0.4s</span></div>
         <div class="nstat"><span class="ic ok">✓</span> CLIPTextEncode (prompt) <span class="spacer muted">0.1s</span></div>
         <div class="nstat"><span class="ic ok">✓</span> KSampler <span class="spacer muted">6.2s</span></div>
         <div class="nstat"><span class="ic run">●</span> VAEDecode <span class="spacer muted">running</span></div>
-        <div class="nstat"><span class="ic err">✕</span> FaceDetailer <span class="spacer" style="color:var(--danger)">missing node</span></div>
+        <div class="nstat"><span class="ic err" data-testid="field-error" data-tf-state="error">✕</span> FaceDetailer <span class="spacer" style="color:var(--danger)">missing node</span></div>
         <div class="nstat"><span class="ic idle">·</span> SaveImage <span class="spacer muted">queued</span></div>
       </div>
 
-      <div class="card">
+      <div class="card" data-testid="card-exact-json-sent">
         <h3>Exact JSON sent</h3>
         <div class="code">POST /prompt
 {
@@ -240,18 +241,18 @@ tr.sel td{background:var(--sel)}
 }</div>
       </div>
 
-      <div class="alert warn">
+      <div class="alert warn" data-testid="alert-warn">
         <b>Missing dependency.</b> Custom node <span class="mono">ComfyUI-Impact-Pack</span> (FaceDetailer) is not installed.
-        <div style="margin-top:8px"><button class="btn brand" data-act="Install">Install node</button></div>
+        <div style="margin-top:8px"><button class="btn brand" data-act="Install" onclick="/* shows Working then Done: page script */" data-testid="btn-install-node">Install node</button></div>
       </div>
 
-      <div class="card">
-        <div class="row"><h3 style="margin:0">Save / version</h3><span class="spacer"></span><span class="badge ok">known-good</span></div>
+      <div class="card" data-testid="card-save-version">
+        <div class="row"><h3 style="margin:0">Save / version</h3><span class="spacer"></span><span class="badge ok" data-testid="badge-known-good">known-good</span></div>
         <div class="col" style="margin-top:8px">
-          <input class="input" placeholder="Model name e.g. sdxl-portrait">
+          <input class="input" placeholder="Model name e.g. sdxl-portrait" data-testid="field-model-name-e-g-sdxl-port">
           <div class="row">
-            <select class="select"><option>v3 (current)</option><option>v2</option><option>v1</option></select>
-            <button class="btn brand" disabled style="opacity:.5;cursor:not-allowed">Save as model</button>
+            <select class="select" data-testid="field-15"><option>v3 (current)</option><option>v2</option><option>v1</option></select>
+            <button class="btn brand" disabled style="opacity:.5;cursor:not-allowed" onclick="alert('Save as model: done in the built app')" data-testid="btn-save-as-model">Save as model</button>
           </div>
           <div class="muted" style="font-size:11.5px">Smoke-test must pass before saving — resolve missing node first.</div>
         </div>

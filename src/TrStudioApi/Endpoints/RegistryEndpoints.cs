@@ -67,8 +67,10 @@ public static class RegistryEndpoints
 
     private static async Task<IResult> ListModelsAsync(IModelCatalogService aCatalog, CancellationToken aCancellationToken)
     {
+        // Phase 2: creator-facing picker rows (provider kind, ability flags, allowed values) — the
+        // provider's own model id never leaves the admin surface.
         var vModels = await aCatalog.ListVisibleAsync(aCancellationToken);
-        return Results.Ok(vModels);
+        return Results.Ok(vModels.Select(CatalogModelMapper.ToResponse).ToList());
     }
 
     private static async Task<IResult> ListTextChatModelsAsync(IModelCatalogService aCatalog, CancellationToken aCancellationToken)
@@ -150,14 +152,36 @@ public static class RegistryEndpoints
         IProviderKeyRepository aRepository,
         CancellationToken aCancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(aRequest.ProviderName) || string.IsNullOrWhiteSpace(aRequest.ApiKey))
+        if (string.IsNullOrWhiteSpace(aRequest.ProviderName))
         {
-            return Results.BadRequest(new { error = "ProviderName and ApiKey are required." });
+            return Results.BadRequest(new { error = "ProviderName is required." });
+        }
+
+        var vBaseUrl = string.IsNullOrWhiteSpace(aRequest.BaseUrl) ? null : aRequest.BaseUrl.Trim();
+        if (vBaseUrl is not null
+            && (!Uri.TryCreate(vBaseUrl, UriKind.Absolute, out var vUri) || (vUri.Scheme != Uri.UriSchemeHttps && vUri.Scheme != Uri.UriSchemeHttp)))
+        {
+            return Results.BadRequest(new { error = "BaseUrl must be an absolute http(s) address." });
+        }
+
+        // The key may be left blank to change only the address or the enabled flag of a stored provider.
+        var vExisting = await aRepository.GetInfoAsync(aRequest.ProviderName, aCancellationToken);
+        if (string.IsNullOrWhiteSpace(aRequest.ApiKey) && vExisting is null)
+        {
+            return Results.BadRequest(new { error = "ApiKey is required the first time a provider is saved." });
         }
 
         // Write-only: the raw key goes into the AES-GCM key store and is never echoed back.
-        await aKeyStore.StoreAsync(aRequest.ProviderName, aRequest.ApiKey, aCancellationToken);
+        if (!string.IsNullOrWhiteSpace(aRequest.ApiKey))
+        {
+            await aKeyStore.StoreAsync(aRequest.ProviderName, aRequest.ApiKey, aCancellationToken);
+        }
+
         await aRepository.SetEnabledAsync(aRequest.ProviderName, aRequest.IsEnabled, aCancellationToken);
+        if (vBaseUrl is not null || aRequest.BaseUrl is not null)
+        {
+            await aRepository.SetBaseUrlAsync(aRequest.ProviderName, vBaseUrl, aCancellationToken);
+        }
 
         var vMasked = (await aKeyStore.ListMaskedAsync(aCancellationToken))
             .FirstOrDefault(aInfo => aInfo.ProviderName == aRequest.ProviderName);

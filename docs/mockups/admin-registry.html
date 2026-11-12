@@ -111,38 +111,39 @@ tr.sel td{background:var(--sel)}
 </head>
 <body>
 <div class="app">
-<aside class="side">
-  <div class="brand"><div class="logo">TR</div><div>TrStudioAdmin <span class="badge" style="font-size:10px;padding:1px 7px;vertical-align:middle">admin</span></div></div>
+<aside class="side" data-testid="sidebar">
+  <div class="brand"><div class="logo">TR</div><div>TrStudioAdmin <span class="badge" style="font-size:10px;padding:1px 7px;vertical-align:middle" data-testid="badge-admin">admin</span></div></div>
   <div class="navgroup">Environment</div>
   <nav class="nav">
-    <a href="admin-hardware.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M9 2v2M15 20v2M9 20v2M2 15h2M2 9h2M20 15h2M20 9h2"/></svg>Hardware &amp; Setup</a>
-    <a href="admin-ops.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 1 0-.4-8.98 6 6 0 1 0-11.6 2.2A3.5 3.5 0 0 0 6.5 19z"/></svg>RunPod &amp; Ops</a>
+    <a href="admin-hardware.html" data-testid="nav-admin-hardware"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M9 2v2M15 20v2M9 20v2M2 15h2M2 9h2M20 15h2M20 9h2"/></svg>Hardware &amp; Setup</a>
+    <a href="admin-ops.html" data-testid="nav-admin-ops"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 1 0-.4-8.98 6 6 0 1 0-11.6 2.2A3.5 3.5 0 0 0 6.5 19z"/></svg>RunPod &amp; Ops</a>
   </nav>
   <div class="navgroup">Models</div>
   <nav class="nav">
-    <a href="admin-sources.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Model Sources</a>
-    <a href="admin-models.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>Model Library</a>
-    <a class="active" href="admin-registry.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>Registry &amp; Providers</a>
-    <a href="admin-comfy.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>ComfyUI Import</a>
+    <a href="admin-sources.html" data-testid="nav-admin-sources"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Model Sources</a>
+    <a href="admin-models.html" data-testid="nav-admin-models"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>Model Library</a>
+    <a class="active" href="admin-registry.html" data-testid="nav-admin-registry"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>Registry &amp; Providers</a>
+    <a href="admin-comfy.html" data-testid="nav-admin-comfy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>ComfyUI Import</a>
   </nav>
   <div class="navgroup">Governance</div>
   <nav class="nav">
-    <a href="admin-policy.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Content Policy</a>
+    <a href="admin-policy.html" data-testid="nav-admin-policy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Content Policy</a>
   </nav>
   <div class="sidefoot">
-    <a href="avatar-studio.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudio</a>
+    <a href="avatar-studio.html" data-testid="link-switch-to-trstudio"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudio</a>
+    <a href="login.html" data-testid="nav-sign-out"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>Sign out</a>
   </div>
 </aside>
-<div class="main">
-<header class="top">
+<div class="main" data-testid="main">
+<header class="top" data-testid="topbar">
   <span class="crumb">Admin</span><span class="crumb">/</span><span class="crumb here">Registry &amp; Providers</span>
   <span class="spacer"></span>
-  <input class="input" style="max-width:220px" placeholder="Search registry…">
-  <button class="btn brand">+ Add model</button>
-  <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
-  <div class="userchip">TR</div>
+  <input class="input" style="max-width:220px" placeholder="Search registry…" data-testid="field-search-registry">
+  <button class="btn brand" onclick="alert('+ Add model: done in the built app')" data-testid="btn-add-model">+ Add model</button>
+  <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode" onclick="/* switches light and dark: page script */" data-testid="icon-btn-toggle-dark-mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
+  <div class="userchip" data-testid="user-chip">TR</div>
 </header>
-<div class="content">
+<div class="content" data-testid="content">
   <div>
     <h1 class="h">Registry &amp; Providers</h1>
     <p class="sub">Declarative model rows. The params schema here auto-renders TrStudio's controls — no code change.</p>
@@ -150,33 +151,41 @@ tr.sel td{background:var(--sel)}
 
   <div class="layout">
     <!-- Registry table -->
-    <div class="card" style="padding:0;overflow:hidden">
-      <table>
+    <div class="card" style="padding:0;overflow:hidden" data-testid="card-1">
+      <table data-testid="table-1">
         <thead><tr><th>id</th><th>name</th><th>task</th><th>provider</th><th>tier</th><th>license</th><th>safety</th></tr></thead>
         <tbody>
-          <tr class="sel">
+          <tr class="sel" data-tf-sample>
             <td class="muted">musetalk-v1</td><td><b>MuseTalk</b><div class="muted" style="font-size:11px">lip-sync</div></td>
-            <td>avatar</td><td>local (Mac)</td><td><span class="badge ok">fast</span></td><td>MIT</td><td><span class="badge">general</span></td>
+            <td>avatar</td><td>local (Mac)</td><td><span class="badge ok" data-testid="badge-fast">fast</span></td><td>MIT</td><td><span class="badge" data-testid="badge-general">general</span></td>
           </tr>
-          <tr>
+          <tr data-tf-sample>
             <td class="muted">sdxl-1.0</td><td><b>SDXL</b><div class="muted" style="font-size:11px">image base+refiner</div></td>
-            <td>image</td><td>RunPod</td><td><span class="badge brand">high</span></td><td>OpenRAIL++</td><td><span class="badge warn">restricted</span></td>
+            <td>image</td><td>RunPod</td><td><span class="badge brand" data-testid="badge-high">high</span></td><td>OpenRAIL++</td><td><span class="badge warn" data-testid="badge-restricted">restricted</span></td>
           </tr>
-          <tr>
+          <tr data-tf-sample>
             <td class="muted">hunyuan-avatar</td><td><b>Hunyuan-Avatar</b><div class="muted" style="font-size:11px">talking head</div></td>
-            <td>video</td><td>RunPod</td><td><span class="badge brand">high</span></td><td>Tencent Comm.</td><td><span class="badge warn">restricted</span></td>
+            <td>video</td><td>RunPod</td><td><span class="badge brand" data-testid="badge-high-2">high</span></td><td>Tencent Comm.</td><td><span class="badge warn" data-testid="badge-restricted-2">restricted</span></td>
           </tr>
-          <tr>
+          <tr data-tf-sample>
             <td class="muted">heygen-avatar-iv</td><td><b>HeyGen Avatar IV</b><div class="muted" style="font-size:11px">premium avatar</div></td>
-            <td>video</td><td>HeyGen</td><td><span class="badge primary">premium</span></td><td>Commercial API</td><td><span class="badge warn">gated</span></td>
+            <td>video</td><td>HeyGen</td><td><span class="badge primary" data-testid="badge-premium">premium</span></td><td>Commercial API</td><td><span class="badge warn" data-testid="badge-gated">gated</span></td>
           </tr>
-          <tr>
+          <tr data-tf-sample>
             <td class="muted">flux-pro-fal</td><td><b>FLUX.1 [pro]</b><div class="muted" style="font-size:11px">image premium</div></td>
-            <td>image</td><td>fal.ai</td><td><span class="badge primary">premium</span></td><td>Commercial API</td><td><span class="badge">general</span></td>
+            <td>image</td><td>fal.ai</td><td><span class="badge primary" data-testid="badge-premium-2">premium</span></td><td>Commercial API</td><td><span class="badge" data-testid="badge-general-2">general</span></td>
           </tr>
-          <tr>
+          <tr data-tf-sample>
             <td class="muted">xtts-v2</td><td><b>XTTS v2</b><div class="muted" style="font-size:11px">voice clone</div></td>
-            <td>voice</td><td>local (Mac)</td><td><span class="badge ok">fast</span></td><td>Coqui CPML</td><td><span class="badge warn">consent</span></td>
+            <td>voice</td><td>local (Mac)</td><td><span class="badge ok" data-testid="badge-fast-2">fast</span></td><td>Coqui CPML</td><td><span class="badge warn" data-testid="badge-consent">consent</span></td>
+          </tr>
+          <tr data-tf-sample data-tf-phase="2">
+            <td class="muted">venice-z-image-turbo</td><td><b>Z-Image Turbo</b><div class="muted" style="font-size:11px">z-image-turbo · text to image</div></td>
+            <td>image</td><td><span class="badge brand" data-testid="badge-venice">Venice</span></td><td><span class="badge primary" data-testid="badge-premium-venice">premium</span></td><td>Venice terms</td><td><span class="badge" data-testid="badge-general-venice">general</span></td>
+          </tr>
+          <tr data-tf-sample data-tf-phase="2">
+            <td class="muted">venice-kling-v4-r2v</td><td><b>Kling 4.0 reference</b><div class="muted" style="font-size:11px">kling-v4-reference-to-video · fixed character</div></td>
+            <td>video</td><td><span class="badge brand" data-testid="badge-venice-2">Venice</span></td><td><span class="badge primary" data-testid="badge-premium-venice-2">premium</span></td><td>Venice terms</td><td><span class="badge" data-testid="badge-general-venice-2">general</span></td>
           </tr>
         </tbody>
       </table>
@@ -184,64 +193,82 @@ tr.sel td{background:var(--sel)}
 
     <!-- Edit panel + provider keys -->
     <div class="grid">
-      <div class="card">
-        <div class="row"><h3 style="margin:0">Edit model</h3><span class="spacer"></span><span class="badge brand">musetalk-v1</span></div>
+      <div class="card" data-testid="card-edit-model">
+        <div class="row"><h3 style="margin:0">Edit model</h3><span class="spacer"></span><span class="badge brand" data-testid="badge-musetalk-v1">musetalk-v1</span></div>
         <div class="col" style="margin-top:10px">
-          <div><label class="label">Display name</label><input class="input" value="MuseTalk"></div>
+          <div><label class="label">Display name</label><input class="input" value="MuseTalk" data-testid="field-display-name"></div>
           <div class="row">
             <div style="flex:1"><label class="label">Task</label>
-              <select class="select"><option>avatar</option><option>image</option><option>video</option><option>voice</option></select></div>
+              <select class="select" data-testid="field-task"><option>avatar</option><option>image</option><option>video</option><option>voice</option></select></div>
             <div style="flex:1"><label class="label">Tier</label>
-              <select class="select"><option>fast</option><option>high</option><option>premium</option></select></div>
+              <select class="select" data-testid="field-tier"><option>fast</option><option>high</option><option>premium</option></select></div>
+          </div>
+          <div class="row" data-tf-phase="2" data-testid="venice-model-fields">
+            <div style="flex:1"><label class="label">Provider</label>
+              <select class="select" data-testid="field-provider"><option>local (Mac)</option><option>ComfyUI</option><option>RunPod</option><option>HeyGen</option><option>fal.ai</option><option>Venice</option></select></div>
+            <div style="flex:1"><label class="label">Provider model id</label><div class="row" style="gap:6px"><input class="input" placeholder="e.g. z-image-turbo" data-testid="field-provider-model-id"><button class="btn outline" style="padding:4px 10px;white-space:nowrap" onclick="alert('Fill from Venice: reads Venice\'s model list and fills task, abilities, durations and sizes; check them, then Save')" data-testid="btn-fill-from-venice">Fill from Venice</button></div></div>
+          </div>
+          <div class="row" data-tf-phase="2" data-testid="model-abilities">
+            <label class="row" style="gap:6px;font-size:13px"><input type="checkbox" data-testid="field-takes-reference-picture"> Takes a reference picture</label>
+            <label class="row" style="gap:6px;font-size:13px"><input type="checkbox" data-testid="field-keeps-fixed-character"> Keeps a fixed character</label>
           </div>
         </div>
 
         <div style="margin-top:14px">
-          <div class="row"><label class="label" style="margin:0">Params schema</label><span class="spacer"></span><button class="btn ghost" style="padding:4px 8px">+ row</button></div>
+          <div class="row"><label class="label" style="margin:0">Params schema</label><span class="spacer"></span><button class="btn ghost" style="padding:4px 8px" onclick="alert('+ row: done in the built app')" data-testid="btn-row">+ row</button></div>
           <div class="pgrid" style="margin-top:8px">
             <div class="hd">key</div><div class="hd">type</div><div class="hd">req</div><div class="hd">default</div><div></div>
-            <input class="input" value="audio" style="padding:5px 8px">
-            <select class="select" style="padding:5px 8px"><option>file</option><option>string</option><option>int</option><option>bool</option></select>
-            <div class="toggle on"></div>
-            <input class="input" placeholder="—" style="padding:5px 8px">
+            <input class="input" value="audio" style="padding:5px 8px" data-testid="field-params-schema">
+            <select class="select" style="padding:5px 8px" data-testid="field-6"><option>file</option><option>string</option><option>int</option><option>bool</option></select>
+            <div class="toggle on" data-testid="switch"></div>
+            <input class="input" placeholder="—" style="padding:5px 8px" data-testid="field-7">
             <span class="del">✕</span>
 
-            <input class="input" value="bbox_shift" style="padding:5px 8px">
-            <select class="select" style="padding:5px 8px"><option>int</option><option>float</option><option>string</option></select>
-            <div class="toggle"></div>
-            <input class="input" value="0" style="padding:5px 8px">
+            <input class="input" value="bbox_shift" style="padding:5px 8px" data-testid="field-8">
+            <select class="select" style="padding:5px 8px" data-testid="field-9"><option>int</option><option>float</option><option>string</option></select>
+            <div class="toggle" data-testid="switch-2"></div>
+            <input class="input" value="0" style="padding:5px 8px" data-testid="field-10">
             <span class="del">✕</span>
 
-            <input class="input" value="fps" style="padding:5px 8px">
-            <select class="select" style="padding:5px 8px"><option>int</option><option>float</option></select>
-            <div class="toggle"></div>
-            <input class="input" value="25" style="padding:5px 8px">
+            <input class="input" value="fps" style="padding:5px 8px" data-testid="field-11">
+            <select class="select" style="padding:5px 8px" data-testid="field-12"><option>int</option><option>float</option></select>
+            <div class="toggle" data-testid="switch-3"></div>
+            <input class="input" value="25" style="padding:5px 8px" data-testid="field-13">
             <span class="del">✕</span>
 
-            <input class="input" value="hd_mode" style="padding:5px 8px;border-color:var(--danger);outline:1px solid var(--danger)">
-            <select class="select" style="padding:5px 8px"><option>bool</option></select>
-            <div class="toggle"></div>
-            <input class="input" placeholder="—" style="padding:5px 8px;border-color:var(--danger)">
+            <input class="input" value="hd_mode" style="padding:5px 8px;border-color:var(--danger);outline:1px solid var(--danger)" data-testid="field-14">
+            <select class="select" style="padding:5px 8px" data-testid="field-15"><option>bool</option></select>
+            <div class="toggle" data-testid="switch-4"></div>
+            <input class="input" placeholder="—" style="padding:5px 8px;border-color:var(--danger)" data-testid="field-16">
             <span class="del">✕</span>
           </div>
-          <div class="err">⚠ "hd_mode" — bool params need a default value.</div>
+          <div class="err" data-testid="field-error" data-tf-state="error">⚠ "hd_mode" — bool params need a default value.</div>
         </div>
-        <div class="row" style="margin-top:14px"><button class="btn brand">Save</button><button class="btn outline">Cancel</button></div>
+        <div class="row" style="margin-top:14px"><button class="btn brand" onclick="alert('Save: done in the built app')" data-testid="btn-save">Save</button><button class="btn outline" onclick="alert('Cancel: done in the built app')" data-testid="btn-cancel">Cancel</button></div>
       </div>
 
-      <div class="card">
+      <div class="card" data-testid="card-provider-keys">
         <h3>Provider keys</h3>
         <p class="muted" style="font-size:12px;margin:0 0 10px">Encrypted at rest · never logged.</p>
         <div class="col">
           <div>
-            <div class="row"><label class="label" style="margin:0">HeyGen</label><span class="spacer"></span><span class="muted" style="font-size:11px">enabled</span><div class="toggle on"></div></div>
-            <input class="input" type="password" value="hg_live_8f2c9a1b4d" style="margin-top:6px">
+            <div class="row"><label class="label" style="margin:0">HeyGen</label><span class="spacer"></span><span class="muted" style="font-size:11px">enabled</span><div class="toggle on" data-testid="switch-5"></div></div>
+            <input class="input" type="password" value="hg_live_8f2c9a1b4d" style="margin-top:6px" data-testid="field-heygen">
           </div>
           <div>
-            <div class="row"><label class="label" style="margin:0">fal.ai</label><span class="spacer"></span><span class="muted" style="font-size:11px">enabled</span><div class="toggle on"></div></div>
-            <input class="input" type="password" value="fal_key_3e7d2c0a9f" style="margin-top:6px">
+            <div class="row"><label class="label" style="margin:0">fal.ai</label><span class="spacer"></span><span class="muted" style="font-size:11px">enabled</span><div class="toggle on" data-testid="switch-6"></div></div>
+            <input class="input" type="password" value="fal_key_3e7d2c0a9f" style="margin-top:6px" data-testid="field-fal-ai">
           </div>
-          <div class="alert" style="margin-top:4px;font-size:12px">Keys are write-only — saved values are masked and cannot be read back.</div>
+          <div data-tf-phase="2" data-testid="provider-venice">
+            <div class="row"><label class="label" style="margin:0">Venice</label><span class="badge brand" style="margin-left:6px" data-testid="badge-cloud-venice">Cloud</span><span class="spacer"></span><span class="muted" style="font-size:11px">enabled</span><div class="toggle on" data-testid="switch-venice"></div></div>
+            <label class="label" style="margin-top:6px">Address</label>
+            <input class="input" value="https://api.venice.ai/api/v1" data-testid="field-venice-address">
+            <label class="label" style="margin-top:6px">API key</label>
+            <input class="input" type="password" value="••••••••••••3f9a" data-testid="field-venice-key">
+            <div class="row" style="margin-top:8px"><button class="btn outline" style="padding:4px 10px" onclick="alert('Test connection: asks Venice for its model list with this key and shows Connected or Venice\'s own error text')" data-testid="btn-test-connection">Test connection</button><span class="badge ok" data-testid="badge-connected">Connected</span></div>
+            <div class="err" style="margin-top:6px" data-testid="venice-error" data-tf-state="error">Venice said: Authentication failed (AUTHENTICATION_FAILED)</div>
+          </div>
+          <div class="alert" style="margin-top:4px;font-size:12px" data-testid="alert-info">Keys are write-only — saved values are masked and cannot be read back.</div>
         </div>
       </div>
     </div>

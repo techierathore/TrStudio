@@ -35,7 +35,7 @@ public static class DesktopDevSession
 
     /// <summary>
     /// The client-side route the root initializer navigates to once, after the DEBUG dev session has
-    /// been pre-seeded at startup (role landing, or a <c>TrStudioDevStartPath</c> deep link). Null
+    /// been pre-seeded at startup (role landing, or a <c>Desktop:DevStartPath</c> deep link). Null
     /// when no dev role was requested.
     /// </summary>
     public static string? RequestedNavPath { get; set; }

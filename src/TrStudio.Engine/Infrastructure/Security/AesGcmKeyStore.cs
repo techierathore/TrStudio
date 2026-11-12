@@ -72,7 +72,8 @@ public class AesGcmKeyStore : IKeyStore
             {
                 ProviderName = vRow.ProviderName,
                 IsEnabled = vRow.IsEnabled,
-                MaskedKey = vMask
+                MaskedKey = vMask,
+                BaseUrl = vRow.BaseUrl
             });
         }
 

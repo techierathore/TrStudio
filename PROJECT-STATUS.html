@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TrStudio — Status (PROJECT-STATUS)</title>
+<title>TrStudio — Status</title>
 <script>
 /* Resolve the theme BEFORE first paint (no flash). Saved choice wins; otherwise
    pick by time of day — light 07:00–19:00 local, softened dark at night. */
@@ -102,28 +102,39 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </style>
 </head>
 <body>
-<button id="themeToggle" class="theme-toggle" title="Toggle light / dark">☾ Dark</button>
+<button id="themeToggle" class="theme-toggle" title="Toggle light / dark">&#9790; Dark</button>
 <div class="layout">
   <nav class="side">
     <h1>TrStudio — Status</h1>
-    <div class="sub">Last updated: 2026-07-12 · Phase: Handoff</div>
+    <div class="sub">Last rendered: 2026-11-12</div>
     <div class="group">Contents</div>
     <ol>
-      <li><a href="#where-i-am">Where I am</a></li>
-      <li><a href="#next-command-to-run">Next command to run</a></li>
-      <li><a href="#open-requirements">Open requirements</a></li>
-      <li><a href="#known-blockers">Known blockers</a></li>
-      <li><a href="#verification-log">Verification log</a></li>
-      <li><a href="#library-feedback-summary">Library feedback summary</a></li>
-      <li><a href="#standards-compliance-last-verifier-check">Standards compliance</a></li>
-      <li><a href="#deferred-future">Deferred / future</a></li>
-      <li><a href="#recovery-note-2026-07-06">Recovery note (2026-07-06)</a></li>
+        <li><a href="#where-i-am">Where I am</a></li>
+        <li><a href="#next-command-to-run">Next command to run</a></li>
+        <li><a href="#open-requirements">Open requirements</a></li>
+        <li><a href="#known-blockers">Known blockers</a></li>
+        <li><a href="#verification-log">Verification log</a></li>
+        <li><a href="#library-feedback-summary">Library feedback summary</a></li>
+        <li><a href="#standards-compliance">Standards compliance</a></li>
+        <li><a href="#deferred-future">Deferred / future</a></li>
     </ol>
   </nav>
   <main>
     <h1>TrStudio — Status</h1>
-    <div class="subtitle">PROJECT-STATUS — rendered 2026-07-12</div>
-
+    <div class="subtitle">Rendered 2026-11-12 &middot; source <code>PROJECT-STATUS.md</code></div>
+    <div class="cta-next" style="padding:20px; background:var(--cta-bg); border:2px solid var(--accent); border-radius:10px; margin:20px 0;">
+      <div style="font-size:11px; color:var(--muted); letter-spacing:.5px;">NEXT COMMAND TO RUN</div>
+      <div style="font-family:var(--mono); font-size:18px; margin-top:6px;">/TechieFlow:agents:flow-master *build-phase TrStudio</div>
+    </div>
+<table>
+<tbody>
+<tr><th>project</th><td>TrStudio</td></tr>
+<tr><th>last_updated</th><td>2026-11-12</td></tr>
+<tr><th>current_phase</th><td>Build — Phase 2 of 2 (Venice cloud provider), 31 rows built, 14 Implemented, 17 awaiting their screen check, 0 verified</td></tr>
+<tr><th>last_verified_build</th><td>not-run</td></tr>
+<tr><th>last_verified_date</th><td>never</td></tr>
+</tbody>
+</table>
     <div class="toc-inline">
       <div>Contents</div>
       <ol>
@@ -133,122 +144,89 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
         <li><a href="#known-blockers">Known blockers</a></li>
         <li><a href="#verification-log">Verification log</a></li>
         <li><a href="#library-feedback-summary">Library feedback summary</a></li>
-        <li><a href="#standards-compliance-last-verifier-check">Standards compliance (last verifier check)</a></li>
+        <li><a href="#standards-compliance">Standards compliance</a></li>
         <li><a href="#deferred-future">Deferred / future</a></li>
-        <li><a href="#recovery-note-2026-07-06">Recovery note (2026-07-06)</a></li>
       </ol>
     </div>
-
-    <table>
-      <tbody>
-        <tr><th>project</th><td>TrStudio</td></tr>
-        <tr><th>stack</th><td>.NET 10 / Blazor Web + MAUI Blazor Hybrid / TrBlazeUI / TechieRag / PostgreSQL+PgVector / Dapper + DbUp / Hangfire / AppManager (external identity)</td></tr>
-        <tr><th>last_updated</th><td>2026-07-12</td></tr>
-        <tr><th>current_phase</th><td>Handoff — all P1–P10 built + verified; handoff docs finalized (UsageGuide + DevGuide incl. Prompt Studio); awaiting manual UAT (owner sets Released after UAT)</td></tr>
-        <tr><th>last_verified_build</th><td>PASS</td></tr>
-        <tr><th>last_verified_date</th><td>2026-07-07</td></tr>
-        <tr><th>last_test_run</th><td>260 tests PASS — re-run on the Mac 2026-07-12 (unit suite, fresh Mac build; previous live run 2026-07-07)</td></tr>
-      </tbody>
-    </table>
-
-    <h2 id="where-i-am">Where I am<a class="anchor-link" href="#where-i-am">#</a></h2>
-
-    <p><strong>Handoff.</strong> All 9 build phases (P1–P9) are built and consolidated into ONE role-based <code>TrStudio</code> app (BRD-86 / ADR-012 supersedes ADR-001) on the shared <code>TrStudioUI</code> RCL, with MAUI Blazor Hybrid desktop heads (BRD-87 — Windows head run-verified via FlaUI; Mac Catalyst build-verified only, no Mac in env). Handoff docs (UsageGuide + split DevGuide, 2 roles / 22 screens / 31 screenshots) are done. <strong><code>*verify all</code> ran live 2026-07-06</strong> (API :5102 + web :5099 on the real stack; 231/231 tests; live API smoke of the whole functional surface; Playwright render+visual sweep of 23 screens across 3 roles via <code>/dev/session</code>): backend + safety + role-gating all re-confirmed live, but the §4b visual-truth gate caught <strong>4 screens that clipped off the right edge at 390px mobile width</strong>. <strong><code>*fix-issues</code> (2026-07-07) fixed all 4</strong> — page-scoped <code>@media(≤430px)</code> single-column collapse + header wrapping + a systemic shell fix (the SidebarInset content column + <code>.table-scroll</code> now carry <code>min-width:0</code>, so wide content scrolls internally instead of inflating the layout). Re-smoked live @390px: Character/Library <code>documentElement.scrollWidth==390</code>; Account/Sources all controls render &amp; fit (no page scrollbar) with their wide DataTable scrolling internally (minor TrBlazeUI trait TR-010). All 4 → <code>Verified</code> (UI-060 upgraded Implemented→Verified — live data render + visual now both confirmed). Remaining Implemented/PARTIAL/Blocked items are model / API-key / published-app gated (degrade cleanly), not code defects.</p>
-
-    <p><strong>Phase 10 — Prompt Studio (F-PROMPT, BRD-88..92) BUILT + VERIFIED live 2026-07-07</strong> via <code>*build-phase</code> (contract-first: orchestrator froze the shared seam — <code>GenerationTaskType.TextChat</code>, <code>ProviderKind.TextLlm</code>, <code>RegistryModel.{Endpoint,ChatModel,VisionCapable}</code>, <code>IPromptChatService</code> + DTOs — then fanned 3 backend clusters in parallel + a UI cluster). A <code>/prompt-studio</code> chat screen crafts generation prompts via a registry-configured text LLM (TechieRag <strong>direct chat-completion, no RAG</strong> — ADR-013), with a registry-driven <code>text-chat</code> LLM picker, vision-gated image attach (BRD-90), per-user sessions (BRD-81), token accrual to <code>SpendChannel.LlmText</code> (BRD-56), and copy / save-to-library / send-to-studio prompt-use actions. <strong>Live smoke (API :5102 + web :5099, dev-session tokens):</strong> <code>/models/text-chat</code> returns the 2 seeded rows &amp; <code>/models</code> excludes them; text-chat job submit → 400 reject; session CRUD + message→reply persist; <strong>cross-user isolation → 404</strong>; delete cascades; chat degrades cleanly to synthetic (no LLM configured, expected); <strong>vision gate: text-only+image → 400</strong>; token usage accrued live (<code>/rag/usage</code> 70 tok/$0.00014); Playwright: <code>/prompt-studio</code> renders the picker+vision-badge+rail, <strong>@390 scrollWidth==390</strong> (no overflow), matches the mockup. Standards greps clean. New: DbUp <code>0201</code>/<code>0620</code>/<code>1400</code>, <code>PromptChatService</code>/<code>PromptChatRepository</code>/<code>PromptChatEndpoints</code>, admin <code>/admin/registry</code> text-chat editor, <code>PromptStudio.razor</code>. TechieRag vision-seam gap <code>TR-RAG-001</code> logged (no image API at 1.0.5 — best-effort OpenAI-compatible HTTP fallback + clean degrade). Across 114 tracked REQs (updated 2026-07-07 after the live AppManager re-verify): <strong>82 Verified / 17 Implemented / 4 PARTIAL / 0 Blocked / 0 Needs re-verify / 0 FAIL</strong> (+11 Not-Started deferred-Could / cross-cutting NFR). Build green (<code>dotnet build TrStudio.slnx</code> 0 err, rung #4, incl. MAUI head; 1 pre-existing nullable warning in CharacterBibleService, not Phase-10); <strong>260 unit tests PASS</strong> (+29). Ready for <strong>UAT</strong> with Prompt Studio live.</p>
-
-    <p><strong>AppManager identity now live (2026-07-07):</strong> the owner fixed AppManager's <code>/keys</code> RSA-key permission fault + restarted, and the real auth path was re-verified end-to-end — login/<code>me</code>/license/register all 200 (Owner <code>admin@appmanager.local</code> role 0; registered test creator <code>creator@trstudio.test</code> role 1). <strong>REQ-FN-012/013/015 + FN-016 → Verified</strong> (the 3 Blocked items are cleared). Only remaining external item: assign a Premium license in AppManager to finish FN-014 Premium tier-gating.</p>
-
-    <h2 id="next-command-to-run">Next command to run<a class="anchor-link" href="#next-command-to-run">#</a></h2>
-
-    <pre><code>Retry manual UAT per docs/TrStudio-UsageGuide.md smoke checklist (all 2026-07-12 fix-issues defects fixed + re-verified). Follow-up: *fix-issues for the Projects live-refresh minor; *devguide TrStudio --update for the changed screens.</code></pre>
-
-    <p>Handoff is complete — all buildable REQs (incl. Phase 10 Prompt Studio) are built + verified; handoff docs are finalized (UsageGuide test-plan incl. Prompt Studio, DevGuide 16-Creator-screen map incl. <code>/prompt-studio</code>, both library-feedback files consolidated). The only non-Verified rows are external-dependency-gated (Blocked/PARTIAL/Implemented — all degrade cleanly) or deferred-Could/cross-cutting NFR — nothing left to build. <strong>After UAT passes, manually set <code>current_phase: Released</code>.</strong> To lift the 3 Blocked: publish AppManager app 4, then <code>/TechieFlow:agents:verifier *verify FN-012,FN-013,FN-014,FN-015,FN-016</code>. To light up RAG-005's live LLM path: set <code>TechieRag:Llm:Source</code> (+ endpoint/key) or add a real key to a <code>/admin/registry</code> text-chat row. For an external end-user manual: <code>*productguide TrStudio</code>.</p>
-
-    <h2 id="open-requirements">Open requirements<a class="anchor-link" href="#open-requirements">#</a></h2>
-
-    <ul>
-      <li>☑ <strong>Blocked (0) — CLEARED 2026-07-07</strong> — REQ-FN-012 / 013 / 015 (AppManager login / license / register) now <strong>Verified live</strong> after the owner fixed AppManager's <code>/keys</code> permission + restarted. FN-016 (login-driven landing) also Verified live.</li>
-      <li>☐ <strong>PARTIAL (4)</strong> — REQ-FN-009 / 010 / 011 (real ONNX/Python/ComfyUI provisioning + resumable download), REQ-FN-014 (role resolution now live-verified; <strong>Premium</strong> tier-gating still needs a Premium license assigned in AppManager). <em>(FN-016 moved to Verified 2026-07-07 — login-driven landing now live.)</em></li>
-      <li>☐ <strong>Implemented (18)</strong> — model/key/service-gated verticals that degrade cleanly (voice TTS/routing FN-031/033/034/035, avatar exec FN-037/038, RunPod FN-028, ComfyUI run FN-045/046/047, video interpolate/upscale FN-053, RAG script/captions RAG-001/002, UI-052 live-data re-smoke, NFR-008/010); light up when the dependency is supplied.</li>
-      <li>☑ <strong>Phase 10 Prompt Studio (5) — DONE 2026-07-07</strong> — REQ-UI-081/082 + REQ-FN-073/074 <strong>Verified live</strong>; REQ-RAG-005 <strong>Implemented</strong> (gate+degrade+token verified live; real-LLM completion config-gated like RAG-001/002).</li>
-      <li>☐ <strong>Not Started (11)</strong> — cross-cutting NFR-001/002/004/005/006/009 + deferred-<code>Could</code> FN-041/042/055/070/071 (behind MVP).</li>
-    </ul>
-
-    <h2 id="known-blockers">Known blockers<a class="anchor-link" href="#known-blockers">#</a></h2>
-
-    <ul>
-      <li><strong>Windows→Mac move (2026-07-12) — new-machine environment gaps, not code defects.</strong> The source tree moved to the owner's Mac (<code>/Volumes/MacD/MyCode/TrStudio</code>). Present: .NET SDK 10.0.301 + MAUI workload 10.0.20 + TrBlazeUI 1.0.7 in <code>~/LocalNuGet</code>. <strong>Progress same day:</strong> the owner supplied <code>nuget.config</code> (PAT) → restore green (TechieRag 1.0.5 resolves), <strong>web stack builds 0 err on the Mac</strong> (Api/TrStudio/Engine/Models/UI/Db + both test projects; only the Desktop head's 2 TFMs fail — Catalyst TR-011 + Windows head not buildable on macOS by nature) and <strong>260/260 unit tests PASS on the Mac</strong>. <strong>ALL GAPS CLOSED later the same day — the full stack now RUNS on the Mac:</strong> owner supplied <code>appsettings.json</code> pointing at the Windows box's containers over the LAN (Postgres <code>192.168.1.12:5432</code> direct; AppManager via <code>tools/appmanager-forward.py</code> loopback relay because the <code>AllowInvalidCert</code> self-signed relaxation is loopback-only by design, NFR-05) + installed Xcode 26.6. Verified live from the Mac: API :5102 healthy (DbUp 0 new scripts, Hangfire up), <strong>real AppManager login → JWT (Owner, <code>/avatar</code>, setupComplete)</strong>, <code>/auth/me</code> + <code>/license</code> + <code>/models</code> all 200, web head :5099 renders Sign-in, <strong>Catalyst <code>TrStudio.app</code> launched against the live API</strong>. Setup details: UsageGuide §How to run — macOS (LAN-containers alternative).</li>
-      <li><strong>✅ TrBlazeUI TR-011 — RESOLVED in 1.0.9, verified 2026-07-12 (same day).</strong> Was: Mac Catalyst head unbuildable (<code>NETSDK1082</code> — the 1.0.7 packages' <code>Microsoft.AspNetCore.App</code> FrameworkReference has no maccatalyst runtime pack; the 2026-07-05 from-Windows "compile 0/0" claim was withdrawn). The TrBlazeUI team re-packed without the FrameworkReference; TrStudio pins bumped <code>[1.0.7]</code>→<code>[1.0.9]</code> in <code>TrStudioUI.csproj</code> → all three 1.0.9 nuspecs show 0 frameworkReferences, restore + web build green, <strong>260/260 tests pass on 1.0.9</strong>, Catalyst build clears dependency resolution. <strong>Catalyst head BUILT + LAUNCHED on the Mac the same day:</strong> owner pointed <code>xcode-select</code> at Xcode 26.6; with <code>-p:ValidateXcodeVersion=false</code> (the SDK's opt-out while the 26.5 workload band trails Xcode 26.6) <code>dotnet build src/TrStudio.Desktop -f net10.0-maccatalyst</code> → <strong>0 err / 0 warn</strong>, <code>TrStudio.app</code> produced and launched (process stayed alive; no crash). API-connected run-verify of the Catalyst head still pending the Mac's <code>appsettings.json</code> + containers (same gap as the web head).</li>
-      <li><strong>✅ AppManager auth — RESOLVED + VERIFIED LIVE 2026-07-07.</strong> The <code>/AuthSvc/*</code> HTTP 500 (root cause: <code>System.UnauthorizedAccessException: Access to the path '/keys/rsa-private.pem' is denied</code> — <code>RsaEncryptionService</code> couldn't write its RSA key) was fixed by the owner (made <code>/keys</code> writable + restarted <code>appmanager-api</code>; its log now shows "generated a 2048-bit keypair and persisted it to /keys/rsa-private.pem"). Re-verified end-to-end: login <code>admin@appmanager.local</code>/<code>Admin@123!</code> → 200+JWT (Owner); <code>/auth/me</code> → 200; <code>/license</code> → 200 (<code>/LicenseSvc/validate</code>, no license assigned = clean data state); <code>/register</code> → created <code>creator@trstudio.test</code> (Creator, role 1) → 200, re-login → 200. <strong>FN-012/013/015 + FN-016 Verified.</strong> Only remaining external item: assign a <strong>Premium license</strong> in AppManager to fully exercise Premium tier-gating (FN-014, still PARTIAL).</li>
-      <li><strong>RunPod API key</strong> (<code>RunPod:ApiKey</code>/<code>EndpointId</code> empty) — live serverless cold-start / scale-to-zero (FN-028 High tier). Degrades to "not configured".</li>
-      <li><strong>Real models + host tooling</strong> — ONNX image model (FN-019/021), voice/lip-sync/video models, real detection models (SAFE floors are fail-closed pluggable), a live <code>ComfyUI:BaseUrl</code>, HeyGen key (Premium), and ffmpeg on host (FN-054 real export). Synthetic/graceful paths + API contracts are verified.</li>
-    </ul>
-
-    <h2 id="verification-log">Verification log<a class="anchor-link" href="#verification-log">#</a></h2>
-
-    <table>
-      <thead><tr><th>Date</th><th>Phase</th><th>Result</th><th>Status table</th></tr></thead>
-      <tbody>
-        <tr><td>2026-07-02</td><td>split-brd</td><td>N/A (checklist created, 105 REQs)</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-03</td><td>build-phase re-entry (reconcile)</td><td>Build PASS · <strong>80/80</strong> · 2 defects fixed (compile + provider race) · FN-001..018 reconciled</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-03</td><td>build-phase (image+workspace+setup+9 UI+auth, 7 subagents)</td><td>Build PASS · <strong>95/95</strong> · every cluster self-smoked · live isolation + auth flow proven</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-03</td><td>verify-phase (Phase 1+2, 37 REQs — live app)</td><td><strong>29 Verified / 5 PARTIAL / 3 Blocked / 0 FAIL</strong> (after FIX pass) · standards clean</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-03</td><td>build-phase Phase 3 (RunPod + cost + sources + 3 admin UI)</td><td><strong>PASS</strong> · <strong>120 tests</strong> · FN-029/030 + NFR-007 Verified live · FN-028 + UI-073/074/076 Implemented</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-03</td><td>build-phase Phase 4 (Voice + RAG + voice studio)</td><td><strong>PASS</strong> · <strong>135 tests</strong> · FN-032 SAFE-03 consent + RAG-003 token-tracking Verified · FN-031/033/034/035 + RAG-001/002 + UI-030 Implemented</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-03</td><td>build-phase Phase 8 (SAFETY floors + provenance + NSFW + policy UI)</td><td><strong>PASS</strong> · <strong>154 tests</strong> · SAFE-01..06 (FN-056..063) + UI-075 Verified; floors STILL fire with NSFW ON (minor/CSAM → 403)</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-04</td><td>build-phase Phase 9 (ops/compare/presets/export/account/API-key + 3 UI)</td><td><strong>PASS</strong> · <strong>178 tests</strong> · FN-064..069 Verified incl. external API-key auth; UI-052/053/060 Implemented; NFR-008 wired</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-04</td><td>build-phase Phase 5 (flagship Avatar: character/tier/captions/bible + 2 UI)</td><td><strong>PASS</strong> · <strong>201 tests</strong> · FN-036/039/040 + RAG-004 + UI-010 Verified; FN-037/038 + UI-011 Implemented</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-04</td><td>build-phase Phase 6 (ComfyUI import/map/save/version/sandbox + admin UI)</td><td><strong>PASS</strong> · <strong>217 tests</strong> · FN-043/044/048/049/050 + UI-072 Verified (save graph-hidden, sandbox gate 409→200); FN-045/046/047 Implemented</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-04</td><td>build-phase Phase 7 (Video I2V/T2V + closed-API + edit + video studio) — FINAL PHASE</td><td><strong>PASS</strong> · <strong>230 tests</strong> · FN-051/052/054 + UI-040 Verified (tier→3 providers, safety 403, isolation 404); FN-053 Implemented · ALL 9 PHASES BUILT</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-04</td><td>handoff-phase (UsageGuide + DevGuide + runtime OBSERVE)</td><td>Build PASS · UsageGuide + DevGuide (2 roles/22 screens) + 31 shots · OBSERVE: 24/24 render, 1 visual-fail (admin-ops@390px) · <strong>9 FE↔API defects logged</strong></td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-04</td><td>fix-issues (the 9 DevGuide defects)</td><td>Build PASS · <strong>all 9 fixed + re-verified LIVE</strong> (registry PUT persists, comfy/voice/rag/video routes 200, setup-step run, admin-ops reflows @390px) · <strong>68 Verified / 19 Implemented / 5 PARTIAL / 3 Blocked / 0 Needs re-verify</strong></td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-04</td><td>UAT smoke dry-run (full UsageGuide checklist, live stack)</td><td>7/8 PASS/clean-degrade. Item 5 caught a P6 provider-resolution 500 (avatar Fast tier + any ComfyUi job); FIXED (LipSync task discriminator) + regression test; <strong>231 tests</strong>, live-re-verified</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-05</td><td>build-phase consolidation (one role-based app BRD-86 + MAUI desktop heads BRD-87)</td><td><strong>PASS</strong> · <code>TrStudio.Desktop</code> MAUI head (Win head 0/0 + Mac Catalyst compile 0/0 + <code>TrStudio.sln</code> 0/0, rung #4) · per-role live smoke (Creator admin→403+AccessDenied, Operator 7 mgmt screens→200, Owner both+switch); Windows-head FlaUI native-window smoke PASS · REQ-UI-080/FN-072 + NFR-003 (Win) Verified</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-06</td><td>verify all (live stack :5102+:5099, 3 roles via /dev/session)</td><td><strong>231/231 tests</strong> (fixed <code>.slnx</code> root-finder in LiveApiFixture → FN-005 green) · live API smoke: job spine + 4 safety floors→403 + role-gate Creator→403 + FN-069 X-Api-Key→200, 23 GET contracts 200 · Playwright sweep 23 screens: <strong>19 PASS / 0 render-error / 4 VISUAL-FAIL @390px</strong> (UI-011/053/060/074 clip, don't reflow) · role-gate AccessDenied confirmed → <strong>65 Verified / 18 Implemented / 5 PARTIAL / 3 Blocked / 4 Needs re-verify / 0 FAIL</strong></td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-07</td><td>fix-issues (4 mobile-visual defects, live re-smoke @390px)</td><td><strong>4/4 fixed + re-verified</strong>: page-scoped 1-col collapse + header wrap + systemic shell fix (SidebarInset content column + <code>.table-scroll</code> <code>min-width:0</code>). Character/Library <code>documentElement.scrollWidth==390</code>; Account/Sources controls fit, wide DataTable scrolls internally (TrBlazeUI TR-010 minor). UI-060 Implemented→Verified. Build <code>TrStudio.slnx</code> 0/0 → <strong>69 Verified / 18 Implemented / 5 PARTIAL / 3 Blocked / 0 Needs re-verify / 0 FAIL</strong></td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-07</td><td>amend-docs (Prompt Studio, F-PROMPT)</td><td>N/A (docs only — no code) · BRD-88..92 + ADR-013 + Phase 10 added; 5 REQ rows appended (UI-081/082, FN-073/074, RAG-005, all Not Started); mockup prompt-studio.html + UIDesign + UsageGuide updated; table now <strong>114 rows: 75 Verified / 16 Implemented / 4 PARTIAL / 3 Blocked / 16 Not Started</strong></td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-07</td><td>build-phase Phase 10 (Prompt Studio — contract-first: 3 backend clusters ∥ + UI cluster)</td><td><strong>PASS</strong> · full soln <code>TrStudio.slnx</code> 0 err (rung #4, incl. MAUI head) · <strong>260 tests</strong> (+29) · live smoke API :5102 + web :5099: <code>/models/text-chat</code>=2 rows &amp; <code>/models</code> excludes; text-chat job→400; session CRUD+msg→reply persist; <strong>x-user→404</strong>; delete cascades; chat degrades synthetic; <strong>vision-gate text-only+image→400</strong>; tokens accrued live (70/$0.00014→LlmText); Playwright <code>/prompt-studio</code> render+picker+vision-badge, <strong>@390 scrollWidth==390</strong>, matches mockup · <strong>UI-081/082 + FN-073/074 Verified · RAG-005 Implemented</strong> (real-LLM config-gated) · standards clean · TR-RAG-001 (TechieRag vision seam) logged</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-07</td><td>verify UI-081,UI-082,FN-073,FN-074,RAG-005 (independent re-verify, live :5102+:5099)</td><td><strong>5/5 re-confirmed, 0 regressions</strong> · unit 40/40 (PromptChat/TextChat/Registry) · live API: <code>/models/text-chat</code>=2 &amp; <code>/models</code> excludes both, <code>/jobs</code> gpt-4o-chat→<strong>400</strong>, session CRUD+persist, <strong>x-user→404</strong>, delete→cascade 404, chat→synthetic degrade, <strong>vision-gate→400</strong>, <code>/rag/usage</code> 174 tok/$0.000348→LlmText · Playwright <code>/prompt-studio</code>: picker opens to 2 rows, vision badge + all 3 prompt-use actions render, §4b no-overlap @1280 &amp; scrollWidth==390 @390 (screenshots inspected) → <strong>UI-081/082/FN-073/074 Verified · RAG-005 Implemented</strong> (unchanged). DevGuide has no Prompt Studio screen yet (Phase-10 predates handoff) → add at <code>*handoff-phase</code>.</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-07</td><td>handoff-phase (Prompt Studio fold-in + doc finalize)</td><td><strong>READY FOR UAT</strong> · UsageGuide finalized (Prompt Studio walkthrough shipped, smoke line added, 260-test count, known-limits RAG-005/TR-RAG-001) · DevGuide refreshed (16th Creator screen <code>/prompt-studio</code>: page→control→service→data-access map + runtime-verified screenshot; index 23 screens; nav row) · both library-feedback files consolidated (TrBlazeUI 3maj/6min/1nice incl. TR-010, TechieRag 1maj TR-RAG-001+3min) · BRD §4 F-PROMPT→Done · current_phase→Handoff · HTMLs re-rendered. Tally unchanged: <strong>79 Verified / 17 Implemented / 4 PARTIAL / 3 Blocked</strong>.</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-12</td><td>fix-issues (4 owner-reported first-UAT issues on the Mac) + scoped verify (13 REQs)</td><td><strong>All 4 fixed + 3 deeper defects found &amp; fixed.</strong> (1) Login gate enforced on BOTH heads (anonymous → <code>/login</code> from any screen; chip shows the sign-in email initial; Owner's admin switch renders after soft-nav login). (1b) <strong>10 pages purged of hardcoded mockup seed data</strong> → live API + honest empty states + API-down Alerts (Compare/Account/AdminOps deserialized into wrong DTO shapes and could NEVER have shown live data). (2) Catalyst head: ⌘+/⌘−/⌘0 text zoom (WKWebView.PageZoom, View menu, persisted). (3) UsageGuide rewritten clean (+HTML). (4) New ApiStatusIndicator health pill in the shell. <strong>Late finds:</strong> pill dispose-race crash ("unhandled error" banner, both heads) fixed; <code>.auth-card</code> mockup padding restored; <strong><code>AdminOnlyPolicy</code> rejected REAL AppManager JWTs — every <code>/admin/*</code> 403 for the real Owner, masked until now by the fake seed data — fixed via <code>UserRoleMapper</code> resolution (real Owner 200 / real Creator 403 re-proven live)</strong>. Verifier ran scoped (ledger <code>docs/.last-verify.json</code>, evidence <code>test-results/verify-refix/</code>; session cut short by a spend limit — remaining verdicts transcribed from its evidence): <strong>12/13 clean PASS</strong>; 1 open minor — Projects list doesn't live-refresh after create/archive (persists on API, shows on reload). Builds 0 err · <strong>260/260 tests</strong> · TrBlazeUI TR-012 logged; library team resolved TR-001..011 source-side (pending publish).</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-12</td><td>fix-issues (Catalyst small/unreadable fonts + broken zoom — 3 owner screenshots <code>IssuesSc/</code>) + live re-verify (REQ-FN-072)</td><td><strong>Fixed + RUNTIME-VERIFIED on the real Catalyst head.</strong> Three bugs: (1) <code>WKWebView.PageZoom</code> is a <strong>no-op</strong> on this Catalyst/WebKit build; (2) MAUI <code>MenuBarItems</code> <strong>never render</strong> in the Catalyst menu bar, so the View→Zoom menu + Cmd accelerators were invisible → zoom never worked for the owner; (3) default was a flat 1.0 on a 4K panel that renders everything ~40% size. Reworked <code>WebViewZoom.cs</code> → one document-start <code>WKUserScript</code> that applies CSS <code>zoom</code> on <code>document.documentElement</code>, binds <strong>Cmd/Ctrl + '='/'−'/'0'</strong> (zoom in/out/actual-size, clamp 0.5–3.0), and persists to <code>localStorage</code>; native menu + <code>Preferences</code> + <code>PageZoom</code> removed. Default keyed off <strong>logical point width</strong> <code>clamp(round(Bounds.Width/2400,1),1.0,3.0)</code> = <strong>1.6 @3840pt</strong> (owner's pick; 4K at native/scale-1.0 → <code>Scale==1.0</code> so a backing-scale default was blind to it), 1.0 on 1080p/HiDPI. Built <code>-p:ValidateXcodeVersion=false -p:EnableWindowsTargeting=true</code> (0/0), launched, screenshotted: default renders the login card readable (~470px); after focusing the WebView, Cmd+= grew it to ~2.2× (shortcuts need one click into the window first). Follow-up regression fixed: CSS <code>zoom</code> scaled <code>.auth-shell</code>'s <code>100vh</code> and pushed the login card below the fold → <code>--tr-zoom</code> var + <code>min-height:calc(100vh/var(--tr-zoom,1))</code>, re-verified centered/no-scroll. Also: <code>/admin/sources</code> status "unknown"→"Not tested" label; UsageGuide gains creator how-to walkthroughs (+HTML). Windows head unaffected; REQ-FN-072 stays Verified.</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-        <tr><td>2026-07-07</td><td>verify FN-012,FN-013,FN-015 (+FN-016/014) — live AppManager after owner fixed <code>/keys</code></td><td><strong>3 Blocked → Verified, 0 regressions</strong> · owner fixed AppManager <code>/keys</code> RSA-key permission + restarted (log: keypair persisted) · live API :5102 → AppManager :5101: <strong>login</strong> <code>admin@appmanager.local</code> → 200+JWT (Owner role 0, landing <code>/avatar</code>); <strong>/auth/me</strong> → 200 (<code>/AuthSvc/validate</code>); <strong>/license</strong> → 200 (<code>/LicenseSvc/validate</code>, no-license clean state); <strong>/register</strong> <code>creator@trstudio.test</code> → 200 (Creator role 1) + re-login 200 → <strong>FN-012/013/015 Verified</strong>, <strong>FN-016</strong> login-driven landing Verified, <strong>FN-014</strong> role-resolution now live (Premium tier-gate still needs a license). New tally <strong>82 Verified / 17 Implemented / 4 PARTIAL / 0 Blocked / 11 Not-Started</strong>.</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
-      </tbody>
-    </table>
-
-    <h2 id="library-feedback-summary">Library feedback summary<a class="anchor-link" href="#library-feedback-summary">#</a></h2>
-
-    <ul>
-      <li>TrBlazeUI: <strong>1 blocker (TR-011 — RESOLVED in 1.0.9), 3 major, 6 minor, 1 nice-to-have</strong> (TR-001..011) — docs/TrStudio-TrBlazeUI-Feedback.md (TR-011 2026-07-12: packages' <code>Microsoft.AspNetCore.App</code> FrameworkReference → Catalyst NETSDK1082, <strong>fixed by the team in 1.0.9 + verified same day; TrStudio pins now <code>[1.0.9]</code></strong>; attribute-splat on DataTable/Alert/Checkbox/Switch; FileUpload <code>FilesChanged</code> vs documented <code>OnFilesSelected</code>; Icon-slot/Empty/Pagination doc gaps; DataTable narrow-viewport min-content TR-010 — TR-001..010 reported against 1.0.7, not yet re-audited on 1.0.9).</li>
-      <li>TechieRag: <strong>1 major + 3 minor</strong> — docs/TrStudio-TechieRag-Feedback.md (<strong>TR-RAG-001 major: no image/multimodal seam at 1.0.5</strong> — <code>ChatMessage.Content</code> is a plain string, blocks native vision for Prompt Studio; worked around with a best-effort OpenAI-compatible multimodal HTTP POST + clean degrade; plus metadata dict type, no server-side metadata/tenant filter on Search, no typed "embeddings unavailable" signal). All worked around; PgVector + RAG + prompt-chat paths functional.</li>
-    </ul>
-
-    <h2 id="standards-compliance-last-verifier-check">Standards compliance (last verifier check)<a class="anchor-link" href="#standards-compliance-last-verifier-check">#</a></h2>
-
-    <ul>
-      <li>Underscore fields: clean (verifier grep 2026-07-03) · Test-method underscores: clean · <code>obj</code>/<code>a</code>/<code>v</code> prefixes consistent across audited engine + endpoint + UI files.</li>
-    </ul>
-
-    <h2 id="deferred-future">Deferred / future<a class="anchor-link" href="#deferred-future">#</a></h2>
-
-    <ul>
-      <li>Mac Catalyst desktop head: <strong>builds 0/0 + launches on the owner's Mac since 2026-07-12</strong> (TrBlazeUI 1.0.9 fixed TR-011). Full API-connected run-verify pending the Mac's <code>appsettings.json</code> + containers; then verify per docs/TrStudio-BuildAndRun-Guide.md §3 Option A.</li>
-      <li>SaaS/multi-tenant tiers, MCP server (FN-071), webhooks (FN-070), digital-twin (FN-041), multi-shot (FN-042), clip extension (FN-055) — <code>Could</code>, deferred behind MVP.</li>
-      <li>Cross-cutting NFR-001/002/004/005/006/009 (perf/scale/reliability/security/privacy/extensibility) not yet formally verified as standalone REQs (properties exercised throughout the build).</li>
-    </ul>
-
-    <h2 id="recovery-note-2026-07-06">Recovery note (2026-07-06)<a class="anchor-link" href="#recovery-note-2026-07-06">#</a></h2>
-
-    <p>Reconstructed by <code>*refresh-status</code> after a session ended before its status-gate tail completed.</p>
-    <ul>
-      <li><strong>Signature:</strong> gate-tail interruption + unrecorded follow-on doc work — NOT a code interruption. Zero source files are newer than the prior <code>PROJECT-STATUS.md</code> (2026-07-05 21:06) and <code>dotnet build TrStudio.sln</code> is green 0/0 (rung #4), so no half-built code. But <code>PROJECT-STATUS.html</code> was stamped 17:51 — <strong>older than the md</strong> → the 2026-07-05 phase wrote the md but its HTML re-render never ran. And <code>docs/TrStudio-BuildAndRun-Guide.md</code> (+ .html) was authored/rewritten <strong>today 2026-07-06</strong> with no status entry.</li>
-      <li><strong>Recovered:</strong> no REQ status changed (green build + no code churn since the last gate confirm every checklist cell stands — reconciled tally held at 68/19/5/3). This file was <strong>rebuilt to the crisp fixed-shape template</strong> — the banned per-run dated H2 prose blocks (Phase 1+2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 narratives + "REQ state" section) were dropped, still-true facts folded into "Where I am" + the Verification log. <code>last_updated</code> → today; build re-confirmed live. Noted the new Build &amp; Run guide.</li>
-      <li><strong>Also synced:</strong> BRD §4 Development status — the stale <strong>F-SHELL</strong> row (<code>Planned 0%</code>) rolled up to <code>Done</code> (BRD-86 consolidation Verified; Mac Catalyst head build-only), snapshot date + tally refreshed. <code>PROJECT-STATUS.html</code> + <code>TrStudio-BRD.html</code> re-rendered.</li>
-      <li><strong>No re-verify flagged</strong> — no evidence-ambiguous REQ. No tests were re-run this session (reconcile-only); the last-known 231-test pass (2026-07-04) is carried forward.</li>
-      <li><strong>Post-recovery (owner request 2026-07-06):</strong> migrated the solution to the modern XML format — <code>TrStudio.sln</code> → <code>TrStudio.slnx</code> (<code>dotnet sln migrate</code>; old <code>.sln</code> removed), rebuilt green 0/0 (rung #4). Build/run instructions updated in <code>docs/TrStudio-BuildAndRun-Guide.md</code> + UsageGuide + DevGuide. VS 2022 needs <strong>17.10+</strong> to open <code>.slnx</code>; the <code>dotnet</code> CLI + VS Code read it natively. (Dated verification-log rows above keep the <code>.sln</code> name as the accurate record of what ran on those dates.)</li>
-    </ul>
-
+<h2 id="where-i-am">Where I am<a class="anchor-link" href="#where-i-am">#</a></h2>
+<p>Phase 2 of 2 (Venice cloud provider) is built: 31 rows, 14 Implemented on passing tests, 17 built but In Progress because no screen was opened this run (owner's instruction). Build passes; unit tests 369/369, ComfyUI's 16 unchanged and passing. Phase 1 stays as it was: 80 of 114 Verified, its 34 open rows untouched. Nothing verified in phase 2 yet.</p>
+<h2 id="next-command-to-run">Next command to run<a class="anchor-link" href="#next-command-to-run">#</a></h2>
+<p>Claude Code:</p>
+<pre><code>/TechieFlow:agents:flow-master *build-phase TrStudio</code></pre>
+<p>OpenCode:</p>
+<pre><code>/flow-master *build-phase TrStudio</code></pre>
+<p>The re-run opens each changed screen and chains the verifier on the 17 In Progress rows.</p>
+<h2 id="open-requirements">Open requirements<a class="anchor-link" href="#open-requirements">#</a></h2>
+<table>
+<thead><tr><th>Status</th><th>Count</th></tr></thead>
+<tbody>
+<tr><td>Not Started</td><td>0</td></tr>
+<tr><td>In Progress</td><td>17</td></tr>
+<tr><td>Implemented</td><td>14</td></tr>
+<tr><td>Needs re-verify</td><td>0</td></tr>
+<tr><td>Blocked</td><td>0</td></tr>
+</tbody>
+</table>
+<ul>
+<li>[ ] REQ-NFR-012 — One live test per task type against Venice (In Progress)
+</li>
+<li>[ ] REQ-NFR-013 — Live tests skip clearly without a key (In Progress)
+</li>
+<li>[ ] REQ-UI-083 — Test the Venice connection (In Progress)
+</li>
+<li>[ ] REQ-UI-084 — Add a Venice model as a registry row for one task (In Progress)
+</li>
+<li>[ ] REQ-UI-085 — Venice picture models appear in the model list (In Progress)
+</li>
+<li>[ ] REQ-UI-086 — Generate a picture through Venice (In Progress)
+</li>
+<li>[ ] REQ-UI-087 — A reference picture limits the list to models that take one (In Progress)
+</li>
+<li>[ ] REQ-UI-088 — A masked edit is never offered to Venice (In Progress)
+</li>
+<li>[ ] REQ-UI-089 — Venice text-to-video models appear in a model list (In Progress)
+</li>
+<li>[ ] REQ-UI-090 — Make a clip through Venice with progress (In Progress)
+</li>
+</ul>
+<h2 id="known-blockers">Known blockers<a class="anchor-link" href="#known-blockers">#</a></h2>
+<ul>
+<li><code>tests/integration/TrStudio.Tests.Integration/testsettings.Local.json</code> is not valid JSON (closing brace missing) and has no <code>Venice:BaseUrl</code>; the five live tests skip until the owner fixes it.
+</li>
+<li><code>src/TrStudioApi/appsettings.json</code> is absent on this machine, so the SignalR progress integration test cannot start the API (unrelated to Venice).
+</li>
+<li>Phase 1's 34 open rows need ComfyUI, voice or lip-sync models, a RunPod key or a Premium licence, none of which is on this machine.
+</li>
+</ul>
+<h2 id="verification-log">Verification log<a class="anchor-link" href="#verification-log">#</a></h2>
+<p>Last five passes; older passes live in <code>docs/metrics/gates.jsonl</code>.</p>
+<table>
+<thead><tr><th>Date</th><th>Phase</th><th>Result</th><th>Status table</th></tr></thead>
+<tbody>
+<tr><td>2026-07-12</td><td>fix-issues + verify 13 rows</td><td>12 of 13 PASS; 260/260 tests</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
+<tr><td>2026-07-12</td><td>fix-issues Mac zoom</td><td>Fixed and verified on the Mac head</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
+<tr><td>2026-07-07</td><td>verify FN-012, FN-013, FN-015</td><td>3 Blocked to Verified</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
+<tr><td>2026-11-12</td><td>amend-docs</td><td>80/114 Verified</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
+<tr><td>2026-11-12</td><td>build-phase</td><td>0/31 Verified</td><td>docs/TrStudio-P2-Checklist.md#requirements-status</td></tr>
+</tbody>
+</table>
+<h2 id="library-feedback-summary">Library feedback summary<a class="anchor-link" href="#library-feedback-summary">#</a></h2>
+<ul>
+<li>TechieRag: 3 open · 1 closed — docs/TrStudio-TechieRag-Feedback.md
+</li>
+<li>TrBlazeUI: 1 open · 1 fixed upstream, not yet re-checked (TR-011) · 10 closed — docs/TrStudio-TrBlazeUI-Feedback.md
+</li>
+</ul>
+<h2 id="standards-compliance">Standards compliance<a class="anchor-link" href="#standards-compliance">#</a></h2>
+<ul>
+<li>Last check 2026-11-12: 0 findings; no environment-variable reads left in src/ or tests/ (SettingsSourceRuleTests).
+</li>
+</ul>
+<h2 id="deferred-future"><a id="deferred--future"></a>Deferred / future<a class="anchor-link" href="#deferred-future">#</a></h2>
+<ul>
+<li>Could rows behind the MVP: digital twin, multi-shot, clip extension, webhooks, MCP server.
+</li>
+</ul>
   </main>
 </div>
 

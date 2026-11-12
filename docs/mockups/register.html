@@ -120,9 +120,9 @@ tr.sel td{background:var(--sel)}
 </style>
 </head>
 <body>
-<button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode" style="position:fixed;top:14px;right:14px;z-index:60"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
+<button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode" style="position:fixed;top:14px;right:14px;z-index:60" onclick="/* switches light and dark: page script */" data-testid="icon-btn-toggle-dark-mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
 <div class="authwrap">
-  <div class="card authcard">
+  <div class="card authcard" data-testid="card-1">
     <div class="brandblock">
       <div class="logo">TR</div>
       <div>
@@ -133,35 +133,35 @@ tr.sel td{background:var(--sel)}
 
     <div class="field">
       <label class="label" for="name">Full name</label>
-      <input class="input" id="name" type="text" value="Aarav Rathore" placeholder="Your full name">
+      <input class="input" id="name" type="text" value="Aarav Rathore" placeholder="Your full name" data-testid="field-name">
     </div>
 
     <div class="field">
       <label class="label" for="email">Email</label>
-      <input class="input" id="email" type="email" value="aarav.rathore@studio.in" placeholder="you@studio.com">
+      <input class="input" id="email" type="email" value="aarav.rathore@studio.in" placeholder="you@studio.com" data-testid="field-email">
     </div>
 
     <div class="field">
       <label class="label" for="pwd">Password</label>
-      <input class="input" id="pwd" type="password" value="············" placeholder="••••••••">
+      <input class="input" id="pwd" type="password" value="············" placeholder="••••••••" data-testid="field-pwd">
       <div class="hint">At least 12 characters with a number and a symbol.</div>
     </div>
 
     <div class="field">
       <label class="label" for="pwd2">Confirm password</label>
-      <input class="input" id="pwd2" type="password" value="············" placeholder="••••••••">
+      <input class="input" id="pwd2" type="password" value="············" placeholder="••••••••" data-testid="field-pwd2">
     </div>
 
     <div class="field">
       <label class="label">Account type</label>
       <div class="seg" id="roleSeg" style="display:flex;width:100%">
-        <button type="button" class="active" data-role="creator" style="flex:1">Creator</button>
-        <button type="button" data-role="admin" style="flex:1">Admin (Operator)</button>
+        <button type="button" class="active" data-role="creator" style="flex:1" onclick="/* selects this option: page script */" data-testid="btn-creator">Creator</button>
+        <button type="button" data-role="admin" style="flex:1" onclick="/* selects this option: page script */" data-testid="btn-admin-operator">Admin (Operator)</button>
       </div>
       <div class="hint">Creators make avatars, images, video &amp; voice. Admins also manage models, providers &amp; spend.</div>
     </div>
 
-    <button class="btn brand full" id="createBtn" type="button">
+    <button class="btn brand full" id="createBtn" type="button" onclick="alert('Create account: done in the built app')" data-testid="btn-create-account">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>
       Create account
     </button>
@@ -169,7 +169,7 @@ tr.sel td{background:var(--sel)}
     <div class="divline">AppManager</div>
     <div class="authnote">Your account is provisioned via the AppManager child-app API — identity, licensing and billing live there. TrStudio keeps only your userId.</div>
 
-    <div class="authswitch">Already have an account? <a href="login.html">Sign in</a></div>
+    <div class="authswitch">Already have an account? <a href="login.html" data-testid="link-sign-in">Sign in</a></div>
   </div>
 </div>
 <script>

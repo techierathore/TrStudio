@@ -56,6 +56,15 @@
     </ItemGroup>
 
     <ItemGroup>
+        <!-- Desktop settings (section Desktop, REQ-NFR-015): the committed template carries the defaults;
+             this machine's git-ignored appsettings.json, when present, is embedded beside it and wins. -->
+        <Content Remove="appsettings.json;appsettings.template.json" />
+        <None Remove="appsettings.json;appsettings.template.json" />
+        <EmbeddedResource Include="appsettings.template.json" LogicalName="TrStudio.Desktop.appsettings.template.json" />
+        <EmbeddedResource Include="appsettings.json" Condition="Exists('appsettings.json')" LogicalName="TrStudio.Desktop.appsettings.json" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />

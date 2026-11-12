@@ -124,40 +124,41 @@ tr.sel td{background:var(--sel)}
 </head>
 <body>
 <div class="app">
-  <aside class="side">
+  <aside class="side" data-testid="sidebar">
     <div class="brand"><div class="logo">TR</div>TrStudio</div>
     <div class="navgroup">Studios</div>
     <nav class="nav">
-      <a href="avatar-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Avatar Studio</a>
-    <a href="character-library.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Characters</a>
-    <a class="active" href="image-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Image Studio</a>
-    <a href="video-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>Video Studio</a>
-    <a href="voice-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 19v3"/></svg>Voice Studio</a>
-    <a href="prompt-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>Prompt Studio</a>
+      <a href="avatar-studio.html" data-testid="nav-avatar-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Avatar Studio</a>
+    <a href="character-library.html" data-testid="nav-character-library"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Characters</a>
+    <a class="active" href="image-studio.html" data-testid="nav-image-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Image Studio</a>
+    <a href="video-studio.html" data-testid="nav-video-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>Video Studio</a>
+    <a href="voice-studio.html" data-testid="nav-voice-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 19v3"/></svg>Voice Studio</a>
+    <a href="prompt-studio.html" data-testid="nav-prompt-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>Prompt Studio</a>
   </nav>
   <div class="navgroup">Workspace</div>
   <nav class="nav">
-    <a href="gallery.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Gallery</a>
-    <a href="projects.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Projects</a>
-    <a href="library.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Library</a>
-    <a href="account.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/></svg>Account</a>
+    <a href="gallery.html" data-testid="nav-gallery"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Gallery</a>
+    <a href="projects.html" data-testid="nav-projects"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Projects</a>
+    <a href="library.html" data-testid="nav-library"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Library</a>
+    <a href="account.html" data-testid="nav-account"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/></svg>Account</a>
   </nav>
   <div class="sidefoot">
-    <a href="admin-hardware.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudioAdmin</a>
+    <a href="admin-hardware.html" data-testid="link-switch-to-trstudioadmin"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudioAdmin</a>
+    <a href="login.html" data-testid="nav-sign-out"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>Sign out</a>
   </div>
 </aside>
 
-  <div class="main">
-    <header class="top">
+  <div class="main" data-testid="main">
+    <header class="top" data-testid="topbar">
       <span class="crumb">TrStudio</span><span class="crumb">/</span><span class="crumb here">Image Studio</span>
       <span class="spacer"></span>
-      <span class="badge ok"><span class="dot ok"></span>RunPod warm</span>
-      <span class="badge">FLUX.1-dev (GGUF)</span>
-      <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
-      <div class="userchip">TR</div>
+      <span class="badge ok" data-testid="badge-status"><span class="dot ok"></span>RunPod warm</span>
+      <span class="badge" data-testid="badge-flux-1-dev-gguf">FLUX.1-dev (GGUF)</span>
+      <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode" onclick="/* switches light and dark: page script */" data-testid="icon-btn-toggle-dark-mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
+      <div class="userchip" data-testid="user-chip">TR</div>
     </header>
 
-    <div class="content">
+    <div class="content" data-testid="content">
       <h1 class="h">Image Studio</h1>
       <p class="sub">Generate, image-to-image, and inpaint. Parameters render from the model registry schema.</p>
 
@@ -165,18 +166,24 @@ tr.sel td{background:var(--sel)}
 
         <!-- LEFT: model + params (schema-driven) -->
         <div class="grid">
-          <div class="card">
+          <div class="card" data-testid="card-model">
             <h3>Model</h3>
-            <select class="select">
+            <select class="select" data-testid="field-1">
               <option selected>FLUX.1-dev (GGUF Q8)</option>
               <option>SDXL 1.0 base</option>
               <option>SDXL Turbo</option>
               <option>Playground v2.5</option>
+              <option data-tf-phase="2">Z-Image Turbo — Cloud · Venice</option>
+              <option data-tf-phase="2">Nano Banana Pro — Cloud · Venice</option>
+              <option data-tf-phase="2">Krea v2 Large (takes a reference picture) — Cloud · Venice</option>
             </select>
+            <div class="row" style="margin-top:6px" data-tf-phase="2"><span class="badge brand" data-testid="badge-cloud-venice">Cloud · Venice</span><span class="muted" style="font-size:11.5px">shown when a Venice model is picked</span></div>
+            <div class="alert" style="margin-top:6px;font-size:12px" data-tf-phase="2" data-testid="alert-sent-to-venice">Your prompt and pictures are sent to Venice.</div>
+            <div class="muted" style="font-size:11.5px;margin-top:6px" data-tf-phase="2" data-testid="model-filter-note">Only models that can do this task are listed: a reference picture keeps models that take one; a drawn mask hides Venice models.</div>
             <div class="muted" style="font-size:11.5px;margin-top:6px">Params below auto-rendered from registry schema</div>
           </div>
 
-          <div class="card">
+          <div class="card" data-testid="card-parameters">
             <h3>Parameters</h3>
             <div class="field">
               <div class="row"><label class="label" style="margin:0">Steps</label><span class="spacer"></span><span class="muted" style="font-size:12px">28</span></div>
@@ -188,25 +195,25 @@ tr.sel td{background:var(--sel)}
             </div>
             <div class="field">
               <label class="label">Sampler</label>
-              <select class="select"><option selected>Euler</option><option>DPM++ 2M Karras</option><option>UniPC</option></select>
+              <select class="select" data-testid="field-sampler"><option selected>Euler</option><option>DPM++ 2M Karras</option><option>UniPC</option></select>
             </div>
             <div class="field">
               <label class="label">Seed</label>
-              <input class="input" value="284913 (fixed)">
+              <input class="input" value="284913 (fixed)" data-testid="field-seed">
             </div>
             <div class="row">
               <div><div style="font-weight:600;font-size:13px">Hi-res fix</div><div class="muted" style="font-size:12px">2-pass latent</div></div>
               <span class="spacer"></span>
-              <span class="toggle"></span>
+              <span class="toggle" data-testid="switch"></span>
             </div>
           </div>
 
-          <div class="card">
+          <div class="card" data-testid="card-conditioning-controlnet">
             <h3>Conditioning (ControlNet)</h3>
             <div class="seg" style="font-size:12px;margin-bottom:10px">
-              <button type="button" class="active">Pose</button>
-              <button type="button">Depth</button>
-              <button type="button">Edges</button>
+              <button type="button" class="active" onclick="/* selects this option: page script */" data-testid="btn-pose">Pose</button>
+              <button type="button" onclick="/* selects this option: page script */" data-testid="btn-depth">Depth</button>
+              <button type="button" onclick="/* selects this option: page script */" data-testid="btn-edges">Edges</button>
             </div>
             <div class="thumb drop">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 5 17 10"/><line x1="12" y1="5" x2="12" y2="15"/></svg>
@@ -217,15 +224,15 @@ tr.sel td{background:var(--sel)}
 
         <!-- CENTER: canvas -->
         <div class="grid">
-          <div class="card">
+          <div class="card" data-testid="card-canvas">
             <div class="row" style="margin-bottom:10px">
               <h3 style="margin:0">Canvas</h3>
               <span class="spacer"></span>
               <div class="toolbar">
-                <button type="button" class="active"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/></svg>Brush</button>
-                <button type="button"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Mask</button>
-                <button type="button">Inpaint</button>
-                <button type="button">Erase</button>
+                <button type="button" class="active" onclick="/* selects this option: page script */" data-testid="btn-brush"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/></svg>Brush</button>
+                <button type="button" onclick="alert('Mask: done in the built app')" data-testid="btn-mask"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Mask</button>
+                <button type="button" onclick="alert('Inpaint: done in the built app')" data-testid="btn-inpaint">Inpaint</button>
+                <button type="button" onclick="alert('Erase: done in the built app')" data-testid="btn-erase">Erase</button>
               </div>
             </div>
             <div class="canvas">
@@ -236,52 +243,54 @@ tr.sel td{background:var(--sel)}
             </div>
             <div style="margin-top:12px">
               <label class="label">Prompt</label>
-              <textarea rows="2">A glowing brass diya lantern on a marble table, warm golden bokeh, festive Diwali mood, ultra-detailed, cinematic lighting</textarea>
+              <textarea rows="2" data-testid="field-prompt">A glowing brass diya lantern on a marble table, warm golden bokeh, festive Diwali mood, ultra-detailed, cinematic lighting</textarea>
               <div class="row" style="margin-top:8px">
                 <span class="muted" style="font-size:12px">Generating batch of 4 — step 18 / 28</span>
                 <span class="spacer"></span>
-                <button class="btn brand" data-act>
+                <button class="btn brand" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-generate">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v4M3 5h4M6 17v4M4 19h4M13 3l2.5 6.5L22 12l-6.5 2.5L13 21l-2.5-6.5L4 12l6.5-2.5z"/></svg>
                   Generate
                 </button>
               </div>
-              <div class="prog" style="margin-top:8px"><i style="width:64%"></i></div>
+              <div class="prog" style="margin-top:8px" data-testid="progress"><i style="width:64%"></i></div>
+              <div class="err" style="margin-top:8px" data-tf-phase="2" data-tf-state="error" data-testid="alert-venice-failed">Venice refused this prompt: content policy violation (CONTENT_POLICY_VIOLATION). Try rewording it.</div>
             </div>
           </div>
 
-          <div class="card">
+          <div class="card" data-testid="card-upscale-restore">
             <div class="row">
               <h3 style="margin:0">Upscale &amp; restore</h3>
               <span class="spacer"></span>
-              <div class="seg" style="font-size:12px"><button type="button">2K</button><button type="button" class="active">4K</button></div>
+              <div class="seg" style="font-size:12px"><button type="button" onclick="/* selects this option: page script */" data-testid="btn-2k">2K</button><button type="button" class="active" onclick="/* selects this option: page script */" data-testid="btn-4k">4K</button></div>
             </div>
             <div class="row" style="margin-top:10px">
-              <button class="btn outline">
+              <button class="btn outline" onclick="alert('Upscaling… face-restore: done in the built app')" data-testid="btn-upscaling-face-restore">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="spin"><path d="M21 12a9 9 0 1 1-6.2-8.5"/></svg>
                 Upscaling… face-restore
               </button>
               <span class="muted" style="font-size:12px">GFPGAN + ESRGAN ×4</span>
+              <select class="select" style="max-width:220px" data-tf-phase="2" data-testid="field-upscale-model"><option>GFPGAN + ESRGAN (local)</option><option>Venice upscaler — Cloud · Venice</option></select>
             </div>
           </div>
         </div>
 
         <!-- RIGHT: results + export -->
         <div class="grid">
-          <div class="card">
-            <div class="row"><h3 style="margin:0">Results</h3><span class="spacer"></span><span class="badge">batch · 4</span></div>
+          <div class="card" data-testid="card-results">
+            <div class="row"><h3 style="margin:0">Results</h3><span class="spacer"></span><span class="badge" data-testid="badge-batch-4">batch · 4</span></div>
             <div class="resgrid" style="margin-top:10px">
-              <div class="restile rA"><span class="badge seedbadge">#284913</span></div>
-              <div class="restile rB"><span class="badge seedbadge">#284914</span></div>
-              <div class="restile rC"><span class="badge seedbadge">#284915</span></div>
+              <div class="restile rA"><span class="badge seedbadge" data-testid="badge-284913">#284913</span></div>
+              <div class="restile rB"><span class="badge seedbadge" data-testid="badge-284914">#284914</span></div>
+              <div class="restile rC"><span class="badge seedbadge" data-testid="badge-284915">#284915</span></div>
               <div class="restile skel" style="height:auto"></div>
             </div>
             <div class="muted" style="font-size:11.5px;margin-top:8px">Seed shown per tile for reproduction</div>
           </div>
 
-          <div class="card">
+          <div class="card" data-testid="card-export">
             <h3>Export</h3>
             <label class="label">Aspect / preset</label>
-            <select class="select">
+            <select class="select" data-testid="field-aspect-preset">
               <option selected>1:1 — Instagram post</option>
               <option>4:5 — Portrait feed</option>
               <option>9:16 — Story / Reel</option>
@@ -290,9 +299,9 @@ tr.sel td{background:var(--sel)}
             <div class="row" style="margin-top:12px">
               <div><div style="font-weight:600;font-size:13px">Remove background</div><div class="muted" style="font-size:12px">transparent PNG</div></div>
               <span class="spacer"></span>
-              <span class="toggle"></span>
+              <span class="toggle" data-testid="switch-2"></span>
             </div>
-            <button class="btn brand" style="margin-top:14px;width:100%;justify-content:center">
+            <button class="btn brand" style="margin-top:14px;width:100%;justify-content:center" onclick="alert('Export: done in the built app')" data-testid="btn-export">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Export
             </button>

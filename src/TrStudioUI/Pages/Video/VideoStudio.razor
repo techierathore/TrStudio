@@ -6,6 +6,7 @@
 @inject ToastService ToastService
 @inject IAuthSession AuthSession
 @inject NavigationManager Navigation
+@implements IDisposable
 
 @*
     Video Studio (REQ-UI-040). A three-column studio: (left) an Image→Video / Text→Video mode Tabs
@@ -80,12 +81,47 @@
             <div class="param-field">
                 <div class="param-head">
                     <label class="param-label">Duration</label>
-                    <span class="param-val">@((int)objDuration)s</span>
+                    <span class="param-val">@DurationSeconds s</span>
                 </div>
-                <div data-testid="duration-slider">
-                    <Slider @bind-Value="objDuration" Min="2" Max="10" Step="1" />
-                </div>
+                @if (ModelStatesDurations)
+                {
+                    @* REQ-FN-081: a row that states its durations offers only those. *@
+                    <div data-testid="duration-select">
+                        <Select Value="@objDurationValue" ValueChanged="@((string? aVal) => objDurationValue = aVal)" TValue="string" Class="w-full">
+                            <SelectTrigger><SelectValue Placeholder="Duration" /></SelectTrigger>
+                            <SelectContent>
+                                @foreach (var vDur in AllowedValues.Durations)
+                                {
+                                    <SelectItem Value="@vDur" Text="@vDur" TValue="string">@vDur</SelectItem>
+                                }
+                            </SelectContent>
+                        </Select>
+                    </div>
+                }
+                else
+                {
+                    <div data-testid="duration-slider">
+                        <Slider @bind-Value="objDuration" Min="2" Max="10" Step="1" />
+                    </div>
+                }
             </div>
+            @if (AllowedValues.Resolutions.Count > 0)
+            {
+                <div class="param-field">
+                    <label class="param-label">Resolution</label>
+                    <div data-testid="resolution-select">
+                        <Select Value="@objResolution" ValueChanged="@((string? aVal) => objResolution = aVal)" TValue="string" Class="w-full">
+                            <SelectTrigger><SelectValue Placeholder="Resolution" /></SelectTrigger>
+                            <SelectContent>
+                                @foreach (var vRes in AllowedValues.Resolutions)
+                                {
+                                    <SelectItem Value="@vRes" Text="@vRes" TValue="string">@vRes</SelectItem>
+                                }
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+            }
             <div class="param-field">
                 <div class="param-head">
                     <label class="param-label">Motion strength</label>
@@ -100,9 +136,10 @@
                 <Select @bind-Value="objAspect" TValue="string" Class="w-full">
                     <SelectTrigger><SelectValue Placeholder="Aspect ratio" /></SelectTrigger>
                     <SelectContent>
-                        @foreach (var vAspect in objAspects)
+                        @foreach (var vAspect in AllowedValues.AspectRatios)
                         {
-                            <SelectItem Value="@vAspect.Key" Text="@vAspect.Value" TValue="string">@vAspect.Value</SelectItem>
+                            var vAspectLabel = objAspects.GetValueOrDefault(vAspect, vAspect);
+                            <SelectItem Value="@vAspect" Text="@vAspectLabel" TValue="string">@vAspectLabel</SelectItem>
                         }
                     </SelectContent>
                 </Select>
@@ -112,7 +149,7 @@
         <Card>
             <h3 class="card-h3">Quality tier</h3>
             <div data-testid="tier-group">
-                <RadioGroup @bind-Value="objTier" TValue="string" Class="grid gap-2">
+                <RadioGroup Value="@objTier" ValueChanged="@((string? aTier) => OnTierChanged(aTier))" TValue="string" Class="grid gap-2">
                     @foreach (var vTier in objTiers)
                     {
                         <label class="tier-option @(vTier.Key == objTier ? "is-sel" : "")" for="@($"vtier-{vTier.Key}")">
@@ -154,6 +191,62 @@
                     </Alert>
                 </div>
             }
+
+            @* Phase 2 (decision 3A): registry-driven model picker under the tier buttons (REQ-UI-089..092). *@
+            <div data-testid="video-model-picker" style="margin-top:12px">
+                <label class="param-label">Model</label>
+                <div data-testid="field-video-model">
+                    <Select Value="@objModelId" ValueChanged="@((string? aId) => OnModelChanged(aId))" TValue="string" Class="w-full" Disabled="@(ListedModels.Count == 0)">
+                        <SelectTrigger><SelectValue Placeholder="@(ListedModels.Count == 0 ? "No model for this choice" : "Model")" /></SelectTrigger>
+                        <SelectContent>
+                            @foreach (var vModel in ListedModels)
+                            {
+                                var vLabel = VideoModelFilter.IsVenice(vModel) ? $"{vModel.DisplayName} — Cloud · Venice" : vModel.DisplayName;
+                                <SelectItem Value="@vModel.Id" Text="@vLabel" TValue="string">@vLabel</SelectItem>
+                            }
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div class="muted-sm" style="margin-top:6px">
+                    @(objCharacterId != NoCharacter
+                        ? "Only models that keep a fixed character are listed."
+                        : $"Lists only {(IsImageToVideo ? "image to video" : "text to video")} models.")
+                </div>
+
+                <label class="param-label" style="margin-top:10px">Character</label>
+                <div data-testid="field-character">
+                    <Select Value="@objCharacterId" ValueChanged="@((string? aId) => OnCharacterChanged(aId))" TValue="string" Class="w-full">
+                        <SelectTrigger><SelectValue Placeholder="No character" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem Value="@NoCharacter" Text="No character" TValue="string">No character</SelectItem>
+                            @foreach (var vChar in objCharacters)
+                            {
+                                var vCharLabel = $"{vChar.Name} (reference set)";
+                                <SelectItem Value="@vChar.CharacterId.ToString()" Text="@vCharLabel" TValue="string">@vCharLabel</SelectItem>
+                            }
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                @if (SelectedModel is not null && VideoModelFilter.IsVenice(SelectedModel))
+                {
+                    <div class="flex-between" style="margin-top:8px;gap:8px">
+                        <span data-testid="badge-cloud-venice"><Badge Class="badge-brand">Cloud · Venice</Badge></span>
+                        <span class="muted-sm">@AllowedSummary</span>
+                    </div>
+                    <div data-testid="alert-sent-to-venice" style="margin-top:6px">
+                        <Alert Variant="AlertVariant.Info">
+                            <LucideIcon Name="cloud" Size="16" />
+                            <AlertDescription>
+                                Your prompt and pictures are sent to Venice.
+                                @(objVenicePrice is decimal vPrice
+                                    ? $"Venice price for this clip: {FormatCost(vPrice)}."
+                                    : "Venice prices this clip when you generate.")
+                            </AlertDescription>
+                        </Alert>
+                    </div>
+                }
+            </div>
         </Card>
     </div>
 
@@ -185,7 +278,7 @@
                     <div class="avatar-playbtn">
                         <LucideIcon Name="play" Size="20" />
                     </div>
-                    <div>Preview — @objClips[0].Label (@SelectedTier.Model, @objAspect)</div>
+                    <div>Preview — @objClips[0].Label (@ModelLabel, @objAspect)</div>
                 </div>
             }
 
@@ -241,16 +334,31 @@
             {
                 <div data-testid="render-progress">
                     <div class="flex-between">
-                        <span class="muted-sm">Generating clip · @SelectedTier.Model</span>
+                        <span class="muted-sm">Generating clip · @ModelLabel</span>
                         <span class="muted-sm">@objProgress% · eta @RenderEta</span>
                     </div>
                     <Progress Value="@objProgress" Class="mt-2" />
+                    @if (objVeniceRun)
+                    {
+                        <div class="muted-sm" style="margin-top:6px" data-testid="venice-progress">
+                            Venice: processing · @objProgress%@(objEta is TimeSpan vEta ? $" · about {FormatEta(vEta)} left" : "")
+                        </div>
+                    }
                 </div>
             }
             else
             {
                 <div class="muted-sm" style="margin-bottom:8px">
                     @(objClips.Count > 0 ? $"{objClips.Count} clip(s) on the timeline · ready to edit or export." : "Set your controls, then generate the first clip.")
+                </div>
+            }
+            @if (objVeniceFailure is not null)
+            {
+                <div data-testid="alert-venice-failed" style="margin-top:6px">
+                    <Alert Variant="AlertVariant.Danger" AccentBorder="true">
+                        <LucideIcon Name="circle-alert" Size="16" />
+                        <AlertDescription>@objVeniceFailure</AlertDescription>
+                    </Alert>
                 </div>
             }
             <Button Class="w-full mt-3" OnClick="GenerateAsync" Disabled="@objRendering" data-testid="generate-btn">
@@ -375,6 +483,55 @@
     private bool objRendering;
     private int objProgress;
 
+    // ---- Phase 2 (Venice): registry-driven model picker, character filter, model-bound values ----
+    private const string NoCharacter = "none";
+    private List<CatalogModelResponse> objCatalog = new();
+    private List<CharacterResponse> objCharacters = new();
+    private string? objModelId;
+    private string? objCharacterId = NoCharacter;
+    private string? objDurationValue;
+    private string? objResolution;
+    private bool objVeniceRun;
+    private TimeSpan? objEta;
+    private decimal? objVenicePrice;
+    private string? objVeniceFailure;
+    private readonly CancellationTokenSource objCts = new();
+
+    /// <summary>The rows the picker lists for the current mode and character (REQ-UI-089/091/092).</summary>
+    private IReadOnlyList<CatalogModelResponse> ListedModels =>
+        VideoModelFilter.ForStudio(objCatalog, IsImageToVideo, objCharacterId != NoCharacter);
+
+    /// <summary>The picked catalog row, or null when the catalog has none for this choice.</summary>
+    private CatalogModelResponse? SelectedModel => ListedModels.FirstOrDefault(aModel => aModel.Id == objModelId);
+
+    /// <summary>The duration/resolution/aspect values the picked row allows (REQ-FN-081).</summary>
+    private AllowedVideoValues AllowedValues => VideoModelFilter.Allowed(SelectedModel);
+
+    /// <summary>Whether the picked row states its own durations (then a Select replaces the slider).</summary>
+    private bool ModelStatesDurations => SelectedModel is { Durations.Length: > 0 };
+
+    /// <summary>The clip length in seconds from whichever duration control is shown.</summary>
+    private int DurationSeconds => ModelStatesDurations ? VideoModelFilter.Seconds(objDurationValue) : (int)objDuration;
+
+    /// <summary>The model name shown in captions: the picked row, else the tier's default.</summary>
+    private string ModelLabel => SelectedModel?.DisplayName ?? SelectedTier.Model;
+
+    /// <summary>One line naming the values the picked row allows.</summary>
+    private string AllowedSummary
+    {
+        get
+        {
+            var vParts = new List<string> { $"Duration {string.Join("/", AllowedValues.Durations)}" };
+            if (AllowedValues.Resolutions.Count > 0)
+            {
+                vParts.Add(string.Join("/", AllowedValues.Resolutions));
+            }
+
+            vParts.Add(string.Join(", ", AllowedValues.AspectRatios));
+            return string.Join(" · ", vParts) + " from this model";
+        }
+    }
+
     /// <summary>Whether the studio is in Image→Video mode (vs Text→Video).</summary>
     private bool IsImageToVideo => objMode == "i2v";
 
@@ -408,7 +565,7 @@
             return;
         }
 
-        await AuthSession.EnsureLoadedAsync();
+        var vHasSession = await AuthSession.EnsureLoadedAsync();
 
         // Send-to-studio (REQ-UI-082): pre-fill the prompt and switch to Text→Video when Prompt Studio
         // routes here with ?prompt=… (the T2V mode is where the prompt Textarea is shown).
@@ -417,13 +574,94 @@
         {
             objPrompt = vPrompt;
             objMode = "t2v";
-            StateHasChanged();
         }
+
+        if (vHasSession)
+        {
+            await LoadPickerAsync();
+        }
+
+        SyncPicker();
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Loads the creator catalog and the character library for the model picker. Failures leave the
+    /// lists empty (the picker says no model fits and the tier buttons still route), never fake rows.
+    /// </summary>
+    private async Task LoadPickerAsync()
+    {
+        var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+        try
+        {
+            objCatalog = await vClient.GetFromJsonAsync<List<CatalogModelResponse>>(ApiRoutes.Models, objCts.Token) ?? new();
+        }
+        catch (Exception aEx) when (aEx is not OperationCanceledException)
+        {
+            objCatalog = new();
+        }
+
+        try
+        {
+            objCharacters = await vClient.GetFromJsonAsync<List<CharacterResponse>>(ApiRoutes.Characters, objCts.Token) ?? new();
+        }
+        catch (Exception aEx) when (aEx is not OperationCanceledException)
+        {
+            objCharacters = new();
+        }
+    }
+
+    /// <summary>
+    /// Re-picks the model for the current mode/character/tier and keeps duration, resolution and
+    /// aspect inside the values the picked row allows (REQ-FN-081).
+    /// </summary>
+    private void SyncPicker()
+    {
+        objModelId = VideoModelFilter.PickModel(objModelId, ListedModels, SelectedTier.Tier);
+        var vAllowed = AllowedValues;
+        objDurationValue = VideoModelFilter.KeepOrFirst(objDurationValue ?? $"{(int)objDuration}s", vAllowed.Durations);
+        objResolution = VideoModelFilter.KeepOrFirst(objResolution, vAllowed.Resolutions);
+        objAspect = VideoModelFilter.KeepOrFirst(objAspect, vAllowed.AspectRatios) ?? "16:9";
+        objVenicePrice = null;
     }
 
     /// <summary>Switches the generation mode and swaps the conditioning controls.</summary>
     /// <param name="aMode">The chosen mode tab value (<c>i2v</c> or <c>t2v</c>).</param>
-    private void OnModeChanged(string? aMode) => objMode = aMode ?? "i2v";
+    private void OnModeChanged(string? aMode)
+    {
+        objMode = aMode ?? "i2v";
+        SyncPicker();
+    }
+
+    /// <summary>Chooses a tier button; the picker moves to that tier's first listed row when the current one is gone.</summary>
+    /// <param name="aTier">The tier key.</param>
+    private void OnTierChanged(string? aTier)
+    {
+        objTier = aTier ?? "High";
+        var vOnTier = ListedModels.FirstOrDefault(aModel => aModel.Tier == SelectedTier.Tier);
+        if (vOnTier is not null && SelectedModel?.Tier != SelectedTier.Tier)
+        {
+            objModelId = vOnTier.Id;
+        }
+
+        SyncPicker();
+    }
+
+    /// <summary>Picks a model row and refits the duration/resolution/aspect controls to it.</summary>
+    /// <param name="aId">The row id.</param>
+    private void OnModelChanged(string? aId)
+    {
+        objModelId = aId;
+        SyncPicker();
+    }
+
+    /// <summary>Picks (or clears) a character; only fixed-character rows stay listed (REQ-UI-092).</summary>
+    /// <param name="aId">The character id, or <see cref="NoCharacter"/>.</param>
+    private void OnCharacterChanged(string? aId)
+    {
+        objCharacterId = string.IsNullOrEmpty(aId) ? NoCharacter : aId;
+        SyncPicker();
+    }
 
     /// <summary>Records the chosen first-frame file name (upload itself is handled by the endpoint).</summary>
     /// <param name="aFiles">The files chosen in the FileUpload control.</param>
@@ -448,51 +686,82 @@
             return;
         }
 
+        var vModel = SelectedModel;
+        objVeniceRun = VideoModelFilter.IsVenice(vModel);
         objRendering = true;
         objProgress = 0;
+        objEta = null;
+        objVeniceFailure = null;
         StateHasChanged();
 
-        for (var vStep = 1; vStep <= 5; vStep++)
+        if (!objVeniceRun)
         {
-            objProgress = vStep * 20;
-            StateHasChanged();
-            await Task.Delay(150);
+            for (var vStep = 1; vStep <= 5; vStep++)
+            {
+                objProgress = vStep * 20;
+                StateHasChanged();
+                await Task.Delay(150);
+            }
         }
 
-        var vBlocked = await TrySubmitJobAsync();
+        var vOutcome = await TrySubmitJobAsync(vModel);
 
         objRendering = false;
         objProgress = 100;
 
-        if (vBlocked)
+        if (vOutcome.Blocked)
         {
             ToastService.Error("Generation blocked by a safety floor (SAFE-01..06).", "Blocked");
             return;
         }
 
+        if (vOutcome.CapExceeded)
+        {
+            ToastService.Error("This month's spending cap is reached; nothing was sent.", "Over the cap");
+            return;
+        }
+
+        if (objVeniceRun && vOutcome.Failure is not null)
+        {
+            objVeniceFailure = VideoModelFilter.FailureLine(vOutcome.Failure);
+            ToastService.Error(objVeniceFailure, "Venice");
+            return;
+        }
+
         var vIndex = objClips.Count + 1;
-        objClips.Add(new ClipSegment($"clip{vIndex:00}", (int)objDuration));
-        ToastService.Success($"clip{vIndex:00} generated on the {SelectedTier.Name} tier ({SelectedTier.Model}).", "Rendered");
+        objClips.Add(new ClipSegment($"clip{vIndex:00}", DurationSeconds));
+        ToastService.Success($"clip{vIndex:00} generated with {ModelLabel}.", "Rendered");
     }
 
-    /// <summary>Best-effort spine round-trip; returns true when the job came back Blocked.</summary>
-    private async Task<bool> TrySubmitJobAsync()
+    /// <summary>
+    /// Spine round-trip. With a picked catalog row the job goes to that row (Venice keys
+    /// <c>duration</c>/<c>resolution</c>/<c>aspectRatio</c>/<c>characterId</c> only from its allowed
+    /// values); otherwise the tier's default model. A Venice job is followed until it ends, feeding
+    /// progress, eta and price into the page; other jobs keep the short best-effort poll.
+    /// </summary>
+    /// <param name="aModel">The picked row, or null to route by tier.</param>
+    private async Task<SubmitOutcome> TrySubmitJobAsync(CatalogModelResponse? aModel)
     {
+        var vVenice = VideoModelFilter.IsVenice(aModel);
         try
         {
             var vClient = HttpClientFactory.CreateClient("TrStudioApi");
             var vRequest = new JobSubmitRequest
             {
-                ModelId = SelectedTier.HeyGen ? "heygen-video" : SelectedTier.Tier == GenerationTier.High ? "wan-video" : "svd-local",
+                ModelId = aModel?.Id ?? (SelectedTier.HeyGen ? "heygen-video" : SelectedTier.Tier == GenerationTier.High ? "wan-video" : "svd-local"),
                 Task = IsImageToVideo ? GenerationTaskType.ImageToVideo : GenerationTaskType.TextToVideo,
-                Tier = SelectedTier.Tier,
+                Tier = aModel?.Tier ?? SelectedTier.Tier,
                 ParamsJson = JsonSerializer.Serialize(new
                 {
                     mode = objMode,
                     prompt = IsImageToVideo ? null : objPrompt,
                     firstFrame = objFirstFrame,
                     lastFrame = objLastFrame,
-                    durationSeconds = (int)objDuration,
+                    durationSeconds = DurationSeconds,
+                    duration = ModelStatesDurations ? objDurationValue : null,
+                    resolution = AllowedValues.Resolutions.Count > 0 ? objResolution : null,
+                    aspectRatio = objAspect,
+                    characterId = objCharacterId != NoCharacter ? objCharacterId : null,
                     motionStrength = objMotion,
                     aspect = objAspect,
                     interpolate = objInterpolate,
@@ -500,36 +769,112 @@
                 })
             };
 
-            var vResponse = await vClient.PostAsJsonAsync(ApiRoutes.Jobs, vRequest);
+            var vResponse = await vClient.PostAsJsonAsync(ApiRoutes.Jobs, vRequest, objCts.Token);
+            if (vResponse.StatusCode == System.Net.HttpStatusCode.PaymentRequired)
+            {
+                return new SubmitOutcome(false, true, null);
+            }
+
             if (!vResponse.IsSuccessStatusCode)
             {
-                return false;
+                // 502 PROVIDER_FAILED carries Venice's own text in the problem detail.
+                return new SubmitOutcome(false, false, vVenice ? await ReadProblemDetailAsync(vResponse) : null);
             }
 
-            var vSubmit = await vResponse.Content.ReadFromJsonAsync<JobSubmitResponse>();
+            var vSubmit = await vResponse.Content.ReadFromJsonAsync<JobSubmitResponse>(objCts.Token);
             if (vSubmit is null)
             {
-                return false;
+                return new SubmitOutcome(false, false, null);
             }
 
-            for (var vPoll = 0; vPoll < 8; vPoll++)
+            // A Venice clip takes minutes: follow it every 2 s for up to 20 minutes.
+            var vPolls = vVenice ? 600 : 8;
+            var vDelay = vVenice ? 2000 : 200;
+            for (var vPoll = 0; vPoll < vPolls; vPoll++)
             {
-                var vStatus = await vClient.GetFromJsonAsync<JobStatusResponse>($"{ApiRoutes.Jobs}/{vSubmit.JobId}");
-                if (vStatus is not null && vStatus.State is JobState.Succeeded or JobState.Failed or JobState.Blocked)
+                var vStatus = await vClient.GetFromJsonAsync<JobStatusResponse>($"{ApiRoutes.Jobs}/{vSubmit.JobId}", objCts.Token);
+                if (vStatus is not null)
                 {
-                    return vStatus.State == JobState.Blocked;
+                    if (vVenice)
+                    {
+                        objProgress = Math.Clamp(vStatus.Progress, 0, 100);
+                        objEta = vStatus.Eta;
+                        objVenicePrice = vStatus.ActualCost ?? vStatus.CostEstimate ?? objVenicePrice;
+                        await InvokeAsync(StateHasChanged);
+                    }
+
+                    if (vStatus.State is JobState.Succeeded or JobState.Failed or JobState.Blocked)
+                    {
+                        return new SubmitOutcome(
+                            vStatus.State == JobState.Blocked,
+                            false,
+                            vStatus.State == JobState.Failed ? vStatus.FailureMessage ?? string.Empty : null);
+                    }
                 }
 
-                await Task.Delay(200);
+                await Task.Delay(vDelay, objCts.Token);
             }
+
+            return new SubmitOutcome(false, false, vVenice ? "Venice did not finish this clip in time." : null);
+        }
+        catch (OperationCanceledException)
+        {
+            // Page closed while the clip was running.
         }
         catch
         {
-            // Phase-7 video path still forming / API down — the representative clip stands in.
+            // API down — for a Venice row say so; the tier path keeps the representative clip.
+            if (vVenice)
+            {
+                return new SubmitOutcome(false, false, "the studio could not reach the server.");
+            }
         }
 
-        return false;
+        return new SubmitOutcome(false, false, null);
     }
+
+    /// <summary>Reads <c>detail</c> from a problem response, falling back to the status code.</summary>
+    /// <param name="aResponse">The failed response.</param>
+    private static async Task<string> ReadProblemDetailAsync(HttpResponseMessage aResponse)
+    {
+        try
+        {
+            using var vDoc = JsonDocument.Parse(await aResponse.Content.ReadAsStringAsync());
+            if (vDoc.RootElement.TryGetProperty("detail", out var vDetail) && vDetail.ValueKind == JsonValueKind.String)
+            {
+                return vDetail.GetString() ?? string.Empty;
+            }
+
+            if (vDoc.RootElement.TryGetProperty("error", out var vError) && vError.ValueKind == JsonValueKind.String)
+            {
+                return vError.GetString() ?? string.Empty;
+            }
+        }
+        catch (JsonException)
+        {
+            // Not a problem body.
+        }
+
+        return $"HTTP {(int)aResponse.StatusCode}";
+    }
+
+    /// <summary>Formats an eta as <c>1m 10s</c> or <c>40s</c>.</summary>
+    /// <param name="aEta">The remaining time.</param>
+    private static string FormatEta(TimeSpan aEta) =>
+        aEta.TotalMinutes >= 1 ? $"{(int)aEta.TotalMinutes}m {aEta.Seconds}s" : $"{Math.Max(0, aEta.Seconds)}s";
+
+    /// <summary>Cancels a running Venice follow-up when the page closes.</summary>
+    public void Dispose()
+    {
+        objCts.Cancel();
+        objCts.Dispose();
+    }
+
+    /// <summary>How a submit ended.</summary>
+    /// <param name="Blocked">The safety floor blocked it.</param>
+    /// <param name="CapExceeded">The monthly cap refused it (402); nothing was sent.</param>
+    /// <param name="Failure">The failure text (Venice's own words), or null.</param>
+    private sealed record SubmitOutcome(bool Blocked, bool CapExceeded, string? Failure);
 
     /// <summary>Runs a best-effort timeline edit (trim/join/reframe/add-audio/split) over the spine.</summary>
     /// <param name="aTool">The edit tool the creator pressed.</param>

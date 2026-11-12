@@ -16,22 +16,27 @@ public class RegistryRepository : IRegistryRepository
     internal const string SelectColumns =
         "\"RegistryModelId\" AS \"Id\", \"DisplayName\", \"Task\", \"ProviderKind\", \"Tier\", \"WorkflowRef\", " +
         "\"HardwareRequirementsJson\", \"ParamsJson\", \"LanguagesJson\", \"License\", \"SafetyClass\", " +
-        "\"CostJson\", \"IsReady\", \"IsEnabled\", \"Endpoint\", \"ChatModel\", \"VisionCapable\"";
+        "\"CostJson\", \"IsReady\", \"IsEnabled\", \"Endpoint\", \"ChatModel\", \"VisionCapable\", " +
+        "\"ProviderModelId\", \"TakesReferencePicture\", \"KeepsFixedCharacter\", \"MaxInputImages\"";
 
     /// <summary>
     /// The idempotent upsert over <c>"RegistryModel"</c>. The text-chat columns
     /// (<c>"Endpoint"</c> / <c>"ChatModel"</c> / <c>"VisionCapable"</c>, REQ-FN-074) round-trip
-    /// through both the INSERT list and the <c>DO UPDATE SET</c> so admin config edits persist.
+    /// through both the INSERT list and the <c>DO UPDATE SET</c> so admin config edits persist; so do
+    /// the phase 2 provider columns (<c>"ProviderModelId"</c>, <c>"TakesReferencePicture"</c>,
+    /// <c>"KeepsFixedCharacter"</c>, <c>"MaxInputImages"</c>, REQ-FN-077).
     /// </summary>
     internal const string UpsertSql =
         "INSERT INTO \"RegistryModel\" (\"RegistryModelId\", \"DisplayName\", \"Task\", \"ProviderKind\", " +
         "\"Tier\", \"WorkflowRef\", \"HardwareRequirementsJson\", \"ParamsJson\", \"LanguagesJson\", " +
         "\"License\", \"SafetyClass\", \"CostJson\", \"IsReady\", \"IsEnabled\", " +
-        "\"Endpoint\", \"ChatModel\", \"VisionCapable\", \"UpdatedUtc\") " +
+        "\"Endpoint\", \"ChatModel\", \"VisionCapable\", " +
+        "\"ProviderModelId\", \"TakesReferencePicture\", \"KeepsFixedCharacter\", \"MaxInputImages\", \"UpdatedUtc\") " +
         "VALUES (@Id, @DisplayName, @Task, @ProviderKind, @Tier, @WorkflowRef, " +
         "CAST(@HardwareRequirementsJson AS jsonb), CAST(@ParamsJson AS jsonb), CAST(@LanguagesJson AS jsonb), " +
         "@License, @SafetyClass, CAST(@CostJson AS jsonb), @IsReady, @IsEnabled, " +
-        "@Endpoint, @ChatModel, @VisionCapable, now()) " +
+        "@Endpoint, @ChatModel, @VisionCapable, " +
+        "@ProviderModelId, @TakesReferencePicture, @KeepsFixedCharacter, @MaxInputImages, now()) " +
         "ON CONFLICT (\"RegistryModelId\") DO UPDATE SET " +
         "\"DisplayName\" = EXCLUDED.\"DisplayName\", \"Task\" = EXCLUDED.\"Task\", " +
         "\"ProviderKind\" = EXCLUDED.\"ProviderKind\", \"Tier\" = EXCLUDED.\"Tier\", " +
@@ -42,6 +47,10 @@ public class RegistryRepository : IRegistryRepository
         "\"CostJson\" = EXCLUDED.\"CostJson\", \"IsReady\" = EXCLUDED.\"IsReady\", " +
         "\"IsEnabled\" = EXCLUDED.\"IsEnabled\", \"Endpoint\" = EXCLUDED.\"Endpoint\", " +
         "\"ChatModel\" = EXCLUDED.\"ChatModel\", \"VisionCapable\" = EXCLUDED.\"VisionCapable\", " +
+        "\"ProviderModelId\" = EXCLUDED.\"ProviderModelId\", " +
+        "\"TakesReferencePicture\" = EXCLUDED.\"TakesReferencePicture\", " +
+        "\"KeepsFixedCharacter\" = EXCLUDED.\"KeepsFixedCharacter\", " +
+        "\"MaxInputImages\" = EXCLUDED.\"MaxInputImages\", " +
         "\"UpdatedUtc\" = now()";
 
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
@@ -103,7 +112,11 @@ public class RegistryRepository : IRegistryRepository
             aModel.IsEnabled,
             aModel.Endpoint,
             aModel.ChatModel,
-            aModel.VisionCapable
+            aModel.VisionCapable,
+            aModel.ProviderModelId,
+            aModel.TakesReferencePicture,
+            aModel.KeepsFixedCharacter,
+            aModel.MaxInputImages
         }, cancellationToken: aCancellationToken)).ConfigureAwait(false);
     }
 
@@ -152,6 +165,10 @@ public class RegistryRepository : IRegistryRepository
         public string? Endpoint { get; set; }
         public string? ChatModel { get; set; }
         public bool VisionCapable { get; set; }
+        public string? ProviderModelId { get; set; }
+        public bool TakesReferencePicture { get; set; }
+        public bool KeepsFixedCharacter { get; set; }
+        public int? MaxInputImages { get; set; }
 
         public RegistryModel ToEntity() => new()
         {
@@ -171,7 +188,11 @@ public class RegistryRepository : IRegistryRepository
             IsEnabled = IsEnabled,
             Endpoint = Endpoint,
             ChatModel = ChatModel,
-            VisionCapable = VisionCapable
+            VisionCapable = VisionCapable,
+            ProviderModelId = ProviderModelId,
+            TakesReferencePicture = TakesReferencePicture,
+            KeepsFixedCharacter = KeepsFixedCharacter,
+            MaxInputImages = MaxInputImages
         };
     }
 }

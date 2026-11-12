@@ -112,114 +112,115 @@ tr.diff td:first-child{border-left:3px solid var(--brand)}
 </head>
 <body>
 <div class="app">
-<aside class="side">
+<aside class="side" data-testid="sidebar">
   <div class="brand"><div class="logo">TR</div>TrStudio</div>
   <div class="navgroup">Studios</div>
   <nav class="nav">
-    <a href="avatar-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Avatar Studio</a>
-    <a href="character-library.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Characters</a>
-    <a href="image-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Image Studio</a>
-    <a href="video-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>Video Studio</a>
-    <a href="voice-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 19v3"/></svg>Voice Studio</a>
-    <a href="prompt-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>Prompt Studio</a>
+    <a href="avatar-studio.html" data-testid="nav-avatar-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Avatar Studio</a>
+    <a href="character-library.html" data-testid="nav-character-library"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Characters</a>
+    <a href="image-studio.html" data-testid="nav-image-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Image Studio</a>
+    <a href="video-studio.html" data-testid="nav-video-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>Video Studio</a>
+    <a href="voice-studio.html" data-testid="nav-voice-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 19v3"/></svg>Voice Studio</a>
+    <a href="prompt-studio.html" data-testid="nav-prompt-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>Prompt Studio</a>
   </nav>
   <div class="navgroup">Workspace</div>
   <nav class="nav">
-    <a href="gallery.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Gallery</a>
-    <a href="projects.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Projects</a>
-    <a href="library.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Library</a>
-    <a href="account.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/></svg>Account</a>
+    <a href="gallery.html" data-testid="nav-gallery"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Gallery</a>
+    <a href="projects.html" data-testid="nav-projects"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Projects</a>
+    <a href="library.html" data-testid="nav-library"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Library</a>
+    <a href="account.html" data-testid="nav-account"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/></svg>Account</a>
   </nav>
   <div class="sidefoot">
-    <a href="admin-hardware.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudioAdmin</a>
+    <a href="admin-hardware.html" data-testid="link-switch-to-trstudioadmin"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudioAdmin</a>
+    <a href="login.html" data-testid="nav-sign-out"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>Sign out</a>
   </div>
 </aside>
-<div class="main">
-<header class="top">
-  <span class="crumb">TrStudio</span><span class="crumb">/</span><span class="crumb"><a href="gallery.html">Gallery</a></span><span class="crumb">/</span><span class="crumb here">Compare</span>
+<div class="main" data-testid="main">
+<header class="top" data-testid="topbar">
+  <span class="crumb">TrStudio</span><span class="crumb">/</span><span class="crumb"><a href="gallery.html" data-testid="link-gallery">Gallery</a></span><span class="crumb">/</span><span class="crumb here">Compare</span>
   <span class="spacer"></span>
-  <span class="badge ok"><span class="dot ok"></span>$38.40 / $100.00 cap</span>
-  <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
-  <div class="userchip">TR</div>
+  <span class="badge ok" data-testid="badge-status"><span class="dot ok"></span>$38.40 / $100.00 cap</span>
+  <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode" onclick="/* switches light and dark: page script */" data-testid="icon-btn-toggle-dark-mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
+  <div class="userchip" data-testid="user-chip">TR</div>
 </header>
-<div class="content">
+<div class="content" data-testid="content">
   <h1 class="h">Compare</h1>
   <p class="sub">Side-by-side across models, seeds and providers — differing parameters are highlighted so you can see exactly what changed between runs.</p>
 
   <!-- Slot pickers -->
   <div class="slotbar">
     <span class="slottag">A</span>
-    <select class="select"><option>Diwali avatar intro — Kavya (Hunyuan-Avatar · seed 4821)</option><option>Product reel teaser — saree line (HeyGen Avatar IV)</option><option>Lip-sync test — MuseTalk (seed 1133)</option></select>
+    <select class="select" data-testid="field-1"><option>Diwali avatar intro — Kavya (Hunyuan-Avatar · seed 4821)</option><option>Product reel teaser — saree line (HeyGen Avatar IV)</option><option>Lip-sync test — MuseTalk (seed 1133)</option></select>
     <span class="slottag">B</span>
-    <select class="select"><option>Diwali avatar intro — Kavya (MuseTalk · seed 4821)</option><option>Product reel teaser — saree line (HeyGen Avatar IV)</option><option>Kavya portrait — warm light (SDXL)</option></select>
-    <button class="btn outline"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Add third</button>
+    <select class="select" data-testid="field-2"><option>Diwali avatar intro — Kavya (MuseTalk · seed 4821)</option><option>Product reel teaser — saree line (HeyGen Avatar IV)</option><option>Kavya portrait — warm light (SDXL)</option></select>
+    <button class="btn outline" onclick="alert('Add third: done in the built app')" data-testid="btn-add-third"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Add third</button>
     <span class="spacer"></span>
-    <div class="seg"><button class="active">Side-by-side</button><button>Overlay</button></div>
-    <span class="row" style="gap:8px"><span class="toggle on" role="switch" aria-checked="true"></span><span class="muted" style="font-size:12.5px">Sync playback</span></span>
+    <div class="seg"><button class="active" onclick="/* selects this option: page script */" data-testid="btn-side-by-side">Side-by-side</button><button onclick="/* selects this option: page script */" data-testid="btn-overlay">Overlay</button></div>
+    <span class="row" style="gap:8px"><span class="toggle on" role="switch" aria-checked="true" data-testid="switch"></span><span class="muted" style="font-size:12.5px">Sync playback</span></span>
   </div>
 
   <!-- Panes -->
   <div class="panes">
-    <div class="card pane">
+    <div class="card pane" data-testid="card-1">
       <div class="thumb pv"><span class="playbtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span><span class="durchip">0:24</span></div>
       <div class="t">A — Diwali avatar intro — Kavya</div>
       <div class="badges">
-        <span class="badge brand">Hunyuan-Avatar</span>
-        <span class="badge">High · RunPod</span>
-        <span class="badge">seed 4821</span>
-        <span class="badge ok">provenance ✓</span>
+        <span class="badge brand" data-testid="badge-hunyuan-avatar">Hunyuan-Avatar</span>
+        <span class="badge" data-testid="badge-high-runpod">High · RunPod</span>
+        <span class="badge" data-testid="badge-seed-4821">seed 4821</span>
+        <span class="badge ok" data-testid="badge-provenance">provenance ✓</span>
       </div>
       <div class="kv"><span class="muted">Cost</span><b>$0.31</b></div>
       <div class="kv"><span class="muted">Duration</span><b>92 s render</b></div>
       <div class="kv"><span class="muted">Resolution</span><b>1080×1920 (9:16)</b></div>
-      <div class="acts"><button class="btn ghost" data-act>Reproduce</button><button class="btn ghost" data-act>Export</button><a class="btn ghost" href="gallery.html" style="text-decoration:none">Open in Gallery</a></div>
+      <div class="acts"><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce">Reproduce</button><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-export">Export</button><a class="btn ghost" href="gallery.html" style="text-decoration:none" data-testid="link-open-in-gallery">Open in Gallery</a></div>
     </div>
-    <div class="card pane">
+    <div class="card pane" data-testid="card-2">
       <div class="thumb pv2"><span class="playbtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span><span class="durchip">0:24</span></div>
       <div class="t">B — Diwali avatar intro — Kavya</div>
       <div class="badges">
-        <span class="badge brand">MuseTalk</span>
-        <span class="badge">Fast · Mac local</span>
-        <span class="badge">seed 4821</span>
-        <span class="badge ok">provenance ✓</span>
+        <span class="badge brand" data-testid="badge-musetalk">MuseTalk</span>
+        <span class="badge" data-testid="badge-fast-mac-local">Fast · Mac local</span>
+        <span class="badge" data-testid="badge-seed-4821-2">seed 4821</span>
+        <span class="badge ok" data-testid="badge-provenance-2">provenance ✓</span>
       </div>
       <div class="kv"><span class="muted">Cost</span><b>$0.00 (local)</b></div>
       <div class="kv"><span class="muted">Duration</span><b>141 s render</b></div>
       <div class="kv"><span class="muted">Resolution</span><b>720×1280 (9:16)</b></div>
-      <div class="acts"><button class="btn ghost" data-act>Reproduce</button><button class="btn ghost" data-act>Export</button><a class="btn ghost" href="gallery.html" style="text-decoration:none">Open in Gallery</a></div>
+      <div class="acts"><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-2">Reproduce</button><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-export-2">Export</button><a class="btn ghost" href="gallery.html" style="text-decoration:none" data-testid="link-open-in-gallery-2">Open in Gallery</a></div>
     </div>
   </div>
 
   <!-- Parameter diff -->
-  <div class="card" style="margin-bottom:16px">
+  <div class="card" style="margin-bottom:16px" data-testid="card-parameters-4-differ">
     <div class="row" style="justify-content:space-between;margin-bottom:6px">
       <h3 style="margin:0">Parameters<span class="diffmark">4 differ</span></h3>
-      <span class="row" style="gap:8px"><span class="toggle" role="switch" aria-checked="false"></span><span class="muted" style="font-size:12.5px">Show identical rows</span></span>
+      <span class="row" style="gap:8px"><span class="toggle" role="switch" aria-checked="false" data-testid="switch-2"></span><span class="muted" style="font-size:12.5px">Show identical rows</span></span>
     </div>
-    <table>
+    <table data-testid="table-1">
       <thead><tr><th style="width:22%">Parameter</th><th>A — Hunyuan-Avatar</th><th>B — MuseTalk</th></tr></thead>
       <tbody>
-        <tr class="diff"><td>Model</td><td>Hunyuan-Avatar</td><td>MuseTalk v1</td></tr>
-        <tr class="diff"><td>Provider · tier</td><td>RunPod serverless · High</td><td>Mac local (MPS) · Fast</td></tr>
-        <tr class="diff"><td>Resolution</td><td>1080×1920</td><td>720×1280</td></tr>
-        <tr class="diff"><td>Cost</td><td>$0.31</td><td>$0.00 (local)</td></tr>
-        <tr><td>Character</td><td colspan="2">Kavya (synthetic · photoreal · identity locked)</td></tr>
-        <tr><td>Voice</td><td colspan="2">Ravi (Hindi) — IndicF5, speed 1.0</td></tr>
-        <tr><td>Script</td><td colspan="2">"Is Diwali, apno ko dijiye mithaas ka tohfa…" (HI, 62 words)</td></tr>
-        <tr><td>Seed</td><td colspan="2">4821</td></tr>
-        <tr><td>Captions</td><td colspan="2">Hindi · burn-in</td></tr>
+        <tr class="diff" data-tf-sample><td>Model</td><td>Hunyuan-Avatar</td><td>MuseTalk v1</td></tr>
+        <tr class="diff" data-tf-sample><td>Provider · tier</td><td>RunPod serverless · High</td><td>Mac local (MPS) · Fast</td></tr>
+        <tr class="diff" data-tf-sample><td>Resolution</td><td>1080×1920</td><td>720×1280</td></tr>
+        <tr class="diff" data-tf-sample><td>Cost</td><td>$0.31</td><td>$0.00 (local)</td></tr>
+        <tr data-tf-sample><td>Character</td><td colspan="2">Kavya (synthetic · photoreal · identity locked)</td></tr>
+        <tr data-tf-sample><td>Voice</td><td colspan="2">Ravi (Hindi) — IndicF5, speed 1.0</td></tr>
+        <tr data-tf-sample><td>Script</td><td colspan="2">"Is Diwali, apno ko dijiye mithaas ka tohfa…" (HI, 62 words)</td></tr>
+        <tr data-tf-sample><td>Seed</td><td colspan="2">4821</td></tr>
+        <tr data-tf-sample><td>Captions</td><td colspan="2">Hindi · burn-in</td></tr>
       </tbody>
     </table>
   </div>
 
-  <div class="alert">Same seed, same script — only the model, tier, resolution and cost differ. Use <b>Reproduce</b> on the winner to re-run it, or export both for review.</div>
+  <div class="alert" data-testid="alert-info">Same seed, same script — only the model, tier, resolution and cost differ. Use <b>Reproduce</b> on the winner to re-run it, or export both for review.</div>
 
   <!-- Empty state (fewer than two picked) -->
-  <div class="card emptystate">
+  <div class="card emptystate" data-testid="card-nothing-to-compare-yet">
     <div class="emptyicon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M21 3 3 21"/></svg></div>
     <h3 style="margin:0 0 4px">Nothing to compare yet</h3>
     <div class="muted" style="margin-bottom:14px">Select two or more assets in the Gallery and hit Compare, or pick them in the slots above.</div>
-    <a class="btn brand" href="gallery.html" style="text-decoration:none">Go to Gallery</a>
+    <a class="btn brand" href="gallery.html" style="text-decoration:none" data-testid="link-go-to-gallery">Go to Gallery</a>
   </div>
 </div>
 </div>

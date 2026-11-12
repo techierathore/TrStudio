@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TrStudio — Architecture — TrStudio</title>
+<title>TrStudio — Architecture</title>
 <script>
 /* Resolve the theme BEFORE first paint (no flash). Saved choice wins; otherwise
    pick by time of day — light 07:00–19:00 local, softened dark at night. */
@@ -102,112 +102,148 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </style>
 </head>
 <body>
-<button id="themeToggle" class="theme-toggle" title="Toggle light / dark">☾ Dark</button>
+<button id="themeToggle" class="theme-toggle" title="Toggle light / dark">&#9790; Dark</button>
 <div class="layout">
   <nav class="side">
     <h1>TrStudio — Architecture</h1>
-    <div class="sub">Last rendered: 2026-07-07</div>
+    <div class="sub">Last rendered: 2026-11-12</div>
     <div class="group">Contents</div>
     <ol>
-      <li><a href="#tech-stack">1. Tech stack</a></li>
-      <li><a href="#component-map">2. Component map</a></li>
-      <li><a href="#data-flow-primary-generation-job-path">3. Data flow — primary generation job path</a></li>
-      <li class="h3"><a href="#prompt-crafting-chat-path-f-prompt-added-2026-07-07">3.1 Prompt-crafting chat path</a></li>
-      <li><a href="#module-responsibilities">4. Module responsibilities</a></li>
-      <li><a href="#provider-abstraction-and-the-three-execution-tiers">5. Provider abstraction and the three execution tiers</a></li>
-      <li><a href="#model-and-provider-registry">6. Model and provider registry</a></li>
-      <li><a href="#identity-and-licensing-appmanager-integration">7. Identity and licensing — AppManager integration</a></li>
-      <li><a href="#comfyui-pipeline-management">8. ComfyUI pipeline management</a></li>
-      <li><a href="#cross-cutting-concerns">9. Cross-cutting concerns</a></li>
-      <li><a href="#deployment-architecture">10. Deployment architecture</a></li>
-      <li><a href="#architectural-decisions-adr-style-log">11. Architectural decisions (ADR-style log)</a></li>
-      <li><a href="#build-roadmap-phased-target">12. Build roadmap (phased target)</a></li>
-      <li><a href="#open-questions-risks">13. Open questions / risks</a></li>
-      <li><a href="#sources-harvested">Sources harvested</a></li>
+        <li><a href="#stack-decisions">1. Stack decisions</a></li>
+        <li class="h3"><a href="#technology-choices">Technology choices</a></li>
+        <li><a href="#solution-structure">2. Solution structure</a></li>
+        <li><a href="#component-map">3. Component map</a></li>
+        <li class="h3"><a href="#data-flow-primary-generation-job-path">Data flow — primary generation job path</a></li>
+        <li class="h3"><a href="#provider-abstraction-and-the-three-execution-tiers">Provider abstraction and the three execution tiers</a></li>
+        <li class="h3"><a href="#venice-cloud-provider-phase-2-planned">Venice cloud provider (phase 2, planned)</a></li>
+        <li class="h3"><a href="#model-and-provider-registry">Model and provider registry</a></li>
+        <li class="h3"><a href="#comfyui-pipeline-management">ComfyUI pipeline management</a></li>
+        <li><a href="#data-model">4. Data model</a></li>
+        <li><a href="#cross-cutting">5. Cross-cutting</a></li>
+        <li class="h3"><a href="#identity-and-licensing-appmanager-integration">Identity and licensing — AppManager integration</a></li>
+        <li><a href="#decisions-log">6. Decisions log</a></li>
+        <li><a href="#module-responsibilities">7. Module responsibilities</a></li>
+        <li class="h3"><a href="#build-roadmap-phased-target-july-2026">Build roadmap (phased target, July 2026)</a></li>
+        <li><a href="#open-questions">8. Open questions</a></li>
+        <li class="h3"><a href="#sources-harvested">Sources harvested</a></li>
     </ol>
   </nav>
   <main>
     <h1>TrStudio — Architecture</h1>
-    <div class="subtitle">Target architecture (greenfield) — TrStudio</div>
-
-    <p><strong>Last updated:</strong> 2026-07-07<br>
-    <strong>Status:</strong> Target (greenfield) · amended 2026-07-05: consolidated to one role-based <code>TrStudio</code> app + MAUI desktop Win/Mac (ADR-012 supersedes ADR-001) · amended 2026-07-07: Prompt Studio LLM chat path added (F-PROMPT, BRD-88..92, ADR-013)</p>
+    <div class="subtitle">Rendered 2026-11-12 &middot; source <code>TrStudio-Architecture.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
       <ol>
-        <li><a href="#tech-stack">Tech stack</a></li>
-        <li><a href="#component-map">Component map</a></li>
-        <li><a href="#data-flow-primary-generation-job-path">Data flow — primary generation job path</a>
-          <ul>
-            <li><a href="#prompt-crafting-chat-path-f-prompt-added-2026-07-07">Prompt-crafting chat path (F-PROMPT)</a></li>
-          </ul>
-        </li>
-        <li><a href="#module-responsibilities">Module responsibilities</a></li>
-        <li><a href="#provider-abstraction-and-the-three-execution-tiers">Provider abstraction and the three execution tiers</a></li>
-        <li><a href="#model-and-provider-registry">Model and provider registry</a></li>
-        <li><a href="#identity-and-licensing-appmanager-integration">Identity and licensing — AppManager integration</a></li>
-        <li><a href="#comfyui-pipeline-management">ComfyUI pipeline management</a></li>
-        <li><a href="#cross-cutting-concerns">Cross-cutting concerns</a></li>
-        <li><a href="#deployment-architecture">Deployment architecture</a></li>
-        <li><a href="#architectural-decisions-adr-style-log">Architectural decisions (ADR-style log)</a></li>
-        <li><a href="#build-roadmap-phased-target">Build roadmap (phased target)</a></li>
-        <li><a href="#open-questions-risks">Open questions / risks</a></li>
-        <li><a href="#sources-harvested">Sources harvested</a></li>
+        <li><a href="#stack-decisions">1. Stack decisions</a></li>
+        <li class="h3"><a href="#technology-choices">Technology choices</a></li>
+        <li><a href="#solution-structure">2. Solution structure</a></li>
+        <li><a href="#component-map">3. Component map</a></li>
+        <li class="h3"><a href="#data-flow-primary-generation-job-path">Data flow — primary generation job path</a></li>
+        <li class="h3"><a href="#provider-abstraction-and-the-three-execution-tiers">Provider abstraction and the three execution tiers</a></li>
+        <li class="h3"><a href="#venice-cloud-provider-phase-2-planned">Venice cloud provider (phase 2, planned)</a></li>
+        <li class="h3"><a href="#model-and-provider-registry">Model and provider registry</a></li>
+        <li class="h3"><a href="#comfyui-pipeline-management">ComfyUI pipeline management</a></li>
+        <li><a href="#data-model">4. Data model</a></li>
+        <li><a href="#cross-cutting">5. Cross-cutting</a></li>
+        <li class="h3"><a href="#identity-and-licensing-appmanager-integration">Identity and licensing — AppManager integration</a></li>
+        <li><a href="#decisions-log">6. Decisions log</a></li>
+        <li><a href="#module-responsibilities">7. Module responsibilities</a></li>
+        <li class="h3"><a href="#build-roadmap-phased-target-july-2026">Build roadmap (phased target, July 2026)</a></li>
+        <li><a href="#open-questions">8. Open questions</a></li>
+        <li class="h3"><a href="#sources-harvested">Sources harvested</a></li>
       </ol>
     </div>
-
-    <h2 id="tech-stack">1. Tech stack<a class="anchor-link" href="#tech-stack">#</a></h2>
-    <table>
-      <thead>
-        <tr><th>Layer</th><th>Choice</th><th>Version</th><th>Notes</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>Runtime</td><td>.NET</td><td>10 (LTS)</td><td>Unified Blazor render modes; released Nov 2025</td></tr>
-        <tr><td>Creator + Management UI</td><td><code>TrStudio</code> — <strong>one unified Blazor app</strong>, role-based surface (Blazor Web + MAUI Blazor Hybrid desktop)</td><td>.NET 10</td><td>Creator/Operator/Owner see their surface by role; Win+Mac desktop <strong>and</strong> browser</td></tr>
-        <tr><td><del>Management UI</del></td><td><del><code>TrStudioAdmin</code></del> — <strong>retired 2026-07-05</strong>, merged into <code>TrStudio</code> (ADR-012)</td><td>—</td><td>Screens moved to <code>TrStudioUI</code> RCL under role-gated routes</td></tr>
-        <tr><td>Shared UI</td><td><code>TrStudioUI</code> — Razor Class Library on <strong>TrBlazeUI</strong></td><td>.NET 10</td><td>Components/layouts/screens shared by both apps</td></tr>
-        <tr><td>Backend / API</td><td><code>TrStudioApi</code> — ASP.NET Core</td><td>.NET 10</td><td>Provider abstraction, registry, orchestrator, generation endpoints, OpenAPI, SignalR</td></tr>
-        <tr><td>Background jobs</td><td><strong>Hangfire</strong> (PostgreSQL storage)</td><td>—</td><td>Durable queue, retries, concurrency caps — <strong>no Redis</strong></td></tr>
-        <tr><td>Cache</td><td><code>IMemoryCache</code> (in-process)</td><td>—</td><td>No distributed cache for the MVP</td></tr>
-        <tr><td>Local image inference</td><td><strong>ONNX Runtime</strong> (CoreML/CPU EP)</td><td>—</td><td>SDXL/FLUX image path; aligns with TechieRag's ONNX usage</td></tr>
-        <tr><td>Media inference</td><td><strong>ComfyUI</strong> (managed, isolated Python)</td><td>—</td><td>Mac MPS (Fast tier) + RunPod serverless (High tier)</td></tr>
-        <tr><td>Premium avatar</td><td><strong>HeyGen API</strong></td><td>—</td><td>Premium tier, user-selectable per job</td></tr>
-        <tr><td>Closed image/video</td><td>Aggregator adapter (fal.ai / Replicate / WaveSpeed)</td><td>—</td><td>Vendor adapters (Veo/Kling/Seedance) later</td></tr>
-        <tr><td>Text / LLM / RAG</td><td><strong>TechieRag</strong> + <strong>TechieRag.Embedded</strong> (NuGet, GitHub Packages)</td><td>.NET 10</td><td>Script/caption/prompt-memory/character-bible; PgVector store + ONNX embeddings. <strong>Text only — not the image path</strong></td></tr>
-        <tr><td>DB</td><td><strong>PostgreSQL + PgVector</strong></td><td>16+</td><td>Relational + vector in one instance; India-resident (DPDP)</td></tr>
-        <tr><td>Data access</td><td><strong>Dapper</strong></td><td>—</td><td>Micro-ORM; <strong>no EF Core</strong>; parameterized SQL in the engine's <code>Infrastructure/</code> folder</td></tr>
-        <tr><td>Migrations</td><td><strong>DbUp</strong> (<code>TrStudioDb</code> project)</td><td>—</td><td>Embedded SQL scripts executed on <code>TrStudioApi</code> startup</td></tr>
-        <tr><td>Object storage</td><td>Object store (assets) + RunPod network volume (models)</td><td>—</td><td>Big media models on <code>$0.07/GB/mo</code> network volume</td></tr>
-        <tr><td>Auth / Identity</td><td><strong>AppManager</strong> (external child-app API)</td><td>—</td><td>JWT + <code>X-Api-Key</code>/<code>X-Api-Secret</code>, RSA-encrypted passwords; <strong>not</strong> the app DB</td></tr>
-        <tr><td>Logging / Telemetry</td><td><strong>Serilog</strong> (structured) + <strong>OpenTelemetry</strong></td><td>—</td><td>Queue/memory/latency/spend metrics, traceable job IDs</td></tr>
-        <tr><td>Packaging</td><td>Docker (<code>TrStudioApi</code> + workers) + RunPod template image</td><td>—</td><td>—</td></tr>
-      </tbody>
-    </table>
-
-    <h2 id="component-map">2. Component map<a class="anchor-link" href="#component-map">#</a></h2>
-    <div class="diagram">
-      <div class="dt">
-        <button data-zout title="Zoom out">−</button>
-        <span class="zlabel">100%</span>
-        <button data-zin title="Zoom in">+</button>
-        <button data-fit title="Fit to width">Fit</button>
-        <button data-one title="Actual size">1:1</button>
-        <button data-fs title="Fullscreen">⛶</button>
-        <button data-pop title="Open in new tab">↗</button>
-      </div>
-      <pre class="mermaid">flowchart TB
+<table>
+<thead><tr><th></th><th></th></tr></thead>
+<tbody>
+<tr><td>App</td><td>TrStudio</td></tr>
+<tr><td>Kind</td><td>app</td></tr>
+<tr><td>Size</td><td>Large</td></tr>
+<tr><td>Stack answer set</td><td>none</td></tr>
+<tr><td>Date</td><td>2026-11-12</td></tr>
+</tbody>
+</table>
+<p>The single <code>TrStudio</code> app has a role-based surface (ADR-012). Phase 2 adds Venice as a second cloud provider for pictures and video (ADR-014, <a href="TrStudio-P2-BRD.html">phase 2 BRD</a>).</p>
+<h2 id="stack-decisions"><a id="1-stack-decisions"></a>1. Stack decisions<a class="anchor-link" href="#stack-decisions">#</a></h2>
+<p>One row per stack question. The project predates the stack questions, so every answer is read from the existing code ("code").</p>
+<table>
+<thead><tr><th>Q</th><th>Topic</th><th>Decision</th><th>Source</th></tr></thead>
+<tbody>
+<tr><td>Q1</td><td>Configuration</td><td><code>appsettings.json</code> per head, layered by <code>appsettings.{Environment}.json</code>; <code>src/TrStudioApi/appsettings.json</code> is git-ignored and made from <code>appsettings.template.json</code>. Provider addresses and keys added at run time (RunPod, HeyGen, text-chat models, Venice) live in the database, entered on Registry &amp; providers. Never environment variables.</td><td>code</td></tr>
+<tr><td>Q2</td><td>Secrets in development</td><td>The git-ignored <code>appsettings.json</code> or Visual Studio user secrets for AppManager and the database password; provider keys are stored in the database, encrypted by <code>AesGcmKeyStore</code>. Test secrets go in a git-ignored <code>testsettings.Local.json</code> beside the tests. Nothing secret is committed.</td><td>code</td></tr>
+<tr><td>Q3</td><td>Database</td><td>PostgreSQL 16+ with PgVector in development and production; DbUp (<code>TrStudioDb</code>) migrates on API start. A container is acceptable for the developer's database. When the database is not reachable the API refuses to start and says so; the agent does not fake data.</td><td>code</td></tr>
+<tr><td>Q4</td><td>Authentication</td><td>AppManager as an external child application (JWT and refresh, RSA-encrypted passwords, <code>X-Api-Key</code>/<code>X-Api-Secret</code>). AppManager owns users, roles, licences and subscriptions; TrStudio stores only the AppManager <code>userId</code>.</td><td>code</td></tr>
+<tr><td>Q5</td><td>Logging</td><td>Serilog structured logging plus OpenTelemetry metrics; job ids on every line; no secrets in logs or URLs.</td><td>code</td></tr>
+<tr><td>Q6</td><td>Tests</td><td>xUnit with NSubstitute: <code>tests/unit/TrStudio.Tests.Unit</code> and <code>tests/integration/TrStudio.Tests.Integration</code>; Playwright browser tests in <code>tests/verify/</code>. Test settings come from <code>testsettings.json</code> (committed, empty values) overlaid by git-ignored <code>testsettings.Local.json</code> beside the tests, never from environment variables.</td><td>code</td></tr>
+<tr><td>Q7</td><td>Layout and naming</td><td><code>src/</code> and <code>tests/</code>; the primary head is <code>TrStudio</code> (web), the desktop head <code>TrStudio.Desktop</code>; libraries <code>TrStudio.Engine</code>, <code>TrStudio.Models</code>, <code>TrStudioUI</code>, <code>TrStudioDb</code>; API host <code>TrStudioApi</code>.</td><td>code</td></tr>
+<tr><td>Q8</td><td>User interface</td><td>TrBlazeUI on Blazor (<code>TrStudioUI</code> Razor Class Library) for the web head and the MAUI Blazor Hybrid desktop head (Windows and Mac); interactive server rendering on the web head.</td><td>code</td></tr>
+<tr><td>Q11</td><td>Standing rules</td><td>Log files are written under the build output folder, never at the repository root. No unnecessary folders at the repository root. No setting is read from an environment variable. Provider addresses and keys never go in appsettings or in code.</td><td>code</td></tr>
+</tbody>
+</table>
+<p>Required packages: <code>TrBlazeUI.Components</code>, <code>TrBlazeUI.Icons.Lucide</code>, <code>TechieRag</code>, <code>Dapper</code>, <code>dbup-postgresql</code>, <code>Npgsql</code>, <code>Hangfire.PostgreSql</code>, <code>Serilog.AspNetCore</code>, <code>xunit</code></p>
+<h3 id="technology-choices">Technology choices<a class="anchor-link" href="#technology-choices">#</a></h3>
+<table>
+<thead><tr><th>Layer</th><th>Choice</th><th>Version</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>Runtime</td><td>.NET</td><td>10 (LTS)</td><td>Unified Blazor render modes; released Nov 2025</td></tr>
+<tr><td>Creator + Management UI</td><td><code>TrStudio</code> — <strong>one unified Blazor app</strong>, role-based surface (Blazor Web + MAUI Blazor Hybrid desktop)</td><td>.NET 10</td><td>Creator/Operator/Owner see their surface by role; Win+Mac desktop <strong>and</strong> browser</td></tr>
+<tr><td><s>Management UI</s></td><td><s><code>TrStudioAdmin</code></s> — <strong>retired 2026-07-05</strong>, merged into <code>TrStudio</code> (ADR-012)</td><td>—</td><td>Screens moved to <code>TrStudioUI</code> RCL under role-gated routes</td></tr>
+<tr><td>Shared UI</td><td><code>TrStudioUI</code> — Razor Class Library on <strong>TrBlazeUI</strong></td><td>.NET 10</td><td>Components/layouts/screens shared by both apps</td></tr>
+<tr><td>Backend / API</td><td><code>TrStudioApi</code> — ASP.NET Core</td><td>.NET 10</td><td>Provider abstraction, registry, orchestrator, generation endpoints, OpenAPI, SignalR</td></tr>
+<tr><td>Background jobs</td><td><strong>Hangfire</strong> (PostgreSQL storage)</td><td>—</td><td>Durable queue, retries, concurrency caps — <strong>no Redis</strong></td></tr>
+<tr><td>Cache</td><td><code>IMemoryCache</code> (in-process)</td><td>—</td><td>No distributed cache for the MVP</td></tr>
+<tr><td>Local image inference</td><td><strong>ONNX Runtime</strong> (CoreML/CPU EP)</td><td>—</td><td>SDXL/FLUX image path; aligns with TechieRag's ONNX usage</td></tr>
+<tr><td>Media inference</td><td><strong>ComfyUI</strong> (managed, isolated Python)</td><td>—</td><td>Mac MPS (Fast tier) + RunPod serverless (High tier)</td></tr>
+<tr><td>Premium avatar</td><td><strong>HeyGen API</strong></td><td>—</td><td>Premium tier, user-selectable per job</td></tr>
+<tr><td>Closed image/video</td><td>Aggregator adapter (fal.ai / Replicate / WaveSpeed)</td><td>—</td><td>Vendor adapters (Veo/Kling/Seedance) later</td></tr>
+<tr><td>Text / LLM / RAG</td><td><strong>TechieRag</strong> + <strong>TechieRag.Embedded</strong> (NuGet, GitHub Packages)</td><td>.NET 10</td><td>Script/caption/prompt-memory/character-bible; PgVector store + ONNX embeddings. <strong>Text only — not the image path</strong></td></tr>
+<tr><td>DB</td><td><strong>PostgreSQL + PgVector</strong></td><td>16+</td><td>Relational + vector in one instance; India-resident (DPDP)</td></tr>
+<tr><td>Data access</td><td><strong>Dapper</strong></td><td>—</td><td>Micro-ORM; <strong>no EF Core</strong>; parameterized SQL in the engine's <code>Infrastructure/</code> folder</td></tr>
+<tr><td>Migrations</td><td><strong>DbUp</strong> (<code>TrStudioDb</code> project)</td><td>—</td><td>Embedded SQL scripts executed on <code>TrStudioApi</code> startup</td></tr>
+<tr><td>Object storage</td><td>Object store (assets) + RunPod network volume (models)</td><td>—</td><td>Big media models on <code>$0.07/GB/mo</code> network volume</td></tr>
+<tr><td>Auth / Identity</td><td><strong>AppManager</strong> (external child-app API)</td><td>—</td><td>JWT + <code>X-Api-Key</code>/<code>X-Api-Secret</code>, RSA-encrypted passwords; <strong>not</strong> the app DB</td></tr>
+<tr><td>Logging / Telemetry</td><td><strong>Serilog</strong> (structured) + <strong>OpenTelemetry</strong></td><td>—</td><td>Queue/memory/latency/spend metrics, traceable job IDs</td></tr>
+<tr><td>Packaging</td><td>Docker (<code>TrStudioApi</code> + workers) + RunPod template image</td><td>—</td><td>—</td></tr>
+</tbody>
+</table>
+<h2 id="solution-structure"><a id="2-solution-structure"></a>2. Solution structure<a class="anchor-link" href="#solution-structure">#</a></h2>
+<table>
+<thead><tr><th>Project</th><th>Kind</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td><code>TrStudio</code></td><td>web app (Blazor)</td><td>The primary head: one role-based app hosting the <code>TrStudioUI</code> screens in a browser</td></tr>
+<tr><td><code>TrStudio.Desktop</code></td><td>desktop app (MAUI Blazor Hybrid, Windows and Mac)</td><td>The same <code>TrStudioUI</code> screens in a desktop window</td></tr>
+<tr><td><code>TrStudioUI</code></td><td>Razor Class Library</td><td>Shared layouts, screens and components on TrBlazeUI, creator and management screens behind role-gated routes</td></tr>
+<tr><td><code>TrStudioApi</code></td><td>API (ASP.NET Core)</td><td>Generation endpoints, orchestrator wiring, registry, queue, cost, safety, AppManager integration, SignalR; runs <code>TrStudioDb</code> on start</td></tr>
+<tr><td><code>TrStudio.Engine</code></td><td>class library</td><td>Domain rules, Dapper data access, providers (<code>IGenerationProvider</code> implementations), workers</td></tr>
+<tr><td><code>TrStudio.Models</code></td><td>class library</td><td>Shared entities, DTOs, enums (<code>ProviderKind</code>, <code>GenerationTaskType</code>) and interfaces</td></tr>
+<tr><td><code>TrStudioDb</code></td><td>migrations project</td><td>DbUp runner with ordered embedded SQL scripts</td></tr>
+<tr><td><code>TrStudio.Tests.Unit</code></td><td>test project</td><td>xUnit unit tests by area (Comfy, Registry, Spine, Cost, …)</td></tr>
+<tr><td><code>TrStudio.Tests.Integration</code></td><td>test project</td><td>Live API tests (<code>LiveApiFixture</code>, SignalR push) and, from phase 2, the Venice live tests</td></tr>
+</tbody>
+</table>
+<h2 id="component-map"><a id="3-component-map"></a>3. Component map<a class="anchor-link" href="#component-map">#</a></h2>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">&minus;</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">&#9166;</button>
+    <button data-pop title="Open in new tab">&#8599;</button>
+  </div>
+  <pre class="mermaid">flowchart TB
   subgraph Exp["Experience (Blazor Web + MAUI Blazor Hybrid)"]
-    Creator["TrStudio (creator app)"]
-    Admin["TrStudioAdmin (management app)"]
+    Creator["TrStudio (one role-based app: creator and management screens)"]
     RCL["TrStudioUI RCL (TrBlazeUI)"]
   end
   subgraph Api["TrStudioApi (ASP.NET Core .NET 10)"]
     Gen["Generation endpoints"]
     Orch["Orchestrator + Hangfire queue"]
-    Reg["Model & Provider Registry"]
+    Reg["Model &amp; Provider Registry"]
     Prov["Provider abstraction (IGenerationProvider)"]
-    Cost["Cost estimation & guardrails"]
+    Cost["Cost estimation &amp; guardrails"]
     Safety["Safety pipeline (SAFE-01..06)"]
     Sig["SignalR progress hub"]
     Rag["TechieRag (text / RAG)"]
@@ -218,53 +254,65 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
     Comfy["ComfyUIProvider (Mac MPS / RunPod)"]
     HeyGen["HeyGenProvider (Premium avatar)"]
     Closed["ClosedApiProvider (aggregator)"]
+    Venice["VeniceProvider (cloud pictures and video, phase 2)"]
   end
   subgraph Data["Data (India, DPDP)"]
     PG[("PostgreSQL + PgVector")]
     Obj[("Object storage / RunPod volume")]
   end
-  AppMgr[/"AppManager (external identity & licensing)"/]
+  AppMgr[/"AppManager (external identity &amp; licensing)"/]
 
-  Creator --> RCL
-  Admin --> RCL
-  Creator -->|"HTTPS / JWT"| Gen
-  Admin -->|"admin-scoped HTTPS / JWT"| Gen
-  Gen --> Orch
-  Gen --> Cost
-  Gen --> Safety
-  Orch --> Prov
-  Prov --> Reg
-  Prov --> Onnx
-  Prov --> Comfy
-  Prov --> HeyGen
-  Prov --> Closed
-  Orch --> Sig
-  Sig -->|"live progress"| Creator
-  Gen --> Rag
-  Creator -->|"prompt-crafting chat"| PChat
-  PChat --> Reg
-  PChat --> Rag
-  PChat --> PG
-  Rag --> PG
-  Orch --> PG
-  Reg --> PG
-  Prov --> Obj
-  Api -->|"X-Api-Key + JWT"| AppMgr</pre>
-    </div>
-
-    <h2 id="data-flow-primary-generation-job-path">3. Data flow — primary generation job path<a class="anchor-link" href="#data-flow-primary-generation-job-path">#</a></h2>
-    <p>The signature flow: the creator submits <em>"task T, model M, params P"</em>; <code>TrStudioApi</code> never lets the UI know which provider runs it. Cost is estimated and safety-checked <strong>before</strong> the job is enqueued.</p>
-    <div class="diagram">
-      <div class="dt">
-        <button data-zout title="Zoom out">−</button>
-        <span class="zlabel">100%</span>
-        <button data-zin title="Zoom in">+</button>
-        <button data-fit title="Fit to width">Fit</button>
-        <button data-one title="Actual size">1:1</button>
-        <button data-fs title="Fullscreen">⛶</button>
-        <button data-pop title="Open in new tab">↗</button>
-      </div>
-      <pre class="mermaid">sequenceDiagram
+  Creator --&gt; RCL
+  Creator --&gt;|"HTTPS / JWT"| Gen
+  Gen --&gt; Orch
+  Gen --&gt; Cost
+  Gen --&gt; Safety
+  Orch --&gt; Prov
+  Prov --&gt; Reg
+  Prov --&gt; Onnx
+  Prov --&gt; Comfy
+  Prov --&gt; HeyGen
+  Prov --&gt; Closed
+  Prov --&gt;|"HTTPS, Bearer key from the database"| Venice
+  Orch --&gt; Sig
+  Sig --&gt;|"live progress"| Creator
+  Gen --&gt; Rag
+  Creator --&gt;|"prompt-crafting chat"| PChat
+  PChat --&gt; Reg
+  PChat --&gt; Rag
+  PChat --&gt; PG
+  Rag --&gt; PG
+  Orch --&gt; PG
+  Reg --&gt; PG
+  Prov --&gt; Obj
+  Api --&gt;|"X-Api-Key + JWT"| AppMgr</pre>
+</div>
+<p><strong>How a request travels</strong> (one generation job; per-screen detail is in the DevGuide):</p>
+<ol>
+<li>The creator picks a model and its parameters on a studio screen; <code>TrStudioUI</code> posts <code>POST /api/v1/jobs</code> with the AppManager JWT.
+</li>
+<li><code>TrStudioApi</code> resolves the registry row to one provider and tier, estimates the cost against the monthly cap, and runs the safety floors on the inputs.
+</li>
+<li>The job is enqueued in Hangfire (Postgres storage) and the API answers with the job id and cost estimate.
+</li>
+<li>A worker calls the provider (<code>submit</code>, then <code>status</code> until done); progress goes to the screen over SignalR.
+</li>
+<li>The output is safety-checked and provenance-stamped, the asset and the generation-log row are written with the per-user owner filter, and the screen shows the result.
+</li>
+</ol>
+<h3 id="data-flow-primary-generation-job-path"><a id="data-flow--primary-generation-job-path"></a>Data flow — primary generation job path<a class="anchor-link" href="#data-flow-primary-generation-job-path">#</a></h3>
+<p>The signature flow: the creator submits <em>"task T, model M, params P"</em>; <code>TrStudioApi</code> never lets the UI know which provider runs it. Cost is estimated and safety-checked <strong>before</strong> the job is enqueued.</p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">&minus;</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">&#9166;</button>
+    <button data-pop title="Open in new tab">&#8599;</button>
+  </div>
+  <pre class="mermaid">sequenceDiagram
   actor U as "Creator"
   participant W as "TrStudio UI"
   participant A as "TrStudioApi"
@@ -273,134 +321,141 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
   participant Q as "Hangfire queue"
   participant P as "Provider (Onnx / ComfyUI / HeyGen)"
   participant DB as "Postgres + PgVector"
-  U->>W: "pick model + params, submit"
-  W->>A: "POST /jobs (JWT)"
-  A->>R: "resolve M to provider + tier"
-  A->>A: "estimateCost(job)"
-  A->>SF: "pre-check inputs (CSAM / NCII / consent)"
-  SF-->>A: "allow or block"
-  A->>Q: "enqueue durable job"
-  A-->>W: "jobId + cost estimate"
-  Q->>P: "submit(job)"
-  P-->>A: "progress events"
-  A-->>W: "SignalR progress + eta"
-  P->>SF: "post-check + provenance stamp output"
-  P->>DB: "persist asset metadata + generation log"
-  A-->>W: "assetRef on completion"
-  W-->>U: "render result in gallery"</pre>
-    </div>
-
-    <h3 id="prompt-crafting-chat-path-f-prompt-added-2026-07-07">3.1 Prompt-crafting chat path (F-PROMPT, added 2026-07-07)<a class="anchor-link" href="#prompt-crafting-chat-path-f-prompt-added-2026-07-07">#</a></h3>
-    <p>The Prompt Studio path deliberately bypasses the generation-job machinery — no Hangfire job, no provider abstraction, no safety-generation pipeline (its output is advisory text, not media). <code>TrStudioApi</code> resolves the picked LLM from the registry (<code>text-chat</code> modality) and calls <strong>TechieRag chat-completion directly — no RAG/vector setup</strong>. Sessions and messages persist per user (BRD-81 owner filter); token usage flows into the BRD-56 text-LLM budget.</p>
-    <div class="diagram">
-      <div class="dt">
-        <button data-zout title="Zoom out">−</button>
-        <span class="zlabel">100%</span>
-        <button data-zin title="Zoom in">+</button>
-        <button data-fit title="Fit to width">Fit</button>
-        <button data-one title="Actual size">1:1</button>
-        <button data-fs title="Fullscreen">⛶</button>
-        <button data-pop title="Open in new tab">↗</button>
-      </div>
-      <pre class="mermaid">sequenceDiagram
+  U-&gt;&gt;W: "pick model + params, submit"
+  W-&gt;&gt;A: "POST /jobs (JWT)"
+  A-&gt;&gt;R: "resolve M to provider + tier"
+  A-&gt;&gt;A: "estimateCost(job)"
+  A-&gt;&gt;SF: "pre-check inputs (CSAM / NCII / consent)"
+  SF--&gt;&gt;A: "allow or block"
+  A-&gt;&gt;Q: "enqueue durable job"
+  A--&gt;&gt;W: "jobId + cost estimate"
+  Q-&gt;&gt;P: "submit(job)"
+  P--&gt;&gt;A: "progress events"
+  A--&gt;&gt;W: "SignalR progress + eta"
+  P-&gt;&gt;SF: "post-check + provenance stamp output"
+  P-&gt;&gt;DB: "persist asset metadata + generation log"
+  A--&gt;&gt;W: "assetRef on completion"
+  W--&gt;&gt;U: "render result in gallery"</pre>
+</div>
+<h4 id="prompt-crafting-chat-path-f-prompt-added-2026-07-07"><a id="31-prompt-crafting-chat-path-f-prompt-added-2026-07-07"></a>3.1 Prompt-crafting chat path (F-PROMPT, added 2026-07-07)<a class="anchor-link" href="#prompt-crafting-chat-path-f-prompt-added-2026-07-07">#</a></h4>
+<p>The Prompt Studio path deliberately bypasses the generation-job machinery — no Hangfire job, no provider abstraction, no safety-generation pipeline (its output is advisory text, not media). <code>TrStudioApi</code> resolves the picked LLM from the registry (<code>text-chat</code> modality) and calls <strong>TechieRag chat-completion directly — no RAG/vector setup</strong>. Sessions and messages persist per user (BRD-81 owner filter); token usage flows into the BRD-56 text-LLM budget.</p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">&minus;</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">&#9166;</button>
+    <button data-pop title="Open in new tab">&#8599;</button>
+  </div>
+  <pre class="mermaid">sequenceDiagram
   actor U as "Creator"
   participant W as "Prompt studio (/prompt-studio)"
   participant A as "TrStudioApi (PromptChatService)"
   participant R as "Registry (text-chat models)"
   participant T as "TechieRag chat-completion (no RAG)"
   participant DB as "Postgres (PromptChatSession / Message)"
-  U->>W: "pick LLM, type request (+ optional image)"
-  W->>A: "POST /prompt-chat/{sessionId}/messages (JWT)"
-  A->>R: "resolve LLM (endpoint, key, visionCapable)"
-  A->>A: "reject image if model not vision-capable"
-  A->>T: "chat-completion (history + message + image)"
-  T-->>A: "assistant reply (crafted prompt)"
-  A->>DB: "persist message pair (userId-scoped) + token usage (BRD-56)"
-  A-->>W: "reply"
-  W-->>U: "copy / save to library (BRD-50) / send to studio"</pre>
-    </div>
-
-    <h2 id="module-responsibilities">4. Module responsibilities<a class="anchor-link" href="#module-responsibilities">#</a></h2>
-    <table>
-      <thead>
-        <tr><th>Module</th><th>Type</th><th>Responsibility</th><th>Depends on</th></tr>
-      </thead>
-      <tbody>
-        <tr><td><code>src/TrStudio</code></td><td>Blazor app</td><td><strong>Unified app (Web + MAUI Hybrid desktop, Win/Mac)</strong> — presents creator studios AND (role-gated) the management surface; avatar/image/video/voice studios, gallery, projects</td><td><code>TrStudioUI</code>, <code>TrStudio.Models</code>, <code>TrStudioApi</code> (HTTP)</td></tr>
-        <tr><td><code>src/TrStudioAdmin</code></td><td><del>Blazor app</del> <strong>RETIRED 2026-07-05 (ADR-012)</strong> — merged into <code>TrStudio</code>; management screens now live in <code>TrStudioUI</code> under role-gated routes</td><td><del>Management app (Web + MAUI Hybrid) — hardware detection, setup, model sources, registry editing, RunPod control, ComfyUI import/debug, ops, cost, content policy</del></td><td><code>TrStudioUI</code>, <code>TrStudio.Models</code>, <code>TrStudioApi</code> (admin-scoped HTTP)</td></tr>
-        <tr><td><code>src/TrStudioUI</code></td><td>Razor Class Library</td><td>Shared layouts, screens and components on TrBlazeUI, consumed by both apps across Web + desktop. Now also hosts the (role-gated) management screens formerly in <code>TrStudioAdmin</code>.</td><td>TrBlazeUI, <code>TrStudio.Models</code></td></tr>
-        <tr><td><code>src/TrStudioApi</code></td><td>ASP.NET Core host</td><td>The unified backend contract — generation endpoints, orchestrator wiring, registry endpoints, queue, cost, safety, auth integration, SignalR. Runs <code>TrStudioDb</code> (DbUp) on startup</td><td><code>TrStudio.Engine</code>, <code>TrStudio.Models</code>, <code>TrStudioDb</code></td></tr>
-        <tr><td><code>src/TrStudio.Engine</code></td><td>Class library</td><td>The engine. Folders: <strong><code>Domain/</code></strong> (entities &amp; rules — Character, Job, Asset, registry rows, GenerationLog, Consent), <strong><code>Infrastructure/</code></strong> (Dapper data access, Hangfire wiring, object storage, encrypted key store, AppManager client), <strong><code>Providers/</code></strong> (<code>OnnxLocalProvider</code>, <code>ComfyUIProvider</code>, <code>HeyGenProvider</code>, <code>ClosedApiProvider</code>), <strong><code>Workers/</code></strong> (ComfyUI worker control local MPS + RunPod, ONNX in-process image worker)</td><td><code>TrStudio.Models</code></td></tr>
-        <tr><td><code>src/TrStudio.Models</code></td><td>Class library</td><td>Shared models/DTOs/entities, <strong>interfaces</strong> (<code>IGenerationProvider</code>, repository contracts), provider/registry contracts, enums — referenced by every app, the RCL, and the engine</td><td>(none)</td></tr>
-        <tr><td><code>src/TrStudioDb</code></td><td>Class library</td><td><strong>DbUp</strong> migration runner — embedded, ordered SQL scripts (schema, PgVector, registry/jobs/characters, seed); executed on <code>TrStudioApi</code> startup</td><td>DbUp, <code>TrStudio.Models</code> (optional)</td></tr>
-      </tbody>
-    </table>
-
-    <p><strong><code>TrStudio.Models</code> — the shared contract types.</strong> A dependency-free class library holding everything multiple projects must agree on: entity/DTO shapes, enums (tier, task, safetyClass), and the interfaces (<code>IGenerationProvider</code>, repository contracts). Both Blazor apps, the RCL, the API host and the engine reference it, so types never get duplicated or drift.</p>
-
-    <p><strong><code>TrStudio.Engine</code> — one engine, four folders.</strong> The former Domain / Infrastructure / Providers / Workers projects are now folders inside a single <code>TrStudio.Engine</code> class library (fewer projects to wire, one assembly to reference). <code>Domain/</code> holds business rules; <code>Infrastructure/</code> holds the <strong>Dapper</strong> data-access layer (parameterized SQL, the per-user <code>userId</code> owner filter applied to every query — BRD-81), Hangfire wiring, object storage, the encrypted key store and the AppManager client; <code>Providers/</code> holds the <code>IGenerationProvider</code> implementations; <code>Workers/</code> drives the ComfyUI workers (local MPS + RunPod) and the in-process ONNX image worker.</p>
-
-    <p><strong><code>TrStudioApi</code> — the shared contract.</strong> This is the boundary that keeps the system sane. <code>TrStudioAdmin</code> is <em>only a UI</em>; it performs admin actions by calling admin-scoped <code>TrStudioApi</code> endpoints. Any capability <code>TrStudio</code> also needs — or that may be exposed to third parties later — is a first-class <code>TrStudioApi</code> endpoint, never buried in the admin app. The registry, job, and generation services are shared; only setup/sources, ComfyUI import/debug, content-policy and ops are admin-scoped. <strong>On startup the API runs <code>TrStudioDb</code> (DbUp)</strong> to create/upgrade the schema before serving traffic.</p>
-
-    <p><strong>Provider abstraction.</strong> Each provider (in <code>TrStudio.Engine/Providers/</code>, implementing <code>IGenerationProvider</code> from <code>TrStudio.Models</code>) is routed by the orchestrator to exactly one resolved model and treated uniformly: <code>submit → status → result → estimateCost</code>. One <code>ComfyUIProvider</code> serves <em>all</em> ComfyUI-backed models (avatar, lip-sync, video) because each model is just a workflow template (§6/§8).</p>
-
-    <p><strong>Prompt Studio chat path (F-PROMPT, added 2026-07-07).</strong> The prompt-crafting chat spans the existing modules without new projects: <code>TrStudioUI</code> gains the Prompt Studio screen (<code>/prompt-studio</code> — chat pane, registry-driven LLM picker, image attachment, session list, prompt-use actions); <code>TrStudioApi</code> exposes the <code>prompt-chat</code> endpoints; <code>TrStudio.Engine</code> gains <code>Domain/</code> entities <code>PromptChatSession</code>/<code>PromptChatMessage</code> and an <code>Infrastructure/</code> <code>PromptChatService</code> that resolves the picked model from the registry and calls <strong>TechieRag chat-completion directly (no RAG pipeline)</strong>, applying the BRD-81 owner filter to every session/message query and recording token usage (BRD-56); <code>TrStudioDb</code> adds the DbUp script for the two tables. Text-chat LLMs are ordinary registry rows (<code>text-chat</code> modality, §6) — no separate config store.</p>
-
-    <p><strong>Single Postgres, Dapper + DbUp.</strong> PgVector gives vector + relational in one instance, so the registry, jobs, characters, asset metadata, generation log <strong>and</strong> embeddings/vectors all live in one PostgreSQL database. Data access is <strong>Dapper</strong> (parameterized SQL, no EF Core); schema is created/upgraded by <strong>DbUp</strong> scripts in <code>TrStudioDb</code>, run automatically when <code>TrStudioApi</code> starts. Durable jobs use Hangfire's Postgres storage; there is no Redis. Provider API keys are held in an encrypted key store.</p>
-
-    <h2 id="provider-abstraction-and-the-three-execution-tiers">5. Provider abstraction and the three execution tiers<a class="anchor-link" href="#provider-abstraction-and-the-three-execution-tiers">#</a></h2>
-    <p><code>TrStudio</code> requests <em>"task T with model M and params P."</em> <code>TrStudioApi</code> resolves <strong>M → a provider</strong> and routes the job. Every provider implements:</p>
-    <pre><code>IGenerationProvider
+  U-&gt;&gt;W: "pick LLM, type request (+ optional image)"
+  W-&gt;&gt;A: "POST /prompt-chat/{sessionId}/messages (JWT)"
+  A-&gt;&gt;R: "resolve LLM (endpoint, key, visionCapable)"
+  A-&gt;&gt;A: "reject image if model not vision-capable"
+  A-&gt;&gt;T: "chat-completion (history + message + image)"
+  T--&gt;&gt;A: "assistant reply (crafted prompt)"
+  A-&gt;&gt;DB: "persist message pair (userId-scoped) + token usage (BRD-56)"
+  A--&gt;&gt;W: "reply"
+  W--&gt;&gt;U: "copy / save to library (BRD-50) / send to studio"</pre>
+</div>
+<h3 id="provider-abstraction-and-the-three-execution-tiers">Provider abstraction and the three execution tiers<a class="anchor-link" href="#provider-abstraction-and-the-three-execution-tiers">#</a></h3>
+<p><code>TrStudio</code> requests <em>"task T with model M and params P."</em> <code>TrStudioApi</code> resolves <strong>M → a provider</strong> and routes the job. Every provider implements:</p>
+<pre><code>IGenerationProvider
   ├─ supports(task, model) : bool
   ├─ submit(job) : jobId           // async
   ├─ status(jobId) : {state, progress, eta}
   ├─ result(jobId) : assetRef
   └─ estimateCost(job) : money</code></pre>
-
-    <p><strong>Concrete providers (MVP):</strong></p>
-    <ul>
-      <li><code>OnnxLocalProvider</code> — ONNX Runtime, CoreML/CPU EP; image + upscale (<em>Fast tier</em>).</li>
-      <li><code>ComfyUIProvider</code> — drives a ComfyUI instance (local MPS or RunPod) via its HTTP <code>/prompt</code> API + WebSocket progress; serves all ComfyUI-backed models (<em>Fast/High tiers</em>).</li>
-      <li><code>HeyGenProvider</code> — adapter for the HeyGen API (<em>Premium tier</em>, avatars).</li>
-      <li><code>ClosedApiProvider</code> — aggregator (fal.ai/Replicate/WaveSpeed) or direct vendor for closed image/video (<em>Premium tier</em>).</li>
-    </ul>
-
-    <p>The same UI control (AV-04) lets the user pick the tier per job — <strong>Fast (Mac local)</strong>, <strong>High (RunPod serverless)</strong>, or <strong>Premium (HeyGen API)</strong> — and the abstraction swaps the provider underneath.</p>
-
-    <p><strong>The hard design driver — scale-to-zero.</strong> 36 GB unified memory + a $100/mo budget means heavy avatar/video cannot live on the Mac <em>or</em> on an always-on rented GPU (a 24/7 A100 ≈ $860/mo). Heavy jobs MUST run on serverless GPUs that <code>TrStudioAdmin</code> starts on demand and that idle-stop to $0.</p>
-
-    <div class="diagram">
-      <div class="dt">
-        <button data-zout title="Zoom out">−</button>
-        <span class="zlabel">100%</span>
-        <button data-zin title="Zoom in">+</button>
-        <button data-fit title="Fit to width">Fit</button>
-        <button data-one title="Actual size">1:1</button>
-        <button data-fs title="Fullscreen">⛶</button>
-        <button data-pop title="Open in new tab">↗</button>
-      </div>
-      <pre class="mermaid">sequenceDiagram
+<p><strong>Concrete providers (MVP):</strong></p>
+<ul>
+<li><code>OnnxLocalProvider</code> — ONNX Runtime, CoreML/CPU EP; image + upscale (<em>Fast tier</em>).
+</li>
+<li><code>ComfyUIProvider</code> — drives a ComfyUI instance (local MPS or RunPod) via its HTTP <code>/prompt</code> API + WebSocket progress; serves all ComfyUI-backed models (<em>Fast/High tiers</em>).
+</li>
+<li><code>HeyGenProvider</code> — adapter for the HeyGen API (<em>Premium tier</em>, avatars).
+</li>
+<li><code>ClosedApiProvider</code> — aggregator (fal.ai/Replicate/WaveSpeed) or direct vendor for closed image/video (<em>Premium tier</em>).
+</li>
+</ul>
+<p>The same UI control (AV-04) lets the user pick the tier per job — <strong>Fast (Mac local)</strong>, <strong>High (RunPod serverless)</strong>, or <strong>Premium (HeyGen API)</strong> — and the abstraction swaps the provider underneath.</p>
+<p><strong>The hard design driver — scale-to-zero.</strong> 36 GB unified memory + a $100/mo budget means heavy avatar/video cannot live on the Mac <em>or</em> on an always-on rented GPU (a 24/7 A100 ≈ $860/mo). Heavy jobs MUST run on serverless GPUs that <code>TrStudioAdmin</code> starts on demand and that idle-stop to $0.</p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">&minus;</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">&#9166;</button>
+    <button data-pop title="Open in new tab">&#8599;</button>
+  </div>
+  <pre class="mermaid">sequenceDiagram
   participant Orch as "Orchestrator"
   participant RP as "RunPod control"
   participant Pod as "RunPod serverless GPU"
   participant Vol as "Network volume (models)"
   participant Cost as "Cost guardrails"
-  Orch->>Cost: "estimate job cost"
-  Cost-->>Orch: "within monthly cap?"
-  Orch->>RP: "ensure worker (heavy job)"
-  RP->>Pod: "cold start (scale from zero)"
-  Pod->>Vol: "mount cached models"
-  Pod-->>Orch: "ready"
-  Orch->>Pod: "run workflow"
-  Pod-->>Orch: "progress + result"
-  Orch->>RP: "idle timer expired"
-  RP->>Pod: "scale to zero (billing stops)"
-  Cost->>Cost: "record spend-to-date (RunPod + closed APIs)"</pre>
-    </div>
-
-    <h2 id="model-and-provider-registry">6. Model and provider registry<a class="anchor-link" href="#model-and-provider-registry">#</a></h2>
-    <p>Every usable model is a registry row owned by <code>TrStudioApi</code>. A <strong>declarative params schema</strong> lets the UI render controls for any model with no code change — so "add a model" is a <code>TrStudioAdmin</code> action, not a dev task (NFR-09 extensibility).</p>
-    <pre><code class="language-jsonc">{
+  Orch-&gt;&gt;Cost: "estimate job cost"
+  Cost--&gt;&gt;Orch: "within monthly cap?"
+  Orch-&gt;&gt;RP: "ensure worker (heavy job)"
+  RP-&gt;&gt;Pod: "cold start (scale from zero)"
+  Pod-&gt;&gt;Vol: "mount cached models"
+  Pod--&gt;&gt;Orch: "ready"
+  Orch-&gt;&gt;Pod: "run workflow"
+  Pod--&gt;&gt;Orch: "progress + result"
+  Orch-&gt;&gt;RP: "idle timer expired"
+  RP-&gt;&gt;Pod: "scale to zero (billing stops)"
+  Cost-&gt;&gt;Cost: "record spend-to-date (RunPod + closed APIs)"</pre>
+</div>
+<h3 id="venice-cloud-provider-phase-2-planned">Venice cloud provider (phase 2, planned)<a class="anchor-link" href="#venice-cloud-provider-phase-2-planned">#</a></h3>
+<p>Venice (venice.ai) is a second cloud provider for pictures and video, behind the same seam (ADR-014, BRD-93 to BRD-123). Facts below are from Venice's API documentation read on 2026-11-12 (https://docs.venice.ai).</p>
+<ul>
+<li><strong>Seam.</strong> A new <code>ProviderKind.Venice</code> and <code>VeniceProvider : IGenerationProvider</code> in <code>src/TrStudio.Engine/Providers</code>. It supports <code>TextToImage</code>, <code>ImageToImage</code>, <code>Upscale</code>, <code>TextToVideo</code> and <code>ImageToVideo</code>, and only for registry rows whose <code>ProviderKind</code> is Venice. <code>Inpaint</code>, <code>BackgroundRemove</code>, <code>LipSync</code>, <code>TextToSpeech</code> and <code>WorkflowRun</code> are never Venice: its edit endpoint has no mask, and its old <code>inpaint</code> field was disabled on 2025-05-19.
+</li>
+<li><strong>Configuration, only in the database.</strong> The <code>ProviderKey</code> table gains <code>BaseUrl</code> (DbUp migration); the key is encrypted by the existing <code>AesGcmKeyStore</code> and masked on read. A named <code>HttpClient</code> takes its address and <code>Authorization: Bearer &lt;key&gt;</code> from the database on every call. Nothing goes in appsettings or in code. Address: <code>https://api.venice.ai/api/v1</code>.
+</li>
+<li><strong>Registry.</strong> <code>RegistryModel</code> gains <code>ProviderModelId</code> (the Venice model id, so one Venice model can have one row per task), <code>TakesReferencePicture</code>, <code>KeepsFixedCharacter</code> and <code>MaxInputImages</code>. The studios filter rows by task and by these flags. The params schema carries the model's allowed durations, resolutions and aspect ratios.
+</li>
+<li><strong>Calls.</strong>
+<ul>
+<li>Text to image: <code>POST /image/generate</code> (JSON; base64 <code>images[]</code> back; <code>style_references[]</code> only where the model supports it; <code>safe_mode</code>).
+</li>
+<li>Image to image: <code>POST /image/edit</code>, or <code>POST /image/multi-edit</code> for several inputs; the image comes back as binary.
+</li>
+<li>Upscale: <code>POST /image/upscale</code> with <code>scale</code> 2 or 4.
+</li>
+<li>Video: <code>POST /video/quote</code> returns <code>{quote}</code> in US dollars; then <code>POST /video/queue</code> returns <code>queue_id</code>; a Hangfire job polls <code>POST /video/retrieve</code> (JSON status <code>PROCESSING</code> with <code>average_execution_time</code> and <code>execution_duration</code>, turned into SignalR progress; the mp4, or a <code>download_url</code>, when done); then <code>POST /video/complete</code> frees Venice's copy.
+</li>
+<li>Image to video sends <code>image_url</code>; a fixed character sends the character's reference set as <code>reference_image_urls[]</code> or <code>elements[]</code> to a reference-to-video model. Local pictures are sent as base64 data URLs.
+</li>
+</ul>
+</li>
+<li><strong>Price (owner decision 1A, 2026-11-12).</strong> Venice returns no per-call cost on picture or video responses, so the stored "Venice price" is Venice's own stated price: for video the <code>/video/quote</code> answer taken just before queueing; for pictures the model's listed price from <code>GET /models</code> (<code>model_spec.pricing</code>) for the chosen resolution, read at call time. It goes in <code>GenerationLog.ActualCost</code> with a new <code>PriceSource</code> column (<code>venice-quote</code> or <code>venice-list</code>).
+</li>
+<li><strong>Errors.</strong> The body is <code>{"error": "..."}</code> or <code>{error: {message, type}}</code>; codes include 401 <code>AUTHENTICATION_FAILED</code>, 402 <code>INSUFFICIENT_BALANCE</code>, 422 <code>CONTENT_POLICY_VIOLATION</code> (with <code>suggested_prompt</code>), 429 <code>RATE_LIMIT_EXCEEDED</code> and 503 <code>MODEL_AT_CAPACITY</code>. The job's <code>FailureMessage</code> stores "Venice: &lt;its text&gt;" word for word; a 429 honours the <code>x-ratelimit-*</code> headers.
+</li>
+<li><strong>Safety and spend.</strong> <code>safe_mode</code> is true unless the owner's unrestricted mode is on. The safety floors run before enqueue, as for every provider. Venice spend counts toward the monthly cap.
+</li>
+<li><strong>ComfyUI unchanged.</strong> <code>ComfyUiProvider</code>, <code>ComfyUiOptions</code> (<code>ComfyUI:BaseUrl</code>) and <code>tests/unit/TrStudio.Tests.Unit/Comfy/*</code> are not touched. The proof is those tests passing unedited, plus a new orchestrator test that a ComfyUi row still resolves to <code>ComfyUiProvider</code> when a Venice provider exists.
+</li>
+<li><strong>Fill from Venice (owner decision 4B).</strong> <code>POST /api/v1/admin/registry/venice/fill</code> with a Venice model id reads Venice's public model list and returns the task, the abilities, the durations, sizes and aspect ratios for the admin to check; nothing is saved until the admin presses Save.
+</li>
+<li><strong>Desktop settings (owner decision 5A).</strong> The desktop app reads its API address and its developer role and start page from <code>appsettings.json</code> beside the app (section <code>Desktop</code>), never from environment variables (BRD-123).
+</li>
+<li><strong>Live tests (owner decision 6A).</strong> <code>tests/integration/TrStudio.Tests.Integration/Venice/</code> holds one test per task type, marked <code>Category=Live</code> and left out of the normal run (<code>dotnet test --filter Category=Live</code> runs them), using the cheapest models, 480p and the shortest clips. They read <code>testsettings.json</code> (committed, empty values) overlaid by the git-ignored <code>testsettings.Local.json</code> in that project folder (keys <code>Venice:BaseUrl</code>, <code>Venice:ApiKey</code>, <code>Venice:Models:&lt;Task&gt;</code>). Each is skipped with "Venice key not set in testsettings.Local.json" when the key is empty.
+</li>
+</ul>
+<h3 id="model-and-provider-registry">Model and provider registry<a class="anchor-link" href="#model-and-provider-registry">#</a></h3>
+<p>Every usable model is a registry row owned by <code>TrStudioApi</code>. A <strong>declarative params schema</strong> lets the UI render controls for any model with no code change — so "add a model" is a <code>TrStudioAdmin</code> action, not a dev task (NFR-09 extensibility).</p>
+<pre><code class="language-jsonc">{
   "id": "musetalk-v1",
   "displayName": "MuseTalk (real-time lip-sync)",
   "task": "lip-sync",
@@ -418,12 +473,9 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
   "safetyClass": "avatar-synthetic-default",
   "cost": { "kind": "serverless-seconds", "estimateSecPerJob": 90 }
 }</code></pre>
-
-    <p>The registry carries each model's <strong>license</strong> field (used by the build-time license check, ADR-006) and <strong>safetyClass</strong> (<code>synthetic-default</code> | <code>real-person-gated</code>), which scopes the safety floors (§9) applied to that model's jobs.</p>
-
-    <p><strong>Text-chat LLMs are registry rows too (F-PROMPT, added 2026-07-07).</strong> The Prompt Studio's LLM picker is driven by registry entries with <code>task: "text-chat"</code> — same admin Registry screen, same encrypted key store, no separate config table. They are not generation models: they never enter the provider abstraction/job queue; <code>PromptChatService</code> resolves them directly (§3.1).</p>
-
-    <pre><code class="language-jsonc">{
+<p>The registry carries each model's <strong>license</strong> field (used by the build-time license check, ADR-006) and <strong>safetyClass</strong> (<code>synthetic-default</code> | <code>real-person-gated</code>), which scopes the safety floors (§9) applied to that model's jobs.</p>
+<p><strong>Text-chat LLMs are registry rows too (F-PROMPT, added 2026-07-07).</strong> The Prompt Studio's LLM picker is driven by registry entries with <code>task: "text-chat"</code> — same admin Registry screen, same encrypted key store, no separate config table. They are not generation models: they never enter the provider abstraction/job queue; <code>PromptChatService</code> resolves them directly (§3.1).</p>
+<pre><code class="language-jsonc">{
   "id": "gpt-4o-chat",
   "displayName": "GPT-4o (prompt crafting)",
   "task": "text-chat",         // Prompt Studio picker filters on this
@@ -433,127 +485,212 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
   "visionCapable": true,       // gates image attachment in the chat UI (BRD-90)
   "cost": { "kind": "tokens", "inPer1k": 0.005, "outPer1k": 0.015 }
 }</code></pre>
-
-    <h2 id="identity-and-licensing-appmanager-integration">7. Identity and licensing — AppManager integration<a class="anchor-link" href="#identity-and-licensing-appmanager-integration">#</a></h2>
-    <p>Users, login/JWT, licenses/subscriptions, feature &amp; tier gating, payments and support are provided by <strong>AppManager</strong> (<code>docs/AppManager-api-usage-guide.md</code>). <code>TrStudioApi</code> integrates as an AppManager <strong>child application</strong>: <code>X-Api-Key</code>/<code>X-Api-Secret</code> for the app handshake, JWT bearer for the user session, RSA-encrypted passwords. TrStudio stores only a reference to the AppManager <code>userId</code> for ownership of characters/jobs/assets — <strong>never passwords, and AppManager is never the application database.</strong></p>
-    <div class="diagram">
-      <div class="dt">
-        <button data-zout title="Zoom out">−</button>
-        <span class="zlabel">100%</span>
-        <button data-zin title="Zoom in">+</button>
-        <button data-fit title="Fit to width">Fit</button>
-        <button data-one title="Actual size">1:1</button>
-        <button data-fs title="Fullscreen">⛶</button>
-        <button data-pop title="Open in new tab">↗</button>
-      </div>
-      <pre class="mermaid">sequenceDiagram
+<h3 id="comfyui-pipeline-management">ComfyUI pipeline management<a class="anchor-link" href="#comfyui-pipeline-management">#</a></h3>
+<p>ComfyUI is both a media engine (Fast/High tiers) and the mechanism for adding new models. The import/debug/use screen lives in <code>TrStudioAdmin</code>; registered models it produces are served to <code>TrStudio</code> through <code>TrStudioApi</code>. ComfyUI exposes <code>POST /prompt</code> (workflow graph as API-format JSON), <code>GET /history/{id}</code>, <code>/view</code>, and a WebSocket for live progress + node-level errors. <code>TrStudioApi</code> maps a workflow's editable node fields to UI controls via the registry params schema.</p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">&minus;</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">&#9166;</button>
+    <button data-pop title="Open in new tab">&#8599;</button>
+  </div>
+  <pre class="mermaid">flowchart LR
+  Import["Import workflow JSON (drag-drop / paste)"] --&gt; Parse["Parse nodes, list editable inputs"]
+  Parse --&gt; Map["Map inputs to registry params (types, defaults, required)"]
+  Map --&gt; Debug["Run + Debug (per-node status, WebSocket previews)"]
+  Debug --&gt; Smoke["Sandbox smoke test"]
+  Smoke --&gt; Save["Save as registered model (graph hidden)"]
+  Save --&gt; Use["Served to TrStudio via TrStudioApi"]</pre>
+</div>
+<h2 id="data-model"><a id="4-data-model"></a>4. Data model<a class="anchor-link" href="#data-model">#</a></h2>
+<p>The main tables, from the DbUp scripts in <code>src/TrStudioDb/Scripts/</code>. Every user-owned table carries <code>UserId</code> (the AppManager user) and every query applies the owner filter (BRD-81).</p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">&minus;</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">&#9166;</button>
+    <button data-pop title="Open in new tab">&#8599;</button>
+  </div>
+  <pre class="mermaid">erDiagram
+  PROJECT ||--o{ GENERATEDASSET : groups
+  GENERATIONJOB ||--o{ GENERATEDASSET : produces
+  GENERATIONJOB ||--|| GENERATIONLOG : "is logged as"
+  REGISTRYMODEL ||--o{ GENERATIONJOB : "is run by"
+  PROVIDERKEY ||--o{ REGISTRYMODEL : "serves (by ProviderKind)"
+  CHARACTER ||--o{ CHARACTERBIBLEENTRY : has
+  PROMPTCHATSESSION ||--o{ PROMPTCHATMESSAGE : holds
+  COMFYWORKFLOW ||--o{ COMFYWORKFLOWVERSION : versions
+  GENERATIONJOB {
+    uuid GenerationJobId PK
+    text UserId
+    text ModelId
+    text Task
+    text Tier
+    numeric CostEstimate
+    numeric ActualCost
+    text FailureMessage
+  }
+  GENERATEDASSET {
+    uuid GeneratedAssetId PK
+    uuid GenerationJobId FK
+    uuid ProjectId FK
+    text StoragePath
+    jsonb ProvenanceJson
+  }
+  GENERATIONLOG {
+    uuid GenerationLogId PK
+    uuid GenerationJobId FK
+    numeric ActualCost
+    text Outcome
+    text FailureMessage
+  }
+  REGISTRYMODEL {
+    text RegistryModelId PK
+    text Task
+    text ProviderKind
+    text Tier
+    jsonb ParamsJson
+  }
+  PROVIDERKEY {
+    uuid ProviderKeyId PK
+    text ProviderName
+    text EncryptedKey
+    bool IsEnabled
+  }</pre>
+</div>
+<table>
+<thead><tr><th>Entity</th><th>Key fields</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>GenerationJob</td><td><code>GenerationJobId</code>, <code>UserId</code>, <code>ModelId</code>, <code>Task</code>, <code>State</code></td><td>One submitted job; cost estimate and actual cost, failure message and remediation hint</td></tr>
+<tr><td>GeneratedAsset</td><td><code>GeneratedAssetId</code>, <code>GenerationJobId</code>, <code>ProjectId</code></td><td>Output file, seed, parameters, C2PA provenance</td></tr>
+<tr><td>GenerationLog</td><td><code>GenerationLogId</code>, <code>GenerationJobId</code></td><td>The auditable trail; phase 2 adds <code>PriceSource</code></td></tr>
+<tr><td>RegistryModel</td><td><code>RegistryModelId</code>, <code>Task</code>, <code>ProviderKind</code></td><td>One model and one task; params schema; text-chat columns; phase 2 adds <code>ProviderModelId</code>, <code>TakesReferencePicture</code>, <code>KeepsFixedCharacter</code>, <code>MaxInputImages</code></td></tr>
+<tr><td>ProviderKey</td><td><code>ProviderName</code> (unique)</td><td>Encrypted key per provider; phase 2 adds <code>BaseUrl</code></td></tr>
+<tr><td>ModelSource, ModelInstall, SetupState</td><td>—</td><td>Model sources, resumable installs, guided setup</td></tr>
+<tr><td>Character, CharacterBibleEntry</td><td><code>UserId</code></td><td>Characters and their bible (PgVector)</td></tr>
+<tr><td>PromptChatSession, PromptChatMessage</td><td><code>UserId</code></td><td>Prompt studio history</td></tr>
+<tr><td>Project, Preset, SpendRecord, ApiKey</td><td><code>UserId</code></td><td>Workspace, library presets, spend ledger, external API keys</td></tr>
+<tr><td>VoiceClone, VoiceConsentEvidence, ConsentEvidence, PublicFigureRights</td><td>—</td><td>Consent gates</td></tr>
+<tr><td>SafetyPolicy, SafetyAuditEntry, AbuseReport</td><td>—</td><td>Content policy and audit</td></tr>
+<tr><td>ComfyWorkflow, ComfyWorkflowVersion</td><td>—</td><td>Imported ComfyUI workflows, pinned versions</td></tr>
+</tbody>
+</table>
+<h2 id="cross-cutting"><a id="5-cross-cutting"></a>5. Cross-cutting<a class="anchor-link" href="#cross-cutting">#</a></h2>
+<ul>
+<li><strong>Identity:</strong> AppManager (see the subsection below).
+</li>
+<li><strong>Configuration:</strong> appsettings files per head and Visual Studio user secrets for development secrets; provider addresses and keys in the database; never environment variables.
+</li>
+<li><strong>Logging:</strong> Serilog structured logging and OpenTelemetry metrics with job ids.
+</li>
+<li><strong>Errors:</strong> global middleware returning <code>ProblemDetails</code>; a provider's own failure text (ComfyUI, HeyGen, Venice) is kept on the job and shown with an actionable hint.
+</li>
+<li><strong>Logging</strong> — Serilog (structured), traceable job IDs; no secrets in logs/URLs (NFR-05/08).
+</li>
+<li><strong>Telemetry</strong> — OpenTelemetry metrics: queue depth, memory, latency, spend-to-date.
+</li>
+<li><strong>Error handling</strong> — global middleware; <code>ProblemDetails</code>; actionable failures surfaced to the UI (e.g. "out of memory — drop to 256px or route to RunPod", ADM-09).
+</li>
+<li><strong>Auth</strong> — AppManager JWT bearer for users; <code>X-Api-Key</code>/<code>X-Api-Secret</code> for the child-app handshake; admin-scoped endpoints for <code>TrStudioAdmin</code>-only operations.
+</li>
+<li><strong>Caching</strong> — <code>IMemoryCache</code> in-process only (no Redis).
+</li>
+<li><strong>Cost control</strong> — per-job estimate before run; RunPod idle auto-stop; monthly cap + alerts across RunPod <strong>and</strong> closed APIs incl. HeyGen (ADM-10 / NFR-07).
+</li>
+<li><strong>Safety (binding)</strong> — a non-disableable pipeline on every provider: CSAM hash+classifier blocks, NCII/real-person-deepfake refusal, consent gating for real faces/voices, C2PA-style provenance on outputs, public-figure impersonation block, full audit trail (SAFE-01..06).
+</li>
+<li><strong>Privacy / Compliance</strong> — local jobs stay local; UI flags when a job routes to a closed API; data resident in India; DPDP-aligned; configurable retention (NFR-06/10).
+</li>
+</ul>
+<h3 id="identity-and-licensing-appmanager-integration"><a id="identity-and-licensing--appmanager-integration"></a>Identity and licensing — AppManager integration<a class="anchor-link" href="#identity-and-licensing-appmanager-integration">#</a></h3>
+<p>Users, login/JWT, licenses/subscriptions, feature &amp; tier gating, payments and support are provided by <strong>AppManager</strong> (<code>docs/AppManager-api-usage-guide.md</code>). <code>TrStudioApi</code> integrates as an AppManager <strong>child application</strong>: <code>X-Api-Key</code>/<code>X-Api-Secret</code> for the app handshake, JWT bearer for the user session, RSA-encrypted passwords. TrStudio stores only a reference to the AppManager <code>userId</code> for ownership of characters/jobs/assets — <strong>never passwords, and AppManager is never the application database.</strong></p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">&minus;</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">&#9166;</button>
+    <button data-pop title="Open in new tab">&#8599;</button>
+  </div>
+  <pre class="mermaid">sequenceDiagram
   actor U as "User"
   participant W as "TrStudio UI"
   participant A as "TrStudioApi"
   participant AM as "AppManager (AuthSvc / LicenseSvc / FeatureSvc)"
-  U->>W: "login (email, password)"
-  W->>A: "credentials (RSA-encrypted password)"
-  A->>AM: "authenticate (X-Api-Key + X-Api-Secret)"
-  AM-->>A: "JWT + refresh + userId"
-  A-->>W: "session token"
-  U->>W: "select Premium (HeyGen) tier"
-  W->>A: "submit job (tier=premium)"
-  A->>AM: "check feature / license entitlement"
-  AM-->>A: "allowed or gated"
-  A-->>W: "proceed or upgrade prompt"</pre>
-    </div>
-    <p>In personal mode all tiers are available; when run multi-user/SaaS, which tiers a user may select is gated via AppManager FeatureSvc/LicenseSvc (e.g. Premium behind a paid license).</p>
-
-    <h2 id="comfyui-pipeline-management">8. ComfyUI pipeline management<a class="anchor-link" href="#comfyui-pipeline-management">#</a></h2>
-    <p>ComfyUI is both a media engine (Fast/High tiers) and the mechanism for adding new models. The import/debug/use screen lives in <code>TrStudioAdmin</code>; registered models it produces are served to <code>TrStudio</code> through <code>TrStudioApi</code>. ComfyUI exposes <code>POST /prompt</code> (workflow graph as API-format JSON), <code>GET /history/{id}</code>, <code>/view</code>, and a WebSocket for live progress + node-level errors. <code>TrStudioApi</code> maps a workflow's editable node fields to UI controls via the registry params schema.</p>
-    <div class="diagram">
-      <div class="dt">
-        <button data-zout title="Zoom out">−</button>
-        <span class="zlabel">100%</span>
-        <button data-zin title="Zoom in">+</button>
-        <button data-fit title="Fit to width">Fit</button>
-        <button data-one title="Actual size">1:1</button>
-        <button data-fs title="Fullscreen">⛶</button>
-        <button data-pop title="Open in new tab">↗</button>
-      </div>
-      <pre class="mermaid">flowchart LR
-  Import["Import workflow JSON (drag-drop / paste)"] --> Parse["Parse nodes, list editable inputs"]
-  Parse --> Map["Map inputs to registry params (types, defaults, required)"]
-  Map --> Debug["Run + Debug (per-node status, WebSocket previews)"]
-  Debug --> Smoke["Sandbox smoke test"]
-  Smoke --> Save["Save as registered model (graph hidden)"]
-  Save --> Use["Served to TrStudio via TrStudioApi"]</pre>
-    </div>
-
-    <h2 id="cross-cutting-concerns">9. Cross-cutting concerns<a class="anchor-link" href="#cross-cutting-concerns">#</a></h2>
-    <ul>
-      <li><strong>Logging</strong> — Serilog (structured), traceable job IDs; no secrets in logs/URLs (NFR-05/08).</li>
-      <li><strong>Telemetry</strong> — OpenTelemetry metrics: queue depth, memory, latency, spend-to-date.</li>
-      <li><strong>Error handling</strong> — global middleware; <code>ProblemDetails</code>; actionable failures surfaced to the UI (e.g. "out of memory — drop to 256px or route to RunPod", ADM-09).</li>
-      <li><strong>Auth</strong> — AppManager JWT bearer for users; <code>X-Api-Key</code>/<code>X-Api-Secret</code> for the child-app handshake; admin-scoped endpoints for <code>TrStudioAdmin</code>-only operations.</li>
-      <li><strong>Caching</strong> — <code>IMemoryCache</code> in-process only (no Redis).</li>
-      <li><strong>Cost control</strong> — per-job estimate before run; RunPod idle auto-stop; monthly cap + alerts across RunPod <strong>and</strong> closed APIs incl. HeyGen (ADM-10 / NFR-07).</li>
-      <li><strong>Safety (binding)</strong> — a non-disableable pipeline on every provider: CSAM hash+classifier blocks, NCII/real-person-deepfake refusal, consent gating for real faces/voices, C2PA-style provenance on outputs, public-figure impersonation block, full audit trail (SAFE-01..06).</li>
-      <li><strong>Privacy / Compliance</strong> — local jobs stay local; UI flags when a job routes to a closed API; data resident in India; DPDP-aligned; configurable retention (NFR-06/10).</li>
-    </ul>
-
-    <h2 id="deployment-architecture">10. Deployment architecture<a class="anchor-link" href="#deployment-architecture">#</a></h2>
-    <div class="diagram">
-      <div class="dt">
-        <button data-zout title="Zoom out">−</button>
-        <span class="zlabel">100%</span>
-        <button data-zin title="Zoom in">+</button>
-        <button data-fit title="Fit to width">Fit</button>
-        <button data-one title="Actual size">1:1</button>
-        <button data-fs title="Fullscreen">⛶</button>
-        <button data-pop title="Open in new tab">↗</button>
-      </div>
-      <pre class="mermaid">flowchart LR
-  Dev["Dev box (Windows)"] --> Build["dotnet build + tests"]
-  Build --> ApiImg["Docker: TrStudioApi + workers"]
-  Build --> WorkerImg["RunPod template image (GPU worker)"]
-  ApiImg --> Host["App host (India region)"]
-  Host --> PG[("PostgreSQL + PgVector")]
-  Host --> Obj[("Object storage")]
-  Host -->|"on-demand"| RunPod["RunPod serverless (scale-to-zero)"]
-  WorkerImg --> RunPod
-  RunPod --> Vol[("Network volume — cached models")]
-  Mac["Mac M4 Max"] --> LocalComfy["Local ComfyUI (MPS) + ONNX"]
-  Host -->|"X-Api-Key + JWT"| AppMgr[/"AppManager service"/]</pre>
-    </div>
-    <p>Mac runs the local model stack (Fast tier) and the control plane during dev; Windows is the dev/build box; the API + workers deploy to a server in India later. The single <code>TrStudio</code> app ships as a MAUI Blazor Hybrid desktop app (Win/Mac) — the primary local delivery — and as a Blazor Web app in any modern browser; both host the same <code>TrStudioUI</code> RCL and role-gate the surface by the signed-in user (ADR-012).</p>
-
-    <h2 id="architectural-decisions-adr-style-log">11. Architectural decisions (ADR-style log)<a class="anchor-link" href="#architectural-decisions-adr-style-log">#</a></h2>
-    <ul>
-      <li><strong>[SUPERSEDED by ADR-012, 2026-07-05]</strong> <strong>ADR-001 — Two Blazor apps + shared RCL on TrBlazeUI, both Web + MAUI Blazor Hybrid.</strong> Reason: clean separation of the creator experience (<code>TrStudio</code>) from model/provider management (<code>TrStudioAdmin</code>) while sharing one component set (<code>TrStudioUI</code>); requirement §25 mandates Web + desktop for both.</li>
-      <li><strong>ADR-002 — PostgreSQL + PgVector as the single datastore; no Redis.</strong> Reason: PgVector gives vector + relational in one DB; Hangfire/Postgres gives durable jobs; <code>IMemoryCache</code> covers in-process caching — a second datastore adds ops cost for no MVP benefit (§11 of requirements).</li>
-      <li><strong>ADR-003 — PgVector (via TechieRag <code>UsePgVector</code>) as the vector store.</strong> Reason: RAG-backed character bible, prompt/script memory and embeddings live on the same Postgres instance — no separate vector DB.</li>
-      <li><strong>ADR-004 — Provider abstraction with a three-tier selector (Fast/High/Premium).</strong> Reason: HeyGen-grade realism on tap, open-model parity, and budget control all flow through one <code>IGenerationProvider</code> seam; the UI never knows the provider.</li>
-      <li><strong>ADR-005 — RunPod serverless, scale-to-zero, for heavy jobs.</strong> Reason: 36 GB + $100/mo make always-on GPUs impossible; heavy avatar/video must be bursty and idle-stop to $0 (§3, risk register).</li>
-      <li><strong>ADR-006 — ONNX Runtime directly for the image path (not TensorStack).</strong> Reason: already used by TechieRag, removes a thin third-party dependency, full control of the image path; ComfyUI covers the media models anyway (§11 of requirements).</li>
-      <li><strong>ADR-007 — AppManager as external identity/licensing child-app; not the app DB.</strong> Reason: personal-first, SaaS-ready; delegates auth/license/feature/payment/support while TrStudio keeps its own India-resident data (DPDP).</li>
-      <li><strong>ADR-008 — TechieRag (NuGet) for text/LLM/RAG only.</strong> Reason: confirmed text-only library (script/caption/prompt memory/character bible); the image diffusion path is a separate ONNX implementation.</li>
-      <li><strong>ADR-009 — Hard safety floors are non-disableable; the <em>general</em> SFW filter is an owner-only toggle.</strong> Reason: CSAM, real-person/NCII, minors and public-figure impersonation (SAFE-01/02/03/05) are illegal-harm floors that stay enforced regardless of mode and keep payments/hosting/stores viable; the general adult-content filter may be lifted by the owner in personal mode for <strong>synthetic adult personas</strong> (F-NSFW, BRD-79/80) and is auto-disabled in multi-user/SaaS.</li>
-      <li><strong>ADR-010 — Dapper for data access + DbUp for migrations (not EF Core).</strong> Reason: explicit, parameterized SQL gives full control over PgVector queries and the per-user owner filter; DbUp runs ordered embedded SQL scripts (<code>TrStudioDb</code>) on API startup — simple, transparent, no migration-runtime magic.</li>
-      <li><strong>ADR-011 — One <code>TrStudio.Engine</code> library + a shared <code>TrStudio.Models</code> library.</strong> Reason: Domain/Infrastructure/Providers/Workers collapse into one engine assembly (folders, not projects) to cut wiring overhead; <code>TrStudio.Models</code> holds the contract types every app/engine shares so they never drift.</li>
-      <li><strong>ADR-012 — One unified <code>TrStudio</code> app with a role-based surface, shipped as Blazor Web + MAUI Blazor Hybrid desktop (Win/Mac); supersedes ADR-001.</strong> Reason: the owner's product intent is a single, locally-run desktop app in which the creator and management experiences are the SAME application, gated by the signed-in user's role (Creator → studios; Operator/Admin → management; Owner → both). <code>TrStudioAdmin</code> is retired; its screens move into the shared <code>TrStudioUI</code> RCL under role-gated routes hosted by the one <code>TrStudio</code> app, which ships a Blazor Web head and MAUI Blazor Hybrid desktop heads (Windows + macOS). <code>TrStudioApi</code> (the backend contract, provider abstraction, registry, orchestrator) is unchanged — only the presentation layer consolidates. The previously-deferred MAUI desktop heads (NFR-03/BRD-71/§25) become the primary delivery (BRD-86/87).</li>
-      <li><strong>ADR-013 — Prompt Studio uses TechieRag direct chat-completion (no RAG pipeline); text-chat LLMs are registry rows (<code>text-chat</code> modality), outside the generation-provider abstraction.</strong> <em>(2026-07-07)</em> Reason: the feature is a conversational prompt-crafting aid (F-PROMPT, BRD-88..92) — synchronous advisory text, so the Hangfire job model, <code>IGenerationProvider</code> seam and media safety pipeline don't apply; skipping RAG/vector setup keeps it a thin chat client. Reusing the registry (with a <code>visionCapable</code> flag and the encrypted key store) keeps "add an LLM" a config action per NFR-09 and gives the picker its DB-configured list for free.</li>
-    </ul>
-
-    <h2 id="build-roadmap-phased-target">12. Build roadmap (phased target)<a class="anchor-link" href="#build-roadmap-phased-target">#</a></h2>
-    <p>Greenfield — nothing is built yet. The §12 build order from the requirements doc is the dependency-ordered target; each phase is independently testable. (Carried into the BRD §4 status table and seeded as phase tags by <code>*split-brd</code>.)</p>
-    <div class="diagram">
-      <div class="dt">
-        <button data-zout title="Zoom out">−</button>
-        <span class="zlabel">100%</span>
-        <button data-zin title="Zoom in">+</button>
-        <button data-fit title="Fit to width">Fit</button>
-        <button data-one title="Actual size">1:1</button>
-        <button data-fs title="Fullscreen">⛶</button>
-        <button data-pop title="Open in new tab">↗</button>
-      </div>
-      <pre class="mermaid">flowchart TB
-  P1["Phase 1 — Skeleton & spine (apps, provider abstraction, registry, Hangfire queue, auth, storage, OpenAPI, Serilog)"]
+  U-&gt;&gt;W: "login (email, password)"
+  W-&gt;&gt;A: "credentials (RSA-encrypted password)"
+  A-&gt;&gt;AM: "authenticate (X-Api-Key + X-Api-Secret)"
+  AM--&gt;&gt;A: "JWT + refresh + userId"
+  A--&gt;&gt;W: "session token"
+  U-&gt;&gt;W: "select Premium (HeyGen) tier"
+  W-&gt;&gt;A: "submit job (tier=premium)"
+  A-&gt;&gt;AM: "check feature / license entitlement"
+  AM--&gt;&gt;A: "allowed or gated"
+  A--&gt;&gt;W: "proceed or upgrade prompt"</pre>
+</div>
+<p>In personal mode all tiers are available; when run multi-user/SaaS, which tiers a user may select is gated via AppManager FeatureSvc/LicenseSvc (e.g. Premium behind a paid license).</p>
+<h2 id="decisions-log"><a id="6-decisions-log"></a>6. Decisions log<a class="anchor-link" href="#decisions-log">#</a></h2>
+<p>One row per decision. Every package added to the project has a row saying why. The dates before 2026-07-05 are the day-1 date of the decision set.</p>
+<table>
+<thead><tr><th>Date</th><th>Decision</th><th>Why</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>2026-07-03</td><td>ADR-001: Two Blazor apps plus a shared RCL on TrBlazeUI, both web and MAUI Blazor Hybrid</td><td>Separate the creator experience (<code>TrStudio</code>) from model and provider management (<code>TrStudioAdmin</code>) while sharing one component set; requirement §25 asked for web and desktop for both</td><td>superseded by ADR-012</td></tr>
+<tr><td>2026-07-03</td><td>ADR-002: PostgreSQL with PgVector as the single datastore; no Redis</td><td>Vector and relational in one database; Hangfire on Postgres gives durable jobs; <code>IMemoryCache</code> covers in-process caching</td><td>done</td></tr>
+<tr><td>2026-07-03</td><td>ADR-003: PgVector (TechieRag <code>UsePgVector</code>) as the vector store</td><td>Character bible, prompt and script memory and embeddings live on the same Postgres instance</td><td>done</td></tr>
+<tr><td>2026-07-03</td><td>ADR-004: Provider abstraction with a three-tier selector (Fast, High, Premium)</td><td>HeyGen-grade realism, open-model parity and budget control all flow through one <code>IGenerationProvider</code> seam; the UI never knows the provider</td><td>done</td></tr>
+<tr><td>2026-07-03</td><td>ADR-005: RunPod serverless, scale-to-zero, for heavy jobs</td><td>36 GB and $100 a month make always-on GPUs impossible; heavy avatar and video work must be bursty and stop when idle</td><td>done</td></tr>
+<tr><td>2026-07-03</td><td>ADR-006: ONNX Runtime directly for the image path (not TensorStack)</td><td>Already used by TechieRag; removes a thin dependency; ComfyUI covers the media models</td><td>done</td></tr>
+<tr><td>2026-07-03</td><td>ADR-007: AppManager as the external identity and licensing service, not the app database</td><td>Personal-first and SaaS-ready; delegates auth, licence, feature, payment and support while TrStudio keeps its own India-resident data</td><td>done</td></tr>
+<tr><td>2026-07-03</td><td>ADR-008: TechieRag (NuGet) for text, LLM and RAG only</td><td>A text-only library; the image path is a separate ONNX implementation</td><td>done</td></tr>
+<tr><td>2026-07-03</td><td>ADR-009: Hard safety floors cannot be switched off; the general adult-content filter is an owner-only toggle</td><td>CSAM, real-person and NCII, minors and public-figure impersonation stay enforced in every mode; the owner may lift the general filter in personal mode for synthetic adult personas (BRD-79/80); it is forced on in multi-user mode</td><td>done</td></tr>
+<tr><td>2026-07-03</td><td>ADR-010: Dapper for data access and DbUp for migrations (not EF Core)</td><td>Explicit parameterized SQL for PgVector and the per-user owner filter; ordered embedded scripts run on API start</td><td>done</td></tr>
+<tr><td>2026-07-03</td><td>ADR-011: One <code>TrStudio.Engine</code> library plus a shared <code>TrStudio.Models</code> library</td><td>Domain, infrastructure, providers and workers as folders in one assembly; contract types shared so they never drift</td><td>done</td></tr>
+<tr><td>2026-07-05</td><td>ADR-012: One <code>TrStudio</code> app with a role-based surface, shipped as Blazor web and MAUI Blazor Hybrid desktop (Windows and Mac); supersedes ADR-001</td><td>The owner wants one locally run desktop app where the creator and management screens are the same application, gated by role; <code>TrStudioAdmin</code> retired, its screens moved to <code>TrStudioUI</code>; <code>TrStudioApi</code> unchanged (BRD-86/87)</td><td>done</td></tr>
+<tr><td>2026-07-07</td><td>ADR-013: Prompt studio uses TechieRag direct chat-completion (no RAG); text-chat models are registry rows outside the generation-provider seam</td><td>Synchronous advisory text needs no job queue, provider seam or media safety pipeline; registry reuse keeps "add a model" a configuration action (BRD-88 to BRD-92)</td><td>done</td></tr>
+<tr><td>2026-11-12</td><td>ADR-014: Venice as a second cloud provider for pictures and video behind <code>IGenerationProvider</code> (<code>ProviderKind.Venice</code>), configured only in the database</td><td>A creator can generate without a local ComfyUI; per-model choice through the registry keeps the studios provider-blind; database-only configuration keeps addresses and keys out of appsettings and code (BRD-93 to BRD-123); price, fill button, desktop settings and paid tests settled by the owner's decisions 1A to 6A</td><td>planned</td></tr>
+</tbody>
+</table>
+<h2 id="module-responsibilities"><a id="7-module-responsibilities"></a>7. Module responsibilities<a class="anchor-link" href="#module-responsibilities">#</a></h2>
+<table>
+<thead><tr><th>Module</th><th>Type</th><th>Responsibility</th><th>Depends on</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudio</code></td><td>Blazor app</td><td><strong>Unified app (Web + MAUI Hybrid desktop, Win/Mac)</strong> — presents creator studios AND (role-gated) the management surface; avatar/image/video/voice studios, gallery, projects</td><td><code>TrStudioUI</code>, <code>TrStudio.Models</code>, <code>TrStudioApi</code> (HTTP)</td></tr>
+<tr><td><code>src/TrStudioAdmin</code></td><td><s>Blazor app</s> <strong>RETIRED 2026-07-05 (ADR-012)</strong> — merged into <code>TrStudio</code>; management screens now live in <code>TrStudioUI</code> under role-gated routes</td><td><s>Management app (Web + MAUI Hybrid) — hardware detection, setup, model sources, registry editing, RunPod control, ComfyUI import/debug, ops, cost, content policy</s></td><td><code>TrStudioUI</code>, <code>TrStudio.Models</code>, <code>TrStudioApi</code> (admin-scoped HTTP)</td></tr>
+<tr><td><code>src/TrStudioUI</code></td><td>Razor Class Library</td><td>Shared layouts, screens and components on TrBlazeUI, consumed by both apps across Web + desktop. Now also hosts the (role-gated) management screens formerly in <code>TrStudioAdmin</code>.</td><td>TrBlazeUI, <code>TrStudio.Models</code></td></tr>
+<tr><td><code>src/TrStudioApi</code></td><td>ASP.NET Core host</td><td>The unified backend contract — generation endpoints, orchestrator wiring, registry endpoints, queue, cost, safety, auth integration, SignalR. Runs <code>TrStudioDb</code> (DbUp) on startup</td><td><code>TrStudio.Engine</code>, <code>TrStudio.Models</code>, <code>TrStudioDb</code></td></tr>
+<tr><td><code>src/TrStudio.Engine</code></td><td>Class library</td><td>The engine. Folders: <strong><code>Domain/</code></strong> (entities &amp; rules — Character, Job, Asset, registry rows, GenerationLog, Consent), <strong><code>Infrastructure/</code></strong> (Dapper data access, Hangfire wiring, object storage, encrypted key store, AppManager client), <strong><code>Providers/</code></strong> (<code>OnnxLocalProvider</code>, <code>ComfyUIProvider</code>, <code>HeyGenProvider</code>, <code>ClosedApiProvider</code>), <strong><code>Workers/</code></strong> (ComfyUI worker control local MPS + RunPod, ONNX in-process image worker)</td><td><code>TrStudio.Models</code></td></tr>
+<tr><td><code>src/TrStudio.Models</code></td><td>Class library</td><td>Shared models/DTOs/entities, <strong>interfaces</strong> (<code>IGenerationProvider</code>, repository contracts), provider/registry contracts, enums — referenced by every app, the RCL, and the engine</td><td>(none)</td></tr>
+<tr><td><code>src/TrStudioDb</code></td><td>Class library</td><td><strong>DbUp</strong> migration runner — embedded, ordered SQL scripts (schema, PgVector, registry/jobs/characters, seed); executed on <code>TrStudioApi</code> startup</td><td>DbUp, <code>TrStudio.Models</code> (optional)</td></tr>
+</tbody>
+</table>
+<p><strong><code>TrStudio.Models</code> — the shared contract types.</strong> A dependency-free class library holding everything multiple projects must agree on: entity/DTO shapes, enums (tier, task, safetyClass), and the interfaces (<code>IGenerationProvider</code>, repository contracts). Both Blazor apps, the RCL, the API host and the engine reference it, so types never get duplicated or drift.</p>
+<p><strong><code>TrStudio.Engine</code> — one engine, four folders.</strong> The former Domain / Infrastructure / Providers / Workers projects are now folders inside a single <code>TrStudio.Engine</code> class library (fewer projects to wire, one assembly to reference). <code>Domain/</code> holds business rules; <code>Infrastructure/</code> holds the <strong>Dapper</strong> data-access layer (parameterized SQL, the per-user <code>userId</code> owner filter applied to every query — BRD-81), Hangfire wiring, object storage, the encrypted key store and the AppManager client; <code>Providers/</code> holds the <code>IGenerationProvider</code> implementations; <code>Workers/</code> drives the ComfyUI workers (local MPS + RunPod) and the in-process ONNX image worker.</p>
+<p><strong><code>TrStudioApi</code> — the shared contract.</strong> This is the boundary that keeps the system sane. The management screens are <em>only UI</em>; they perform admin actions by calling admin-scoped <code>TrStudioApi</code> endpoints. Any capability the creator screens also need — or that may be exposed to third parties later — is a first-class <code>TrStudioApi</code> endpoint, never buried in the admin app. The registry, job, and generation services are shared; only setup/sources, ComfyUI import/debug, content-policy and ops are admin-scoped. <strong>On startup the API runs <code>TrStudioDb</code> (DbUp)</strong> to create/upgrade the schema before serving traffic.</p>
+<p><strong>Provider abstraction.</strong> Each provider (in <code>TrStudio.Engine/Providers/</code>, implementing <code>IGenerationProvider</code> from <code>TrStudio.Models</code>) is routed by the orchestrator to exactly one resolved model and treated uniformly: <code>submit → status → result → estimateCost</code>. One <code>ComfyUIProvider</code> serves <em>all</em> ComfyUI-backed models (avatar, lip-sync, video) because each model is just a workflow template (§6/§8).</p>
+<p><strong>Prompt Studio chat path (F-PROMPT, added 2026-07-07).</strong> The prompt-crafting chat spans the existing modules without new projects: <code>TrStudioUI</code> gains the Prompt Studio screen (<code>/prompt-studio</code> — chat pane, registry-driven LLM picker, image attachment, session list, prompt-use actions); <code>TrStudioApi</code> exposes the <code>prompt-chat</code> endpoints; <code>TrStudio.Engine</code> gains <code>Domain/</code> entities <code>PromptChatSession</code>/<code>PromptChatMessage</code> and an <code>Infrastructure/</code> <code>PromptChatService</code> that resolves the picked model from the registry and calls <strong>TechieRag chat-completion directly (no RAG pipeline)</strong>, applying the BRD-81 owner filter to every session/message query and recording token usage (BRD-56); <code>TrStudioDb</code> adds the DbUp script for the two tables. Text-chat LLMs are ordinary registry rows (<code>text-chat</code> modality, §6) — no separate config store.</p>
+<p><strong>Single Postgres, Dapper + DbUp.</strong> PgVector gives vector + relational in one instance, so the registry, jobs, characters, asset metadata, generation log <strong>and</strong> embeddings/vectors all live in one PostgreSQL database. Data access is <strong>Dapper</strong> (parameterized SQL, no EF Core); schema is created/upgraded by <strong>DbUp</strong> scripts in <code>TrStudioDb</code>, run automatically when <code>TrStudioApi</code> starts. Durable jobs use Hangfire's Postgres storage; there is no Redis. Provider API keys are held in an encrypted key store.</p>
+<h3 id="build-roadmap-phased-target-july-2026">Build roadmap (phased target, July 2026)<a class="anchor-link" href="#build-roadmap-phased-target-july-2026">#</a></h3>
+<p>Greenfield — nothing is built yet. The §12 build order from the requirements doc is the dependency-ordered target; each phase is independently testable. (Carried into the BRD §4 status table and seeded as phase tags by <code>*split-brd</code>.)</p>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">&minus;</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">&#9166;</button>
+    <button data-pop title="Open in new tab">&#8599;</button>
+  </div>
+  <pre class="mermaid">flowchart TB
+  P1["Phase 1 — Skeleton &amp; spine (apps, provider abstraction, registry, Hangfire queue, auth, storage, OpenAPI, Serilog)"]
   P2["Phase 2 — Local image vertical (OnnxLocalProvider, Image studio, gallery/history)"]
   P3["Phase 3 — Managed ComfyUI + RunPod (scale-to-zero, cost guardrails)"]
   P4["Phase 4 — Voice EN+HI (XTTS / IndicF5 / OmniVoice)"]
@@ -563,26 +700,61 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
   P8["Phase 8 — Safety + provenance throughout"]
   P9["Phase 9 — Polish + SaaS-ready seams (comparison, libraries, spend dashboard, API seam)"]
   P10["Phase 10 — Prompt Studio (LLM prompt-crafting chat — added 2026-07-07)"]
-  P1 --> P2 --> P3 --> P4 --> P5 --> P6 --> P7 --> P8 --> P9 --> P10</pre>
-    </div>
-    <blockquote><p>Safety (SAFE-01/04) is wired into every provider from Phase 2 onward; SAFE-02/03/05 are enforced before any real-person feature. Phase 8 is the consolidation/verification pass, not the first time safety appears.</p></blockquote>
-
-    <h2 id="open-questions-risks">13. Open questions / risks<a class="anchor-link" href="#open-questions-risks">#</a></h2>
-    <ul>
-      <li><strong>Model licences</strong> vary and date quickly (XTTS Coqui CPML is non-standard; Hunyuan has a MAU cap; HeyGen has its own ToS) — the registry <code>license</code> field + a build-time check must verify each before commercial use.</li>
-      <li><strong>ComfyUI on Apple Silicon (MPS/GGUF)</strong> can be flaky — default to GGUF + low-res-first, auto-fallback to RunPod on OOM.</li>
-      <li><strong>HeyGen / aggregator price changes</strong> — keep open-model parity so the Premium tier stays optional behind the selector.</li>
-      <li><strong>36 GB unified memory</strong> is marginal for local video — route heavy jobs to RunPod/HeyGen; Mac is image + light lip-sync only.</li>
-      <li><strong>TechieRag / TrBlazeUI reuse assumptions</strong> — confirm against the real packages at Phase 1 before depending on them.</li>
-      <li><strong>Credentials needed at build/run</strong> (not blocking docs): GitHub PAT (<code>read:packages</code>), HeyGen API key, AppManager API key/secret.</li>
-      <li><strong>Field-prefix:</strong> greenfield, no code to detect from — defaulted to <code>obj</code> (Coding Standards is authoritative).</li>
-    </ul>
-
-    <h2 id="sources-harvested">Sources harvested<a class="anchor-link" href="#sources-harvested">#</a></h2>
-    <ul>
-      <li><code>docs/TrStudio-Requirements-v0.3.md</code> — §2 app surface, §3 hardware/budget, §4 architecture, §4.2 provider abstraction, §4.3 registry, §5 model stack, §6 ComfyUI, §7 TechieRag, §11 stack, §12 build order, §13 risks.</li>
-      <li><code>docs/AppManager-api-usage-guide.md</code> — child-app integration model (referenced; stays in <code>docs/</code> as independently authoritative).</li>
-    </ul>
+  P1 --&gt; P2 --&gt; P3 --&gt; P4 --&gt; P5 --&gt; P6 --&gt; P7 --&gt; P8 --&gt; P9 --&gt; P10</pre>
+</div>
+<blockquote>
+<p>Safety (SAFE-01/04) is wired into every provider from Phase 2 onward; SAFE-02/03/05 are enforced before any real-person feature. Phase 8 is the consolidation/verification pass, not the first time safety appears.</p>
+</blockquote>
+<p>The ten build stages above are all built (see the BRD's development status). Planning phases from November 2026 are listed in <a href="TrStudio-Phases.html">TrStudio-Phases.md</a>: phase 1 is everything above, phase 2 is the Venice provider.</p>
+<h2 id="open-questions"><a id="8-open-questions"></a>8. Open questions<a class="anchor-link" href="#open-questions">#</a></h2>
+<ul>
+<li><strong>Model licences</strong> vary and date quickly (XTTS Coqui CPML is non-standard; Hunyuan has a MAU cap; HeyGen has its own ToS) — the registry <code>license</code> field + a build-time check must verify each before commercial use.
+</li>
+<li><strong>ComfyUI on Apple Silicon (MPS/GGUF)</strong> can be flaky — default to GGUF + low-res-first, auto-fallback to RunPod on OOM.
+</li>
+<li><strong>HeyGen / aggregator price changes</strong> — keep open-model parity so the Premium tier stays optional behind the selector.
+</li>
+<li><strong>36 GB unified memory</strong> is marginal for local video — route heavy jobs to RunPod/HeyGen; Mac is image + light lip-sync only.
+</li>
+<li><strong>TechieRag / TrBlazeUI reuse assumptions</strong> — confirm against the real packages at Phase 1 before depending on them.
+</li>
+<li><strong>Credentials needed at build/run</strong> (not blocking docs): GitHub PAT (<code>read:packages</code>), HeyGen API key, AppManager API key/secret.
+</li>
+<li><strong>Field-prefix:</strong> greenfield, no code to detect from — defaulted to <code>obj</code> (Coding Standards is authoritative).
+</li>
+<li><strong>Deployment.</strong> Hosting is decided after UAT and belongs in the Deployment Checklist. The July plan, kept here so it is not lost: the Windows box builds and tests; <code>TrStudioApi</code> and its workers ship as a Docker image to a host in India, with PostgreSQL + PgVector and object storage beside it; a RunPod template image runs the GPU workers on demand with models cached on a network volume; the Mac runs the local ComfyUI (MPS) and ONNX stack for the Fast tier; the host reaches AppManager with <code>X-Api-Key</code> and a JWT. The <code>TrStudio</code> app ships as the MAUI desktop app (Windows and Mac) and as a web app, both on the same <code>TrStudioUI</code> screens (ADR-012).
+</li>
+</ul>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">&minus;</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">&#9166;</button>
+    <button data-pop title="Open in new tab">&#8599;</button>
+  </div>
+  <pre class="mermaid">flowchart LR
+  Dev["Dev box (Windows)"] --&gt; Build["dotnet build + tests"]
+  Build --&gt; ApiImg["Docker: TrStudioApi + workers"]
+  Build --&gt; WorkerImg["RunPod template image (GPU worker)"]
+  ApiImg --&gt; Host["App host (India region)"]
+  Host --&gt; PG[("PostgreSQL + PgVector")]
+  Host --&gt; Obj[("Object storage")]
+  Host --&gt;|"on-demand"| RunPod["RunPod serverless (scale-to-zero)"]
+  WorkerImg --&gt; RunPod
+  RunPod --&gt; Vol[("Network volume — cached models")]
+  Mac["Mac M4 Max"] --&gt; LocalComfy["Local ComfyUI (MPS) + ONNX"]
+  Host --&gt;|"X-Api-Key + JWT"| AppMgr[/"AppManager service"/]</pre>
+</div>
+<h3 id="sources-harvested">Sources harvested<a class="anchor-link" href="#sources-harvested">#</a></h3>
+<ul>
+<li><code>docs/TrStudio-Requirements-v0.3.md</code> — §2 app surface, §3 hardware/budget, §4 architecture, §4.2 provider abstraction, §4.3 registry, §5 model stack, §6 ComfyUI, §7 TechieRag, §11 stack, §12 build order, §13 risks.
+</li>
+<li><code>docs/AppManager-api-usage-guide.md</code> — child-app integration model (referenced; stays in <code>docs/</code> as independently authoritative).
+</li>
+</ul>
   </main>
 </div>
 

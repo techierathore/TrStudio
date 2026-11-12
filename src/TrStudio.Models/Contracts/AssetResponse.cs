@@ -37,4 +37,16 @@ public class AssetResponse
 
     /// <summary>UTC timestamp when the asset was persisted.</summary>
     public DateTime CreatedUtc { get; set; }
+
+    /// <summary>The provider kind that produced the asset (e.g. "Venice"), from the generation log; null when unknown.</summary>
+    public string? ProviderKind { get; set; }
+
+    /// <summary>The run's recorded price in US dollars, from the generation log; null for free or unknown runs.</summary>
+    public decimal? ActualCost { get; set; }
+
+    /// <summary>Where the price came from ("venice-quote" / "venice-list"); null for estimate-priced or free runs.</summary>
+    public string? PriceSource { get; set; }
+
+    /// <summary>The provider's own failure text for the run, when it failed (e.g. "Venice: ..."); null on success.</summary>
+    public string? FailureMessage { get; set; }
 }

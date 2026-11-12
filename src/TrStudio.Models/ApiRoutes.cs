@@ -51,6 +51,9 @@ public static class ApiRoutes
     /// <summary>Generation log endpoints (history listing and one-click reproduce).</summary>
     public const string GenerationLog = "/api/v1/generation-log";
 
+    /// <summary>Admin "Fill from Venice" lookup: reads Venice's public model list, saves nothing (decision 4B, BRD-122).</summary>
+    public const string VeniceFill = "/api/v1/admin/registry/venice/fill";
+
     /// <summary>Spend ledger + monthly-cap reporting endpoint (admin-scoped, REQ-FN-029/NFR-007).</summary>
     public const string Spend = "/api/v1/admin/spend";
 

@@ -35,5 +35,12 @@ public enum ProviderKind
     /// Served by <c>PromptChatService</c> via TechieRag direct chat-completion — NOT an
     /// <see cref="TrStudio.Models.Providers.IGenerationProvider"/>; excluded from generation-job resolution.
     /// </summary>
-    TextLlm
+    TextLlm,
+
+    /// <summary>
+    /// Venice cloud provider for pictures and video (phase 2, ADR-014). Address and key
+    /// live only in the database (Registry &amp; providers); served by <c>VeniceProvider</c> for
+    /// TextToImage, ImageToImage, Upscale, TextToVideo and ImageToVideo rows only.
+    /// </summary>
+    Venice
 }

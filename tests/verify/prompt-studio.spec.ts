@@ -65,7 +65,7 @@ function overlaps(a: any, b: any, tol = 4) {
 }
 
 test.describe.serial('Prompt Studio verify', () => {
-  test('UI-081 render gate + UI-082 actions + visual', async ({ browser }) => {
+  test('REQ-UI-081 REQ-UI-082 prompt studio renders and its actions work', async ({ browser }) => {
     test.setTimeout(240000);
     const ctx = await browser.newContext();
     const page = await establishSession(ctx, tokens.Owner);

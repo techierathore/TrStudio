@@ -128,138 +128,139 @@ tr.sel td{background:var(--sel)}
 </head>
 <body>
 <div class="app">
-<aside class="side">
+<aside class="side" data-testid="sidebar">
   <div class="brand"><div class="logo">TR</div>TrStudio</div>
   <div class="navgroup">Studios</div>
   <nav class="nav">
-    <a href="avatar-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Avatar Studio</a>
-    <a href="character-library.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Characters</a>
-    <a href="image-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Image Studio</a>
-    <a href="video-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>Video Studio</a>
-    <a href="voice-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 19v3"/></svg>Voice Studio</a>
-    <a href="prompt-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>Prompt Studio</a>
+    <a href="avatar-studio.html" data-testid="nav-avatar-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Avatar Studio</a>
+    <a href="character-library.html" data-testid="nav-character-library"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Characters</a>
+    <a href="image-studio.html" data-testid="nav-image-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Image Studio</a>
+    <a href="video-studio.html" data-testid="nav-video-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>Video Studio</a>
+    <a href="voice-studio.html" data-testid="nav-voice-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 19v3"/></svg>Voice Studio</a>
+    <a href="prompt-studio.html" data-testid="nav-prompt-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>Prompt Studio</a>
   </nav>
   <div class="navgroup">Workspace</div>
   <nav class="nav">
-    <a href="gallery.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Gallery</a>
-    <a href="projects.html" class="active"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Projects</a>
-    <a href="library.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Library</a>
-    <a href="account.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/></svg>Account</a>
+    <a href="gallery.html" data-testid="nav-gallery"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Gallery</a>
+    <a href="projects.html" class="active" data-testid="nav-projects"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Projects</a>
+    <a href="library.html" data-testid="nav-library"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Library</a>
+    <a href="account.html" data-testid="nav-account"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/></svg>Account</a>
   </nav>
   <div class="sidefoot">
-    <a href="admin-hardware.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudioAdmin</a>
+    <a href="admin-hardware.html" data-testid="link-switch-to-trstudioadmin"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudioAdmin</a>
+    <a href="login.html" data-testid="nav-sign-out"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>Sign out</a>
   </div>
 </aside>
-<div class="main">
-<header class="top">
+<div class="main" data-testid="main">
+<header class="top" data-testid="topbar">
   <span class="crumb">TrStudio</span><span class="crumb">/</span><span class="crumb here">Projects</span>
   <span class="spacer"></span>
-  <button class="btn brand"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>New project</button>
-  <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
-  <div class="userchip">TR</div>
+  <button class="btn brand" onclick="alert('New project: done in the built app')" data-testid="btn-new-project"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>New project</button>
+  <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode" onclick="/* switches light and dark: page script */" data-testid="icon-btn-toggle-dark-mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
+  <div class="userchip" data-testid="user-chip">TR</div>
 </header>
-<div class="content">
+<div class="content" data-testid="content">
   <h1 class="h">Projects</h1>
   <p class="sub">Folders that keep every generation's full parameter set — pick any past run and reproduce it in one click.</p>
 
   <div class="projlayout">
     <!-- Left: project list -->
     <div class="col" style="gap:10px">
-      <input class="input" placeholder="Search projects…">
-      <div class="card projcard sel">
+      <input class="input" placeholder="Search projects…" data-testid="field-search-projects">
+      <div class="card projcard sel" data-testid="card-1">
         <div class="projicon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
         <div class="col" style="gap:0">
           <span class="nm">Diwali Promo</span>
           <span class="mt">18 assets · updated 1 Jul 2026</span>
         </div>
       </div>
-      <div class="card projcard">
+      <div class="card projcard" data-testid="card-2">
         <div class="projicon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
         <div class="col" style="gap:0">
           <span class="nm">Product Explainers</span>
           <span class="mt">11 assets · updated 28 Jun 2026</span>
         </div>
       </div>
-      <div class="card projcard">
+      <div class="card projcard" data-testid="card-3">
         <div class="projicon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
         <div class="col" style="gap:0">
           <span class="nm">Hindi Shorts</span>
           <span class="mt">27 assets · updated 24 Jun 2026</span>
         </div>
       </div>
-      <div class="card projcard">
+      <div class="card projcard" data-testid="card-4">
         <div class="projicon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
         <div class="col" style="gap:0">
           <span class="nm">Wedding Invite Reels</span>
           <span class="mt">6 assets · updated 12 Jun 2026</span>
         </div>
       </div>
-      <div class="card hintcard">
+      <div class="card hintcard" data-testid="card-5">
         <div style="margin-bottom:6px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 11v4M10 13h4"/></svg></div>
         Projects capture the full parameter history of every generation, so any result can be reproduced later — even after you tweak the prompt.
-        <div style="margin-top:10px"><button class="btn outline">Create a project</button></div>
+        <div style="margin-top:10px"><button class="btn outline" onclick="alert('Create a project: done in the built app')" data-testid="btn-create-a-project">Create a project</button></div>
       </div>
     </div>
 
     <!-- Right: selected project detail -->
     <div class="col" style="gap:14px">
-      <div class="card">
+      <div class="card" data-testid="card-6">
         <div class="detailhead">
           <div class="col" style="gap:3px">
             <div style="font-size:16px;font-weight:650">Diwali Promo</div>
             <span class="muted" style="font-size:12.5px">Campaign assets for the Diwali 2026 launch · owner: Techie Rathore</span>
           </div>
           <span class="spacer"></span>
-          <span class="badge brand">18 assets</span>
-          <span class="badge">₹-free local: 9 runs</span>
-          <span class="badge ok"><span class="dot ok"></span>updated 1 Jul 2026</span>
+          <span class="badge brand" data-testid="badge-18-assets">18 assets</span>
+          <span class="badge" data-testid="badge-free-local-9-runs">₹-free local: 9 runs</span>
+          <span class="badge ok" data-testid="badge-status"><span class="dot ok"></span>updated 1 Jul 2026</span>
         </div>
         <div class="row" style="gap:8px">
-          <button class="btn outline"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Open in Gallery</button>
-          <button class="btn outline">Rename</button>
-          <button class="btn ghost">Archive</button>
+          <button class="btn outline" onclick="alert('Open in Gallery: done in the built app')" data-testid="btn-open-in-gallery"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Open in Gallery</button>
+          <button class="btn outline" onclick="alert('Rename: done in the built app')" data-testid="btn-rename">Rename</button>
+          <button class="btn ghost" onclick="alert('Archive: done in the built app')" data-testid="btn-archive">Archive</button>
         </div>
       </div>
 
       <div class="detailgrid">
         <!-- Generation history -->
-        <div class="card">
+        <div class="card" data-testid="card-generation-history">
           <div class="row" style="justify-content:space-between;margin-bottom:8px">
             <h3 style="margin:0">Generation history</h3>
-            <div class="seg"><button class="active">All</button><button>Images</button><button>Video</button><button>Voice</button></div>
+            <div class="seg"><button class="active" onclick="/* selects this option: page script */" data-testid="btn-all">All</button><button onclick="/* selects this option: page script */" data-testid="btn-images">Images</button><button onclick="/* selects this option: page script */" data-testid="btn-video">Video</button><button onclick="/* selects this option: page script */" data-testid="btn-voice">Voice</button></div>
           </div>
-          <table class="histtable">
+          <table class="histtable" data-testid="table-1">
             <thead><tr><th>Asset</th><th>Model</th><th>Provider · Tier</th><th>Seed</th><th>Date</th><th></th></tr></thead>
             <tbody>
-              <tr class="sel">
+              <tr class="sel" data-tf-sample>
                 <td><span class="assetcell"><span class="miniart pv">▶</span>Diwali avatar intro — Kavya</span></td>
                 <td>Hunyuan-Avatar</td><td>RunPod · High</td><td>4821</td><td>1 Jul</td>
-                <td><button class="btn outline" data-act>Reproduce</button></td>
+                <td><button class="btn outline" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce">Reproduce</button></td>
               </tr>
-              <tr>
+              <tr data-tf-sample>
                 <td><span class="assetcell"><span class="miniart pb">IMG</span>Diwali poster v3 — rangoli</span></td>
                 <td>FLUX.1</td><td>Local GPU · Fast</td><td>9012</td><td>30 Jun</td>
-                <td><button class="btn outline" data-act>Reproduce</button></td>
+                <td><button class="btn outline" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-2">Reproduce</button></td>
               </tr>
-              <tr>
+              <tr data-tf-sample>
                 <td><span class="assetcell"><span class="miniart pa">IMG</span>Kavya portrait — warm light</span></td>
                 <td>SDXL</td><td>Local GPU · Fast</td><td>7734</td><td>29 Jun</td>
-                <td><button class="btn outline" data-act>Reproduce</button></td>
+                <td><button class="btn outline" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-3">Reproduce</button></td>
               </tr>
-              <tr>
+              <tr data-tf-sample>
                 <td><span class="assetcell"><span class="miniart pv">VO</span>Kavya greeting VO (Hindi)</span></td>
                 <td>IndicF5</td><td>RunPod · High</td><td>—</td><td>29 Jun</td>
-                <td><button class="btn outline" data-act>Reproduce</button></td>
+                <td><button class="btn outline" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-4">Reproduce</button></td>
               </tr>
-              <tr>
+              <tr data-tf-sample>
                 <td><span class="assetcell"><span class="miniart pv">▶</span>Sweet-box teaser 9:16</span></td>
                 <td>HeyGen Avatar IV</td><td>Closed API · Premium</td><td>—</td><td>27 Jun</td>
-                <td><button class="btn outline" data-act>Reproduce</button></td>
+                <td><button class="btn outline" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-5">Reproduce</button></td>
               </tr>
-              <tr>
+              <tr data-tf-sample>
                 <td><span class="assetcell"><span class="miniart pc">IMG</span>Mithai hero shot 3:2</span></td>
                 <td>FLUX.1</td><td>RunPod · High</td><td>5570</td><td>26 Jun</td>
-                <td><button class="btn outline" data-act>Reproduce</button></td>
+                <td><button class="btn outline" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-6">Reproduce</button></td>
               </tr>
             </tbody>
           </table>
@@ -267,10 +268,10 @@ tr.sel td{background:var(--sel)}
         </div>
 
         <!-- Params of the selected run -->
-        <div class="card paramcard">
+        <div class="card paramcard" data-testid="card-run-parameters">
           <div class="row" style="justify-content:space-between;margin-bottom:8px">
             <h3 style="margin:0">Run parameters</h3>
-            <span class="badge brand">run_01JZK4</span>
+            <span class="badge brand" data-testid="badge-run-01jzk4">run_01JZK4</span>
           </div>
           <div class="muted" style="font-size:12px;margin-bottom:8px">Diwali avatar intro — Kavya · 1 Jul 2026, 18:42 IST</div>
           <div class="promptbox">"Kavya in a festive maroon saree, warm diya lighting, greets viewers for Diwali and invites them to the sale — upbeat, 20 seconds."</div>
@@ -283,16 +284,22 @@ tr.sel td{background:var(--sel)}
           <div class="kv"><span class="muted">Voice</span><b>IndicF5 · Hindi (Kavya)</b></div>
           <div class="kv"><span class="muted">Guidance / steps</span><b>CFG 6.5 · 30 steps</b></div>
           <div class="kv"><span class="muted">Cost</span><b>$0.42</b></div>
-          <div class="kv"><span class="muted">Provenance</span><b><span class="badge ok" style="font-size:10.5px">C2PA signed</span></b></div>
+          <div data-tf-phase="2" data-testid="venice-run-details" style="border-top:1px dashed var(--border);margin-top:6px;padding-top:6px">
+            <div class="muted" style="font-size:11.5px;margin-bottom:4px">A run made through Venice shows:</div>
+            <div class="kv"><span class="muted">Provider</span><b><span class="badge brand" style="font-size:10.5px" data-testid="badge-provider-venice">Venice</span></b></div>
+            <div class="kv"><span class="muted">Venice price</span><b data-testid="venice-price">$0.18</b></div>
+            <div class="err" style="margin-top:6px" data-tf-state="error" data-testid="venice-failure-reason">Venice said: Content policy violation (CONTENT_POLICY_VIOLATION)</div>
+          </div>
+          <div class="kv"><span class="muted">Provenance</span><b><span class="badge ok" style="font-size:10.5px" data-testid="badge-c2pa-signed">C2PA signed</span></b></div>
           <div class="col" style="margin-top:12px;gap:8px">
-            <button class="btn brand" data-act style="justify-content:center">Reproduce with these params</button>
-            <button class="btn outline" style="justify-content:center">Copy params as JSON</button>
+            <button class="btn brand" data-act style="justify-content:center" onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-with-these-params">Reproduce with these params</button>
+            <button class="btn outline" style="justify-content:center" onclick="alert('Copy params as JSON: done in the built app')" data-testid="btn-copy-params-as-json">Copy params as JSON</button>
           </div>
         </div>
       </div>
 
       <!-- Empty-state hint -->
-      <div class="card hintcard">
+      <div class="card hintcard" data-testid="card-9">
         No runs yet in a new project? Generate from any studio and pick the project in the "Save to" selector — the full parameter set is captured automatically (BRD-48).
       </div>
     </div>

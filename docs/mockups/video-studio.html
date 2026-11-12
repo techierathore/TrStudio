@@ -120,54 +120,55 @@ tr.sel td{background:var(--sel)}
 </head>
 <body>
 <div class="app">
-  <aside class="side">
+  <aside class="side" data-testid="sidebar">
     <div class="brand"><div class="logo">TR</div>TrStudio</div>
     <div class="navgroup">Studios</div>
     <nav class="nav">
-      <a href="avatar-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Avatar Studio</a>
-    <a href="character-library.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Characters</a>
-    <a href="image-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Image Studio</a>
-    <a class="active" href="video-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>Video Studio</a>
-    <a href="voice-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 19v3"/></svg>Voice Studio</a>
-    <a href="prompt-studio.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>Prompt Studio</a>
+      <a href="avatar-studio.html" data-testid="nav-avatar-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Avatar Studio</a>
+    <a href="character-library.html" data-testid="nav-character-library"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Characters</a>
+    <a href="image-studio.html" data-testid="nav-image-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Image Studio</a>
+    <a class="active" href="video-studio.html" data-testid="nav-video-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>Video Studio</a>
+    <a href="voice-studio.html" data-testid="nav-voice-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 19v3"/></svg>Voice Studio</a>
+    <a href="prompt-studio.html" data-testid="nav-prompt-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>Prompt Studio</a>
   </nav>
   <div class="navgroup">Workspace</div>
   <nav class="nav">
-    <a href="gallery.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Gallery</a>
-    <a href="projects.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Projects</a>
-    <a href="library.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Library</a>
-    <a href="account.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/></svg>Account</a>
+    <a href="gallery.html" data-testid="nav-gallery"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Gallery</a>
+    <a href="projects.html" data-testid="nav-projects"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Projects</a>
+    <a href="library.html" data-testid="nav-library"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Library</a>
+    <a href="account.html" data-testid="nav-account"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/></svg>Account</a>
   </nav>
   <div class="sidefoot">
-    <a href="admin-hardware.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudioAdmin</a>
+    <a href="admin-hardware.html" data-testid="link-switch-to-trstudioadmin"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudioAdmin</a>
+    <a href="login.html" data-testid="nav-sign-out"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>Sign out</a>
   </div>
 </aside>
 
-  <div class="main">
-    <header class="top">
+  <div class="main" data-testid="main">
+    <header class="top" data-testid="topbar">
       <span class="crumb">TrStudio</span><span class="crumb">/</span><span class="crumb here">Video Studio</span>
       <span class="spacer"></span>
-      <span class="badge ok"><span class="dot ok"></span>$38.40 / $100.00 cap</span>
-      <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
-      <div class="userchip">TR</div>
+      <span class="badge ok" data-testid="badge-status"><span class="dot ok"></span>$38.40 / $100.00 cap</span>
+      <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode" onclick="/* switches light and dark: page script */" data-testid="icon-btn-toggle-dark-mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
+      <div class="userchip" data-testid="user-chip">TR</div>
     </header>
 
-    <div class="content">
+    <div class="content" data-testid="content">
       <h1 class="h">Video Studio</h1>
       <p class="sub">Image→Video / Text→Video generation, timeline editing and export.</p>
 
       <div class="studio">
         <!-- LEFT: controls -->
         <div class="grid">
-          <div class="card">
+          <div class="card" data-testid="card-mode">
             <h3>Mode</h3>
             <div class="seg" style="display:flex;width:100%">
-              <button type="button" class="active" style="flex:1">Image → Video</button>
-              <button type="button" style="flex:1">Text → Video</button>
+              <button type="button" class="active" style="flex:1" onclick="/* selects this option: page script */" data-testid="btn-image-video">Image → Video</button>
+              <button type="button" style="flex:1" onclick="/* selects this option: page script */" data-testid="btn-text-video">Text → Video</button>
             </div>
           </div>
 
-          <div class="card">
+          <div class="card" data-testid="card-conditioning-frames">
             <h3>Conditioning frames</h3>
             <div class="row" style="align-items:stretch">
               <div class="col" style="flex:1"><span class="label">First frame</span>
@@ -179,7 +180,7 @@ tr.sel td{background:var(--sel)}
             </div>
           </div>
 
-          <div class="card">
+          <div class="card" data-testid="card-controls">
             <h3>Controls</h3>
             <div class="col" style="margin-bottom:14px">
               <div class="row" style="justify-content:space-between"><span class="label" style="margin:0">Duration</span><span class="muted" style="font-size:12px">5s</span></div>
@@ -190,39 +191,53 @@ tr.sel td{background:var(--sel)}
               <div class="slider"><i style="width:70%"></i><b style="left:70%"></b></div>
             </div>
             <span class="label">Aspect ratio</span>
-            <select class="select">
+            <select class="select" data-testid="field-1">
               <option selected>16:9 — Landscape</option>
               <option>9:16 — Reels</option>
               <option>1:1 — Square</option>
             </select>
           </div>
 
-          <div class="card">
+          <div class="card" data-testid="card-quality-tier">
             <h3>Quality tier</h3>
             <div class="seg tierseg" style="display:flex;width:100%;margin-bottom:10px">
-              <button type="button"><b>Fast</b><small>Mac · ~30s · $0</small></button>
-              <button type="button" class="active"><b>High</b><small>Wan 2.x · ~2m · $0.18</small></button>
-              <button type="button"><b>Premium</b><small>HeyGen · ~4m · $0.90</small></button>
+              <button type="button" onclick="/* selects this option: page script */" data-testid="btn-fast-mac-30s-0"><b>Fast</b><small>Mac · ~30s · $0</small></button>
+              <button type="button" class="active" onclick="/* selects this option: page script */" data-testid="btn-high-wan-2-x-2m-0-18"><b>High</b><small>Wan 2.x · ~2m · $0.18</small></button>
+              <button type="button" onclick="/* selects this option: page script */" data-testid="btn-premium-heygen-4m-0-90"><b>Premium</b><small>HeyGen · ~4m · $0.90</small></button>
             </div>
-            <div style="margin-bottom:10px"><span class="badge brand">Provider: Wan 2.x (RunPod)</span></div>
-            <div class="alert">Premium tier routes to <strong>HeyGen (closed API)</strong>. Output is billed against your monthly cap and stamped with provenance.</div>
+            <div style="margin-bottom:10px"><span class="badge brand" data-testid="badge-provider-wan-2-x-runpod">Provider: Wan 2.x (RunPod)</span></div>
+            <div class="alert" data-testid="alert-info">Premium tier routes to <strong>HeyGen (closed API)</strong>. Output is billed against your monthly cap and stamped with provenance.</div>
+            <div data-tf-phase="2" data-testid="video-model-picker" style="margin-top:12px">
+              <span class="label">Model</span>
+              <select class="select" data-testid="field-video-model">
+                <option>Wan 2.x (RunPod)</option>
+                <option selected>Wan 3.0 image to video — Cloud · Venice</option>
+                <option>Kling 4.0 image to video — Cloud · Venice</option>
+                <option>Veo 3.1 Fast image to video — Cloud · Venice</option>
+              </select>
+              <div class="muted" style="font-size:11.5px;margin-top:6px">Lists only models for the chosen mode; with a character picked, only models that keep a fixed character.</div>
+              <span class="label" style="margin-top:10px;display:block">Character</span>
+              <select class="select" data-testid="field-character"><option selected>No character</option><option>Aria (reference set)</option></select>
+              <div class="row" style="margin-top:8px"><span class="badge brand" data-testid="badge-cloud-venice">Cloud · Venice</span><span class="muted" style="font-size:11.5px">Duration 2–30s · 480p/720p/1080p · 16:9, 9:16, 1:1 from this model</span></div>
+              <div class="alert" style="margin-top:6px;font-size:12px" data-testid="alert-sent-to-venice">Your prompt and pictures are sent to Venice. Venice price for this clip: $0.42.</div>
+            </div>
           </div>
         </div>
 
         <!-- CENTER: timeline / editor -->
         <div class="grid">
-          <div class="card">
-            <div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">Timeline / editor</h3><span class="badge ok"><span class="dot ok"></span>Rendered</span></div>
+          <div class="card" data-testid="card-timeline-editor">
+            <div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">Timeline / editor</h3><span class="badge ok" data-testid="badge-status-2"><span class="dot ok"></span>Rendered</span></div>
             <div class="preview">
               <div class="playbtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
               Preview — clip01 (Wan 2.x, 16:9)
             </div>
             <div class="edittools">
-              <button class="btn outline"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.12 15.88M14.47 14.48 20 20M8.12 8.12 12 12"/></svg>Trim</button>
-              <button class="btn outline"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Join</button>
-              <button class="btn outline"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>Reframe</button>
-              <button class="btn outline"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>Add audio</button>
-              <button class="btn outline"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M8 3H3v5M12 22v-8.3M4 10c0 6 8 4 8 10M20 10c0 6-8 4-8 10"/></svg>Split</button>
+              <button class="btn outline" onclick="alert('Trim: done in the built app')" data-testid="btn-trim"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.12 15.88M14.47 14.48 20 20M8.12 8.12 12 12"/></svg>Trim</button>
+              <button class="btn outline" onclick="alert('Join: done in the built app')" data-testid="btn-join"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Join</button>
+              <button class="btn outline" onclick="alert('Reframe: done in the built app')" data-testid="btn-reframe"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>Reframe</button>
+              <button class="btn outline" onclick="alert('Add audio: done in the built app')" data-testid="btn-add-audio"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>Add audio</button>
+              <button class="btn outline" onclick="alert('Split: done in the built app')" data-testid="btn-split"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M8 3H3v5M12 22v-8.3M4 10c0 6 8 4 8 10M20 10c0 6-8 4-8 10"/></svg>Split</button>
               <span class="spacer"></span>
               <span class="muted" style="font-size:12px">00:11 / 00:21</span>
             </div>
@@ -239,42 +254,44 @@ tr.sel td{background:var(--sel)}
             </div>
           </div>
 
-          <div class="card">
+          <div class="card" data-testid="card-rendering">
             <h3>Rendering</h3>
             <div class="muted" style="margin-bottom:6px;font-size:12.5px">Generating clip03 · Wan 2.x · est. 1m 20s remaining</div>
-            <div class="prog"><i style="width:55%"></i></div>
+            <div class="prog" data-testid="progress"><i style="width:55%"></i></div>
+            <div class="muted" style="margin-top:6px;font-size:12.5px" data-tf-phase="2" data-testid="venice-progress">Venice: processing · about 1m 10s of 2m</div>
+            <div class="err" style="margin-top:6px" data-tf-phase="2" data-tf-state="error" data-testid="alert-venice-failed">Venice could not make this clip: Model at capacity (MODEL_AT_CAPACITY). Try again shortly.</div>
           </div>
         </div>
 
         <!-- RIGHT: post + export -->
         <div class="grid">
-          <div class="card">
+          <div class="card" data-testid="card-post-processing">
             <h3>Post-processing</h3>
-            <div class="row" style="justify-content:space-between;margin-bottom:14px"><span style="font-size:13px">Interpolate (RIFE/FILM)</span><span class="toggle on"></span></div>
-            <div class="row" style="justify-content:space-between;margin-bottom:14px"><span style="font-size:13px">Smooth motion</span><span class="toggle"></span></div>
-            <button class="btn outline" style="width:100%;justify-content:center">
+            <div class="row" style="justify-content:space-between;margin-bottom:14px"><span style="font-size:13px">Interpolate (RIFE/FILM)</span><span class="toggle on" data-testid="switch"></span></div>
+            <div class="row" style="justify-content:space-between;margin-bottom:14px"><span style="font-size:13px">Smooth motion</span><span class="toggle" data-testid="switch-2"></span></div>
+            <button class="btn outline" style="width:100%;justify-content:center" onclick="alert('Upscale to 1080p: done in the built app')" data-testid="btn-upscale-to-1080p">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9"/><polyline points="7 8 12 3 17 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               Upscale to 1080p
             </button>
             <div class="muted" style="margin-top:8px;font-size:12px">Upscaling adds ~40s of RunPod time.</div>
           </div>
 
-          <div class="card">
+          <div class="card" data-testid="card-export">
             <h3>Export</h3>
             <span class="label">Platform preset</span>
-            <select class="select" style="margin-bottom:12px">
+            <select class="select" style="margin-bottom:12px" data-testid="field-2">
               <option>YouTube (16:9, H.264)</option>
               <option>Instagram Reels (9:16)</option>
               <option>Raw MP4</option>
             </select>
             <div class="row" style="justify-content:space-between;margin-bottom:12px"><span class="muted" style="font-size:13px">Est. export cost</span><strong>$0.18</strong></div>
-            <button class="btn brand" data-act style="width:100%;justify-content:center">
+            <button class="btn brand" data-act style="width:100%;justify-content:center" onclick="/* shows Working then Done: page script */" data-testid="btn-export-mp4">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Export MP4
             </button>
           </div>
 
-          <div class="card">
+          <div class="card" data-testid="card-empty-segment">
             <h3>Empty segment</h3>
             <div class="thumb" style="aspect-ratio:16/9;padding:10px;text-align:center">No clip selected — pick a segment to edit</div>
           </div>

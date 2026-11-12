@@ -168,6 +168,19 @@
                             <div class="kv"><span class="muted">Resolution</span><b>@objRun.Resolution</b></div>
                             <div class="kv"><span class="muted">Guidance / steps</span><b>@objRun.GuidanceSteps</b></div>
                             <div class="kv"><span class="muted">Cost</span><b>@objRun.Cost</b></div>
+                            @if (VeniceRunDetailsFormat.IsVenice(objRun.ProviderKind))
+                            {
+                                <div data-testid="venice-run-details" style="border-top:1px dashed var(--border);margin-top:6px;padding-top:6px">
+                                    <div class="kv"><span class="muted">Provider</span><b><Badge Class="badge-brand" data-testid="badge-provider-venice">Venice</Badge></b></div>
+                                    <div class="kv"><span class="muted">Venice price</span><b data-testid="venice-price">@VeniceRunDetailsFormat.PriceLabel(objRun.ActualCost)</b></div>
+                                    @if (VeniceRunDetailsFormat.FailureReason(objRun.FailureMessage) is { } vReason)
+                                    {
+                                        <Alert Variant="AlertVariant.Danger" Class="mt-2" data-testid="venice-failure-reason">
+                                            <AlertDescription>@vReason</AlertDescription>
+                                        </Alert>
+                                    }
+                                </div>
+                            }
                             <div class="kv"><span class="muted">Provenance</span><b>@objRun.Provenance</b></div>
                         </div>
                         <div class="flex-col" style="margin-top:12px">
@@ -407,7 +420,8 @@
     private sealed record HistoryRow(
         Guid JobId, string Kind, string Title, string MiniLabel, string Art, string Model, string ProviderTier,
         long? Seed, string DateLabel, string RunRef, string Prompt, string Resolution, string GuidanceSteps,
-        string Cost, string Provenance)
+        string Cost, string Provenance, string? ProviderKind = null, decimal? ActualCost = null,
+        string? FailureMessage = null)
     {
         /// <summary>The seed as a display label, or an em dash when the run used no seed.</summary>
         public string SeedLabel => Seed?.ToString() ?? "—";
@@ -420,7 +434,8 @@
             return new HistoryRow(
                 aAsset.JobId, aAsset.Kind, $"{aAsset.Kind} · {aAsset.CreatedUtc:d MMM}", vMini, aArt,
                 aAsset.ModelId, aAsset.Kind, aAsset.SeedUsed, aAsset.CreatedUtc.ToString("d MMM"),
-                $"run_{aAsset.JobId.ToString()[..6]}", "Stored parameter set for this run.", vDims, "—", "—", "—");
+                $"run_{aAsset.JobId.ToString()[..6]}", "Stored parameter set for this run.", vDims, "—", "—", "—",
+                aAsset.ProviderKind, aAsset.ActualCost, aAsset.FailureMessage);
         }
     }
 }

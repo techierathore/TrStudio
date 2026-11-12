@@ -109,76 +109,77 @@ tr.sel td{background:var(--sel)}
 </head>
 <body>
 <div class="app">
-<aside class="side">
-  <div class="brand"><div class="logo">TR</div><div>TrStudioAdmin <span class="badge" style="font-size:10px;padding:1px 7px;vertical-align:middle">admin</span></div></div>
+<aside class="side" data-testid="sidebar">
+  <div class="brand"><div class="logo">TR</div><div>TrStudioAdmin <span class="badge" style="font-size:10px;padding:1px 7px;vertical-align:middle" data-testid="badge-admin">admin</span></div></div>
   <div class="navgroup">Environment</div>
   <nav class="nav">
-    <a href="admin-hardware.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M9 2v2M15 20v2M9 20v2M2 15h2M2 9h2M20 15h2M20 9h2"/></svg>Hardware &amp; Setup</a>
-    <a class="active" href="admin-ops.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 1 0-.4-8.98 6 6 0 1 0-11.6 2.2A3.5 3.5 0 0 0 6.5 19z"/></svg>RunPod &amp; Ops</a>
+    <a href="admin-hardware.html" data-testid="nav-admin-hardware"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M9 2v2M15 20v2M9 20v2M2 15h2M2 9h2M20 15h2M20 9h2"/></svg>Hardware &amp; Setup</a>
+    <a class="active" href="admin-ops.html" data-testid="nav-admin-ops"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 1 0-.4-8.98 6 6 0 1 0-11.6 2.2A3.5 3.5 0 0 0 6.5 19z"/></svg>RunPod &amp; Ops</a>
   </nav>
   <div class="navgroup">Models</div>
   <nav class="nav">
-    <a href="admin-sources.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Model Sources</a>
-    <a href="admin-models.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>Model Library</a>
-    <a href="admin-registry.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>Registry &amp; Providers</a>
-    <a href="admin-comfy.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>ComfyUI Import</a>
+    <a href="admin-sources.html" data-testid="nav-admin-sources"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Model Sources</a>
+    <a href="admin-models.html" data-testid="nav-admin-models"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>Model Library</a>
+    <a href="admin-registry.html" data-testid="nav-admin-registry"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>Registry &amp; Providers</a>
+    <a href="admin-comfy.html" data-testid="nav-admin-comfy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>ComfyUI Import</a>
   </nav>
   <div class="navgroup">Governance</div>
   <nav class="nav">
-    <a href="admin-policy.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Content Policy</a>
+    <a href="admin-policy.html" data-testid="nav-admin-policy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Content Policy</a>
   </nav>
   <div class="sidefoot">
-    <a href="avatar-studio.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudio</a>
+    <a href="avatar-studio.html" data-testid="link-switch-to-trstudio"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudio</a>
+    <a href="login.html" data-testid="nav-sign-out"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>Sign out</a>
   </div>
 </aside>
-<div class="main">
-<header class="top">
+<div class="main" data-testid="main">
+<header class="top" data-testid="topbar">
   <span class="crumb">Admin</span><span class="crumb">/</span><span class="crumb here">RunPod &amp; Ops</span>
   <span class="spacer"></span>
-  <span class="badge">Billing cycle: Jun 1 – Jun 30</span>
-  <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
-  <div class="userchip">TR</div>
+  <span class="badge" data-testid="badge-billing-cycle-jun-1-jun">Billing cycle: Jun 1 – Jun 30</span>
+  <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode" onclick="/* switches light and dark: page script */" data-testid="icon-btn-toggle-dark-mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
+  <div class="userchip" data-testid="user-chip">TR</div>
 </header>
-<div class="content grid" style="max-width:1100px">
+<div class="content grid" style="max-width:1100px" data-testid="content">
   <div>
     <h1 class="h">RunPod &amp; Ops</h1>
     <p class="sub" style="margin-bottom:0">Spend guardrails across RunPod and closed APIs, worker health, and the generation log. The monthly cap spans all providers.</p>
   </div>
 
-  <div class="alert warn"><b>Approaching monthly cap.</b> Total spend is at 88% of the $100 cap — per-job estimates are now enforced before every run.</div>
+  <div class="alert warn" data-testid="alert-warn"><b>Approaching monthly cap.</b> Total spend is at 88% of the $100 cap — per-job estimates are now enforced before every run.</div>
 
   <!-- Spend guardrails -->
   <div class="grid" style="grid-template-columns:repeat(3,1fr)">
-    <div class="card kpi">
-      <div class="row"><span class="lbl">RunPod (GPU)</span><span class="spacer"></span><span class="badge">this cycle</span></div>
+    <div class="card kpi" data-testid="card-1">
+      <div class="row"><span class="lbl">RunPod (GPU)</span><span class="spacer"></span><span class="badge" data-testid="badge-this-cycle">this cycle</span></div>
       <div class="big">$41.20</div>
-      <div class="prog" style="margin:6px 0 4px"><i style="width:46%"></i></div>
+      <div class="prog" style="margin:6px 0 4px" data-testid="progress"><i style="width:46%"></i></div>
       <div class="lbl">A100 80GB · 14.6 hrs serverless</div>
     </div>
-    <div class="card kpi">
-      <div class="row"><span class="lbl">Closed APIs</span><span class="spacer"></span><span class="badge">HeyGen · fal.ai</span></div>
+    <div class="card kpi" data-testid="card-2">
+      <div class="row"><span class="lbl">Closed APIs</span><span class="spacer"></span><span class="badge" data-testid="badge-heygen-fal-ai">HeyGen · fal.ai</span></div>
       <div class="big">$46.80</div>
-      <div class="prog" style="margin:6px 0 4px"><i style="width:52%"></i></div>
+      <div class="prog" style="margin:6px 0 4px" data-testid="progress-2"><i style="width:52%"></i></div>
       <div class="lbl">HeyGen $38.10 · fal.ai $8.70</div>
     </div>
-    <div class="card kpi">
-      <div class="row"><span class="lbl">Total vs $100 cap</span><span class="spacer"></span><span class="badge warn">88%</span></div>
+    <div class="card kpi" data-testid="card-3">
+      <div class="row"><span class="lbl">Total vs $100 cap</span><span class="spacer"></span><span class="badge warn" data-testid="badge-88">88%</span></div>
       <div class="big" style="color:var(--warn)">$88.00</div>
-      <div class="prog" style="margin:6px 0 4px"><i class="warnfill" style="width:88%"></i></div>
+      <div class="prog" style="margin:6px 0 4px" data-testid="progress-3"><i class="warnfill" style="width:88%"></i></div>
       <div class="lbl">$12.00 remaining</div>
     </div>
   </div>
 
   <div class="grid" style="grid-template-columns:1fr 1fr">
     <!-- RunPod control -->
-    <div class="card">
-      <div class="row"><h3 style="margin:0">RunPod control</h3><span class="spacer"></span><span class="badge ok"><span class="dot ok"></span>scaled to zero</span></div>
+    <div class="card" data-testid="card-runpod-control">
+      <div class="row"><h3 style="margin:0">RunPod control</h3><span class="spacer"></span><span class="badge ok" data-testid="badge-status"><span class="dot ok"></span>scaled to zero</span></div>
       <div class="row" style="margin:14px 0 6px">
         <div class="col" style="gap:2px;flex:1">
           <span style="font-weight:600;font-size:13px">Auto idle-stop</span>
           <span class="muted" style="font-size:12px">Scale endpoint to zero after 60s idle</span>
         </div>
-        <div class="toggle on"></div>
+        <div class="toggle on" data-testid="switch"></div>
       </div>
       <hr class="hr">
       <div class="row">
@@ -186,49 +187,49 @@ tr.sel td{background:var(--sel)}
           <span style="font-weight:600;font-size:13px">Endpoint state</span>
           <span class="muted" style="font-size:12px">trstudio-sdxl · serverless</span>
         </div>
-        <button class="btn brand" data-act="Start">Start endpoint</button>
-        <button class="btn outline">Stop</button>
+        <button class="btn brand" data-act="Start" onclick="/* shows Working then Done: page script */" data-testid="btn-start-endpoint">Start endpoint</button>
+        <button class="btn outline" onclick="alert('Stop: done in the built app')" data-testid="btn-stop">Stop</button>
       </div>
-      <div class="alert" style="margin-top:12px;font-size:12px">Endpoint is cold. Next request triggers a ~25s cold-start. <span class="badge warn">starting</span></div>
+      <div class="alert" style="margin-top:12px;font-size:12px" data-testid="alert-info">Endpoint is cold. Next request triggers a ~25s cold-start. <span class="badge warn" data-testid="badge-starting">starting</span></div>
     </div>
 
     <!-- Worker health -->
-    <div class="card">
+    <div class="card" data-testid="card-worker-health">
       <h3>Worker health</h3>
-      <div class="row" style="margin-top:8px"><span class="muted" style="flex:1">Status</span><span class="badge ok"><span class="dot ok"></span>healthy</span></div>
+      <div class="row" style="margin-top:8px"><span class="muted" style="flex:1">Status</span><span class="badge ok" data-testid="badge-status-2"><span class="dot ok"></span>healthy</span></div>
       <div class="row" style="margin-top:10px"><span class="muted" style="flex:1">Active workers</span><b>0 / 3 max</b></div>
-      <div class="row" style="margin-top:10px"><span class="muted" style="flex:1">Queue depth</span><span class="badge brand">2 jobs</span></div>
-      <div class="row" style="margin-top:10px"><span class="muted" style="flex:1">Error rate (24h)</span><span class="badge ok">0.8%</span></div>
+      <div class="row" style="margin-top:10px"><span class="muted" style="flex:1">Queue depth</span><span class="badge brand" data-testid="badge-2-jobs">2 jobs</span></div>
+      <div class="row" style="margin-top:10px"><span class="muted" style="flex:1">Error rate (24h)</span><span class="badge ok" data-testid="badge-0-8">0.8%</span></div>
       <div class="row" style="margin-top:10px"><span class="muted" style="flex:1">Avg cold-start</span><b>24.6s</b></div>
       <div class="row" style="margin-top:10px"><span class="muted" style="flex:1">Avg job latency</span><b>11.2s</b></div>
     </div>
   </div>
 
   <!-- Generation log -->
-  <div class="card" style="padding:0;overflow:hidden">
-    <div class="row" style="padding:14px 16px"><h3 style="margin:0">Generation log</h3><span class="spacer"></span><input class="input" style="max-width:220px" placeholder="Filter by user / model…"></div>
-    <table>
+  <div class="card" style="padding:0;overflow:hidden" data-testid="card-generation-log">
+    <div class="row" style="padding:14px 16px"><h3 style="margin:0">Generation log</h3><span class="spacer"></span><input class="input" style="max-width:220px" placeholder="Filter by user / model…" data-testid="field-filter-by-user-model"></div>
+    <table data-testid="table-1">
       <thead><tr><th>User</th><th>Model</th><th>Params</th><th>Cost</th><th>Duration</th><th>Outcome</th><th></th></tr></thead>
       <tbody>
-        <tr>
+        <tr data-tf-sample>
           <td>priya@…</td><td>HeyGen Avatar IV</td><td class="muted">premium · 1080p · 22s</td><td>$2.40</td><td>48s</td>
-          <td><span class="badge ok">success</span></td><td style="text-align:right"><button class="btn outline" data-act="Reproduce">Reproduce</button></td>
+          <td><span class="badge ok" data-testid="badge-success">success</span></td><td style="text-align:right"><button class="btn outline" data-act="Reproduce" onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce">Reproduce</button></td>
         </tr>
-        <tr>
-          <td>techierathore@…</td><td>SDXL</td><td class="muted">steps 30 · seed 7714</td><td>$0.18</td><td>9.1s</td>
-          <td><span class="badge ok">success</span></td><td style="text-align:right"><button class="btn outline" data-act="Reproduce">Reproduce</button></td>
+        <tr data-tf-sample>
+          <td>owner@studio…</td><td>SDXL</td><td class="muted">steps 30 · seed 7714</td><td>$0.18</td><td>9.1s</td>
+          <td><span class="badge ok" data-testid="badge-success-2">success</span></td><td style="text-align:right"><button class="btn outline" data-act="Reproduce" onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-2">Reproduce</button></td>
         </tr>
-        <tr>
+        <tr data-tf-sample>
           <td>arjun@…</td><td>Hunyuan-Avatar</td><td class="muted">high · 8s clip</td><td>$0.91</td><td>1m 12s</td>
-          <td><span class="badge warn">capped</span></td><td style="text-align:right"><button class="btn outline" data-act="Reproduce">Reproduce</button></td>
+          <td><span class="badge warn" data-testid="badge-capped">capped</span></td><td style="text-align:right"><button class="btn outline" data-act="Reproduce" onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-3">Reproduce</button></td>
         </tr>
-        <tr>
+        <tr data-tf-sample>
           <td>priya@…</td><td>FLUX.1 [pro]</td><td class="muted">premium · 1:1</td><td>$0.05</td><td>4.3s</td>
-          <td><span class="badge ok">success</span></td><td style="text-align:right"><button class="btn outline" data-act="Reproduce">Reproduce</button></td>
+          <td><span class="badge ok" data-testid="badge-success-3">success</span></td><td style="text-align:right"><button class="btn outline" data-act="Reproduce" onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-4">Reproduce</button></td>
         </tr>
-        <tr>
-          <td>techierathore@…</td><td>MuseTalk</td><td class="muted">fast · local Mac · 30s</td><td>$0.00</td><td>18.7s</td>
-          <td><span class="badge danger">failed</span></td><td style="text-align:right"><button class="btn outline" data-act="Reproduce">Reproduce</button></td>
+        <tr data-tf-sample>
+          <td>owner@studio…</td><td>MuseTalk</td><td class="muted">fast · local Mac · 30s</td><td>$0.00</td><td>18.7s</td>
+          <td><span class="badge danger" data-testid="badge-failed">failed</span></td><td style="text-align:right"><button class="btn outline" data-act="Reproduce" onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-5">Reproduce</button></td>
         </tr>
       </tbody>
     </table>

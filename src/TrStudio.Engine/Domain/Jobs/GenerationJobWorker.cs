@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using TrStudio.Engine.Domain.Cost;
 using TrStudio.Engine.Domain.Progress;
 using TrStudio.Engine.Domain.Providers;
+using TrStudio.Engine.Domain.Venice;
 using TrStudio.Engine.Infrastructure.Observability;
 using TrStudio.Models.Contracts;
 using TrStudio.Models.Entities;
@@ -227,7 +228,7 @@ public class GenerationJobWorker
         aJob.CompletedUtc = DateTime.UtcNow;
         aJob.ActualCost = aJob.CostEstimate;
         await objJobRepository.UpdateAsync(aJob, aJob.UserId, aCancellationToken).ConfigureAwait(false);
-        await WriteLogAsync(aJob, "succeeded", null, aCancellationToken).ConfigureAwait(false);
+        await WriteLogAsync(aJob, "succeeded", null, aCancellationToken, VenicePriceSources.For(aModel.ProviderKind, aJob.Task)).ConfigureAwait(false);
         await NotifyAsync(aJob, aCancellationToken).ConfigureAwait(false);
 
         // REQ-FN-029/NFR-007: record the actual cost against the billing channel so month-to-date
@@ -279,7 +280,7 @@ public class GenerationJobWorker
         objLogger.LogWarning("Job {JobId} BLOCKED at output post-check: {BlockMessage}", aJob.JobId, aBlockMessage);
     }
 
-    private Task WriteLogAsync(GenerationJob aJob, string aOutcome, string? aFailureMessage, CancellationToken aCancellationToken)
+    private Task WriteLogAsync(GenerationJob aJob, string aOutcome, string? aFailureMessage, CancellationToken aCancellationToken, string? aPriceSource = null)
     {
         var vDurationMs = aJob.StartedUtc.HasValue && aJob.CompletedUtc.HasValue
             ? (long?)(aJob.CompletedUtc.Value - aJob.StartedUtc.Value).TotalMilliseconds
@@ -302,6 +303,7 @@ public class GenerationJobWorker
             DurationMs = vDurationMs,
             Outcome = aOutcome,
             FailureMessage = aFailureMessage,
+            PriceSource = aJob.ActualCost is null ? null : aPriceSource,
             CreatedUtc = DateTime.UtcNow
         }, aCancellationToken);
     }

@@ -15,6 +15,11 @@
     condition the run; results strip shows per-result seed Badges; export presets + background-remove
     finish the flow. Job submit/poll/result go through the shared spine (POST/GET /api/v1/jobs);
     representative output is shown when the API is unreachable so the studio stays demonstrable.
+    Phase 2 (Venice): the list comes from CatalogModelResponse and is filtered by ImageModelFilter —
+    picture rows only, a reference picture keeps rows that take one (REQ-UI-087), a drawn mask hides
+    Venice rows (REQ-UI-088); a Venice pick shows the Cloud · Venice badge and the "sent to Venice"
+    notice (REQ-UI-085/096); Upscale offers Venice upscale rows (REQ-FN-080); a 402 shows the over-cap
+    alert (REQ-FN-085) and Venice's own failure text shows in a Danger Alert (BRD-113).
 *@
 
 <PageTitle>TrStudio — Image Studio</PageTitle>
@@ -32,13 +37,25 @@
                 <Select Value="@objSelectedModelId" ValueChanged="OnModelChangedAsync" TValue="string" Class="w-full">
                     <SelectTrigger><SelectValue Placeholder="Select a model" /></SelectTrigger>
                     <SelectContent>
-                        @foreach (var vModel in objModels)
+                        @foreach (var vModel in VisibleModels)
                         {
-                            <SelectItem Value="@vModel.Id" Text="@vModel.DisplayName" TValue="string">@vModel.DisplayName</SelectItem>
+                            <SelectItem Value="@vModel.Id" Text="@ImageModelFilter.OptionLabel(vModel)" TValue="string">@ImageModelFilter.OptionLabel(vModel)</SelectItem>
                         }
                     </SelectContent>
                 </Select>
             </div>
+            @if (SelectedModel is not null && ImageModelFilter.IsVenice(SelectedModel))
+            {
+                @* REQ-UI-085 badge + REQ-UI-096 notice: shown only when a Venice row is picked. *@
+                <div class="flex-row" style="margin-top:6px">
+                    <Badge Class="badge-brand" data-testid="badge-cloud-venice">@ImageModelFilter.VeniceBadge</Badge>
+                </div>
+                <Alert Variant="AlertVariant.Info" Class="mt-2" data-testid="alert-sent-to-venice">
+                    <LucideIcon Name="cloud" Size="16" />
+                    <AlertDescription>Your prompt and pictures are sent to Venice.</AlertDescription>
+                </Alert>
+            }
+            <div class="seg-hint" data-testid="model-filter-note">Only models that can do this task are listed: a reference picture keeps models that take one; a drawn mask hides Venice models.</div>
             <div class="seg-hint">Params below auto-render from the registry schema · @objTierLabel tier</div>
         </Card>
 
@@ -111,7 +128,7 @@
                 </TabsList>
             </Tabs>
             <div data-testid="controlnet-upload">
-                <FileUpload Accept="image/*" />
+                <FileUpload Files="@objReferenceFiles" FilesChanged="OnReferenceFilesChangedAsync" Accept="image/*" />
             </div>
         </Card>
     </div>
@@ -127,7 +144,7 @@
                         {
                             <ToolbarButton AriaLabel="@vTool"
                                            Class="@(vTool == objActiveTool ? "badge-brand" : null)"
-                                           OnClick="@(() => objActiveTool = vTool)">
+                                           OnClick="@(() => OnToolChangedAsync(vTool))">
                                 @vTool
                             </ToolbarButton>
                         }
@@ -177,6 +194,24 @@
                 {
                     <Progress Value="@objProgress" Class="mt-2" />
                 }
+                @if (objOverCapMessage is not null)
+                {
+                    @* REQ-FN-085: over the monthly cap (402 SPEND_CAP_EXCEEDED) — nothing was sent. *@
+                    <Alert Variant="AlertVariant.Warning" Class="mt-2" data-testid="alert-over-cap">
+                        <LucideIcon Name="wallet" Size="16" />
+                        <AlertTitle>Monthly spend cap reached</AlertTitle>
+                        <AlertDescription>@objOverCapMessage</AlertDescription>
+                    </Alert>
+                }
+                @if (objProviderFailure is not null)
+                {
+                    @* BRD-113: Venice's own failure text, word for word. *@
+                    <Alert Variant="AlertVariant.Danger" AccentBorder="true" Class="mt-2" data-testid="alert-venice-failed">
+                        <LucideIcon Name="circle-alert" Size="16" />
+                        <AlertTitle>Venice could not make this</AlertTitle>
+                        <AlertDescription>@objProviderFailure</AlertDescription>
+                    </Alert>
+                }
             </div>
         </Card>
 
@@ -188,7 +223,8 @@
                     {
                         <Button Size="ButtonSize.Small"
                                 Variant="@(vScale == objUpscale ? ButtonVariant.Default : ButtonVariant.Outline)"
-                                OnClick="@(() => objUpscale = vScale)">@vScale</Button>
+                                OnClick="@(() => objUpscale = vScale)"
+                                data-testid="@($"btn-{vScale.ToLowerInvariant()}")">@vScale</Button>
                     }
                 </div>
             </div>
@@ -197,7 +233,17 @@
                     <LucideIcon Name="maximize-2" Size="14" />
                     Upscale to @objUpscale
                 </Button>
-                <span class="muted-sm">GFPGAN + ESRGAN face-restore</span>
+                <div data-testid="field-upscale-model" style="min-width:200px">
+                    <Select @bind-Value="objUpscaleModelId" TValue="string" Class="w-full">
+                        <SelectTrigger><SelectValue Placeholder="@ImageModelFilter.LocalUpscalerLabel" /></SelectTrigger>
+                        <SelectContent>
+                            @foreach (var vChoice in ImageModelFilter.UpscaleChoices(objModels))
+                            {
+                                <SelectItem Value="@vChoice.Key" Text="@vChoice.Value" TValue="string">@vChoice.Value</SelectItem>
+                            }
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
         </Card>
     </div>
@@ -220,8 +266,16 @@
                 {
                     @foreach (var vResult in objResults)
                     {
-                        <div class="restile @vResult.Art" @key="vResult.Seed">
+                        <div class="restile @vResult.Art" @key="vResult.Seed" data-testid="result-tile">
+                            @if (!string.IsNullOrEmpty(vResult.PictureDataUrl))
+                            {
+                                <img src="@vResult.PictureDataUrl" alt="Result, seed @vResult.Seed" data-testid="result-picture" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" />
+                            }
                             <Badge Class="seed-badge">#@vResult.Seed</Badge>
+                            @if (vResult.FromVenice)
+                            {
+                                <Badge Variant="BadgeVariant.Outline" data-testid="badge-result-venice">Venice</Badge>
+                            }
                         </div>
                     }
                     @if (objGenerating)
@@ -261,8 +315,14 @@
 </div>
 
 @code {
-    private List<RegistryModel> objModels = new();
+    private List<CatalogModelResponse> objModels = new();
     private string? objSelectedModelId;
+
+    // Phase 2 (Venice): list filters, upscale choice and failure alerts.
+    private IReadOnlyList<FileUploadItem>? objReferenceFiles;
+    private string objUpscaleModelId = ImageModelFilter.LocalUpscalerId;
+    private string? objOverCapMessage;
+    private string? objProviderFailure;
 
     private readonly Dictionary<string, double> objNumeric = new();
     private readonly Dictionary<string, string?> objText = new();
@@ -274,6 +334,16 @@
 
     private readonly string[] objTools = { "Brush", "Mask", "Inpaint", "Erase" };
     private string objActiveTool = "Brush";
+
+    /// <summary>Whether a reference picture is added (REQ-UI-087).</summary>
+    private bool HasReferencePicture => objReferenceFiles is { Count: > 0 };
+
+    /// <summary>Whether a mask is drawn: the Mask or Inpaint tool is active (REQ-UI-088).</summary>
+    private bool HasMask => objActiveTool is "Mask" or "Inpaint";
+
+    /// <summary>The rows the model Select offers under the current reference / mask state.</summary>
+    private IReadOnlyList<CatalogModelResponse> VisibleModels =>
+        ImageModelFilter.Filter(objModels, HasReferencePicture, HasMask);
 
     private readonly string[] objUpscaleOptions = { "2K", "4K" };
     private string objUpscale = "4K";
@@ -293,9 +363,9 @@
     private int objProgress;
     private int objBatchSize = 4;
 
-    /// <summary>The currently selected registry model, or null before models load.</summary>
-    private RegistryModel? SelectedModel =>
-        objModels.FirstOrDefault(aModel => aModel.Id == objSelectedModelId);
+    /// <summary>The currently selected model (only from the visible rows), or null before models load.</summary>
+    private CatalogModelResponse? SelectedModel =>
+        VisibleModels.FirstOrDefault(aModel => aModel.Id == objSelectedModelId);
 
     /// <summary>The selected model's tier as a lower-case label for the schema hint.</summary>
     private string objTierLabel => SelectedModel?.Tier.ToString().ToLowerInvariant() ?? "—";
@@ -323,7 +393,7 @@
 
         var vHasSession = await AuthSession.EnsureLoadedAsync();
         await TryLoadModelsAsync(vHasSession);
-        objSelectedModelId = objModels.FirstOrDefault()?.Id;
+        objSelectedModelId = VisibleModels.FirstOrDefault()?.Id;
         RebuildParamValues();
 
         // Send-to-studio (REQ-UI-082): pre-fill the prompt when Prompt Studio routes here with ?prompt=…
@@ -354,7 +424,7 @@
         try
         {
             var vClient = HttpClientFactory.CreateClient("TrStudioApi");
-            var vModels = await vClient.GetFromJsonAsync<List<RegistryModel>>(ApiRoutes.Models);
+            var vModels = await vClient.GetFromJsonAsync<List<CatalogModelResponse>>(ApiRoutes.Models);
             if (vModels is { Count: > 0 })
             {
                 objModels = vModels;
@@ -379,7 +449,70 @@
         objSelectedModelId = aModelId;
         RebuildParamValues();
         objResults.Clear();
+        ClearAlerts();
         return Task.CompletedTask;
+    }
+
+    /// <summary>A reference picture was added or removed: re-filter the list (REQ-UI-087).</summary>
+    private Task OnReferenceFilesChangedAsync(IReadOnlyList<FileUploadItem> aFiles)
+    {
+        objReferenceFiles = aFiles;
+        KeepSelectionVisible();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>A canvas tool was picked; Mask / Inpaint means a mask is drawn (REQ-UI-088).</summary>
+    private Task OnToolChangedAsync(string aTool)
+    {
+        objActiveTool = aTool;
+        KeepSelectionVisible();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>When the filter hides the chosen row, falls back to the first row still listed.</summary>
+    private void KeepSelectionVisible()
+    {
+        if (VisibleModels.Any(aModel => aModel.Id == objSelectedModelId))
+        {
+            return;
+        }
+
+        objSelectedModelId = VisibleModels.FirstOrDefault()?.Id;
+        RebuildParamValues();
+    }
+
+    private void ClearAlerts()
+    {
+        objOverCapMessage = null;
+        objProviderFailure = null;
+    }
+
+    /// <summary>Shows the alert matching a failed submit (402 over cap, 502 provider text).</summary>
+    private async Task ShowSubmitFailureAsync(HttpResponseMessage aResponse)
+    {
+        ProblemLike? vProblem = null;
+        try
+        {
+            vProblem = await aResponse.Content.ReadFromJsonAsync<ProblemLike>();
+        }
+        catch
+        {
+            // Non-JSON body — classified on the status alone.
+        }
+
+        var vFailure = ImageModelFilter.ClassifySubmitFailure((int)aResponse.StatusCode, vProblem?.Title, vProblem?.Detail);
+        switch (vFailure.Kind)
+        {
+            case SubmitFailureKind.OverCap:
+                objOverCapMessage = vFailure.Message;
+                break;
+            case SubmitFailureKind.ProviderFailed:
+                objProviderFailure = vFailure.Message;
+                break;
+            default:
+                ToastService.Error(vFailure.Message, "Not started");
+                break;
+        }
     }
 
     /// <summary>Rebuilds the per-type value stores from the selected model's schema defaults.</summary>
@@ -428,6 +561,7 @@
         objGenerating = true;
         objResults.Clear();
         objProgress = 0;
+        ClearAlerts();
 
         var vBaseSeed = long.TryParse(objSeedText, out var vParsed) ? vParsed : Random.Shared.Next(100000, 999999);
 
@@ -438,10 +572,19 @@
             await Task.Delay(160);
         }
 
-        await TrySubmitJobAsync();
+        var vSubmitted = await TrySubmitJobAsync();
 
-        // Result strip: real seeds when the job returned assets, else deterministic representative seeds.
-        if (objResults.Count == 0)
+        if (objOverCapMessage is not null || objProviderFailure is not null)
+        {
+            // Over cap or refused by Venice: the alert explains it; no representative tiles.
+            objProgress = 0;
+            objGenerating = false;
+            return;
+        }
+
+        // Result strip: real seeds when the job returned assets, else deterministic representative seeds
+        // (only for the offline / local path — a Venice row never shows stand-in tiles).
+        if (objResults.Count == 0 && !vSubmitted)
         {
             var vArts = new[] { "art-a", "art-b", "art-c" };
             for (var vIndex = 0; vIndex < 3; vIndex++)
@@ -452,11 +595,19 @@
 
         objProgress = 100;
         objGenerating = false;
+        if (objResults.Count == 0)
+        {
+            return;
+        }
+
         ToastService.Success($"{objResults.Count} result(s) ready — seeds {string.Join(", ", objResults.Select(aTile => aTile.Seed))}.", "Generated");
     }
 
-    /// <summary>Best-effort spine round-trip; populates result tiles from returned assets on success.</summary>
-    private async Task TrySubmitJobAsync()
+    /// <summary>
+    /// Best-effort spine round-trip; populates result tiles from returned assets on success. Returns
+    /// true when the job reached the server (so stand-in tiles are not invented over a real answer).
+    /// </summary>
+    private async Task<bool> TrySubmitJobAsync()
     {
         try
         {
@@ -473,24 +624,22 @@
             var vResponse = await vClient.PostAsJsonAsync(ApiRoutes.Jobs, vRequest);
             if (!vResponse.IsSuccessStatusCode)
             {
-                return;
+                await ShowSubmitFailureAsync(vResponse);
+                return true;
             }
 
             var vSubmit = await vResponse.Content.ReadFromJsonAsync<JobSubmitResponse>();
             if (vSubmit is null)
             {
-                return;
+                return false;
             }
 
-            for (var vPoll = 0; vPoll < 8; vPoll++)
+            var vStatus = await PollJobAsync(vClient, vSubmit.JobId);
+            if (vStatus?.State == JobState.Failed && !string.IsNullOrWhiteSpace(vStatus.FailureMessage))
             {
-                var vStatus = await vClient.GetFromJsonAsync<JobStatusResponse>($"{ApiRoutes.Jobs}/{vSubmit.JobId}");
-                if (vStatus is not null && vStatus.State is JobState.Succeeded or JobState.Failed or JobState.Blocked)
-                {
-                    break;
-                }
-
-                await Task.Delay(250);
+                // BRD-113: a run-time failure carries Venice's own text word for word.
+                objProviderFailure = vStatus.FailureMessage;
+                return true;
             }
 
             var vAssets = await vClient.GetFromJsonAsync<List<AssetResponse>>($"{ApiRoutes.Jobs}/{vSubmit.JobId}/result");
@@ -500,14 +649,37 @@
                 for (var vIndex = 0; vIndex < vAssets.Count; vIndex++)
                 {
                     var vSeedValue = vAssets[vIndex].SeedUsed ?? vSubmit.JobId.GetHashCode() & 0xFFFFF;
-                    objResults.Add(new ResultTile(vSeedValue, vArts[vIndex % vArts.Length]));
+                    var vFromVenice = string.Equals(vAssets[vIndex].ProviderKind, nameof(ProviderKind.Venice), StringComparison.OrdinalIgnoreCase);
+                    var vPicture = await LoadPictureDataUrlAsync(vClient, vAssets[vIndex].AssetId);
+                    objResults.Add(new ResultTile(vSeedValue, vArts[vIndex % vArts.Length], vAssets[vIndex].AssetId, vFromVenice, vPicture));
                 }
             }
+
+            return true;
         }
         catch
         {
             // Unauthenticated / API down — the caller falls back to representative seeds.
+            return false;
         }
+    }
+
+    /// <summary>Polls the job until it settles (or the short poll budget runs out).</summary>
+    private static async Task<JobStatusResponse?> PollJobAsync(HttpClient aClient, Guid aJobId)
+    {
+        JobStatusResponse? vStatus = null;
+        for (var vPoll = 0; vPoll < 8; vPoll++)
+        {
+            vStatus = await aClient.GetFromJsonAsync<JobStatusResponse>($"{ApiRoutes.Jobs}/{aJobId}");
+            if (vStatus is not null && vStatus.State is JobState.Succeeded or JobState.Failed or JobState.Blocked)
+            {
+                break;
+            }
+
+            await Task.Delay(250);
+        }
+
+        return vStatus;
     }
 
     /// <summary>Serialises the current dynamic control values into the job's ParamsJson document.</summary>
@@ -532,10 +704,63 @@
         return JsonSerializer.Serialize(vBag);
     }
 
-    private Task UpscaleAsync()
+    /// <summary>
+    /// Upscales the first result. The local choice keeps the face-restore path; a Venice upscale row
+    /// (REQ-FN-080) submits an Upscale job with <c>scale</c> 2 or 4 and the result's asset id.
+    /// </summary>
+    private async Task UpscaleAsync()
     {
-        ToastService.Show($"Upscaling to {objUpscale} with face restoration…", "Upscale");
-        return Task.CompletedTask;
+        var vVeniceRow = objModels.FirstOrDefault(aModel => aModel.Id == objUpscaleModelId);
+        if (vVeniceRow is null)
+        {
+            ToastService.Show($"Upscaling to {objUpscale} with face restoration…", "Upscale");
+            return;
+        }
+
+        var vSource = objResults.FirstOrDefault(aTile => aTile.AssetId is not null);
+        if (vSource is null)
+        {
+            ToastService.Show("Generate a picture first, then upscale it.", "Upscale");
+            return;
+        }
+
+        ClearAlerts();
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vRequest = new JobSubmitRequest
+            {
+                ModelId = vVeniceRow.Id,
+                Task = GenerationTaskType.Upscale,
+                Tier = vVeniceRow.Tier,
+                ParamsJson = JsonSerializer.Serialize(new Dictionary<string, object?>
+                {
+                    ["scale"] = ImageModelFilter.ScaleOf(objUpscale),
+                    ["sourceAssetId"] = vSource.AssetId
+                })
+            };
+
+            var vResponse = await vClient.PostAsJsonAsync(ApiRoutes.Jobs, vRequest);
+            if (!vResponse.IsSuccessStatusCode)
+            {
+                await ShowSubmitFailureAsync(vResponse);
+                return;
+            }
+
+            var vSubmit = await vResponse.Content.ReadFromJsonAsync<JobSubmitResponse>();
+            var vStatus = vSubmit is null ? null : await PollJobAsync(vClient, vSubmit.JobId);
+            if (vStatus?.State == JobState.Failed && !string.IsNullOrWhiteSpace(vStatus.FailureMessage))
+            {
+                objProviderFailure = vStatus.FailureMessage;
+                return;
+            }
+
+            ToastService.Success($"Sent to Venice to upscale ×{ImageModelFilter.ScaleOf(objUpscale)}.", "Upscale");
+        }
+        catch
+        {
+            ToastService.Error("The upscale could not be sent. Check the connection and try again.", "Upscale");
+        }
     }
 
     private Task ExportAsync()
@@ -556,11 +781,14 @@
         double.TryParse(aValue, out var vValue) ? vValue : aFallback;
 
     /// <summary>Representative catalog mirroring the two dev-seeded registry rows (used offline).</summary>
-    private static List<RegistryModel> BuildFallbackModels() => new()
+    private static List<CatalogModelResponse> BuildFallbackModels() => new()
     {
-        new RegistryModel
+        new CatalogModelResponse
         {
             Id = "onnx-sdxl-local",
+            ProviderKind = ProviderKind.OnnxLocal,
+            TakesReferencePicture = true,
+            SupportsMask = true,
             DisplayName = "Local SDXL (ONNX, dev)",
             Task = GenerationTaskType.TextToImage,
             Tier = GenerationTier.Fast,
@@ -579,9 +807,10 @@
                 new() { Key = "faceLock", Type = "bool", DefaultValue = "false", Label = "Face/identity lock" },
             }
         },
-        new RegistryModel
+        new CatalogModelResponse
         {
             Id = "stub-echo",
+            ProviderKind = ProviderKind.StubEcho,
             DisplayName = "Stub Echo (spine verification)",
             Task = GenerationTaskType.TextToImage,
             Tier = GenerationTier.Fast,
@@ -595,5 +824,41 @@
     };
 
     /// <summary>A single result-strip tile carrying its reproduction seed and preview gradient.</summary>
-    private sealed record ResultTile(long Seed, string Art);
+    private sealed record ResultTile(long Seed, string Art, Guid? AssetId = null, bool FromVenice = false, string? PictureDataUrl = null);
+
+    /// <summary>
+    /// Reads the picture a job produced (<c>GET /api/v1/assets/{id}/content</c>, owner-filtered) and returns it as
+    /// a data URL for the result tile (REQ-UI-086); <c>null</c> when it cannot be read, so the tile keeps its seed card.
+    /// </summary>
+    private static async Task<string?> LoadPictureDataUrlAsync(HttpClient aClient, Guid aAssetId)
+    {
+        try
+        {
+            using var vResponse = await aClient.GetAsync($"{ApiRoutes.Assets}/{aAssetId}/content");
+            if (!vResponse.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var vType = vResponse.Content.Headers.ContentType?.MediaType ?? "image/png";
+            if (!vType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            var vBytes = await vResponse.Content.ReadAsByteArrayAsync();
+            return $"data:{vType};base64,{Convert.ToBase64String(vBytes)}";
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>The fields of an API ProblemDetails answer this page reads (UI-only).</summary>
+    private sealed class ProblemLike
+    {
+        public string? Title { get; set; }
+        public string? Detail { get; set; }
+    }
 }

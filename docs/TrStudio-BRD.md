@@ -1,57 +1,24 @@
 # TrStudio — Business Requirements
 
-## Table of Contents
+| | |
+|---|---|
+| App | TrStudio |
+| Kind | app |
+| Size | Large |
+| Phase | 1 of 2 |
+| Stack answer set | none |
+| Status | Approved |
+| Date | 2026-11-12 |
 
-1. [Executive summary](#executive-summary)
-2. [Business objectives](#business-objectives)
-3. [Scope](#scope)
-4. [Development status](#development-status)
-5. [Stakeholders / users](#stakeholders-users)
-6. [Context diagram](#context-diagram)
-7. [User journey — primary use case](#user-journey-primary-use-case)
-8. [Component sketch](#component-sketch)
-9. [Feature catalog](#feature-catalog)
-   - [F-PLAT: Platform spine & provider abstraction](#f-plat-platform-spine-provider-abstraction)
-   - [F-PROVIDERS: Model & provider registry](#f-providers-model-provider-registry)
-   - [F-ADMIN: Host setup & environment management](#f-admin-host-setup-environment-management)
-   - [F-RUNPOD: RunPod serverless & cost guardrails](#f-runpod-runpod-serverless-cost-guardrails)
-   - [F-OPS: Generation log, ops & observability](#f-ops-generation-log-ops-observability)
-   - [F-IMAGE: Image studio](#f-image-image-studio)
-   - [F-VOICE: Voice studio (English + Hindi)](#f-voice-voice-studio-english-hindi)
-   - [F-AVATAR: Avatar studio (lead feature)](#f-avatar-avatar-studio-lead-feature)
-   - [F-COMFY: ComfyUI pipeline management](#f-comfy-comfyui-pipeline-management)
-   - [F-VIDEO: Video studio](#f-video-video-studio)
-   - [F-WORKSPACE: Workspace](#f-workspace-workspace)
-   - [F-TEXT: Text, script & character bible (TechieRag)](#f-text-text-script-character-bible-techierag)
-   - [F-PROMPT: Prompt studio (LLM prompt-crafting chat)](#f-prompt-prompt-studio-llm-prompt-crafting-chat)
-   - [F-IDENTITY: Identity & licensing (AppManager)](#f-identity-identity-licensing-appmanager)
-   - [F-SAFETY: Trust, safety & provenance](#f-safety-trust-safety-provenance)
-   - [F-NSFW: Unrestricted (NSFW) content mode — owner-only](#f-nsfw-unrestricted-nsfw-content-mode-owner-only)
-   - [F-API: Platform API & SaaS seam](#f-api-platform-api-saas-seam)
-10. [Functional requirements (BRD ledger)](#functional-requirements-brd-ledger)
-11. [Non-functional requirements](#non-functional-requirements)
-12. [Constraints & assumptions](#constraints-assumptions)
-13. [Success metrics](#success-metrics)
-14. [Risks](#risks)
-15. [Glossary](#glossary)
+## 1. Summary
 
-## 1. Executive summary
+TrStudio is a self-hosted studio for making avatar-led videos (a talking presenter who is not the owner), plus the pictures, voices and clips around them, without ComfyUI graphs or Python setup for the person using it. It runs the owner's own models on their own machine or on pay-per-second GPUs, with a HeyGen tier when studio quality is wanted, and from phase 2 a Venice cloud tier for pictures and video.
 
-TrStudio is an **avatar-led, self-hostable AI image & video generation platform** — "Techie Rathore Studio". Its purpose is one clean app to produce avatar-led videos (a talking presenter that isn't the owner), plus the supporting images, voices and clips, **without ComfyUI graphs or Python setup for the end user**, running against models the owner controls — on their own hardware or cheap on-demand GPUs — with a **HeyGen-grade Premium tier on tap** when they want it.
+It is one Blazor application whose screens depend on the signed-in role (Creator, Operator, Owner), shipped as a web app and as a Windows and Mac desktop app, over one API with a provider seam, a model registry, a durable job queue and Postgres. Identity and licences come from AppManager.
 
-The product is delivered as **one unified Blazor application**, **`TrStudio`**, that presents both the creator experience (avatar/image/video/voice studios, gallery, projects) and the model/provider management experience (hardware detection, setup, registry, RunPod control, ComfyUI import/debug, cost guardrails, ops) — **which surface a signed-in user sees is decided by their role** (Creator / Operator / Owner). It ships as **both a Blazor Web app and a MAUI Blazor Hybrid desktop app (Windows + macOS)** — the local desktop app being the primary delivery — sharing the **`TrStudioUI`** Razor Class Library built on **TrBlazeUI** controls, over a single backend, **`TrStudioApi`** (.NET 10, ASP.NET Core). *(Amended 2026-07-05, BRD-86/87 — supersedes the original two-app `TrStudio` + `TrStudioAdmin` split; see Architecture ADR-012.)*
+Two things shape it: a budget of about $100 a month, so heavy work runs on GPUs that stop when idle, and safety rules that can never be switched off.
 
-Two design drivers shape everything. First, **economics**: an M4 Max with 36 GB unified memory and a ~$100/month budget cannot run heavy avatar/video locally or on an always-on rented GPU, so heavy work runs on **serverless, scale-to-zero GPUs** behind a three-tier quality/cost selector — **Fast** (Mac local), **High** (RunPod self-hosted), **Premium** (HeyGen API). Second, **safety & law**: there is no uncensored mode; hard, non-disableable floors (CSAM/NCII prevention, consent gating, provenance, audit trail) are binding, which is also what keeps payments, app stores, hosting, and the SaaS path open. Data lives in TrStudio's own PostgreSQL + PgVector in India (DPDP-aligned); identity/licensing is delegated to **AppManager** as a child app; text/script/caption/character-bible work uses the **TechieRag** library.
-
-## 2. Business objectives
-
-- Produce a **full EN or Hindi talking-avatar clip from a synthetic character across all three tiers** (Fast/High/Premium) end-to-end, with the owner staying off-camera.
-- Keep personal-use spend within **~$100/month** ($50 RunPod + $50 closed-API incl. HeyGen) by enforcing scale-to-zero, idle auto-stop, and a monthly cap with alerts.
-- Make **adding a model a configuration action** (registry row / ComfyUI import) — not a development task.
-- Keep **personal-first but SaaS-ready**: every shared capability is a first-class `TrStudioApi` endpoint; identity/licensing/tiers gate cleanly via AppManager when run multi-user.
-- Ship **DPDP-aligned, provenance-stamped, auditable** output by construction.
-
-## 3. Scope
+## 2. Scope
 
 **In scope (single combined MVP, built in the §12 dependency order):** the platform spine + provider abstraction + registry; local image vertical; managed ComfyUI + RunPod with cost guardrails; voice studio (EN+HI); the avatar pipeline (lead feature) with the Fast/High/Premium selector incl. HeyGen; the ComfyUI import/debug screen; video studio + closed-API adapters; safety & provenance throughout; workspace (gallery/projects/library/comparison/spend); the SaaS-ready API seam; **an owner-only Unrestricted (NSFW) content mode for fully-synthetic adult personas** (admin-gated, personal-mode only — see F-NSFW).
 
@@ -65,40 +32,41 @@ Two design drivers shape everything. First, **economics**: an M4 Max with 36 GB 
 - **No impersonation of real public figures** without explicit rights (SAFE-05 / BRD-64).
 - Provenance/AI-disclosure metadata and the full audit trail remain on every output regardless of mode (SAFE-04/06 / BRD-63/65).
 
+**Added 2026-11-12 (phase 2, Venice cloud provider, BRD-93 to BRD-121):** Venice becomes a second picture and video provider beside ComfyUI, configured by an admin in the database and chosen per model in the registry. Its requirements are in [the phase 2 BRD](TrStudio-P2-BRD.md); the phases are listed in [TrStudio-Phases.md](TrStudio-Phases.md).
+
 **Out of scope (explicit):**
 - **Uncensored mode in the SaaS / multi-user build** — the NSFW toggle is **personal-only**; the hosted/multi-user product ships SFW-locked. (Keeps Stripe/Razorpay/PayPal, the App/Play stores, and most hosting open.)
 - **AppManager is not re-implemented** — identity/licensing/payments/support are consumed from it; no local password store.
 - **Hindi UI** — Hindi is **voice + captions only**; the UI stays English.
 - **TechieRag is not extended to image/video** — it is text/LLM/RAG only.
 
-## 4. Development status
+### Product background
 
-**Snapshot as of 2026-07-07 (Handoff) — all 10 phases (P1–P10) shipped.** P1–P9 consolidated into one role-based app + MAUI desktop heads; **Phase 10 (Prompt Studio, F-PROMPT) built + verified live 2026-07-07**. Live, per-requirement status is the **Requirements Status** table in `docs/TrStudio-Checklist.md` (114 tracked REQ rows: **82 Verified / 17 Implemented / 4 PARTIAL / 0 Blocked / 11 Not Started (deferred-Could + cross-cutting NFR) / 0 FAIL** — AppManager identity verified live 2026-07-07, clearing the last 3 Blocked) and `PROJECT-STATUS.md`. `Partial` below = the feature's core is Verified but some execution is externally gated (a real model / API key / published-app dependency), degrading cleanly until supplied — never a code defect.
+TrStudio is an **avatar-led, self-hostable AI image & video generation platform** — "Techie Rathore Studio". Its purpose is one clean app to produce avatar-led videos (a talking presenter that isn't the owner), plus the supporting images, voices and clips, **without ComfyUI graphs or Python setup for the end user**, running against models the owner controls — on their own hardware or cheap on-demand GPUs — with a **HeyGen-grade Premium tier on tap** when they want it.
 
-| Feature (F-code) | Phase | Status | % | Notes |
-|------------------|-------|--------|---|-------|
-| F-PLAT: Platform spine & provider abstraction | 1 | Done | 100 | `IGenerationProvider`, async job model, Hangfire/Postgres queue, OpenAPI, SignalR — all Verified live |
-| F-SHELL: Unified role-based app + desktop heads | 1 (amended 2026-07-05) | Done | 95 | ONE role-gated `TrStudio` app on the shared `TrStudioUI` RCL (BRD-86) — REQ-UI-080 + REQ-FN-072 Verified live (Creator→studios+AccessDenied on admin, Operator→management, Owner→both+in-app switch; `TrStudioAdmin` retired). MAUI Blazor Hybrid desktop heads (BRD-87) — REQ-NFR-003: Windows head run-verified (FlaUI), Mac Catalyst build-verified only (no Mac in env). Supersedes the two-app split (ADR-001→ADR-012) |
-| F-PROVIDERS: Model & provider registry | 1 (closed config in 7) | Done | 100 | Registry single-source-of-truth + declarative params schema (drives UI live); encrypted provider keys masked at rest — Verified |
-| F-ADMIN: Host setup & environment management | 1 / 3 | Partial | 85 | Capability detection Verified live; guided ONNX/isolated-Python/ComfyUI + resumable model install — endpoints + state machine live, real provisioning-to-completion host/GPU-gated |
-| F-RUNPOD: RunPod serverless & cost guardrails | 3 | Partial | 90 | Cost estimate + monthly cap (402 over-cap) + spend-by-channel Verified; RunPod scale-to-zero built, live cold-start needs `RunPod:ApiKey` |
-| F-OPS: Generation log, ops & observability | 1 / 9 | Done | 95 | Generation log + ops dashboard (live Hangfire health/queue/spend) Verified; Serilog + OpenTelemetry wired |
-| F-IMAGE: Image studio | 2 | Done | 100 | T2I/I2I/inpaint/ControlNet/upscale/batch/export + seed reproducibility Verified (real pixels ONNX-model-gated; synthetic otherwise) |
-| F-VOICE: Voice studio (EN+HI) | 4 | Partial | 85 | Consent-gated cloning + LLM token tracking Verified; TTS/per-language routing/emotion/avatar-handoff built, real synthesis voice-model-gated |
-| F-AVATAR: Avatar studio (lead feature) | 5 | Partial | 90 | Character + identity-lock + Fast/High/Premium tier routing (3 providers) + captions/SRT + RAG bible Verified; lip-sync/HeyGen execution model/key-gated |
-| F-COMFY: ComfyUI pipeline management | 6 | Partial | 90 | Import/parse/map/save-as-model (graph hidden)/version-pin/sandbox-gate Verified; live run + WS previews + auto-install ComfyUI-instance-gated |
-| F-VIDEO: Video studio | 7 | Partial | 90 | Tier routing (3 providers) + conditioning + edit/export pipeline Verified; generation/interpolation/upscale model/aggregator-key-gated; real ffmpeg export host-gated |
-| F-WORKSPACE: Workspace | 2 / 9 | Done | 95 | Gallery/projects/reproduce/comparison/library/export(+provenance)/spend Verified live; per-user isolation confirmed |
-| F-TEXT: Text, script & character bible (TechieRag) | 4 / 5 | Partial | 90 | Token-budget tracking + RAG character bible (PgVector) Verified; script/caption generation LLM-gated (degrades to keyword) |
-| F-IDENTITY: Identity & licensing (AppManager) | 1 | Done | 90 | **Verified live 2026-07-07** against real AppManager (after an AppManager `/keys` RSA-key permission fault was fixed): login + `/auth/me` + license (LicenseSvc) + register all 200 end-to-end; role mapping (Owner 0 / Creator 1) and login-driven landing confirmed (FN-012/013/015/016 Verified). Remaining: assign a **Premium license** in AppManager to exercise Premium tier-gating (FN-014, Partial) |
-| F-SAFETY: Trust, safety & provenance | 8 (+ throughout) | Done | 100 | SAFE-01..06 Verified: CSAM/NCII/public-figure hard-block before enqueue, consent gate, C2PA provenance, full audit trail (real detection models pluggable/fail-closed) |
-| F-NSFW: Unrestricted (NSFW) content mode — owner-only | 8 | Done | 100 | Owner-only, off-by-default, personal-mode-only (409 in multi-user); floors STILL fire with NSFW ON (minor/CSAM → 403) — Verified |
-| F-API: Platform API & SaaS seam | 9 | Partial | 70 | External REST API-key seam Verified (`X-Api-Key` → job 200); webhooks (FN-070) + MCP server (FN-071) deferred (Could, behind MVP) |
-| F-PROMPT: Prompt studio (LLM prompt-crafting chat) | 10 | Partial | 90 | Shipped + verified 2026-07-07 (BRD-88..92): registry-driven `text-chat` LLM picker + admin config, per-user sessions (owner-filtered, cross-user→404), vision gate, token accrual to LlmText, prompt → library/studio handoff — REQ-UI-081/082 + FN-073/074 Verified live. Chat completion via TechieRag direct chat-completion (RAG-005 Implemented) is LLM-config-gated (degrades to a synthetic best-effort reply, like F-TEXT); native vision blocked at TechieRag 1.0.5 (TR-RAG-001, HTTP fallback) |
+The product is delivered as **one unified Blazor application**, **`TrStudio`**, that presents both the creator experience (avatar/image/video/voice studios, gallery, projects) and the model/provider management experience (hardware detection, setup, registry, RunPod control, ComfyUI import/debug, cost guardrails, ops) — **which surface a signed-in user sees is decided by their role** (Creator / Operator / Owner). It ships as **both a Blazor Web app and a MAUI Blazor Hybrid desktop app (Windows + macOS)** — the local desktop app being the primary delivery — sharing the **`TrStudioUI`** Razor Class Library built on **TrBlazeUI** controls, over a single backend, **`TrStudioApi`** (.NET 10, ASP.NET Core). *(Amended 2026-07-05, BRD-86/87 — supersedes the original two-app `TrStudio` + `TrStudioAdmin` split; see Architecture ADR-012.)*
 
-**Legend:** Done = shipped & working · In progress = actively being built · Partial = core shipped, remainder externally gated or deferred · **Planned** = not started.
+Two design drivers shape everything. First, **economics**: an M4 Max with 36 GB unified memory and a ~$100/month budget cannot run heavy avatar/video locally or on an always-on rented GPU, so heavy work runs on **serverless, scale-to-zero GPUs** behind a three-tier quality/cost selector — **Fast** (Mac local), **High** (RunPod self-hosted), **Premium** (HeyGen API). Second, **safety & law**: there is no uncensored mode; hard, non-disableable floors (CSAM/NCII prevention, consent gating, provenance, audit trail) are binding, which is also what keeps payments, app stores, hosting, and the SaaS path open. Data lives in TrStudio's own PostgreSQL + PgVector in India (DPDP-aligned); identity/licensing is delegated to **AppManager** as a child app; text/script/caption/character-bible work uses the **TechieRag** library.
 
-## 5. Stakeholders / users
+### Business objectives
+
+- Produce a **full EN or Hindi talking-avatar clip from a synthetic character across all three tiers** (Fast/High/Premium) end-to-end, with the owner staying off-camera.
+- Keep personal-use spend within **~$100/month** ($50 RunPod + $50 closed-API incl. HeyGen) by enforcing scale-to-zero, idle auto-stop, and a monthly cap with alerts.
+- Make **adding a model a configuration action** (registry row / ComfyUI import) — not a development task.
+- Keep **personal-first but SaaS-ready**: every shared capability is a first-class `TrStudioApi` endpoint; identity/licensing/tiers gate cleanly via AppManager when run multi-user.
+- Ship **DPDP-aligned, provenance-stamped, auditable** output by construction.
+
+### Success measures
+
+- A complete **EN and HI talking-avatar clip** from a synthetic character generated across **all three tiers** (Fast/High/Premium).
+- A stub job flows `TrStudio` → `TrStudioApi` → worker → gallery at Phase 1 (spine verified).
+- An image generated **and reproduced** locally (Phase 2).
+- One ComfyUI job runs locally **and** on RunPod, idle-stops, with cost shown (Phase 3).
+- Monthly spend stays **≤ $100** under normal personal use.
+- A new lip-sync workflow imported in `TrStudioAdmin` becomes usable from `TrStudio` with no code change (Phase 6).
+- Safety blocks fire and provenance is present on every export (Phase 8).
+
+## 3. Users and roles
 
 | Role | Needs | Key screens |
 |------|-------|-------------|
@@ -109,23 +77,36 @@ Two design drivers shape everything. First, **economics**: an M4 Max with 36 GB 
 
 **License & tier model (from §8.2 of the requirements).** In **personal mode** all tiers (Fast / High / **Premium-HeyGen**) are available. When run **multi-user/SaaS**, which tiers a user may select is gated via AppManager **FeatureSvc / LicenseSvc** (e.g. Premium behind a paid license). TrStudio stores only the AppManager `userId` for ownership of characters/jobs/assets — never passwords.
 
-## 6. Context diagram
+## 4. Screens and flow
 
-```mermaid
-flowchart LR
-  Creator(["Creator / Owner"]) --> App["TrStudio (one role-based app: creator + management)"]
-  App --> Api["TrStudioApi (.NET 10)"]
-  Api --> DB[("PostgreSQL + PgVector (India)")]
-  Api --> Obj[("Object storage / model volume")]
-  Api --> Local["Mac local (ONNX + ComfyUI MPS)"]
-  Api --> RunPod[/"RunPod serverless GPU"/]
-  Api --> HeyGen[/"HeyGen API (Premium)"/]
-  Api --> Aggr[/"Aggregator (fal.ai / Replicate / WaveSpeed)"/]
-  Api --> AppMgr[/"AppManager (identity & licensing)"/]
-  Api --> Rag["TechieRag (text / RAG)"]
-```
+One row per routed page; dialogs, tabs and panels are regions of their page and are described in the [UI design](TrStudio-UIDesign.md).
 
-## 7. User journey — primary use case
+| Screen | Route | Role | Mockup | Fields |
+|---|---|---|---|---|
+| Register | `/register` | Anyone | [mockup](mockups/register.html) | account type, name, email, password, confirm password |
+| Login | `/login` | Anyone | [mockup](mockups/login.html) | email, password |
+| Forgot password | `/forgot-password` | Anyone | [mockup](mockups/forgot-password.html) | email |
+| Setup required (first-run gate) | `/setup-required` | Creator | [mockup](mockups/setup-required.html) | none (status and Check again) |
+| Avatar studio | `/avatar` | Creator | [mockup](mockups/avatar-studio.html) | character, voice, language, script, tier, captions, aspect |
+| Character library | `/avatar/characters` | Creator | [mockup](mockups/character-library.html) | name, realism, reference pictures, bible entries |
+| Image studio | `/image` | Creator | [mockup](mockups/image-studio.html) | model, prompt, model parameters, mask, reference picture, export size |
+| Voice studio | `/voice` | Creator | [mockup](mockups/voice-studio.html) | text, language, voice, speed, emotion, clone sample, consent |
+| Video studio | `/video` | Creator | [mockup](mockups/video-studio.html) | mode, prompt, first and last frame, duration, motion, aspect, tier |
+| Prompt studio | `/prompt-studio` | Creator | [mockup](mockups/prompt-studio.html) | language model, message, attached picture |
+| Gallery | `/gallery` | Creator | [mockup](mockups/gallery.html) | search, type, model, project |
+| Projects | `/projects` | Creator | [mockup](mockups/projects.html) | project name, search |
+| Comparison | `/compare` | Creator | [mockup](mockups/compare.html) | asset A, asset B, view mode |
+| Library | `/library` | Creator | [mockup](mockups/library.html) | preset type, name, text |
+| Account & spend | `/account` | Creator | [mockup](mockups/account.html) | none (profile, spend and licence shown) |
+| Admin — Hardware & setup | `/admin/setup` | Operator | [mockup](mockups/admin-hardware.html) | setup step actions |
+| Admin — Model Sources | `/admin/sources` | Operator | [mockup](mockups/admin-sources.html) | source name, kind, address, token, enabled |
+| Admin — Model Library | `/admin/models` | Operator | [mockup](mockups/admin-models.html) | search, task, source, install destination |
+| Admin — Model & Provider Registry | `/admin/registry` | Operator | [mockup](mockups/admin-registry.html) | model id, name, task, provider, tier, parameters, provider keys |
+| Admin — ComfyUI import & debug | `/admin/comfy/import` | Operator | [mockup](mockups/admin-comfy.html) | workflow JSON, parameter mapping, model name |
+| Admin — RunPod & ops | `/admin/ops` | Operator | [mockup](mockups/admin-ops.html) | monthly cap, idle stop, start and stop |
+| Admin — Content policy (NSFW) | `/admin/policy` | Owner | [mockup](mockups/admin-policy.html) | unrestricted mode switch, confirmation |
+
+**Primary journey:**
 
 The headline workflow — a HeyGen-style talking avatar, self-hosted, with HeyGen on tap:
 
@@ -144,21 +125,11 @@ sequenceDiagram
   U->>Av: "polish: upscale, reframe 9:16 / 1:1 / 16:9, captions, export MP4"
 ```
 
-## 8. Component sketch
+## 5. Requirements
 
-```mermaid
-flowchart TB
-  UI["TrStudio — one role-based app (TrBlazeUI via TrStudioUI)"] --> API["TrStudioApi (provider abstraction, registry, orchestrator)"]
-  API --> SQL[("PostgreSQL + PgVector")]
-  API --> Queue["Hangfire queue (Postgres)"]
-  API --> Rag["TechieRag (text / RAG)"]
-  API --> Prov["Providers: Onnx / ComfyUI / HeyGen / ClosedApi"]
-  API --> AppMgr[/"AppManager (external)"/]
-```
+### Feature catalog
 
-## 9. Feature catalog
-
-### F-PLAT: Platform spine & provider abstraction
+#### F-PLAT: Platform spine & provider abstraction
 
 **Personas:** Creator, Operator · **Phase:** 1
 
@@ -173,7 +144,7 @@ The spine everything else hangs on. `TrStudio` requests *"task T with model M an
 
 **Requirements:** BRD-1, BRD-2, BRD-3, BRD-4, BRD-5 (see §10)
 
-### F-PROVIDERS: Model & provider registry
+#### F-PROVIDERS: Model & provider registry
 
 **Personas:** Operator · **Phase:** 1 (closed-provider config completed in Phase 7)
 
@@ -186,13 +157,13 @@ Every usable model is a registry row owned by `TrStudioApi`, with a **declarativ
 
 **Requirements:** BRD-6, BRD-7
 
-### F-ADMIN: Host setup & environment management
+#### F-ADMIN: Host setup & environment management
 
 **Personas:** Operator · **Phase:** 1 / 3
 
 Gets a machine from bare to ready without the user touching a terminal: detect host capabilities (Apple Silicon GPU cores, unified memory, MPS/CoreML, disk) and show a readiness summary; guided setup installs ONNX Runtime and provisions a **managed, isolated Python env + ComfyUI** that never collides with system Python; one-click install/import of curated open models (resumable downloads) with size/VRAM/licence shown, storing big media models on a RunPod network volume.
 
-**Model sources (BRD-82).** The model library is fed by **configurable model-repository sources** — Hugging Face, Civitai, and arbitrary custom URLs/registries — set on a dedicated **Model Sources** screen (base URL, API token where required, enabled flag). The Operator adds/edits a source there; the Model library then browses/searches and installs models from the enabled sources. This is separate from **Provider config** (which holds closed-API *generation* keys like HeyGen/aggregator) — sources are where *open model files* are discovered and pulled from.
+**Model sources (BRD-82).** The model library is fed by **configurable model-repository sources** — Hugging Face, Civitai, and arbitrary custom URLs/registries — set on a dedicated **Admin — Model Sources** screen (base URL, API token where required, enabled flag). The Operator adds/edits a source there; the Model library then browses/searches and installs models from the enabled sources. This is separate from **Provider config** (which holds closed-API *generation* keys like HeyGen/aggregator) — sources are where *open model files* are discovered and pulled from.
 
 | Screen | Route | Description |
 |--------|-------|-------------|
@@ -203,7 +174,7 @@ Gets a machine from bare to ready without the user touching a terminal: detect h
 
 **Requirements:** BRD-8, BRD-9, BRD-10, BRD-11, BRD-82
 
-### F-RUNPOD: RunPod serverless & cost guardrails
+#### F-RUNPOD: RunPod serverless & cost guardrails
 
 **Personas:** Operator · **Phase:** 3
 
@@ -222,7 +193,7 @@ flowchart LR
 
 **Requirements:** BRD-12, BRD-13
 
-### F-OPS: Generation log, ops & observability
+#### F-OPS: Generation log, ops & observability
 
 **Personas:** Operator · **Phase:** 1 (log) / 9 (ops dashboard)
 
@@ -235,7 +206,7 @@ A generation log records who/model/params/cost/duration/outcome for every job �
 
 **Requirements:** BRD-14, BRD-15
 
-### F-IMAGE: Image studio
+#### F-IMAGE: Image studio
 
 **Personas:** Creator · **Phase:** 2
 
@@ -248,7 +219,7 @@ The first end-to-end vertical and the persona/character image source. Text-to-im
 
 **Requirements:** BRD-16, BRD-17, BRD-18, BRD-19, BRD-20, BRD-21
 
-### F-VOICE: Voice studio (English + Hindi)
+#### F-VOICE: Voice studio (English + Hindi)
 
 **Personas:** Creator · **Phase:** 4
 
@@ -261,7 +232,7 @@ Because lip-sync models are largely audio-driven, Hindi support is mostly a TTS 
 
 **Requirements:** BRD-22, BRD-23, BRD-24, BRD-25, BRD-26
 
-### F-AVATAR: Avatar studio (lead feature)
+#### F-AVATAR: Avatar studio (lead feature)
 
 **Personas:** Creator · **Phase:** 5
 
@@ -290,7 +261,7 @@ flowchart LR
 
 **Requirements:** BRD-27, BRD-28, BRD-29, BRD-30, BRD-31, BRD-32, BRD-33
 
-### F-COMFY: ComfyUI pipeline management
+#### F-COMFY: ComfyUI pipeline management
 
 **Personas:** Operator · **Phase:** 6
 
@@ -312,7 +283,7 @@ flowchart LR
 
 **Requirements:** BRD-34, BRD-35, BRD-36, BRD-37, BRD-38, BRD-39, BRD-40, BRD-41
 
-### F-VIDEO: Video studio
+#### F-VIDEO: Video studio
 
 **Personas:** Creator · **Phase:** 7
 
@@ -325,7 +296,7 @@ Image-to-video and text-to-video (open model on RunPod, or closed API) with dura
 
 **Requirements:** BRD-42, BRD-43, BRD-44, BRD-45, BRD-46
 
-### F-WORKSPACE: Workspace
+#### F-WORKSPACE: Workspace
 
 **Personas:** Creator · **Phase:** 2 (gallery/projects) / 9 (comparison, library, spend)
 
@@ -343,7 +314,7 @@ The connective tissue. An asset gallery makes every output browsable/filterable 
 
 **Requirements:** BRD-47, BRD-48, BRD-49, BRD-50, BRD-51, BRD-52, BRD-81
 
-### F-TEXT: Text, script & character bible (TechieRag)
+#### F-TEXT: Text, script & character bible (TechieRag)
 
 **Personas:** Creator · **Phase:** 4 / 5
 
@@ -356,7 +327,7 @@ The text/LLM/RAG layer, provided by the **TechieRag** library (text only — not
 
 **Requirements:** BRD-53, BRD-54, BRD-55, BRD-56
 
-### F-PROMPT: Prompt studio (LLM prompt-crafting chat)
+#### F-PROMPT: Prompt studio (LLM prompt-crafting chat)
 
 **Personas:** Creator · **Phase:** 10 · *Added 2026-07-07*
 
@@ -381,7 +352,7 @@ flowchart LR
 
 **Requirements:** BRD-88, BRD-89, BRD-90, BRD-91, BRD-92
 
-### F-IDENTITY: Identity & licensing (AppManager)
+#### F-IDENTITY: Identity & licensing (AppManager)
 
 **Personas:** Creator, Operator, AppManager (external) · **Phase:** 1
 
@@ -393,9 +364,9 @@ Identity and licensing are delegated to AppManager as a child application. User 
 |------|----------------------------|-------------------------------------|
 | Superadmin / Owner (`admin@appmanager.local`) | Avatar studio `/avatar` | Management surface — Guided setup `/admin/setup` |
 | Operator / Admin | Management surface — Ops dashboard `/admin/ops` | Hardware & readiness `/admin/setup/hardware` → guided setup |
-| Creator (standard or Premium-licensed) | Avatar studio `/avatar` | Setup-required screen `/setup-required` |
+| Creator (standard or Premium-licensed) | Avatar studio `/avatar` | Setup required (first-run gate) `/setup-required` |
 
-**First-run setup gate (BRD-85).** On every login the system checks whether initial setup is complete — **at least one enabled model source and at least one ready model in the registry**. If not: users with admin rights (Owner/Operator) are taken straight into setup (hardware readiness → guided setup → sources → model install); Creators land on a **Setup-required** screen that explains no models are configured yet and tells them to ask their admin to complete setup (or sign in with an admin account). No generation UI is offered until the gate passes.
+**First-run setup gate (BRD-85).** On every login the system checks whether initial setup is complete — **at least one enabled model source and at least one ready model in the registry**. If not: users with admin rights (Owner/Operator) are taken straight into setup (hardware readiness → guided setup → sources → model install); Creators land on the **Setup required (first-run gate)** screen that explains no models are configured yet and tells them to ask their admin to complete setup (or sign in with an admin account). No generation UI is offered until the gate passes.
 
 | Screen | Route | Description |
 |--------|-------|-------------|
@@ -407,7 +378,7 @@ Identity and licensing are delegated to AppManager as a child application. User 
 
 **Requirements:** BRD-57, BRD-58, BRD-59, BRD-83, BRD-84, BRD-85
 
-### F-SAFETY: Trust, safety & provenance
+#### F-SAFETY: Trust, safety & provenance
 
 **Personas:** all (binding on the build) · **Phase:** 8 consolidation, **wired from Phase 2 onward**
 
@@ -427,7 +398,7 @@ flowchart LR
 
 **Requirements:** BRD-60, BRD-61, BRD-62, BRD-63, BRD-64, BRD-65
 
-### F-NSFW: Unrestricted (NSFW) content mode — owner-only
+#### F-NSFW: Unrestricted (NSFW) content mode — owner-only
 
 **Personas:** Owner (personal mode only) · **Phase:** 8
 
@@ -450,7 +421,7 @@ flowchart LR
 
 **Requirements:** BRD-79, BRD-80
 
-### F-API: Platform API & SaaS seam
+#### F-API: Platform API & SaaS seam
 
 **Personas:** Future SaaS / third-party · **Phase:** 9
 
@@ -458,7 +429,7 @@ The SaaS-ready abstraction. `TrStudioApi` is designed to also serve as an extern
 
 **Requirements:** BRD-66, BRD-67, BRD-68
 
-## 10. Functional requirements (BRD ledger)
+### Requirement ledger
 
 > Machine-traceable ledger consumed by `*split-brd`. One line per discrete capability. Original requirement IDs from `TrStudio-Requirements-v0.3.md` are preserved in parentheses; `<!-- from -->` marks source-doc origin.
 
@@ -480,7 +451,7 @@ The SaaS-ready abstraction. `TrStudioApi` is designed to also serve as an extern
 - **BRD-59** — System shall gate features/tiers via AppManager FeatureSvc (e.g. Premium behind a paid license in multi-user mode). *(F-IDENTITY, §8.2)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-83** — User can register an account via the AppManager API (child-app registration); a generic superadmin (`admin@appmanager.local`) bootstraps the first session. *(F-IDENTITY)*
 - **BRD-84** — System shall route each user to a role-based default landing page after login (Owner/Creator → Avatar studio `/avatar`; Operator/Admin → admin dashboard `/admin/ops`) per the landing table in §9 F-IDENTITY. *(F-IDENTITY)* <!-- from: owner review 2026-07-02 -->
-- **BRD-85** — System shall check on login whether initial setup is complete (≥1 enabled model source AND ≥1 ready registry model); if not, admins are routed into guided setup and Creators land on a Setup-required screen (`/setup-required`) directing them to their admin — no generation offered until the gate passes. *(F-IDENTITY, F-ADMIN)* <!-- from: owner review 2026-07-02 -->
+- **BRD-85** — System shall check on login whether initial setup is complete (≥1 enabled model source AND ≥1 ready registry model); if not, admins are routed into guided setup and Creators land on the Setup required (first-run gate) screen (`/setup-required`) directing them to their admin — no generation offered until the gate passes. *(F-IDENTITY, F-ADMIN)* <!-- from: owner review 2026-07-02 -->
 - **BRD-14** — System shall record a generation log (who/model/params/cost/duration/outcome) for history, reproduce and audit. *(F-OPS, ADM-11)* <!-- from: TrStudio-Requirements-v0.3.md -->
 
 **Phase 2 — Local image vertical + workspace foundation**
@@ -572,7 +543,7 @@ The SaaS-ready abstraction. `TrStudioApi` is designed to also serve as an extern
 - **BRD-91** — System shall persist Prompt Studio chat sessions per user (list/resume/rename/delete), owner-filtered server-side (BRD-81), and count their token usage into the text-LLM token budget (BRD-56). *(F-PROMPT)* <!-- from: owner review 2026-07-07 -->
 - **BRD-92** — Creator can copy a crafted prompt, save it into the prompt library (BRD-50), or send it directly into a studio's prompt field (Image / Avatar / Video). *(F-PROMPT / F-WORKSPACE)* <!-- from: owner review 2026-07-07 -->
 
-## 11. Non-functional requirements
+## 6. Non-functional requirements
 
 | Concern | Target |
 |---------|--------|
@@ -594,7 +565,48 @@ The SaaS-ready abstraction. `TrStudioApi` is designed to also serve as an extern
 - **BRD-77** — Extensibility: registry-driven UI; a new model = config + (for ComfyUI) a workflow import. *(NFR-09)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-78** — Compliance: provenance metadata on outputs; auditable generation log; configurable retention; DPDP-aligned (data in India). *(NFR-10)* <!-- from: TrStudio-Requirements-v0.3.md -->
 
-## 12. Constraints & assumptions
+## 7. Development status
+
+Written by the status gate after every build, verify and handoff; not by hand.
+
+**Snapshot as of 2026-11-12.** Live per-requirement status: `PROJECT-STATUS.md` and the Requirements Status table in `docs/TrStudio-Checklist.md`.
+
+| Screen | Requirements | Verified | Open | Status |
+|---|---|---|---|---|
+| UI / Pages | 25 | 23 | 2 | Partial |
+| Functional requirements | 74 | 54 | 20 | Partial |
+| RAG / AI requirements (→ /techierag) | 5 | 2 | 3 | Partial |
+| Non-functional | 10 | 1 | 9 | Partial |
+
+## 8. Context diagram
+
+```mermaid
+flowchart LR
+  Creator(["Creator / Owner"]) --> App["TrStudio (one role-based app: creator + management)"]
+  App --> Api["TrStudioApi (.NET 10)"]
+  Api --> DB[("PostgreSQL + PgVector (India)")]
+  Api --> Obj[("Object storage / model volume")]
+  Api --> Local["Mac local (ONNX + ComfyUI MPS)"]
+  Api --> RunPod[/"RunPod serverless GPU"/]
+  Api --> HeyGen[/"HeyGen API (Premium)"/]
+  Api --> Aggr[/"Aggregator (fal.ai / Replicate / WaveSpeed)"/]
+  Api --> AppMgr[/"AppManager (identity & licensing)"/]
+  Api --> Rag["TechieRag (text / RAG)"]
+```
+
+### Component sketch
+
+```mermaid
+flowchart TB
+  UI["TrStudio — one role-based app (TrBlazeUI via TrStudioUI)"] --> API["TrStudioApi (provider abstraction, registry, orchestrator)"]
+  API --> SQL[("PostgreSQL + PgVector")]
+  API --> Queue["Hangfire queue (Postgres)"]
+  API --> Rag["TechieRag (text / RAG)"]
+  API --> Prov["Providers: Onnx / ComfyUI / HeyGen / ClosedApi"]
+  API --> AppMgr[/"AppManager (external)"/]
+```
+
+## 9. Constraints and assumptions
 
 - **Hardware:** M4 Max, 14-core CPU / 32-core GPU, 36 GB unified memory (~34 GB usable), ~400 GB free for models. Memory bandwidth ~546 GB/s (≈3–4× slower than a 4090) — fine for iteration, painful for production video. Mac = image + light lip-sync only; heavy avatar/video = RunPod/HeyGen.
 - **Budget:** ~$100/month total (~$50 RunPod serverless + ~$50 closed-API incl. HeyGen pay-as-you-go). Only viable with scale-to-zero + idle auto-stop + monthly cap.
@@ -603,17 +615,7 @@ The SaaS-ready abstraction. `TrStudioApi` is designed to also serve as an extern
 - **Credentials needed at build/run** (not blocking docs): GitHub PAT (`read:packages`) for TechieRag NuGet; HeyGen API key; AppManager API key/secret.
 - **Confirm reuse libraries** (TechieRag, TrBlazeUI) against their real packages at Phase 1 before depending on them.
 
-## 13. Success metrics
-
-- A complete **EN and HI talking-avatar clip** from a synthetic character generated across **all three tiers** (Fast/High/Premium).
-- A stub job flows `TrStudio` → `TrStudioApi` → worker → gallery at Phase 1 (spine verified).
-- An image generated **and reproduced** locally (Phase 2).
-- One ComfyUI job runs locally **and** on RunPod, idle-stops, with cost shown (Phase 3).
-- Monthly spend stays **≤ $100** under normal personal use.
-- A new lip-sync workflow imported in `TrStudioAdmin` becomes usable from `TrStudio` with no code change (Phase 6).
-- Safety blocks fire and provenance is present on every export (Phase 8).
-
-## 14. Risks
+## 10. Risks
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|------------|
@@ -626,7 +628,7 @@ The SaaS-ready abstraction. `TrStudioApi` is designed to also serve as an extern
 | "Everything in MVP" → unverifiable blob | Med | Med | §12 build order keeps each phase independently testable |
 | TechieRag / TrBlazeUI reuse assumptions wrong | Med | Low | Confirm against the real packages at Phase 1 |
 
-## 15. Glossary
+## 11. Glossary
 
 - **TrStudio / TrStudioAdmin / TrStudioApi / TrStudioUI** — creator app / management app / backend / shared RCL.
 - **TrBlazeUI** — .NET 10 Blazor component library (Tailwind v4 + shadcn/ui); `TrStudioUI` builds on it.

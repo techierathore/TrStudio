@@ -43,6 +43,23 @@ public interface IProviderKeyRepository
     Task<bool> SetEnabledAsync(string aProviderName, bool aIsEnabled, CancellationToken aCancellationToken = default);
 
     /// <summary>
+    /// Sets the provider's API base address on its existing key row (BRD-93; database-only config).
+    /// </summary>
+    /// <param name="aProviderName">The provider the key belongs to.</param>
+    /// <param name="aBaseUrl">The base address, or null to clear it.</param>
+    /// <param name="aCancellationToken">Token to cancel the operation.</param>
+    /// <returns><c>true</c> when a row was updated; <c>false</c> when no key is stored for the provider.</returns>
+    Task<bool> SetBaseUrlAsync(string aProviderName, string? aBaseUrl, CancellationToken aCancellationToken = default);
+
+    /// <summary>
+    /// Reads the provider's API base address and enabled flag (no secret).
+    /// </summary>
+    /// <param name="aProviderName">The provider the key belongs to.</param>
+    /// <param name="aCancellationToken">Token to cancel the operation.</param>
+    /// <returns>The masked-free info row (empty <see cref="ProviderKeyInfo.MaskedKey"/>), or null when none is stored.</returns>
+    Task<ProviderKeyInfo?> GetInfoAsync(string aProviderName, CancellationToken aCancellationToken = default);
+
+    /// <summary>
     /// Deletes a provider key row.
     /// </summary>
     /// <param name="aProviderName">The provider the key belongs to.</param>

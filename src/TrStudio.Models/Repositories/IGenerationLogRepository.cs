@@ -37,6 +37,17 @@ public interface IGenerationLogRepository
     Task<PagedResult<GenerationLogEntry>> ListAsync(string aUserId, int aPage, int aPageSize, CancellationToken aCancellationToken = default);
 
     /// <summary>
+    /// Lists the user's generation-log entries for the given jobs (oldest first), owner-filtered —
+    /// used to attach provider kind, price, price source and failure text to asset and run details
+    /// (REQ-FN-082, BRD-118/119).
+    /// </summary>
+    /// <param name="aJobIds">The job identifiers to look up.</param>
+    /// <param name="aUserId">The owning AppManager user id (owner filter, BRD-81).</param>
+    /// <param name="aCancellationToken">Token to cancel the operation.</param>
+    /// <returns>The matching entries; empty when none.</returns>
+    Task<IReadOnlyList<GenerationLogEntry>> ListByJobsAsync(IReadOnlyCollection<Guid> aJobIds, string aUserId, CancellationToken aCancellationToken = default);
+
+    /// <summary>
     /// Returns generation-outcome counts (e.g. <c>succeeded</c>/<c>failed</c>/<c>blocked</c>) since
     /// the given UTC instant across ALL users — the admin ops dashboard's error-rate source
     /// (REQ-FN-064). This is an instance-global aggregate, NOT owner-filtered; it is only ever

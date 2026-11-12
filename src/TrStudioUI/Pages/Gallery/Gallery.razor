@@ -1,4 +1,5 @@
 @page "/gallery"
+@using TrStudioUI.Pages.Projects
 @inject IHttpClientFactory HttpClientFactory
 @inject ToastService ToastService
 @inject NavigationManager Navigation
@@ -154,6 +155,13 @@ else
                 <div class="kv"><span class="muted">Model</span><b>@objDetail.ModelDisplay</b></div>
                 <div class="kv"><span class="muted">Provenance</span><b>@objDetail.Provenance</b></div>
                 <div class="kv"><span class="muted">Seed</span><b>@(objDetail.Seed?.ToString() ?? "—")</b></div>
+                @if (VeniceRunDetailsFormat.IsVenice(objDetail.ProviderKind))
+                {
+                    <div data-testid="venice-asset-details">
+                        <div class="kv"><span class="muted">Provider</span><b><Badge Class="badge-brand" data-testid="badge-provider-venice">Venice</Badge></b></div>
+                        <div class="kv"><span class="muted">Venice price</span><b data-testid="venice-price">@VeniceRunDetailsFormat.PriceLabel(objDetail.ActualCost)</b></div>
+                    </div>
+                }
                 <div class="kv"><span class="muted">Dimensions</span><b>@objDetail.Dimensions</b></div>
                 <div class="kv"><span class="muted">Project</span><b>@(objDetail.ProjectName ?? "—")</b></div>
                 <div class="kv"><span class="muted">Created</span><b>@objDetail.Created</b></div>
@@ -353,7 +361,7 @@ else
     private sealed record GalleryAsset(
         Guid AssetId, Guid JobId, string Kind, string Title, string ModelDisplay, string Provenance,
         string? BadgeTone, long? Seed, string Dimensions, string? ProjectName, string Created,
-        string TypeChip, string ThumbCaption, string Art)
+        string TypeChip, string ThumbCaption, string Art, string? ProviderKind = null, decimal? ActualCost = null)
     {
         /// <summary>Projects an owner-scoped API asset into a gallery card model.</summary>
         public static GalleryAsset FromResponse(AssetResponse aAsset, string aArt)
@@ -366,7 +374,7 @@ else
                 $"{aAsset.ModelId}{(aAsset.SeedUsed is null ? string.Empty : $" · seed {aAsset.SeedUsed}")}",
                 null, aAsset.SeedUsed, vDims,
                 aAsset.ProjectId?.ToString()[..8], aAsset.CreatedUtc.ToString("d MMM yyyy"),
-                vType, string.Empty, aArt);
+                vType, string.Empty, aArt, aAsset.ProviderKind, aAsset.ActualCost);
         }
     }
 }

@@ -17,4 +17,10 @@ public class ProviderKeyUpsertRequest
 
     /// <summary>Whether the key is enabled for use by providers.</summary>
     public bool IsEnabled { get; set; }
+
+    /// <summary>
+    /// Optional API base address for the provider (e.g. Venice),
+    /// stored in the database beside the encrypted key — never in appsettings or code (BRD-93/98).
+    /// </summary>
+    public string? BaseUrl { get; set; }
 }

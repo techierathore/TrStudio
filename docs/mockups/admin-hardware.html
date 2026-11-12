@@ -114,38 +114,39 @@ tr.sel td{background:var(--sel)}
 </head>
 <body>
 <div class="app">
-<aside class="side">
-  <div class="brand"><div class="logo">TR</div><div>TrStudioAdmin <span class="badge" style="font-size:10px;padding:1px 7px;vertical-align:middle">admin</span></div></div>
+<aside class="side" data-testid="sidebar">
+  <div class="brand"><div class="logo">TR</div><div>TrStudioAdmin <span class="badge" style="font-size:10px;padding:1px 7px;vertical-align:middle" data-testid="badge-admin">admin</span></div></div>
   <div class="navgroup">Environment</div>
   <nav class="nav">
-    <a class="active" href="admin-hardware.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M9 2v2M15 20v2M9 20v2M2 15h2M2 9h2M20 15h2M20 9h2"/></svg>Hardware &amp; Setup</a>
-    <a href="admin-ops.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 1 0-.4-8.98 6 6 0 1 0-11.6 2.2A3.5 3.5 0 0 0 6.5 19z"/></svg>RunPod &amp; Ops</a>
+    <a class="active" href="admin-hardware.html" data-testid="nav-admin-hardware"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M9 2v2M15 20v2M9 20v2M2 15h2M2 9h2M20 15h2M20 9h2"/></svg>Hardware &amp; Setup</a>
+    <a href="admin-ops.html" data-testid="nav-admin-ops"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 1 0-.4-8.98 6 6 0 1 0-11.6 2.2A3.5 3.5 0 0 0 6.5 19z"/></svg>RunPod &amp; Ops</a>
   </nav>
   <div class="navgroup">Models</div>
   <nav class="nav">
-    <a href="admin-sources.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Model Sources</a>
-    <a href="admin-models.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>Model Library</a>
-    <a href="admin-registry.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>Registry &amp; Providers</a>
-    <a href="admin-comfy.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>ComfyUI Import</a>
+    <a href="admin-sources.html" data-testid="nav-admin-sources"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Model Sources</a>
+    <a href="admin-models.html" data-testid="nav-admin-models"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>Model Library</a>
+    <a href="admin-registry.html" data-testid="nav-admin-registry"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>Registry &amp; Providers</a>
+    <a href="admin-comfy.html" data-testid="nav-admin-comfy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>ComfyUI Import</a>
   </nav>
   <div class="navgroup">Governance</div>
   <nav class="nav">
-    <a href="admin-policy.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Content Policy</a>
+    <a href="admin-policy.html" data-testid="nav-admin-policy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Content Policy</a>
   </nav>
   <div class="sidefoot">
-    <a href="avatar-studio.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudio</a>
+    <a href="avatar-studio.html" data-testid="link-switch-to-trstudio"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Switch to TrStudio</a>
+    <a href="login.html" data-testid="nav-sign-out"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>Sign out</a>
   </div>
 </aside>
-<div class="main">
-<header class="top">
+<div class="main" data-testid="main">
+<header class="top" data-testid="topbar">
   <span class="crumb">Admin</span><span class="crumb">/</span><span class="crumb here">Hardware &amp; Setup</span>
   <span class="spacer"></span>
-  <span class="badge ok"><span class="dot ok"></span>Node healthy</span>
-  <button class="btn outline" data-act="Re-detect">Re-detect</button>
-  <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
-  <div class="userchip">TR</div>
+  <span class="badge ok" data-testid="badge-status"><span class="dot ok"></span>Node healthy</span>
+  <button class="btn outline" data-act="Re-detect" onclick="/* shows Working then Done: page script */" data-testid="btn-re-detect">Re-detect</button>
+  <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode" onclick="/* switches light and dark: page script */" data-testid="icon-btn-toggle-dark-mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
+  <div class="userchip" data-testid="user-chip">TR</div>
 </header>
-<div class="content grid" style="max-width:1100px">
+<div class="content grid" style="max-width:1100px" data-testid="content">
   <div>
     <h1 class="h">Hardware &amp; Setup</h1>
     <p class="sub" style="margin-bottom:0">Detected capabilities on this node and guided environment provisioning — isolated from system Python.</p>
@@ -153,61 +154,61 @@ tr.sel td{background:var(--sel)}
 
   <!-- Capability detection -->
   <div class="grid" style="grid-template-columns:repeat(4,1fr)">
-    <div class="card kpi">
-      <div class="row"><span class="lbl">GPU cores</span><span class="spacer"></span><span class="badge ok">ready</span></div>
+    <div class="card kpi" data-testid="card-1">
+      <div class="row"><span class="lbl">GPU cores</span><span class="spacer"></span><span class="badge ok" data-testid="badge-ready">ready</span></div>
       <div class="big">32-core</div>
       <div class="lbl">Apple M4 Max GPU</div>
     </div>
-    <div class="card kpi">
-      <div class="row"><span class="lbl">Unified memory</span><span class="spacer"></span><span class="badge ok">ready</span></div>
+    <div class="card kpi" data-testid="card-2">
+      <div class="row"><span class="lbl">Unified memory</span><span class="spacer"></span><span class="badge ok" data-testid="badge-ready-2">ready</span></div>
       <div class="big">36 GB</div>
       <div class="lbl">unified · 31 GB usable</div>
     </div>
-    <div class="card kpi">
-      <div class="row"><span class="lbl">MPS + CoreML</span><span class="spacer"></span><span class="badge ok">ready</span></div>
+    <div class="card kpi" data-testid="card-3">
+      <div class="row"><span class="lbl">MPS + CoreML</span><span class="spacer"></span><span class="badge ok" data-testid="badge-ready-3">ready</span></div>
       <div class="big">Enabled</div>
       <div class="lbl">Metal 3 · ANE available</div>
     </div>
-    <div class="card kpi">
-      <div class="row"><span class="lbl">Disk free</span><span class="spacer"></span><span class="badge warn">low</span></div>
+    <div class="card kpi" data-testid="card-4">
+      <div class="row"><span class="lbl">Disk free</span><span class="spacer"></span><span class="badge warn" data-testid="badge-low">low</span></div>
       <div class="big">412 GB</div>
-      <div class="prog" style="margin:4px 0 4px"><i style="width:80%"></i></div>
+      <div class="prog" style="margin:4px 0 4px" data-testid="progress"><i style="width:80%"></i></div>
       <div class="lbl">of 2 TB used · large models → volume</div>
     </div>
   </div>
 
   <!-- Guided setup wizard -->
-  <div class="card">
-    <div class="row"><h3 style="margin:0">Guided setup</h3><span class="spacer"></span><span class="badge brand">2 of 4 complete</span></div>
+  <div class="card" data-testid="card-guided-setup">
+    <div class="row"><h3 style="margin:0">Guided setup</h3><span class="spacer"></span><span class="badge brand" data-testid="badge-2-of-4-complete">2 of 4 complete</span></div>
     <p class="muted" style="margin:6px 0 4px;font-size:12.5px">Provisions an isolated environment — never collides with system Python.</p>
     <div class="step">
       <div class="stepdot done">✓</div>
       <div class="body"><div class="t">ONNX Runtime</div><div class="muted" style="font-size:12.5px">CoreML execution provider installed · v1.20.1</div></div>
-      <button class="btn outline" data-act="Reinstall">Reinstall</button>
+      <button class="btn outline" data-act="Reinstall" onclick="/* shows Working then Done: page script */" data-testid="btn-reinstall">Reinstall</button>
     </div>
     <div class="step">
       <div class="stepdot done">✓</div>
       <div class="body"><div class="t">MuseTalk + base weights</div><div class="muted" style="font-size:12.5px">Lip-sync runtime verified · 1.8 GB on disk</div></div>
-      <button class="btn outline" data-act="Verify">Verify</button>
+      <button class="btn outline" data-act="Verify" onclick="/* shows Working then Done: page script */" data-testid="btn-verify">Verify</button>
     </div>
     <div class="step">
       <div class="stepdot run">3</div>
       <div class="body">
         <div class="t">Isolated Python + ComfyUI</div>
         <div class="muted" style="font-size:12.5px;margin-bottom:6px">Provisioning venv (python 3.11) and ComfyUI core… installing dependencies</div>
-        <div class="prog"><i style="width:64%"></i></div>
+        <div class="prog" data-testid="progress-2"><i style="width:64%"></i></div>
         <div class="muted" style="font-size:11.5px;margin-top:4px">64% · resolving torch / torchvision wheels</div>
       </div>
-      <button class="btn outline">Logs</button>
+      <button class="btn outline" onclick="alert('Logs: done in the built app')" data-testid="btn-logs">Logs</button>
     </div>
     <div class="step">
       <div class="stepdot">4</div>
       <div class="body"><div class="t">Network volume mount</div><div class="muted" style="font-size:12.5px">For large checkpoints (SDXL, Hunyuan-Avatar) — unlocks after step 3</div></div>
-      <button class="btn brand" disabled style="opacity:.5;cursor:not-allowed">Start</button>
+      <button class="btn brand" disabled style="opacity:.5;cursor:not-allowed" onclick="alert('Start: done in the built app')" data-testid="btn-start">Start</button>
     </div>
   </div>
 
-  <div class="alert warn"><b>Disk space low.</b> The 24 GB Hunyuan-Avatar checkpoint exceeds local free space — attach a network volume before installing from the <a href="admin-models.html" style="color:inherit;font-weight:600">Model Library</a>. <a href="admin-ops.html" style="color:inherit;font-weight:600">Configure volume →</a></div>
+  <div class="alert warn" data-testid="alert-warn"><b>Disk space low.</b> The 24 GB Hunyuan-Avatar checkpoint exceeds local free space — attach a network volume before installing from the <a href="admin-models.html" style="color:inherit;font-weight:600" data-testid="link-model-library">Model Library</a>. <a href="admin-ops.html" style="color:inherit;font-weight:600" data-testid="link-configure-volume">Configure volume →</a></div>
 </div>
 </div>
 </div>

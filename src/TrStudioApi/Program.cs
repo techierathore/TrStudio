@@ -132,6 +132,7 @@ try
     vBuilder.Services.AddAvatarModule(vBuilder.Configuration);
     vBuilder.Services.AddVideoModule(vBuilder.Configuration);
     vBuilder.Services.AddComfyModule(vBuilder.Configuration);
+    vBuilder.Services.AddVeniceModule(vBuilder.Configuration);
     vBuilder.Services.AddPhase9Module(vBuilder.Configuration);
     vBuilder.Services.AddPromptChatModule(vBuilder.Configuration);
 
@@ -183,6 +184,7 @@ try
     // Per-cluster endpoint mappers (the Wave-0 anti-conflict seam).
     vApp.MapSpineEndpoints();
     vApp.MapRegistryEndpoints();
+    vApp.MapVeniceEndpoints();
     vApp.MapSetupEndpoints();
     vApp.MapIdentityEndpoints();
     vApp.MapImageEndpoints();
