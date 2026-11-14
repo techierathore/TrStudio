@@ -13,7 +13,7 @@ namespace TrStudio.Engine.Providers;
 /// <summary>
 /// RunPod serverless <see cref="IGenerationProvider"/> (REQ-FN-028/BRD-12). Submits to a RunPod
 /// serverless endpoint, polls run status, and — when auto idle-stop is on — scales the endpoint
-/// to zero after the job finishes (scale-to-zero). GRACEFUL DEGRADE: with no <c>RunPod:ApiKey</c>
+/// to zero after the job finishes (scale-to-zero). GRACEFUL DEGRADE: with no RunPod key
 /// configured, a submitted job resolves to a Failed status carrying the actionable
 /// "RunPod not configured" message plus a remediation hint (REQ-FN-005 style) instead of
 /// crashing; live cold-start is deferred until a real key is supplied.
@@ -73,7 +73,7 @@ public class RunPodProvider : IGenerationProvider
                 0,
                 null,
                 RunPodOptions.NotConfiguredMessage,
-                "Add RunPod:ApiKey and RunPod:EndpointId under Admin > RunPod, or run this job on the free local (Fast) tier.");
+                "Enter the RunPod key and endpoint id on Registry & providers, or run this job on the free local (Fast) tier.");
             objLogger.LogWarning("RunPod job {JobId} rejected: provider not configured", aJob.JobId);
             return Task.FromResult(aJob.JobId);
         }

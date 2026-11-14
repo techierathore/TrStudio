@@ -1,5 +1,3 @@
-using Hangfire;
-using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,13 +6,14 @@ using TrStudio.Engine.Domain.Jobs;
 using TrStudio.Engine.Domain.Progress;
 using TrStudio.Engine.Domain.Providers;
 using TrStudio.Engine.Infrastructure.Data;
+using TrStudio.Engine.Infrastructure.Jobs;
 using TrStudio.Engine.Infrastructure.Storage;
 using TrStudio.Models.Repositories;
 
 namespace TrStudio.Engine.DependencyInjection;
 
 /// <summary>
-/// DI registrations for the spine cluster: job orchestration, Hangfire queue wiring,
+/// DI registrations for the spine cluster: job orchestration, the in-app job queue,
 /// generation log, progress publishing and the shared data-access plumbing.
 /// </summary>
 /// <remarks>
@@ -25,14 +24,13 @@ public static class SpineModule
 {
     /// <summary>
     /// The authorization policy name gating admin-scoped endpoints (registry CRUD, provider
-    /// keys, Hangfire dashboard). Requires a <c>role</c> claim of Owner or Operator. Cluster D
+    /// keys). Requires a <c>role</c> claim of Owner or Operator. Cluster D
     /// reuses this name — do not rename.
     /// </summary>
     public const string AdminOnlyPolicy = "AdminOnly";
 
     /// <summary>
-    /// Registers the spine services (job repository, orchestrator, Hangfire Postgres storage +
-    /// server, <c>IDbConnectionFactory</c>, progress publisher, local asset storage) and
+    /// Registers the spine services (job repository, orchestrator, the in-app job runner, <c>IDbConnectionFactory</c>, progress publisher, local asset storage) and
     /// defines the <see cref="AdminOnlyPolicy"/> authorization policy (REQ-FN-002/003/004/005/018).
     /// </summary>
     /// <param name="aServices">The service collection to register into.</param>
@@ -73,29 +71,14 @@ public static class SpineModule
             aOptions.AddPolicy(AdminOnlyPolicy, aPolicy => aPolicy.RequireAssertion(aContext =>
                 IsAdminPrincipal(aContext.User, vSuperAdminEmail, vApplicationId))));
 
-        // Durable job queue: Hangfire with PostgreSQL storage — no Redis (REQ-FN-003, ADR).
-        var vConnectionString = aConfiguration.GetConnectionString("Default")
-            ?? throw new InvalidOperationException("ConnectionStrings:Default is not configured.");
-        var vInvisibilityTimeoutSeconds = aConfiguration.GetValue("Jobs:InvisibilityTimeoutSeconds", 300);
+        // Durable job queue (phase 3, ADR-018): the in-app runner over the GenerationJob table —
+        // no Hangfire, no PostgreSQL storage, no Redis. The host starts it after the database is
+        // migrated (RecoverAsync, then Start).
         var vWorkerCount = aConfiguration.GetValue("Jobs:WorkerCount", 2);
-
-        aServices.AddHangfire((aProvider, aHangfire) => aHangfire
-            .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-            .UseSimpleAssemblyNameTypeSerializer()
-            .UseRecommendedSerializerSettings()
-            .UsePostgreSqlStorage(
-                aStorage => aStorage.UseNpgsqlConnection(vConnectionString),
-                new PostgreSqlStorageOptions
-                {
-                    QueuePollInterval = TimeSpan.FromSeconds(2),
-                    InvisibilityTimeout = TimeSpan.FromSeconds(vInvisibilityTimeoutSeconds)
-                }));
-
-        aServices.AddHangfireServer(aOptions =>
-        {
-            aOptions.Queues = new[] { "generation", "default" };
-            aOptions.WorkerCount = Math.Max(1, vWorkerCount);
-        });
+        aServices.TryAddSingleton(new InAppJobRunnerOptions { WorkerCount = Math.Max(1, vWorkerCount) });
+        aServices.TryAddSingleton<JobQueueStore>();
+        aServices.TryAddSingleton<InAppJobRunner>();
+        aServices.TryAddSingleton<IJobQueue>(aProvider => aProvider.GetRequiredService<InAppJobRunner>());
 
         return aServices;
     }
@@ -111,7 +94,7 @@ public static class SpineModule
     /// <param name="aSuperAdminEmail">The configured superadmin bootstrap email.</param>
     /// <param name="aApplicationId">This app's AppManager application id.</param>
     /// <returns><c>true</c> when the principal resolves to Owner or Operator.</returns>
-    private static bool IsAdminPrincipal(System.Security.Claims.ClaimsPrincipal aUser, string aSuperAdminEmail, int aApplicationId)
+    public static bool IsAdminPrincipal(System.Security.Claims.ClaimsPrincipal aUser, string aSuperAdminEmail, int aApplicationId)
     {
         if (aUser.Claims.Any(aClaim =>
                 (aClaim.Type == "role" || aClaim.Type == System.Security.Claims.ClaimTypes.Role)

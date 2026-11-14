@@ -46,7 +46,7 @@ public class SetupStateRepository : ISetupStateRepository
                 "ProgressPercent" = @aProgressPercent,
                 "Message" = @aMessage,
                 "ErrorMessage" = @aErrorMessage,
-                "UpdatedUtc" = NOW() AT TIME ZONE 'utc'
+                "UpdatedUtc" = now()
             WHERE "SetupStateId" = @aStepKey
             """;
 

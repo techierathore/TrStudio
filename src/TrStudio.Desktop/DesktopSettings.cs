@@ -4,8 +4,8 @@ using System.Text.Json;
 namespace TrStudio.Desktop;
 
 /// <summary>
-/// The desktop head's settings, section <c>Desktop</c> (owner decision 5A, REQ-NFR-015): the API
-/// address and the developer role and start page. Read from <c>appsettings.json</c> shipped inside
+/// The desktop head's settings, section <c>Desktop</c> (owner decision 5A, REQ-NFR-015): the
+/// DEBUG developer role and start page (phase 3: there is no API address; the engine runs inside the app). Read from <c>appsettings.json</c> shipped inside
 /// the app (embedded at build time), overlaid on the committed <c>appsettings.template.json</c>
 /// defaults — never from environment variables.
 /// </summary>
@@ -14,17 +14,11 @@ public sealed class DesktopSettings
     /// <summary>The configuration section name.</summary>
     public const string SectionName = "Desktop";
 
-    /// <summary>The default API address when no file sets one.</summary>
-    public const string DefaultApiBaseUrl = "http://localhost:5102";
-
     /// <summary>Embedded resource name of the committed template (defaults).</summary>
     public const string TemplateResource = "TrStudio.Desktop.appsettings.template.json";
 
     /// <summary>Embedded resource name of this machine's <c>appsettings.json</c> (git-ignored, optional).</summary>
     public const string SettingsResource = "TrStudio.Desktop.appsettings.json";
-
-    /// <summary>The TrStudioApi base address.</summary>
-    public string ApiBaseUrl { get; private set; } = DefaultApiBaseUrl;
 
     /// <summary>DEBUG only: the role to boot straight into (Creator / Operator / Owner); empty for none.</summary>
     public string DevRole { get; private set; } = string.Empty;
@@ -47,7 +41,6 @@ public sealed class DesktopSettings
     /// <returns>The pairs.</returns>
     public IEnumerable<KeyValuePair<string, string?>> ToConfiguration() => new[]
     {
-        new KeyValuePair<string, string?>($"{SectionName}:ApiBaseUrl", ApiBaseUrl),
         new KeyValuePair<string, string?>($"{SectionName}:DevRole", DevRole),
         new KeyValuePair<string, string?>($"{SectionName}:DevStartPath", DevStartPath)
     };
@@ -67,7 +60,6 @@ public sealed class DesktopSettings
             return;
         }
 
-        ApiBaseUrl = Read(vSection, "ApiBaseUrl") ?? ApiBaseUrl;
         DevRole = Read(vSection, "DevRole") ?? DevRole;
         DevStartPath = Read(vSection, "DevStartPath") ?? DevStartPath;
     }

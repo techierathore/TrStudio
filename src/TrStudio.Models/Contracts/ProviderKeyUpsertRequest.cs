@@ -23,4 +23,7 @@ public class ProviderKeyUpsertRequest
     /// stored in the database beside the encrypted key — never in appsettings or code (BRD-93/98).
     /// </summary>
     public string? BaseUrl { get; set; }
+
+    /// <summary>A non-secret setting kept beside the key (phase 3): the RunPod endpoint id or the closed-API vendor.</summary>
+    public string? Account { get; set; }
 }

@@ -132,6 +132,9 @@ tr.sel td{background:var(--sel)}
       </div>
     </div>
 
+    <div class="alert warn" style="margin-bottom:12px" data-tf-phase="3" data-tf-state="missing-settings" data-testid="alert-missing-sign-in-settings">This copy of TrStudio was built without its sign-in settings, so it cannot sign you in. Download it again or ask the person who built it.</div>
+    <div class="alert danger" style="margin-bottom:12px" data-tf-phase="3" data-tf-state="error" data-testid="alert-sign-in-unreachable">The sign-in service (AppManager) cannot be reached. Check your internet connection and try again.</div>
+
     <div class="field">
       <label class="label" for="email">Email</label>
       <input class="input" id="email" type="email" value="owner@studio.example" placeholder="you@studio.com" data-testid="field-email">
@@ -149,6 +152,7 @@ tr.sel td{background:var(--sel)}
 
     <div class="divline">AppManager</div>
     <div class="authnote">Your identity and license are managed by AppManager. TrStudio never stores your password — only your AppManager userId.</div>
+    <div class="authnote" data-tf-phase="3" data-testid="note-local-data">Your work stays on this computer, in your own TrStudio folder. Nothing to install or configure.</div>
 
     <div class="authswitch" style="margin-top:6px">Workspace not set up yet? <a href="setup-required.html" data-testid="setup-required-link">See the setup gate</a></div>
     <div class="authswitch">New to TrStudio? <a href="register.html" data-testid="link-create-an-account">Create an account</a></div>

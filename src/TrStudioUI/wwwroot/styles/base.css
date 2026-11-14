@@ -145,6 +145,13 @@ a.bg-primary:hover {
   z-index: 60;
 }
 
+/* Narrow windows: start the centered card below the fixed theme toggle so the two never overlap. */
+@media (max-width: 560px) {
+  .auth-shell {
+    padding-top: 64px;
+  }
+}
+
 /* FocusOnNavigate focuses the page h1 — keep it for a11y, hide the ring. */
 h1:focus {
   outline: none;

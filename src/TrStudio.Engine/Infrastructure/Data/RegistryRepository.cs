@@ -33,8 +33,8 @@ public class RegistryRepository : IRegistryRepository
         "\"Endpoint\", \"ChatModel\", \"VisionCapable\", " +
         "\"ProviderModelId\", \"TakesReferencePicture\", \"KeepsFixedCharacter\", \"MaxInputImages\", \"UpdatedUtc\") " +
         "VALUES (@Id, @DisplayName, @Task, @ProviderKind, @Tier, @WorkflowRef, " +
-        "CAST(@HardwareRequirementsJson AS jsonb), CAST(@ParamsJson AS jsonb), CAST(@LanguagesJson AS jsonb), " +
-        "@License, @SafetyClass, CAST(@CostJson AS jsonb), @IsReady, @IsEnabled, " +
+        "@HardwareRequirementsJson, @ParamsJson, @LanguagesJson, " +
+        "@License, @SafetyClass, @CostJson, @IsReady, @IsEnabled, " +
         "@Endpoint, @ChatModel, @VisionCapable, " +
         "@ProviderModelId, @TakesReferencePicture, @KeepsFixedCharacter, @MaxInputImages, now()) " +
         "ON CONFLICT (\"RegistryModelId\") DO UPDATE SET " +

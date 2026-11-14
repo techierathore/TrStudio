@@ -7,7 +7,15 @@
             same TrStudioUI RCL + TrStudio.Models that the Blazor Web head uses are hosted here in a
             BlazorWebView, so one component set renders in the browser AND on the desktop.
         -->
-        <TargetFrameworks>net10.0-windows10.0.19041.0;net10.0-maccatalyst</TargetFrameworks>
+        <!-- Phase 3: one project, two heads, each built on its own machine: the Windows app on Windows
+             (its XAML compiler runs only there) and the Mac app on a Mac. EnableWindowsTargeting=true
+             on a Mac still lists both, for a solution-level restore. -->
+        <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">net10.0-windows10.0.19041.0</TargetFrameworks>
+        <TargetFrameworks Condition="!$([MSBuild]::IsOSPlatform('windows')) And '$(EnableWindowsTargeting)' == 'true'">net10.0-windows10.0.19041.0;net10.0-maccatalyst</TargetFrameworks>
+        <TargetFrameworks Condition="!$([MSBuild]::IsOSPlatform('windows')) And '$(EnableWindowsTargeting)' != 'true'">net10.0-maccatalyst</TargetFrameworks>
+        <!-- This Mac has Xcode 27.2 while the installed Mac Catalyst workload (26.5) names Xcode 26.5; the
+             build is correct with the newer Xcode. Remove once the workload is updated (owner). -->
+        <ValidateXcodeVersion Condition="'$(ValidateXcodeVersion)' == ''">false</ValidateXcodeVersion>
 
         <OutputType>Exe</OutputType>
         <RootNamespace>TrStudio.Desktop</RootNamespace>
@@ -35,6 +43,7 @@
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
         <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
+
     </PropertyGroup>
 
     <ItemGroup>
@@ -62,6 +71,20 @@
         <None Remove="appsettings.json;appsettings.template.json" />
         <EmbeddedResource Include="appsettings.template.json" LogicalName="TrStudio.Desktop.appsettings.template.json" />
         <EmbeddedResource Include="appsettings.json" Condition="Exists('appsettings.json')" LogicalName="TrStudio.Desktop.appsettings.json" />
+        <!-- Phase 3 (ADR-019, REQ-NFR-019): the AppManager address, application id and API key are put into
+             the build from the git-ignored appmanager.local.json; the committed template has empty values.
+             No API secret and no signing key. -->
+        <Content Remove="appmanager.local.json;appmanager.template.json" />
+        <None Remove="appmanager.local.json;appmanager.template.json" />
+        <EmbeddedResource Include="appmanager.template.json" LogicalName="TrStudio.Desktop.appmanager.template.json" />
+        <EmbeddedResource Include="appmanager.local.json" Condition="Exists('appmanager.local.json')" LogicalName="TrStudio.Desktop.appmanager.local.json" />
+    </ItemGroup>
+
+    <!-- Phase 3: the engine (and with it ONNX Runtime's managed assembly) runs inside the app. That
+         assembly declares the ONNX Runtime Extensions entry point RegisterCustomOps, which no Mac Catalyst
+         build ships, so the linker is told not to require it (the extensions are never called). -->
+    <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">
+        <ReferenceNativeSymbol Include="RegisterCustomOps" SymbolType="Function" SymbolMode="Ignore" />
     </ItemGroup>
 
     <ItemGroup>
@@ -69,15 +92,18 @@
         <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
         <!-- IHttpClientFactory (AddHttpClient) for the named TrStudioApi client. -->
-        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
-        <!-- HS256 dev-token minting for the desktop dev-session seam (DEBUG-gated). -->
-        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.17.0" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.9" />
+        <!-- Phase 3 (Q5): file logging under the user's data folder. -->
+        <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" />
+        <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     </ItemGroup>
 
     <ItemGroup>
         <!-- The shared UI (all creator + management screens, the role-gated shell) and shared contracts. -->
         <ProjectReference Include="..\TrStudioUI\TrStudioUI.csproj" />
         <ProjectReference Include="..\TrStudio.Models\TrStudio.Models.csproj" />
+        <!-- Phase 3 (ADR-015): the engine, the local store and the job runner inside the app. -->
+        <ProjectReference Include="..\TrStudio.InProcess\TrStudio.InProcess.csproj" />
     </ItemGroup>
 
 </Project>

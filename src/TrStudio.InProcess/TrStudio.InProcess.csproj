@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Phase 3 (ADR-015): the engine inside the desktop app. The screens keep calling /api/v1/... through
+    the named "TrStudioApi" HttpClient; InProcessEngineHandler answers those calls in this process, with
+    no socket and no web server, from the same route table the API host had. Plain net10.0: no ASP.NET
+    Core host, so it runs inside Mac Catalyst and Windows.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>TrStudio.InProcess</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TrStudio.Engine\TrStudio.Engine.csproj" />
+    <ProjectReference Include="..\TrStudio.Models\TrStudio.Models.csproj" />
+    <ProjectReference Include="..\TrStudioDb\TrStudioDb.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.9" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TrStudio.Tests.Unit" />
+  </ItemGroup>
+
+</Project>

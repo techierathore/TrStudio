@@ -9,7 +9,7 @@ namespace TrStudio.Engine.Domain.RunPod;
 /// <summary>
 /// HTTP <see cref="IRunPodClient"/> over the RunPod serverless REST API (REQ-FN-028). Structural
 /// implementation: it builds and issues the documented requests but is exercised live only once a
-/// real <c>RunPod:ApiKey</c> is supplied (live cold-start is deferred). The API key is sent as a
+/// real RunPod key is entered on Registry & providers (live cold-start is deferred). The API key is sent as a
 /// bearer header and is never logged.
 /// </summary>
 public class RunPodHttpClient : IRunPodClient

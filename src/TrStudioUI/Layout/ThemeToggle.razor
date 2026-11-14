@@ -12,7 +12,7 @@
         AriaLabel="Toggle dark mode"
         OnClick="ToggleThemeAsync"
         Class="@Class"
-        data-testid="theme-toggle">
+        data-testid="@TestId">
     <LucideIcon Name="@(objIsDark ? "sun" : "moon")" Size="16" />
 </Button>
 
@@ -22,6 +22,10 @@
     /// <summary>Additional CSS classes for the toggle button (e.g. auth-screen positioning).</summary>
     [Parameter]
     public string? Class { get; set; }
+
+    /// <summary>The test anchor (the auth screens' mockups name it icon-btn-toggle-dark-mode).</summary>
+    [Parameter]
+    public string TestId { get; set; } = "theme-toggle";
 
     /// <inheritdoc />
     protected override async Task OnAfterRenderAsync(bool aFirstRender)

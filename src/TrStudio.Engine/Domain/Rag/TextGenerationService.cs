@@ -21,6 +21,7 @@ namespace TrStudio.Engine.Domain.Rag;
 public class TextGenerationService : ITextGenerationService
 {
     private readonly ITechieRag objRag;
+    private readonly ITextModelSource? objTextModels;
     private readonly ILlmTokenTracker objTokenTracker;
     private readonly RagOptions objOptions;
     private readonly ILogger<TextGenerationService> objLogger;
@@ -36,9 +37,11 @@ public class TextGenerationService : ITextGenerationService
         ITechieRag aRag,
         ILlmTokenTracker aTokenTracker,
         RagOptions aOptions,
-        ILogger<TextGenerationService> aLogger)
+        ILogger<TextGenerationService> aLogger,
+        ITextModelSource? aTextModels = null)
     {
         objRag = aRag;
+        objTextModels = aTextModels;
         objTokenTracker = aTokenTracker;
         objOptions = aOptions;
         objLogger = aLogger;
@@ -59,7 +62,7 @@ public class TextGenerationService : ITextGenerationService
         }
 
         var vPrompt = BuildScriptPrompt(aRequest);
-        var vLlm = SafeGetLlm();
+        var vLlm = await SafeGetLlmAsync(aCancellationToken).ConfigureAwait(false);
 
         if (vLlm is not null)
         {
@@ -104,7 +107,7 @@ public class TextGenerationService : ITextGenerationService
         }
 
         var vPrompt = BuildCaptionPrompt(aRequest);
-        var vLlm = SafeGetLlm();
+        var vLlm = await SafeGetLlmAsync(aCancellationToken).ConfigureAwait(false);
 
         if (vLlm is not null)
         {
@@ -134,10 +137,18 @@ public class TextGenerationService : ITextGenerationService
         return await DegradeCaptionsAsync(aRequest, aUserId, aCancellationToken).ConfigureAwait(false);
     }
 
-    private ILlmProvider? SafeGetLlm()
+    private async Task<ILlmProvider?> SafeGetLlmAsync(CancellationToken aCancellationToken)
     {
         try
         {
+            // Phase 3 (REQ-RAG-006): the enabled text-chat registry row comes first; the shared client
+            // has no model unless a host configured one.
+            if (objTextModels is not null
+                && await objTextModels.GetAsync(aCancellationToken).ConfigureAwait(false) is { } vFromRegistry)
+            {
+                return vFromRegistry.Provider;
+            }
+
             return objRag.GetLlmProvider();
         }
         catch (Exception vException)

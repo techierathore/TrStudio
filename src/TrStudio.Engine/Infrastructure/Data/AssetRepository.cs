@@ -36,7 +36,7 @@ public class AssetRepository : IAssetRepository
             "\"Kind\", \"StoragePath\", \"ThumbnailPath\", \"Width\", \"Height\", \"SeedUsed\", \"ParamsJson\", " +
             "\"ModelId\", \"ProvenanceJson\", \"CreatedUtc\") " +
             "VALUES (@AssetId, @JobId, @UserId, @ProjectId, @Kind, @StoragePath, @ThumbnailPath, @Width, @Height, " +
-            "@SeedUsed, CAST(@ParamsJson AS jsonb), @ModelId, CAST(@ProvenanceJson AS jsonb), @CreatedUtc)";
+            "@SeedUsed, @ParamsJson, @ModelId, @ProvenanceJson, @CreatedUtc)";
 
         using var vConnection = await objConnectionFactory.CreateOpenConnectionAsync(aCancellationToken).ConfigureAwait(false);
         await vConnection.ExecuteAsync(new CommandDefinition(vSql, new
@@ -92,7 +92,7 @@ public class AssetRepository : IAssetRepository
 
         if (!string.IsNullOrWhiteSpace(aFilter.Search))
         {
-            vWhere.Append(" AND \"ParamsJson\"::text ILIKE @aSearch");
+            vWhere.Append(" AND \"ParamsJson\" LIKE @aSearch");
         }
 
         var vSql =
@@ -145,7 +145,7 @@ public class AssetRepository : IAssetRepository
     public async Task UpdateProvenanceAsync(Guid aAssetId, string aUserId, string aProvenanceJson, CancellationToken aCancellationToken = default)
     {
         const string vSql =
-            "UPDATE \"GeneratedAsset\" SET \"ProvenanceJson\" = CAST(@aProvenanceJson AS jsonb) " +
+            "UPDATE \"GeneratedAsset\" SET \"ProvenanceJson\" = @aProvenanceJson " +
             "WHERE \"GeneratedAssetId\" = @aAssetId AND \"UserId\" = @aUserId";
 
         using var vConnection = await objConnectionFactory.CreateOpenConnectionAsync(aCancellationToken).ConfigureAwait(false);

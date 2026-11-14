@@ -27,7 +27,7 @@ public class ProviderKeyRepository : IProviderKeyRepository
     public async Task<IReadOnlyList<ProviderKeyInfo>> ListAsync(CancellationToken aCancellationToken = default)
     {
         const string vSql =
-            "SELECT \"ProviderName\", \"IsEnabled\", \"BaseUrl\" FROM \"ProviderKey\" ORDER BY \"ProviderName\"";
+            "SELECT \"ProviderName\", \"IsEnabled\", \"BaseUrl\", \"Account\" FROM \"ProviderKey\" ORDER BY \"ProviderName\"";
 
         using var vConnection = await objConnectionFactory.CreateOpenConnectionAsync(aCancellationToken).ConfigureAwait(false);
         var vRows = await vConnection.QueryAsync<ProviderKeyInfo>(
@@ -89,7 +89,7 @@ public class ProviderKeyRepository : IProviderKeyRepository
     public async Task<ProviderKeyInfo?> GetInfoAsync(string aProviderName, CancellationToken aCancellationToken = default)
     {
         const string vSql =
-            "SELECT \"ProviderName\", \"IsEnabled\", \"BaseUrl\" FROM \"ProviderKey\" WHERE \"ProviderName\" = @aProviderName";
+            "SELECT \"ProviderName\", \"IsEnabled\", \"BaseUrl\", \"Account\" FROM \"ProviderKey\" WHERE \"ProviderName\" = @aProviderName";
 
         using var vConnection = await objConnectionFactory.CreateOpenConnectionAsync(aCancellationToken).ConfigureAwait(false);
         return await vConnection.QuerySingleOrDefaultAsync<ProviderKeyInfo>(

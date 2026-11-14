@@ -33,7 +33,7 @@ public class CharacterRepository : ICharacterRepository
         "\"Seed\", \"IdentityEmbedding\", \"LoraRef\", \"ReferenceAssetsJson\", \"IsRealPerson\", \"PhotorealOfRealPerson\", " +
         "\"DepictsMinor\", \"IsAdult\", \"CreatedUtc\", \"UpdatedUtc\") " +
         "VALUES (@CharacterId, @UserId, @Name, @Description, @Realism, @SafetyClass, @Seed, @IdentityEmbedding, @LoraRef, " +
-        "CAST(@ReferenceAssetsJson AS jsonb), @IsRealPerson, @PhotorealOfRealPerson, @DepictsMinor, @IsAdult, @CreatedUtc, @UpdatedUtc)";
+        "@ReferenceAssetsJson, @IsRealPerson, @PhotorealOfRealPerson, @DepictsMinor, @IsAdult, @CreatedUtc, @UpdatedUtc)";
 
     /// <summary>Owner-filtered update SQL (BRD-81); the locked identity (seed/references) is not touched.</summary>
     internal const string UpdateSql =

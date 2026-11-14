@@ -30,7 +30,7 @@ public class GenerationLogRepository : IGenerationLogRepository
         "INSERT INTO \"GenerationLog\" (\"GenerationLogId\", \"GenerationJobId\", \"UserId\", \"ModelId\", " +
         "\"Tier\", \"ParamsJson\", \"CostEstimate\", \"ActualCost\", \"DurationMs\", \"Outcome\", " +
         "\"FailureMessage\", \"PriceSource\", \"CreatedUtc\") " +
-        "VALUES (@LogId, @JobId, @UserId, @ModelId, @Tier, CAST(@ParamsJson AS jsonb), @CostEstimate, " +
+        "VALUES (@LogId, @JobId, @UserId, @ModelId, @Tier, @ParamsJson, @CostEstimate, " +
         "@ActualCost, @DurationMs, @Outcome, @FailureMessage, @PriceSource, @CreatedUtc)";
 
     private readonly IDbConnectionFactory objConnectionFactory;
@@ -107,11 +107,11 @@ public class GenerationLogRepository : IGenerationLogRepository
 
         var vSql =
             $"SELECT {SelectColumns} {FromClause} " +
-            "WHERE l.\"UserId\" = @aUserId AND l.\"GenerationJobId\" = ANY(@aJobIds) ORDER BY l.\"CreatedUtc\"";
+            "WHERE l.\"UserId\" = @aUserId AND l.\"GenerationJobId\" IN @aJobIds ORDER BY l.\"CreatedUtc\"";
 
         using var vConnection = await objConnectionFactory.CreateOpenConnectionAsync(aCancellationToken).ConfigureAwait(false);
         var vRows = await vConnection.QueryAsync<GenerationLogEntry>(new CommandDefinition(
-            vSql, new { aUserId, aJobIds = aJobIds.ToArray() }, cancellationToken: aCancellationToken)).ConfigureAwait(false);
+            vSql, new { aUserId, aJobIds = aJobIds.Select(aId => aId.ToString("D")).ToArray() }, cancellationToken: aCancellationToken)).ConfigureAwait(false);
         return vRows.ToList();
     }
 

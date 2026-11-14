@@ -40,7 +40,7 @@ public class ModelInstallRepository : IModelInstallRepository
             VALUES
                 (@aInstallId, @aModelName, @aSourceId, @aDownloadUrl, @aTotalBytes, @aDownloadedBytes,
                  @aState, @aDestination, @aSpeedBytesPerSec, @aLicenseName, @aMinVramGb, @aErrorMessage,
-                 NOW() AT TIME ZONE 'utc', NOW() AT TIME ZONE 'utc')
+                 now(), now())
             """;
 
         using var vConnection = await objConnectionFactory.CreateOpenConnectionAsync(aCancellationToken).ConfigureAwait(false);
@@ -79,7 +79,7 @@ public class ModelInstallRepository : IModelInstallRepository
                 "LicenseName" = @aLicenseName,
                 "MinVramGb" = @aMinVramGb,
                 "ErrorMessage" = @aErrorMessage,
-                "UpdatedUtc" = NOW() AT TIME ZONE 'utc'
+                "UpdatedUtc" = now()
             WHERE "ModelInstallId" = @aInstallId
             """;
 

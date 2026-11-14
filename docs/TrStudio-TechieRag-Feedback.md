@@ -4,13 +4,13 @@
 |---|---|
 | App | TrStudio |
 | Upstream | TechieRag |
-| Updated | 2026-11-12 |
+| Updated | 2026-11-14 |
 
 ## Summary
 
-4 entries: 0 blocking now, 3 filed and not blocking, 1 fixed upstream.
+6 entries: 0 blocking now, 5 filed and not blocking, 1 fixed upstream.
 
-Nothing is blocked. The prompt-chat picture input (TR-RAG-001) was fixed in TechieRag 1.1.7 and closed on 2026-10-18. The three minor character-bible gaps (TR-RAG-002 to TR-RAG-004) are all worked around in TrStudio; the character bible and prompt chat both meet their acceptance lines. TrStudio pins TechieRag 1.0.5 (`net10.0`).
+Nothing is blocked. The prompt-chat picture input (TR-RAG-001) was fixed in TechieRag 1.1.7 and closed on 2026-10-18. The three minor character-bible gaps (TR-RAG-002 to TR-RAG-004) are all worked around in TrStudio; the character bible and prompt chat both meet their acceptance lines. TrStudio pins TechieRag 1.0.5 (`net10.0`). Phase 3 (2026-11-14) moves the character bible to `UseSqliteVec` in the desktop app; TR-RAG-005 and TR-RAG-006 are what the reference does not say about that.
 
 ## Entries
 
@@ -63,3 +63,25 @@ Fixed upstream: closed 2026-10-18, fixed in TechieRag 1.1.7 (`ChatMessage.UserWi
 #### Detail
 
 The character bible keeps per-character notes in Postgres (`"CharacterBibleEntry"`, owner and character scoped) and also indexes them into PgVector through TechieRag (`UsePgVector` on the app's Postgres connection, `RagModule`) for script-assist search. Prompt Studio (ADR-013) builds a fresh `TechieRagBuilder` client per call from the picked registry row's endpoint, key and model, because 1.0.5's shared client has no per-call endpoint override; a temporary `UseSqliteVec` store satisfies `Build()` and is never used. `ILlmProvider.ChatAsync` for multi-turn text is present at 1.0.5 and matches the reference.
+
+### TR-RAG-005 — The reference does not say what `UseSqliteVec` needs or does on a desktop app
+
+- **Severity:** minor
+- **Blocks:** no — TrStudio gives TechieRag its own file beside the app database and relies on the in-process fallback, and the work carried on
+- **Repro:** read `.techierag/TechieRag-AI-Reference.md` for running vector search on SQLite inside a Windows and Mac Catalyst desktop app
+- **Expected:** the reference says (1) whether the argument is a file path or a connection string, (2) which native vector-extension builds ship and for which platforms, Mac Catalyst included, (3) what happens when the extension cannot load, and (4) which tables it creates, so an app knows whether it may share its own SQLite file
+- **Actual:** only `UseSqliteVec(connectionString)` with the default `Data Source=techierag.db`; the fallback (`SqliteVecStore.ComputeSimilarityFallbackAsync`, `TryLoadSqliteVecExtension`) is visible only in the 1.0.5 assembly, and the existing TrStudio code passes a bare path
+- **Encountered in:** REQ-RAG-007 (phase 3, character-bible search on the local store)
+- **Workaround:** a separate `TrStudio.vectors.db` in the same data folder; search still works through the fallback when the extension does not load
+- **Suggested fix:** a "SQLite on desktop" section in the reference covering the four points above
+
+### TR-RAG-006 — A SQLite-only desktop app still carries the PostgreSQL, Qdrant and Azure client packages
+
+- **Severity:** minor
+- **Blocks:** no — the packages are unused at run time, and the work carried on
+- **Repro:** reference TechieRag 1.0.5 from a MAUI desktop app that uses only `UseSqliteVec` and an OpenAI-compatible model
+- **Expected:** the vector stores and model clients a project does not use are optional packages
+- **Actual:** `Npgsql`, `Pgvector`, `Qdrant.Client` and `Azure.AI.OpenAI` come in as hard dependencies (nuspec of 1.0.5), so the desktop app ships them
+- **Encountered in:** REQ-NFR-016 (phase 3, one desktop app)
+- **Workaround:** none needed; the app size is larger than it has to be
+- **Suggested fix:** split the stores and clients into `TechieRag.PgVector`, `TechieRag.Qdrant` and similar packages

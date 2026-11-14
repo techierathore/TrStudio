@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    TEST TOOL ONLY — never shipped (phase 3, REQ-NFR-020). Serves the same TrStudioUI screens and the
+    same in-process engine (TrStudio.InProcess, SQLite in a temporary data folder) over interactive
+    server rendering, so the headless Playwright checks can drive them while the desktop app cannot be
+    driven. The desktop project never references this project; nothing here is packaged.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>TrStudio</RootNamespace>
+    <AssemblyName>TrStudio.TestHost</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\TrStudioUI\TrStudioUI.csproj" />
+    <ProjectReference Include="..\..\src\TrStudio.Models\TrStudio.Models.csproj" />
+    <ProjectReference Include="..\..\src\TrStudio.InProcess\TrStudio.InProcess.csproj" />
+  </ItemGroup>
+
+</Project>

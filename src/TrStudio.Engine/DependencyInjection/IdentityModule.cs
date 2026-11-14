@@ -37,10 +37,16 @@ public static class IdentityModule
                 var vOptions = aProvider.GetRequiredService<IOptions<AppManagerOptions>>().Value;
                 aClient.BaseAddress = new Uri(vOptions.BaseUrl);
                 aClient.Timeout = TimeSpan.FromSeconds(30);
+                // Phase 3 (ADR-019): the desktop app identifies itself with its application id and
+                // one API key, built in; no API secret and no signing key are sent.
+                if (vOptions.ApplicationId is { } vApplicationId)
+                {
+                    aClient.DefaultRequestHeaders.Add(AppManagerHeaders.ApplicationId, vApplicationId.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                }
+
                 if (!string.IsNullOrWhiteSpace(vOptions.ApiKey))
                 {
-                    aClient.DefaultRequestHeaders.Add("X-Api-Key", vOptions.ApiKey);
-                    aClient.DefaultRequestHeaders.Add("X-Api-Secret", vOptions.ApiSecret);
+                    aClient.DefaultRequestHeaders.Add(AppManagerHeaders.ApiKey, vOptions.ApiKey);
                 }
             })
             .ConfigurePrimaryHttpMessageHandler(aProvider =>

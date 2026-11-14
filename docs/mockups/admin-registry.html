@@ -250,6 +250,7 @@ tr.sel td{background:var(--sel)}
       <div class="card" data-testid="card-provider-keys">
         <h3>Provider keys</h3>
         <p class="muted" style="font-size:12px;margin:0 0 10px">Encrypted at rest · never logged.</p>
+        <div class="alert" style="margin:0 0 10px;font-size:12px" data-tf-phase="3" data-testid="key-protection-note">Keys stay on this computer, in your TrStudio library, protected by this computer's own protection for your user (Keychain on Mac, Windows data protection).</div>
         <div class="col">
           <div>
             <div class="row"><label class="label" style="margin:0">HeyGen</label><span class="spacer"></span><span class="muted" style="font-size:11px">enabled</span><div class="toggle on" data-testid="switch-5"></div></div>
@@ -258,6 +259,17 @@ tr.sel td{background:var(--sel)}
           <div>
             <div class="row"><label class="label" style="margin:0">fal.ai</label><span class="spacer"></span><span class="muted" style="font-size:11px">enabled</span><div class="toggle on" data-testid="switch-6"></div></div>
             <input class="input" type="password" value="fal_key_3e7d2c0a9f" style="margin-top:6px" data-testid="field-fal-ai">
+          </div>
+          <div data-tf-phase="3" data-testid="provider-runpod">
+            <div class="row"><label class="label" style="margin:0">RunPod</label><span class="badge ok" style="margin-left:6px" data-testid="badge-runpod-configured">Configured</span><span class="spacer"></span><span class="muted" style="font-size:11px">enabled</span><div class="toggle on" data-testid="switch-runpod"></div></div>
+            <label class="label" style="margin-top:6px">Endpoint id</label>
+            <input class="input" value="abc123xyz" data-testid="field-runpod-endpoint">
+            <label class="label" style="margin-top:6px">API key</label>
+            <input class="input" type="password" value="••••••••••••7c21" data-testid="field-runpod-key">
+          </div>
+          <div data-tf-phase="3" data-testid="provider-text-model">
+            <div class="row"><label class="label" style="margin:0">Text model (scripts and captions)</label><span class="spacer"></span><span class="muted" style="font-size:11px">from the enabled text-chat row</span></div>
+            <select class="select" style="margin-top:6px" data-testid="field-text-model"><option>GPT-4o (prompt crafting)</option></select>
           </div>
           <div data-tf-phase="2" data-testid="provider-venice">
             <div class="row"><label class="label" style="margin:0">Venice</label><span class="badge brand" style="margin-left:6px" data-testid="badge-cloud-venice">Cloud</span><span class="spacer"></span><span class="muted" style="font-size:11px">enabled</span><div class="toggle on" data-testid="switch-venice"></div></div>

@@ -76,8 +76,8 @@ public class ComfyWorkflowRepository : IComfyWorkflowRepository
         const string vSql =
             "INSERT INTO \"ComfyWorkflowVersion\" (\"ComfyWorkflowVersionId\", \"ComfyWorkflowId\", \"VersionNumber\", " +
             "\"GraphJson\", \"MappedParamsJson\", \"SmokeStatus\", \"SmokeMessage\", \"CreatedUtc\") " +
-            "VALUES (@VersionId, @WorkflowId, @VersionNumber, CAST(@GraphJson AS jsonb), " +
-            "CAST(@MappedParamsJson AS jsonb), @SmokeStatus, @SmokeMessage, @CreatedUtc)";
+            "VALUES (@VersionId, @WorkflowId, @VersionNumber, @GraphJson, " +
+            "@MappedParamsJson, @SmokeStatus, @SmokeMessage, @CreatedUtc)";
 
         using var vConnection = await objConnectionFactory.CreateOpenConnectionAsync(aCancellationToken).ConfigureAwait(false);
         await vConnection.ExecuteAsync(new CommandDefinition(vSql, new

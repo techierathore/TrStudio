@@ -16,7 +16,7 @@ namespace TrStudio.Engine.Providers;
 /// <see cref="ProviderKind.ClosedApi"/> so it backs the Premium video tier (I2V + T2V) while the
 /// resolver still matches exactly one provider per model. It adapts a hosted video-model aggregator
 /// (fal.ai / Replicate / WaveSpeed shape): submit → poll → download. GRACEFUL DEGRADE: with no
-/// <c>ClosedApi:ApiKey</c> (the EMPTY default) a submitted job resolves to a Failed status carrying
+/// closed-API key on Registry & providers (the EMPTY default) a submitted job resolves to a Failed status carrying
 /// the actionable "aggregator not configured" message plus a remediation hint (REQ-FN-005 style)
 /// instead of crashing; the live aggregator call is deferred until a real key is supplied, at which
 /// point the configured path emits a deterministic placeholder MP4 asset in this phase.
@@ -66,7 +66,7 @@ public class ClosedApiProvider : IGenerationProvider
             vExecution.Status = new JobStatus(
                 JobState.Failed, 0, null,
                 ClosedApiOptions.NotConfiguredMessage,
-                "Add ClosedApi:ApiKey (fal.ai / Replicate / WaveSpeed) under Admin, or route this job to the Fast (local) or High (RunPod) tier.");
+                "Enter the closed-API key (fal.ai / Replicate / WaveSpeed) on Registry & providers, or route this job to the Fast (local) or High (RunPod) tier.");
             objLogger.LogWarning("ClosedApi job {JobId} rejected: aggregator not configured", aJob.JobId);
             return Task.FromResult(aJob.JobId);
         }
@@ -125,7 +125,7 @@ public class ClosedApiProvider : IGenerationProvider
             aExecution.Status = new JobStatus(
                 JobState.Failed, aExecution.Status.Progress, null,
                 $"Closed-API execution error: {vException.Message}",
-                "Retry the job; if it persists, verify ClosedApi:ApiKey under Admin.");
+                "Retry the job; if it persists, check the closed-API key on Registry & providers.");
         }
     }
 

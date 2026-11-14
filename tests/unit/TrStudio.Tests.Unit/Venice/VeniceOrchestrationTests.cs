@@ -1,6 +1,3 @@
-using Hangfire;
-using Hangfire.Common;
-using Hangfire.States;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using TrStudio.Engine.Domain.Comfy;
@@ -33,7 +30,7 @@ public sealed class VeniceOrchestrationTests : IDisposable
     private readonly IJobRepository objJobRepository = Substitute.For<IJobRepository>();
     private readonly IGenerationLogRepository objLogRepository = Substitute.For<IGenerationLogRepository>();
     private readonly IModelCatalogService objCatalog = Substitute.For<IModelCatalogService>();
-    private readonly IBackgroundJobClient objBackgroundJobClient = Substitute.For<IBackgroundJobClient>();
+    private readonly IJobQueue objJobQueue = Substitute.For<IJobQueue>();
     private readonly ICostEstimator objCostEstimator = Substitute.For<ICostEstimator>();
     private readonly ISpendLedger objSpendLedger = Substitute.For<ISpendLedger>();
     private readonly ISafetyPipeline objSafetyPipeline = Substitute.For<ISafetyPipeline>();
@@ -48,7 +45,7 @@ public sealed class VeniceOrchestrationTests : IDisposable
             objLogRepository,
             objCatalog,
             new ProviderResolver(vProviders),
-            objBackgroundJobClient,
+            objJobQueue,
             Substitute.For<IProgressNotifier>(),
             objCostEstimator,
             objSpendLedger,
@@ -85,7 +82,7 @@ public sealed class VeniceOrchestrationTests : IDisposable
 
         await Assert.ThrowsAsync<SafetyBlockedException>(() => CreateOrchestrator().SubmitAsync(vRequest, "user-1"));
         Assert.Empty(objKit.Handler.Requests);
-        objBackgroundJobClient.DidNotReceive().Create(Arg.Any<Job>(), Arg.Any<IState>());
+        objJobQueue.DidNotReceive().Enqueue(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<bool>());
     }
 
     /// <summary>REQ-FN-085: a clip whose Venice quote would pass the cap is refused; the clip is never queued.</summary>
@@ -103,7 +100,7 @@ public sealed class VeniceOrchestrationTests : IDisposable
         await objSpendLedger.Received(1).EvaluateAsync(0.5m, Arg.Any<CancellationToken>());
         Assert.Empty(objKit.Handler.To("video/queue"));
         Assert.All(objKit.Handler.Requests, aRequest => Assert.DoesNotContain("waves", aRequest.Body ?? string.Empty));
-        objBackgroundJobClient.DidNotReceive().Create(Arg.Any<Job>(), Arg.Any<IState>());
+        objJobQueue.DidNotReceive().Enqueue(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<bool>());
         await objJobRepository.DidNotReceive().InsertAsync(Arg.Any<GenerationJob>(), Arg.Any<CancellationToken>());
     }
 
@@ -137,7 +134,7 @@ public sealed class VeniceOrchestrationTests : IDisposable
 
         Assert.Equal(0.3m, vResponse.CostEstimate);
         await objCostEstimator.DidNotReceive().EstimateAsync(Arg.Any<GenerationJob>(), Arg.Any<CancellationToken>());
-        objBackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        objJobQueue.Received(1).Enqueue(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<bool>());
     }
 
     /// <summary>A refused quote is recorded as a failed job and log row with Venice's own text, then surfaced.</summary>

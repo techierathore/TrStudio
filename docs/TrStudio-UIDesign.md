@@ -68,6 +68,9 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 | Submit | `Button` (primary, Submit) | sign in | loading → `Spinner` |
 | Auth note | `TypographyMuted` | "Authenticated via AppManager" | error → `Alert` (Danger) |
 | Register link | `Button` (Link) | "Create an account" → `/register` | — |
+| Missing settings (phase 3) | `Alert` (Warning) | build has no AppManager id or key; Sign in disabled | `alert-missing-sign-in-settings` |
+| Unreachable (phase 3) | `Alert` (Danger) | AppManager cannot be reached | `alert-sign-in-unreachable` |
+| Local data note (phase 3) | `TypographyMuted` | work stays on this computer | `note-local-data` |
 
 **Fields:**
 
@@ -116,6 +119,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 | Message | heading + `TypographyMuted` | no model sources / models configured; ask your admin or sign in as an admin | — |
 | Actions | `Button` (primary) + `Button` (outline) | "Sign in as admin" → `/login`; "Check again" re-runs the gate | checking → `Spinner` |
 | Admin steps hint | `Card` + numbered list | enable a source → install a model → registry row | — |
+| Local data (phase 3) | `Card` + monospace path + `Badge` | the user's data folder; library ready | problem → folder and reason |
 
 **Fields:**
 
@@ -550,6 +554,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 | Add / edit | `Sheet` (right) | row fields + declarative params editor | saving → `Spinner` |
 | Params editor | repeated `Field` rows (`Input`/`Select`/`Switch`) | key/type/required/default | validation inline |
 | Provider keys | `Card` + `Input` (Password) per provider + `Switch` (enabled) | HeyGen / aggregator keys (encrypted) | masked; never logged |
+| Keys (phase 3) | `Alert`, `Input`, `Select` | protection note; RunPod; text model | Configured |
 | Venice card (phase 2) | `Card`, `Input`, `Switch`, `Button` (Test connection) | address, masked key (BRD-93..95) | "Connected" or Venice's error |
 | Venice row (phase 2) | `Select`, `Input`, 2 `Checkbox` | model id, task, abilities (BRD-96..97) | "Venice" `Badge` |
 | Fill from Venice (phase 2) | `Button` | fills the row, unsaved (BRD-122) | error → `Alert` |
@@ -565,16 +570,16 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 | Provider | select | yes | a provider kind |
 | Tier | select | yes | Fast / High / Premium |
 | Params schema | editor rows | no | key, type, required, default per row |
-| Provider key (HeyGen, fal.ai …) | password | no | write-only; shown masked after save |
+| Provider key (HeyGen, fal.ai …) | password | no | write-only, masked |
 | Venice address (phase 2) | url | yes | https |
-| Venice API key (phase 2) | password | yes | masked after save |
-| Provider model id (phase 2) | text | Venice | e.g. z-image-turbo |
+| Venice API key (phase 2) | password | yes | masked |
+| Provider model id (phase 2) | text | Venice | model id |
 | Takes a reference picture (phase 2) | checkbox | no | — |
 | Keeps a fixed character (phase 2) | checkbox | no | — |
 
-**Notes:** the params schema drives the studios' controls. `/admin/providers` renders this screen's provider panel (BRD-7). **States:** empty: `Empty` CTA · loading: skeleton rows · error: `Alert`; secrets masked.
+**Notes:** the params schema drives the studios' controls; `/admin/providers` renders the provider panel. **States:** empty: `Empty` CTA · loading: skeleton rows · error: `Alert`; secrets masked.
 
-**Phase 2 (Venice, BRD-93 to BRD-117, BRD-122):** Venice card; one registry row per Venice model and task; Fill from Venice pre-fills a row.
+**Phase 2:** Venice card; one row per Venice model and task; Fill from Venice.
 
 ### Screen: Admin — ComfyUI import & debug
 

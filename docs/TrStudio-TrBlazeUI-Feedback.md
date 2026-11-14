@@ -186,6 +186,8 @@ Closed: fixed in TrBlazeUI 1.0.9 (2026-07-12); see Detail.
 
 ### TR-011 — packages ship a `Microsoft.AspNetCore.App` FrameworkReference → MAUI Mac Catalyst head unbuildable (NETSDK1082)
 
+> ✅ **Closed 2026-11-14** — re-checked here: 2026-11-14: dotnet build src/TrStudio.Desktop/TrStudio.Desktop.csproj -f net10.0-maccatalyst built with 0 errors (no NETSDK1082), with the TrBlazeUI packages the solution pins.
+
 Fixed upstream (2026-07-12, TrBlazeUI 1.0.9), not yet re-checked in TrStudio.
 
 - **Severity:** blocker (for the Mac Catalyst desktop delivery; Windows head and web head unaffected)

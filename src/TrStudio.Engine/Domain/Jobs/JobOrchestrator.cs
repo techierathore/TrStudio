@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Hangfire;
 using Microsoft.Extensions.Logging;
 using TrStudio.Engine.Domain.Cost;
 using TrStudio.Engine.Domain.Progress;
@@ -18,7 +17,7 @@ namespace TrStudio.Engine.Domain.Jobs;
 /// <summary>
 /// Default <see cref="IJobOrchestrator"/>. Resolves modelId → registry row → exactly one
 /// provider, validates the request against the declarative params schema, estimates cost,
-/// persists the job and enqueues <see cref="GenerationJobWorker"/> on the durable Hangfire
+/// persists the job and enqueues <see cref="GenerationJobWorker"/> on the in-app job
 /// queue — the identical sequence for every provider (REQ-FN-001/002).
 /// </summary>
 public class JobOrchestrator : IJobOrchestrator
@@ -28,7 +27,7 @@ public class JobOrchestrator : IJobOrchestrator
     private readonly IGenerationLogRepository objLogRepository;
     private readonly IModelCatalogService objModelCatalog;
     private readonly IProviderResolver objProviderResolver;
-    private readonly IBackgroundJobClient objBackgroundJobClient;
+    private readonly IJobQueue objJobQueue;
     private readonly IProgressNotifier objProgressNotifier;
     private readonly ICostEstimator objCostEstimator;
     private readonly ISpendLedger objSpendLedger;
@@ -44,7 +43,7 @@ public class JobOrchestrator : IJobOrchestrator
     /// <param name="aLogRepository">Generation-log persistence.</param>
     /// <param name="aModelCatalog">The creator-visible model catalog.</param>
     /// <param name="aProviderResolver">Model → provider resolution.</param>
-    /// <param name="aBackgroundJobClient">The Hangfire enqueue client.</param>
+    /// <param name="aJobQueue">The in-app job queue (phase 3, ADR-018).</param>
     /// <param name="aProgressNotifier">Progress publication seam.</param>
     /// <param name="aCostEstimator">Per-job cost estimator over the registry cost block (REQ-FN-029).</param>
     /// <param name="aSpendLedger">Monthly spend-cap guardrail (REQ-FN-029/NFR-007).</param>
@@ -57,7 +56,7 @@ public class JobOrchestrator : IJobOrchestrator
         IGenerationLogRepository aLogRepository,
         IModelCatalogService aModelCatalog,
         IProviderResolver aProviderResolver,
-        IBackgroundJobClient aBackgroundJobClient,
+        IJobQueue aJobQueue,
         IProgressNotifier aProgressNotifier,
         ICostEstimator aCostEstimator,
         ISpendLedger aSpendLedger,
@@ -70,7 +69,7 @@ public class JobOrchestrator : IJobOrchestrator
         objLogRepository = aLogRepository;
         objModelCatalog = aModelCatalog;
         objProviderResolver = aProviderResolver;
-        objBackgroundJobClient = aBackgroundJobClient;
+        objJobQueue = aJobQueue;
         objProgressNotifier = aProgressNotifier;
         objCostEstimator = aCostEstimator;
         objSpendLedger = aSpendLedger;
@@ -182,10 +181,8 @@ public class JobOrchestrator : IJobOrchestrator
 
         await objJobRepository.InsertAsync(vJob, aCancellationToken).ConfigureAwait(false);
 
-        objBackgroundJobClient.Enqueue<GenerationJobWorker>(
-            aWorker => aWorker.ExecuteAsync(vJob.JobId, aUserId, CancellationToken.None));
-
         await objJobRepository.UpdateStateAsync(vJob.JobId, aUserId, JobState.Queued, 0, null, aCancellationToken).ConfigureAwait(false);
+        objJobQueue.Enqueue(vJob.JobId, aUserId);
         objLogger.LogInformation("Job {JobId} queued for model {ModelId} by user {UserId}", vJob.JobId, vModel.Id, aUserId);
 
         // Surface an over-cap warning (when not hard-blocking) or a near-cap heads-up to the UI.

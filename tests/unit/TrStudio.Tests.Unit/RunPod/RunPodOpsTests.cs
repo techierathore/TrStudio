@@ -25,7 +25,7 @@ public class RunPodOpsTests
 
         Assert.False(vStatus.Configured);
         Assert.Equal("not-configured", vStatus.WorkerState);
-        Assert.Contains("RunPod:ApiKey", vStatus.Message);
+        Assert.Contains("RunPod API key", vStatus.Message);
         await objClient.DidNotReceive().GetHealthAsync(Arg.Any<CancellationToken>());
     }
 

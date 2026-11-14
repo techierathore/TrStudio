@@ -1,6 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
+  outputDir: './tests/.artifacts/test-results',
   testDir: './tests/verify',
   timeout: 120000,
   fullyParallel: false,
@@ -9,6 +10,6 @@ export default defineConfig({
   use: {
     headless: true,
     screenshot: 'only-on-failure',
-    baseURL: 'http://localhost:5099',
+    baseURL: process.env.BASE_URL || 'http://localhost:5099',
   },
 });

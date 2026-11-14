@@ -373,8 +373,8 @@ public class AppManagerClient : IAppManagerClient
         if (vIsUnconfigured && Interlocked.Exchange(ref HasWarnedMissingCredentials, 1) == 0)
         {
             objLogger.LogWarning(
-                "AppManager child-app credentials are not configured: set AppManager:ApiKey/AppManager:ApiSecret " +
-                "(created in the AppManager admin UI under this application's settings) or AppManager:ApplicationId. " +
+                "AppManager child-app credentials are not configured: the build carries no application id and API key " +
+                "(appmanager.local.json beside the desktop project). " +
                 "Login works unscoped, but register/forgot-password/reset will fail with APPLICATION_ID_REQUIRED " +
                 "and licenses/roles will not be scoped to TrStudio.");
         }

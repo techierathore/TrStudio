@@ -1,42 +1,49 @@
 using System.Data;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
-using Npgsql;
 
 namespace TrStudio.Engine.Infrastructure.Data;
 
 /// <summary>
-/// Npgsql-backed <see cref="IDbConnectionFactory"/> reading the <c>ConnectionStrings:Default</c>
-/// connection string from configuration (ADR-010: Dapper over Npgsql, no EF Core).
+/// SQLite-backed <see cref="IDbConnectionFactory"/> (phase 3, ADR-016): one local database file per
+/// user, in the app's own data folder. The path is set by the hosting app at start-up
+/// (<see cref="LocalStoreOptions.DatabasePathKey"/>, an in-memory value computed from the data
+/// folder, never a file a user edits). Dapper stays the data access (ADR-010).
 /// </summary>
 public class DbConnectionFactory : IDbConnectionFactory
 {
     private readonly string objConnectionString;
 
     /// <summary>
-    /// Initialises the factory from application configuration.
+    /// Creates the factory from the hosting app's configuration.
     /// </summary>
-    /// <param name="aConfiguration">The application configuration containing <c>ConnectionStrings:Default</c>.</param>
-    /// <exception cref="InvalidOperationException"><c>ConnectionStrings:Default</c> is missing or empty.</exception>
+    /// <param name="aConfiguration">Configuration carrying <see cref="LocalStoreOptions.DatabasePathKey"/>.</param>
+    /// <exception cref="InvalidOperationException">The host did not set the database path.</exception>
     public DbConnectionFactory(IConfiguration aConfiguration)
     {
-        var vConnectionString = aConfiguration.GetConnectionString("Default");
-        if (string.IsNullOrWhiteSpace(vConnectionString))
+        var vDatabasePath = aConfiguration[LocalStoreOptions.DatabasePathKey];
+        if (string.IsNullOrWhiteSpace(vDatabasePath))
         {
-            throw new InvalidOperationException("ConnectionStrings:Default is not configured.");
+            throw new InvalidOperationException(
+                "The local database path was not set by the app (LocalStore:DatabasePath).");
         }
 
-        objConnectionString = vConnectionString;
+        SqliteDapperSetup.EnsureRegistered();
+        objConnectionString = new SqliteConnectionStringBuilder
+        {
+            DataSource = vDatabasePath,
+            Mode = SqliteOpenMode.ReadWriteCreate,
+            ForeignKeys = true,
+            DefaultTimeout = 30
+        }.ToString();
     }
 
-    /// <summary>
-    /// Creates and opens a new PostgreSQL connection.
-    /// </summary>
-    /// <param name="aCancellationToken">Token to cancel opening the connection.</param>
-    /// <returns>An open <see cref="IDbConnection"/>; the caller owns and must dispose it.</returns>
+    /// <inheritdoc />
     public async Task<IDbConnection> CreateOpenConnectionAsync(CancellationToken aCancellationToken = default)
     {
-        var vConnection = new NpgsqlConnection(objConnectionString);
+        var vConnection = new SqliteConnection(objConnectionString);
         await vConnection.OpenAsync(aCancellationToken).ConfigureAwait(false);
+        SqliteDapperSetup.PrepareConnection(vConnection);
         return vConnection;
     }
 }

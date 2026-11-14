@@ -26,7 +26,7 @@ rule: phases-table
 | App | TrStudio |
 | Kind | app |
 | Size | Large |
-| Date | 2026-11-12 |
+| Date | 2026-11-14 |
 
 ## Phases
 
@@ -34,7 +34,10 @@ rule: phases-table
 |---|---|---|---|---|
 | 1 | Studio and platform (built July 2026) | Register, Login, Forgot password, Setup required (first-run gate), Avatar studio, Character library, Image studio, Voice studio, Video studio, Prompt studio, Gallery, Projects, Comparison, Library, Account & spend, Admin — Hardware & setup, Admin — Model Sources, Admin — Model Library, Admin — Model & Provider Registry, Admin — ComfyUI import & debug, Admin — RunPod & ops, Admin — Content policy (NSFW) | BRD-1 to BRD-92 | kept-whole |
 | 2 | Venice cloud provider | — | BRD-93 to BRD-123 | planned |
+| 3 | One desktop app with the engine inside | no new screen | BRD-124 to BRD-152 | building |
 
 Phase 1 is larger than one phase may be (22 screens, 114 checklist rows). It was written and built before the size rule, so it is kept as one document; its size is reported, not refused.
 
 Phase 2 adds no new screen. It adds Venice controls to five phase-1 screens: Admin — Model & Provider Registry, Image studio, Video studio, Projects and Gallery. In their mockups those controls are marked as phase 2, so checking phase 1 does not ask for them.
+
+Phase 3 adds no new screen. It makes TrStudio one desktop app for Windows and Mac with the engine, a local SQLite database and the job queue inside it, and AppManager sign-in with the built-in application id and key. It changes controls on Login, Register, Setup required and Admin — Model & Provider Registry, marked as phase 3 in their mockups; the other screens it names keep their mockups. Phase 2 stays as it is, built and not yet verified.

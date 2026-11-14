@@ -27,7 +27,8 @@ public static class DatabaseMigrator
             .PostgresqlDatabase(aConnectionString)
             .WithScriptsEmbeddedInAssembly(
                 Assembly.GetExecutingAssembly(),
-                aScriptName => aScriptName.EndsWith(".sql", StringComparison.OrdinalIgnoreCase))
+                aScriptName => aScriptName.StartsWith("TrStudioDb.Scripts.", StringComparison.Ordinal)
+                    && aScriptName.EndsWith(".sql", StringComparison.OrdinalIgnoreCase))
             .WithTransactionPerScript()
             .LogToConsole()
             .Build();

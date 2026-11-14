@@ -36,7 +36,7 @@ public class JobRepository : IJobRepository
             "INSERT INTO \"GenerationJob\" (\"GenerationJobId\", \"UserId\", \"ModelId\", \"Task\", \"Tier\", " +
             "\"ParamsJson\", \"State\", \"Progress\", \"EtaSeconds\", \"CostEstimate\", \"ActualCost\", " +
             "\"FailureMessage\", \"RemediationHint\", \"CreatedUtc\", \"StartedUtc\", \"CompletedUtc\", \"ProjectId\", \"SeedUsed\") " +
-            "VALUES (@JobId, @UserId, @ModelId, @Task, @Tier, CAST(@ParamsJson AS jsonb), @State, @Progress, " +
+            "VALUES (@JobId, @UserId, @ModelId, @Task, @Tier, @ParamsJson, @State, @Progress, " +
             "@EtaSeconds, @CostEstimate, @ActualCost, @FailureMessage, @RemediationHint, @CreatedUtc, @StartedUtc, " +
             "@CompletedUtc, @ProjectId, @SeedUsed)";
 

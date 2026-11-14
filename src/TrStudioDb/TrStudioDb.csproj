@@ -8,10 +8,13 @@
 
   <ItemGroup>
     <PackageReference Include="dbup-postgresql" Version="7.0.1" />
+    <!-- Phase 3 (ADR-016): the desktop app keeps its data in a local SQLite file migrated by these scripts. -->
+    <PackageReference Include="dbup-sqlite" Version="6.0.4" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Scripts/**/*.sql" />
+    <EmbeddedResource Include="SqliteScripts/**/*.sql" />
   </ItemGroup>
 
 </Project>

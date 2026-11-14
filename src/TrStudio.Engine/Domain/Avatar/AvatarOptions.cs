@@ -30,12 +30,12 @@ public class AvatarOptions
 
     /// <summary>The actionable message surfaced when the HeyGen Premium tier has no API key.</summary>
     public const string HeyGenNotConfiguredMessage =
-        "HeyGen not configured — add HeyGen:ApiKey (Avatar:HeyGenApiKey) under Admin, or run this avatar job on " +
+        "HeyGen not configured — enter the HeyGen key on Registry & providers, or run this avatar job on " +
         "the Fast (local) or High (RunPod) tier.";
 
     /// <summary>
     /// Builds options from configuration, reading the <c>Avatar</c> section and the conventional
-    /// <c>HeyGen:ApiKey</c> key-by-key so the engine needs no configuration-binder package.
+    /// the non-secret avatar settings key-by-key so the engine needs no configuration-binder package.
     /// </summary>
     /// <param name="aConfiguration">The application configuration.</param>
     /// <returns>The populated options instance.</returns>
@@ -43,7 +43,8 @@ public class AvatarOptions
     {
         var vOptions = new AvatarOptions
         {
-            HeyGenApiKey = aConfiguration["Avatar:HeyGenApiKey"] ?? aConfiguration["HeyGen:ApiKey"] ?? string.Empty
+            // Phase 3 (ADR-020): the HeyGen key comes from the local database (Registry & providers), never configuration.
+            HeyGenApiKey = string.Empty
         };
         if (bool.TryParse(aConfiguration["Avatar:LocalLipSyncInstalled"], out var vLocal)) { vOptions.LocalLipSyncInstalled = vLocal; }
         if (bool.TryParse(aConfiguration["Avatar:SyntheticFallback"], out var vSynthetic)) { vOptions.SyntheticFallback = vSynthetic; }

@@ -25,7 +25,7 @@ public class ClosedApiOptions
 
     /// <summary>The actionable message surfaced whenever the aggregator is used while not configured.</summary>
     public const string NotConfiguredMessage =
-        "Closed-API video aggregator not configured — add ClosedApi:ApiKey (fal.ai / Replicate / WaveSpeed) " +
+        "Closed-API video aggregator not configured — enter its key (fal.ai / Replicate / WaveSpeed) on Registry & providers " +
         "to appsettings to enable the Premium video tier, or run this job on the Fast (local) or High (RunPod) tier.";
 
     /// <summary>
@@ -37,7 +37,7 @@ public class ClosedApiOptions
     public static ClosedApiOptions FromConfiguration(IConfiguration aConfiguration)
     {
         var vOptions = new ClosedApiOptions();
-        vOptions.ApiKey = aConfiguration["ClosedApi:ApiKey"] ?? vOptions.ApiKey;
+        // Phase 3 (ADR-020): the key comes from the local database (Registry & providers), never configuration.
         vOptions.Vendor = aConfiguration["ClosedApi:Vendor"] ?? vOptions.Vendor;
         vOptions.BaseUrl = aConfiguration["ClosedApi:BaseUrl"] ?? vOptions.BaseUrl;
         return vOptions;

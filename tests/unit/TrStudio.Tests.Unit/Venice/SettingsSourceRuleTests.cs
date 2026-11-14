@@ -35,15 +35,18 @@ public class SettingsSourceRuleTests
 
         var vProgram = File.ReadAllText(Path.Combine(vDesktop, "MauiProgram.cs"));
         Assert.Contains("DesktopSettings.Load()", vProgram);
-        Assert.Contains("vSettings.ApiBaseUrl", vProgram);
+        // Phase 3 (2026-11-14): the engine runs inside the app, so there is no API address to read.
+        Assert.DoesNotContain("ApiBaseUrl", vProgram);
         Assert.Contains("vSettings.DevRole", vProgram);
         Assert.Contains("vSettings.DevStartPath", vProgram);
 
         var vTemplate = File.ReadAllText(Path.Combine(vDesktop, "appsettings.template.json"));
-        foreach (var vKey in new[] { "\"Desktop\"", "\"ApiBaseUrl\"", "\"DevRole\"", "\"DevStartPath\"", "http://localhost:5102" })
+        foreach (var vKey in new[] { "\"Desktop\"", "\"DevRole\"", "\"DevStartPath\"" })
         {
             Assert.Contains(vKey, vTemplate);
         }
+
+        Assert.DoesNotContain("ApiBaseUrl", vTemplate);
 
         var vProject = File.ReadAllText(Path.Combine(vDesktop, "TrStudio.Desktop.csproj"));
         Assert.Contains("TrStudio.Desktop.appsettings.json", vProject);

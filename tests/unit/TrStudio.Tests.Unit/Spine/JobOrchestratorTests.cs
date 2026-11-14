@@ -1,6 +1,3 @@
-using Hangfire;
-using Hangfire.Common;
-using Hangfire.States;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using TrStudio.Engine.Domain.Cost;
@@ -19,7 +16,7 @@ namespace TrStudio.Tests.Unit.Spine;
 
 /// <summary>
 /// Unit tests for <see cref="JobOrchestrator"/> submit/cancel/reproduce behaviour
-/// (REQ-FN-001/002/018): registry resolution, params-schema validation, Hangfire enqueue and
+/// (REQ-FN-001/002/018): registry resolution, params-schema validation, in-app queue (phase 3) and
 /// server-side owner filtering.
 /// </summary>
 public class JobOrchestratorTests
@@ -29,7 +26,7 @@ public class JobOrchestratorTests
     private readonly IGenerationLogRepository objLogRepository = Substitute.For<IGenerationLogRepository>();
     private readonly IModelCatalogService objModelCatalog = Substitute.For<IModelCatalogService>();
     private readonly IProviderResolver objProviderResolver = Substitute.For<IProviderResolver>();
-    private readonly IBackgroundJobClient objBackgroundJobClient = Substitute.For<IBackgroundJobClient>();
+    private readonly IJobQueue objJobQueue = Substitute.For<IJobQueue>();
     private readonly IProgressNotifier objProgressNotifier = Substitute.For<IProgressNotifier>();
     private readonly IGenerationProvider objProvider = Substitute.For<IGenerationProvider>();
     private readonly ICostEstimator objCostEstimator = Substitute.For<ICostEstimator>();
@@ -50,7 +47,7 @@ public class JobOrchestratorTests
             objLogRepository,
             objModelCatalog,
             objProviderResolver,
-            objBackgroundJobClient,
+            objJobQueue,
             objProgressNotifier,
             objCostEstimator,
             objSpendLedger,
@@ -76,7 +73,7 @@ public class JobOrchestratorTests
 
     /// <summary>
     /// Submitting a valid request against a visible model inserts the job row, enqueues the
-    /// Hangfire worker exactly once and returns the job id with the provider's cost estimate.
+    /// in-app worker exactly once and returns the job id with the provider's cost estimate.
     /// </summary>
     [Fact]
     public async Task SubmitEnqueuesValidJob()
@@ -99,7 +96,7 @@ public class JobOrchestratorTests
         await objJobRepository.Received(1).InsertAsync(
             Arg.Is<GenerationJob>(aJob => aJob.UserId == "user-1" && aJob.ModelId == "stub-echo"),
             Arg.Any<CancellationToken>());
-        objBackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        objJobQueue.Received(1).Enqueue(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<bool>());
     }
 
     /// <summary>
@@ -114,7 +111,7 @@ public class JobOrchestratorTests
         var vRequest = new JobSubmitRequest { ModelId = "ghost", Task = GenerationTaskType.TextToImage };
 
         await Assert.ThrowsAsync<KeyNotFoundException>(() => CreateOrchestrator().SubmitAsync(vRequest, "user-1"));
-        objBackgroundJobClient.DidNotReceive().Create(Arg.Any<Job>(), Arg.Any<IState>());
+        objJobQueue.DidNotReceive().Enqueue(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<bool>());
     }
 
     /// <summary>
@@ -188,7 +185,7 @@ public class JobOrchestratorTests
             () => CreateOrchestrator().SubmitAsync(vRequest, "user-1"));
         Assert.Contains("text-chat model and cannot run generation jobs", vException.Message);
         objProviderResolver.DidNotReceive().Resolve(Arg.Any<RegistryModel>());
-        objBackgroundJobClient.DidNotReceive().Create(Arg.Any<Job>(), Arg.Any<IState>());
+        objJobQueue.DidNotReceive().Enqueue(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<bool>());
     }
 
     /// <summary>

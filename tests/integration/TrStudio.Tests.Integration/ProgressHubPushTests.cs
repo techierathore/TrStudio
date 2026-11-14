@@ -47,7 +47,7 @@ public sealed class ProgressHubPushTests : IClassFixture<LiveApiFixture>
     /// A HubConnection joined to the submitting user's group receives live JobProgress pushes
     /// for a submitted stub-echo job, ending in a Succeeded/100% terminal event.
     /// </summary>
-    [Fact]
+    [Fact(Skip = "Set aside 2026-11-14 (phase 3): the SignalR hub belongs to the API host, which the desktop app no longer runs; REQ-FN-005 is replaced by in-app job status.")]
     public async Task RunningJobPushesProgressEventsToConnectedClient()
     {
         var vToken = BuildDevToken();

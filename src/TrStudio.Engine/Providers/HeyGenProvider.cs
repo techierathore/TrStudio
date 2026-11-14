@@ -13,8 +13,8 @@ namespace TrStudio.Engine.Providers;
 /// <summary>
 /// HeyGen avatar <see cref="IGenerationProvider"/> (FN-037/BRD-28), gated to
 /// <see cref="ProviderKind.HeyGen"/> so it backs the Premium avatar tier while the resolver still
-/// matches exactly one provider per model. GRACEFUL DEGRADE: with no <c>HeyGen:ApiKey</c>
-/// (<c>Avatar:HeyGenApiKey</c>) configured — the EMPTY default — a submitted job resolves to a Failed
+/// matches exactly one provider per model. GRACEFUL DEGRADE: with no HeyGen key
+/// entered on Registry & providers — the EMPTY default — a submitted job resolves to a Failed
 /// status carrying the actionable "HeyGen not configured" message plus a remediation hint
 /// (REQ-FN-005 style) instead of crashing. The live HeyGen REST call is deferred until a real key is
 /// supplied; with a key the provider emits a deterministic placeholder video asset in this phase.
@@ -64,7 +64,7 @@ public class HeyGenProvider : IGenerationProvider
             vExecution.Status = new JobStatus(
                 JobState.Failed, 0, null,
                 AvatarOptions.HeyGenNotConfiguredMessage,
-                "Add HeyGen:ApiKey (Avatar:HeyGenApiKey) under Admin, or run this avatar job at the Fast (local) or High (RunPod) tier.");
+                "Enter the HeyGen key on Registry & providers, or run this avatar job at the Fast (local) or High (RunPod) tier.");
             objLogger.LogWarning("HeyGen job {JobId} rejected: provider not configured", aJob.JobId);
             return Task.FromResult(aJob.JobId);
         }
@@ -122,7 +122,7 @@ public class HeyGenProvider : IGenerationProvider
             aExecution.Status = new JobStatus(
                 JobState.Failed, aExecution.Status.Progress, null,
                 $"HeyGen execution error: {vException.Message}",
-                "Retry the job; if it persists, verify HeyGen:ApiKey under Admin.");
+                "Retry the job; if it persists, check the HeyGen key on Registry & providers.");
         }
     }
 

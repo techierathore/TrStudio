@@ -20,4 +20,7 @@ public class ProviderKeyInfo
     /// null for providers that need none. Not a secret.
     /// </summary>
     public string? BaseUrl { get; set; }
+
+    /// <summary>A non-secret setting kept beside the key (phase 3): the RunPod endpoint id or the closed-API vendor.</summary>
+    public string? Account { get; set; }
 }

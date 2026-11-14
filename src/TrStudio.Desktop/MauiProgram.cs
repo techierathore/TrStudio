@@ -1,26 +1,31 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Maui.Storage;
+using Serilog;
 using TrBlazeUI.Components.Toast;
 using TrBlazeUI.Primitives.Extensions;
 using TrStudio.Desktop.Auth;
 using TrStudio.Desktop.Dev;
+using TrStudio.Desktop.Engine;
+using TrStudio.InProcess;
 using TrStudioUI.Auth;
 using TrStudioUI.Navigation;
 
 namespace TrStudio.Desktop;
 
 /// <summary>
-/// Composition root for the MAUI Blazor Hybrid desktop head. Wires the BlazorWebView and the SAME
-/// services the shared TrStudioUI RCL expects from the Blazor Web host — role-based navigation, the
-/// TrBlazeUI primitives/toast services, and a named TrStudioApi HttpClient with a bearer handler —
-/// but backs the session with a Hybrid <see cref="MauiAuthSession"/> (SecureStorage) instead of the
-/// web head's Blazor-Server ProtectedSessionStorage. The result: one component set, two heads.
+/// Builds the TrStudio desktop app (phase 3, ADR-015 to ADR-020): one process holding the
+/// <c>TrStudioUI</c> screens, the engine, the local SQLite store and the in-app job runner. There is no
+/// API process and no web server: the screens' named <c>TrStudioApi</c> client is answered in process
+/// by <see cref="InProcessEngineHandler"/>. The data lives in the signed-in user's own app data folder;
+/// sign-in uses the AppManager application id and key built into the app. Nothing is read from an
+/// environment variable and no user edits a settings file.
 /// </summary>
 public static class MauiProgram
 {
-    /// <summary>Builds and configures the MAUI application.</summary>
-    /// <returns>The configured <see cref="MauiApp"/>.</returns>
+    /// <summary>Creates the MAUI app.</summary>
+    /// <returns>The app.</returns>
     public static MauiApp CreateMauiApp()
     {
         var vBuilder = MauiApp.CreateBuilder();
@@ -33,29 +38,36 @@ public static class MauiProgram
 
         vBuilder.Services.AddMauiBlazorWebView();
 
-        // TrBlazeUI services the shared TrStudioUI components require (same as the web host).
         vBuilder.Services.AddTrBlazeUIPrimitives();
         vBuilder.Services.AddScoped<ToastService>();
 
-        // Hybrid auth session: SecureStorage-backed, registered as a SINGLETON so the WebView-scoped
-        // components and the IHttpClientFactory-scoped bearer handler share one process-wide session
-        // (the web head bridged Blazor circuit scopes instead — no analogue in a Hybrid host).
-        vBuilder.Services.AddSingleton<IAuthSession, MauiAuthSession>();
-        vBuilder.Services.AddTransient<MauiAuthTokenHandler>();
-
-        // Settings come from appsettings.json shipped inside the app (section Desktop), never from
-        // environment variables (owner decision 5A, REQ-NFR-015). Also exposed as IConfiguration.
         var vSettings = DesktopSettings.Load();
         vBuilder.Configuration.AddInMemoryCollection(vSettings.ToConfiguration());
 
-        // Named TrStudioApi HttpClient — BaseAddress = Desktop:ApiBaseUrl (default http://localhost:5102).
-        // The bearer handler stamps the signed-in user's token so owner-scoped screen calls authenticate.
-        var vApiBaseUrl = vSettings.ApiBaseUrl;
-        vBuilder.Services.AddHttpClient("TrStudioApi", aClient => aClient.BaseAddress = new Uri(vApiBaseUrl))
+        // The user's own data folder (Mac: the app's container; Windows: the user's local app data).
+        var vDataFolder = Path.Combine(FileSystem.AppDataDirectory, "TrStudio");
+        var vLoggerFactory = CreateFileLogging(vDataFolder);
+        vBuilder.Logging.AddSerilog(dispose: false);
+
+        // The engine inside the app: create it, then prepare the local store and start the jobs.
+        var vHost = EngineHost.Create(new EngineHostOptions
+        {
+            DataFolder = vDataFolder,
+            SignIn = AppManagerBuildSettings.Load(),
+            KeyProtector = new SecureStorageKeyProtector(),
+            LoggerFactory = vLoggerFactory
+        });
+        Task.Run(() => vHost.StartAsync()).GetAwaiter().GetResult();
+        vBuilder.Services.AddSingleton(vHost);
+        DesktopDevSession.Host = vHost;
+
+        vBuilder.Services.AddSingleton<IAuthSession, MauiAuthSession>();
+        vBuilder.Services.AddTransient<MauiAuthTokenHandler>();
+
+        vBuilder.Services.AddHttpClient("TrStudioApi", aClient => aClient.BaseAddress = InProcessEngineHandler.BaseAddress)
+            .ConfigurePrimaryHttpMessageHandler(aProvider => new InProcessEngineHandler(aProvider.GetRequiredService<EngineHost>()))
             .AddHttpMessageHandler<MauiAuthTokenHandler>();
 
-        // Unified role-based shell (ADR-012): both surfaces registered; the shell selects the active
-        // one from the signed-in role and gates /admin/* — identical behaviour to the web head.
         vBuilder.Services.AddTrStudioRoleBasedNavigation(
             TrStudioNavSets.CreateCreatorNavigation(),
             TrStudioNavSets.CreateManagementNavigation());
@@ -67,11 +79,8 @@ public static class MauiProgram
 
         var vApp = vBuilder.Build();
 
-        // Dev-only: a native-window smoke can boot straight into a role via Desktop:DevRole
-        // (Creator/Operator/Owner), optionally deep-linking a route via Desktop:DevStartPath. The
-        // session is pre-seeded SYNCHRONOUSLY here — before the WebView's first render — so the shell
-        // initialises on the correct role and the initializer only needs a client-side nav (no reload).
-        // DEBUG-only: inert in Release.
+        // DEBUG developer session (REQ-NFR-015): opens already signed in with a chosen role, registered
+        // with the in-process engine (no signed token, no signing key).
         if (DesktopDevSession.IsEnabled)
         {
             var vRequestedRole = vSettings.DevRole;
@@ -91,5 +100,15 @@ public static class MauiProgram
         }
 
         return vApp;
+    }
+
+    private static ILoggerFactory CreateFileLogging(string aDataFolder)
+    {
+        // Logs go under the user's data folder, never the repository; no key is ever logged.
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .WriteTo.File(Path.Combine(aDataFolder, "logs", "trstudio-.log"), rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7)
+            .CreateLogger();
+        return LoggerFactory.Create(aLogging => aLogging.AddSerilog(Log.Logger, dispose: false));
     }
 }

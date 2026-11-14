@@ -1,9 +1,9 @@
-using Hangfire;
 using Microsoft.Extensions.Logging;
 using TrStudio.Engine.Domain.Cost;
 using TrStudio.Engine.Domain.Progress;
 using TrStudio.Engine.Domain.Providers;
 using TrStudio.Engine.Domain.Venice;
+using TrStudio.Engine.Infrastructure.Jobs;
 using TrStudio.Engine.Infrastructure.Observability;
 using TrStudio.Models.Contracts;
 using TrStudio.Models.Entities;
@@ -14,11 +14,11 @@ using TrStudio.Models.Services;
 namespace TrStudio.Engine.Domain.Jobs;
 
 /// <summary>
-/// The durable Hangfire worker executing one generation job (REQ-FN-003): resolves the
+/// The worker executing one generation job, run by the in-app runner (phase 3, ADR-018): resolves the
 /// provider, drives submit → poll → result, streams progress through
 /// <see cref="IProgressNotifier"/>, honours user cancellation, and writes a complete
 /// <c>"GenerationLog"</c> row for EVERY outcome — success and failure (REQ-FN-018). A failed
-/// execution rethrows so Hangfire retries per the <see cref="AutomaticRetryAttribute"/> policy.
+/// execution rethrows so the in-app runner retries it twice.
 /// </summary>
 public class GenerationJobWorker
 {
@@ -34,6 +34,7 @@ public class GenerationJobWorker
     private readonly ISafetyPipeline objSafetyPipeline;
     private readonly IProvenanceStamper objProvenanceStamper;
     private readonly ILogger<GenerationJobWorker> objLogger;
+    private readonly JobQueueStore? objQueueStore;
 
     /// <summary>
     /// Initialises the worker.
@@ -58,7 +59,8 @@ public class GenerationJobWorker
         ISpendLedger aSpendLedger,
         ISafetyPipeline aSafetyPipeline,
         IProvenanceStamper aProvenanceStamper,
-        ILogger<GenerationJobWorker> aLogger)
+        ILogger<GenerationJobWorker> aLogger,
+        JobQueueStore? aQueueStore = null)
     {
         objJobRepository = aJobRepository;
         objRegistryRepository = aRegistryRepository;
@@ -70,6 +72,7 @@ public class GenerationJobWorker
         objSafetyPipeline = aSafetyPipeline;
         objProvenanceStamper = aProvenanceStamper;
         objLogger = aLogger;
+        objQueueStore = aQueueStore;
     }
 
     /// <summary>
@@ -77,11 +80,23 @@ public class GenerationJobWorker
     /// </summary>
     /// <param name="aJobId">The job identifier.</param>
     /// <param name="aUserId">The owning AppManager user id (owner filter, BRD-81).</param>
-    /// <param name="aCancellationToken">Hangfire-injected token signalled on server shutdown or job deletion.</param>
+    /// <param name="aCancellationToken">Signalled when the app closes.</param>
     /// <returns>A task completing when the job reaches a terminal state.</returns>
-    /// <exception cref="InvalidOperationException">The provider reported failure; rethrown so Hangfire retries per policy.</exception>
-    [AutomaticRetry(Attempts = 2, DelaysInSeconds = new[] { 2, 5 }, OnAttemptsExceeded = AttemptsExceededAction.Fail)]
-    public async Task ExecuteAsync(Guid aJobId, string aUserId, CancellationToken aCancellationToken)
+    /// <exception cref="InvalidOperationException">The provider reported failure; rethrown so the in-app runner retries.</exception>
+    public Task ExecuteAsync(Guid aJobId, string aUserId, CancellationToken aCancellationToken)
+        => ExecuteAsync(aJobId, aUserId, false, aCancellationToken);
+
+    /// <summary>
+    /// Executes one job; with <paramref name="aResume"/> a job queued at its provider before the app
+    /// closed re-attaches and resumes polling instead of submitting again (phase 3, REQ-FN-094). A failed
+    /// attempt throws so the in-app runner retries it twice, as the Hangfire policy did.
+    /// </summary>
+    /// <param name="aJobId">The job id.</param>
+    /// <param name="aUserId">The owning user.</param>
+    /// <param name="aResume">True to resume a provider-queued job.</param>
+    /// <param name="aCancellationToken">Signalled when the app closes.</param>
+    /// <returns>A task.</returns>
+    public async Task ExecuteAsync(Guid aJobId, string aUserId, bool aResume, CancellationToken aCancellationToken)
     {
         // NFR-008: open a job-scoped trace span and structured-logging scope so every log line and
         // provider hop for this execution carries the same job-id correlation (submit → provider →
@@ -104,7 +119,7 @@ public class GenerationJobWorker
         }
 
         // Succeeded/Blocked are terminal here; a Failed row is NOT skipped — that is the
-        // Hangfire retry path re-executing the job per the AutomaticRetry policy.
+        // in-app runner retry path re-executing the job.
         if (vJob.State is JobState.Succeeded or JobState.Blocked)
         {
             return;
@@ -127,6 +142,18 @@ public class GenerationJobWorker
 
         var vProvider = objProviderResolver.Resolve(vModel);
 
+        if (aResume)
+        {
+            var vRef = objQueueStore is null ? null : await GetStoredRefAsync(aJobId, aCancellationToken).ConfigureAwait(false);
+            if (vRef is not null && vProvider is IResumableGenerationProvider vResumable
+                && await vResumable.ResumeAsync(vJob, vRef, aCancellationToken).ConfigureAwait(false))
+            {
+                objLogger.LogInformation("Job {JobId} resumed polling at its provider after a restart", aJobId);
+                await PollAsync(vJob, aJobId, aUserId, vProvider, vModel, aCancellationToken).ConfigureAwait(false);
+                return;
+            }
+        }
+
         vJob.State = JobState.Running;
         vJob.StartedUtc = DateTime.UtcNow;
         vJob.CompletedUtc = null;
@@ -137,6 +164,25 @@ public class GenerationJobWorker
 
         await vProvider.SubmitAsync(vJob, aCancellationToken).ConfigureAwait(false);
 
+        // Phase 3 (ADR-018): keep the provider's own reference (Venice's queue id) on the row so the
+        // job can resume after the app closes.
+        if (objQueueStore is not null && vProvider is IResumableGenerationProvider vQueued
+            && vQueued.GetProviderRef(aJobId) is { } vProviderRef)
+        {
+            await objQueueStore.SetProviderRefAsync(aJobId, vProviderRef, aCancellationToken).ConfigureAwait(false);
+        }
+
+        await PollAsync(vJob, aJobId, aUserId, vProvider, vModel, aCancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<string?> GetStoredRefAsync(Guid aJobId, CancellationToken aCancellationToken)
+    {
+        var vTickets = await objQueueStore!.ListUnfinishedAsync(aCancellationToken).ConfigureAwait(false);
+        return vTickets.FirstOrDefault(aTicket => aTicket.JobId == aJobId)?.ProviderRef;
+    }
+
+    private async Task PollAsync(GenerationJob vJob, Guid aJobId, string aUserId, TrStudio.Models.Providers.IGenerationProvider vProvider, RegistryModel vModel, CancellationToken aCancellationToken)
+    {
         while (true)
         {
             await Task.Delay(PollInterval, aCancellationToken).ConfigureAwait(false);
@@ -258,13 +304,13 @@ public class GenerationJobWorker
         await NotifyAsync(aJob, aCancellationToken).ConfigureAwait(false);
         objLogger.LogWarning("Job {JobId} failed: {FailureMessage}", aJob.JobId, aFailureMessage);
 
-        // Rethrow so the Hangfire retry policy re-executes the job (REQ-FN-003 acceptance).
+        // Rethrow so the in-app runner retries the job twice (phase 3, ADR-018; the old Hangfire policy).
         throw new InvalidOperationException(aFailureMessage);
     }
 
     /// <summary>
     /// Marks a job Blocked by the output post-check (SAFE-01..06). Unlike a failure this is TERMINAL
-    /// and does NOT rethrow — a safety block must never be retried by Hangfire. The safety audit entry
+    /// and does NOT rethrow — a safety block must never be retried. The safety audit entry
     /// is written by the pipeline; a "blocked" generation-log row is written here for full traceability.
     /// </summary>
     private async Task BlockAsync(GenerationJob aJob, string aBlockMessage, CancellationToken aCancellationToken)

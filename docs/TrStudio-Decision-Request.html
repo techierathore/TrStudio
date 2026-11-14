@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TrStudio — decisions I need from you</title>
+<script>
+/* Resolve the theme BEFORE first paint (no flash). Saved choice wins; otherwise
+   pick by time of day — light 07:00–19:00 local, softened dark at night. */
+(function(){
+  try{
+    var t = localStorage.getItem('tf-theme');
+    if(t!=='light' && t!=='dark'){ var h = new Date().getHours(); t = (h>=7 && h<19) ? 'light' : 'dark'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){ document.documentElement.setAttribute('data-theme','light'); }
+})();
+</script>
+<style>
+/* LIGHT is the default theme — a warm off-white, easy on the eyes (never bright white). */
+:root{
+  --bg:#f4f1e9; --panel:#efe9db; --panel2:#e7e0cd; --line:#d8cfb6;
+  --ink:#2e2a22; --muted:#6f6857; --accent:#2f6f9f; --accent2:#3f7d54;
+  --warn:#9a6b15; --danger:#b03a52; --ok:#3f7d54;
+  --code-bg:#ece5d3; --code-ink:#332f26; --row-alt:#eae2cf;
+  --h3:#3a352b; --h4:#2f6f9f; --quote:#4a4537; --cta-bg:#e6eef5;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+/* DARK — softened near-black (warmer / less harsh than pure #0f1115). */
+html[data-theme="dark"]{
+  --bg:#11141a; --panel:#171b23; --panel2:#1e2430; --line:#2b3240;
+  --ink:#dfe3ea; --muted:#99a2b1; --accent:#7cc4ff; --accent2:#a6e3a1;
+  --warn:#f9c74f; --danger:#f38ba8; --ok:#a6e3a1;
+  --code-bg:#0c1016; --code-ink:#d8dde8; --row-alt:#141821;
+  --h3:#cfd5e3; --h4:#7cc4ff; --quote:#cfd5e3; --cta-bg:#0d2030;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;font-size:15px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono);font-size:13px;background:var(--code-bg);color:var(--code-ink);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+pre{font-family:var(--mono);font-size:12.5px;background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:auto;color:var(--code-ink);position:relative}
+pre code{background:none;border:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:11px;font-family:var(--sans);cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+/* floating light/dark toggle (top-right) */
+.theme-toggle{position:fixed;top:12px;right:14px;z-index:10000;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:12.5px;font-family:var(--sans);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.theme-toggle:hover{color:var(--accent);border-color:var(--accent)}
+
+.layout{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.layout.no-toc{grid-template-columns:1fr}
+nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid var(--line);background:var(--panel);padding:18px 14px}
+nav.side h1{font-size:14px;margin:0 0 4px;letter-spacing:.5px;color:var(--ink)}
+nav.side .sub{font-size:11.5px;color:var(--muted);margin-bottom:14px}
+nav.side ol,nav.side ul{list-style:none;padding:0;margin:0}
+nav.side li{font-size:13px;margin:2px 0}
+nav.side li a{display:block;padding:5px 8px;color:var(--ink);border-radius:6px}
+nav.side li a:hover{background:var(--panel2);text-decoration:none}
+nav.side li.h3 a{padding-left:22px;font-size:12.5px;color:var(--h3)}
+nav.side .group{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin:14px 8px 4px}
+
+main{padding:28px 40px 80px;max-width:1100px}
+.layout.no-toc main{margin:0 auto}
+
+h1{font-size:28px;margin:0 0 6px}
+h2{font-size:22px;margin:32px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+h3{font-size:17px;margin:22px 0 6px;color:var(--h3);scroll-margin-top:16px}
+h4{font-size:14px;margin:14px 0 4px;color:var(--h4);scroll-margin-top:16px}
+.subtitle{color:var(--muted);font-size:14px;margin-top:-4px;margin-bottom:18px}
+p{margin:6px 0 10px}
+blockquote{border-left:3px solid var(--accent);background:var(--panel);margin:8px 0;padding:8px 14px;color:var(--quote)}
+ul,ol{padding-left:22px}
+li{margin:2px 0}
+
+table{border-collapse:collapse;width:100%;font-size:13.5px;margin:8px 0}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2);color:var(--h3);font-weight:600}
+tr:nth-child(even) td{background:var(--row-alt)}
+
+hr{border:none;border-top:1px solid var(--line);margin:24px 0}
+.anchor-link{color:var(--muted);font-weight:400;font-size:0.85em;margin-left:8px;opacity:0;transition:opacity .15s;text-decoration:none}
+h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
+
+/* inline TOC at top of main content */
+.toc-inline{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 16px;margin:14px 0 24px}
+.toc-inline > div{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.toc-inline ol,.toc-inline ul{margin:4px 0;padding-left:18px}
+.toc-inline li{font-size:13px;margin:1px 0}
+.toc-inline a{color:var(--h3)}
+
+/* mermaid diagram wrapper + toolbar */
+.diagram{position:relative;border:1px solid var(--line);border-radius:8px;background:var(--code-bg);margin:14px 0;overflow:hidden}
+.diagram .mermaid{padding:14px;margin:0;background:transparent;border:none;overflow:auto}
+.diagram .dt{display:flex;gap:6px;justify-content:flex-end;padding:6px 8px;background:var(--row-alt);border-bottom:1px solid var(--line)}
+.diagram .dt button{background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:3px 10px;font-size:12px;font-family:var(--sans);cursor:pointer;min-width:30px}
+.diagram .dt button:hover{color:var(--accent);border-color:var(--accent)}
+.diagram .dt .zlabel{padding:3px 6px;font-size:11px;color:var(--muted);font-family:var(--mono);align-self:center}
+.diagram.fs{position:fixed;inset:0;z-index:9999;border-radius:0;border:none}
+.diagram.fs .mermaid{height:calc(100vh - 40px);display:flex;align-items:center;justify-content:center}
+
+@media(max-width:900px){.layout{grid-template-columns:1fr}nav.side{position:static;height:auto}}
+</style>
+</head>
+<body>
+<button id="themeToggle" class="theme-toggle" title="Toggle light / dark">&#9790; Dark</button>
+<div class="layout no-toc">
+  <main>
+    <h1>TrStudio — decisions I need from you</h1>
+    <div class="subtitle">Rendered 2026-11-14 &middot; source <code>TrStudio-Decision-Request.md</code></div>
+
+    <div class="toc-inline">
+      <div>Contents</div>
+      <ol>
+        <li><a href="#what-happened">What happened</a></li>
+        <li><a href="#what-i-need-you-to-decide">What I need you to decide</a></li>
+        <li class="h3"><a href="#how-the-screens-reach-the-engine">1. How the screens reach the engine</a></li>
+        <li class="h3"><a href="#what-the-headless-test-host-is">2. What the headless test host is</a></li>
+        <li class="h3"><a href="#where-the-character-bible-vectors-live">3. Where the character-bible vectors live</a></li>
+        <li class="h3"><a href="#a-job-that-was-running-when-the-app-closed">4. A job that was running when the app closed</a></li>
+        <li class="h3"><a href="#how-keys-are-protected-on-the-mac-and-on-windows">5. How keys are protected on the Mac and on Windows</a></li>
+        <li class="h3"><a href="#staying-signed-in">6. Staying signed in</a></li>
+        <li class="h3"><a href="#what-happens-to-phase-1-s-checked-rows">7. What happens to phase 1&#x27;s checked rows</a></li>
+        <li class="h3"><a href="#the-api-project-and-the-old-web-head-in-the-solution">8. The API project and the old web head in the solution</a></li>
+        <li class="h3"><a href="#character-bible-search-without-an-embedding-model">9. Character-bible search without an embedding model</a></li>
+        <li class="h3"><a href="#local-picture-generation-onnx-inside-the-mac-app">10. Local picture generation (ONNX) inside the Mac app</a></li>
+        <li><a href="#what-i-do-when-you-answer">What I do when you answer</a></li>
+        <li><a href="#copy-this-back-to-me">Copy this back to me</a></li>
+      </ol>
+    </div>
+<table>
+<thead><tr><th></th><th></th></tr></thead>
+<tbody>
+<tr><td>App</td><td>TrStudio</td></tr>
+<tr><td>Written</td><td>2026-11-14</td></tr>
+<tr><td>Waiting on</td><td>10 decisions. You were asleep, so I took my recommended answer for each and carried on; each can still be reversed.</td></tr>
+</tbody>
+</table>
+<h2 id="what-happened">What happened<a class="anchor-link" href="#what-happened">#</a></h2>
+<p>You asked for TrStudio to become one desktop app for Windows and Mac: the engine inside the app, a local SQLite database, jobs inside the app, AppManager sign-in with the application id and one key, and your keys protected by the computer's own protection. I wrote the phase 3 documents and then built the phase overnight.</p>
+<p>Ten choices came up that change what gets built and that only you can settle. None of them stopped the work: for each I took the answer I recommend, wrote it into the documents, and built on it. If you want a different answer, paste the matching block from the last section and I will change it.</p>
+<h2 id="what-i-need-you-to-decide">What I need you to decide<a class="anchor-link" href="#what-i-need-you-to-decide">#</a></h2>
+<h3 id="how-the-screens-reach-the-engine"><a id="1-how-the-screens-reach-the-engine"></a>1. How the screens reach the engine<a class="anchor-link" href="#how-the-screens-reach-the-engine">#</a></h3>
+<p>The 31 screens all call the engine through one named web client with addresses like <code>/api/v1/jobs</code>. The engine now runs inside the app, and ASP.NET Core, which the old API used, does not run inside a Mac Catalyst app.</p>
+<table>
+<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
+<tbody>
+<tr><td><strong>A — keep the calls, answer them inside the app</strong></td><td>A small library answers the same addresses in the same process, with no network socket and no web server. The screens are unchanged.</td><td>One new library that mirrors the API's routes; two copies of the route list while the API project is kept.</td></tr>
+<tr><td><strong>B — rewrite the screens to call engine services directly</strong></td><td>No route layer at all.</td><td>Every screen is edited, and every screen must be checked again by hand.</td></tr>
+</tbody>
+</table>
+<p><strong>My recommendation: A</strong> — the screens and their tests stay exactly as they are.</p>
+<h3 id="what-the-headless-test-host-is"><a id="2-what-the-headless-test-host-is"></a>2. What the headless test host is<a class="anchor-link" href="#what-the-headless-test-host-is">#</a></h3>
+<p>The automated screen checks need the screens in a browser. The desktop app cannot be driven while the screen is locked.</p>
+<table>
+<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
+<tbody>
+<tr><td><strong>A — a new test-only project under <code>tests/</code></strong></td><td><code>tests/TrStudio.TestHost</code> serves the same screens and the same in-process engine on a temporary SQLite file. The old web head <code>src/TrStudio</code> is set aside, unused.</td><td>One more small project.</td></tr>
+<tr><td><strong>B — turn the old web head into the test host</strong></td><td>Reuses <code>src/TrStudio</code>.</td><td>A shipped-looking project under <code>src/</code> that must never ship.</td></tr>
+</tbody>
+</table>
+<p><strong>My recommendation: A</strong> — it is plainly a test tool by where it lives.</p>
+<h3 id="where-the-character-bible-vectors-live"><a id="3-where-the-character-bible-vectors-live"></a>3. Where the character-bible vectors live<a class="anchor-link" href="#where-the-character-bible-vectors-live">#</a></h3>
+<p>TechieRag stores its vectors in SQLite tables of its own. Its reference does not say which tables, so sharing the app's own file is a risk.</p>
+<table>
+<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
+<tbody>
+<tr><td><strong>A — a second file beside the database</strong></td><td><code>TrStudio.vectors.db</code> in the same data folder. The bible notes themselves stay in <code>TrStudio.db</code>.</td><td>Two files instead of one.</td></tr>
+<tr><td><strong>B — the same file</strong></td><td>One file.</td><td>A TechieRag upgrade could clash with the app's tables.</td></tr>
+</tbody>
+</table>
+<p><strong>My recommendation: A</strong> — no chance of a clash; filed as TR-RAG-005 for TechieRag to document.</p>
+<h3 id="a-job-that-was-running-when-the-app-closed"><a id="4-a-job-that-was-running-when-the-app-closed"></a>4. A job that was running when the app closed<a class="anchor-link" href="#a-job-that-was-running-when-the-app-closed">#</a></h3>
+<table>
+<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
+<tbody>
+<tr><td><strong>A — resume what can resume, fail the rest with the reason</strong></td><td>A Venice clip already queued at Venice resumes polling (its queue id is kept on the job). Any other running job is marked Failed: "TrStudio was closed while this job was running. Run it again."</td><td>A local render cut off half-way is not restarted on its own.</td></tr>
+<tr><td><strong>B — restart every running job</strong></td><td>Everything runs again.</td><td>A paid cloud call could be charged twice.</td></tr>
+</tbody>
+</table>
+<p><strong>My recommendation: A</strong> — it never charges you twice without asking.</p>
+<h3 id="how-keys-are-protected-on-the-mac-and-on-windows"><a id="5-how-keys-are-protected-on-the-mac-and-on-windows"></a>5. How keys are protected on the Mac and on Windows<a class="anchor-link" href="#how-keys-are-protected-on-the-mac-and-on-windows">#</a></h3>
+<table>
+<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
+<tbody>
+<tr><td><strong>A — one random unlock key per user, held by the computer</strong></td><td>Keys are encrypted in the database; the unlock key sits in the Mac Keychain, or in a Windows data-protection blob for the signed-in Windows user.</td><td>If the Keychain item is deleted, the stored keys must be entered again.</td></tr>
+<tr><td><strong>B — every key in the Keychain itself</strong></td><td>No keys in the database at all.</td><td>Against your rule that keys are kept in the local database.</td></tr>
+</tbody>
+</table>
+<p><strong>My recommendation: A</strong> — it matches "kept in the local database, protected by the operating system".</p>
+<h3 id="staying-signed-in"><a id="6-staying-signed-in"></a>6. Staying signed in<a class="anchor-link" href="#staying-signed-in">#</a></h3>
+<table>
+<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
+<tbody>
+<tr><td><strong>A — sign in each time the app opens</strong></td><td>The session lives only while the app is open.</td><td>One sign-in per start.</td></tr>
+<tr><td><strong>B — remember the sign-in</strong></td><td>The AppManager refresh token is kept, protected like the keys.</td><td>More to build and check; a stolen laptop stays signed in.</td></tr>
+</tbody>
+</table>
+<p><strong>My recommendation: A</strong> — simplest and safest now; B can be a later row.</p>
+<h3 id="what-happens-to-phase-1-s-checked-rows"><a id="7-what-happens-to-phase-1s-checked-rows"></a>7. What happens to phase 1's checked rows<a class="anchor-link" href="#what-happens-to-phase-1-s-checked-rows">#</a></h3>
+<p>The database, the host and the job runner under almost every feature changed, even though the screens did not.</p>
+<table>
+<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
+<tbody>
+<tr><td><strong>A — mark every row that touches stored data as "needs re-check"</strong></td><td>68 rows go back to needs re-check; 7 stay checked; 6 are replaced by phase 3 rows; 1 is set aside.</td><td>Phase 1 is open again until the re-check runs.</td></tr>
+<tr><td><strong>B — keep them checked</strong></td><td>Phase 1 looks finished.</td><td>The checks were run on PostgreSQL and a web API that are no longer used.</td></tr>
+</tbody>
+</table>
+<p><strong>My recommendation: A</strong> — a check on a database you no longer ship proves nothing about the new app.</p>
+<h3 id="the-api-project-and-the-old-web-head-in-the-solution"><a id="8-the-api-project-and-the-old-web-head-in-the-solution"></a>8. The API project and the old web head in the solution<a class="anchor-link" href="#the-api-project-and-the-old-web-head-in-the-solution">#</a></h3>
+<p>You said to keep the API project and the PostgreSQL scripts, unused. The engine no longer carries Hangfire or PostgreSQL code, so the API project no longer compiles.</p>
+<table>
+<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
+<tbody>
+<tr><td><strong>A — keep the folders, take them out of the solution build</strong></td><td><code>src/TrStudioApi</code> and <code>src/TrStudio</code> stay on disk untouched and are listed as set aside.</td><td>They will not build until someone brings them back.</td></tr>
+<tr><td><strong>B — keep them compiling</strong></td><td>Both stay buildable.</td><td>The engine has to keep Hangfire and PostgreSQL code alive just for them.</td></tr>
+</tbody>
+</table>
+<p><strong>My recommendation: A</strong> — nothing is deleted, and the shipped app carries nothing it does not use.</p>
+<h3 id="character-bible-search-without-an-embedding-model"><a id="9-character-bible-search-without-an-embedding-model"></a>9. Character-bible search without an embedding model<a class="anchor-link" href="#character-bible-search-without-an-embedding-model">#</a></h3>
+<p>Searching a character's notes by meaning needs an embedding model. TechieRag looks for one on this computer (Ollama), which a person who downloads the app will not have, so search falls back to matching words.</p>
+<table>
+<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
+<tbody>
+<tr><td><strong>A — keep word matching now, plan a built-in model later</strong></td><td>Search works on every computer by matching words; meaning-based search arrives with a later row that ships a small embedding model inside the app.</td><td>The bible row stays partly done until then.</td></tr>
+<tr><td><strong>B — ship an embedding model now</strong></td><td>Meaning-based search everywhere.</td><td>A large download, and ONNX Runtime does not yet run inside the Mac app (decision 10).</td></tr>
+</tbody>
+</table>
+<p><strong>My recommendation: A</strong> — nothing breaks today, and B depends on decision 10.</p>
+<h3 id="local-picture-generation-onnx-inside-the-mac-app"><a id="10-local-picture-generation-onnx-inside-the-mac-app"></a>10. Local picture generation (ONNX) inside the Mac app<a class="anchor-link" href="#local-picture-generation-onnx-inside-the-mac-app">#</a></h3>
+<p>The local ONNX picture model ran in the old API on macOS. Inside the Mac app it cannot: ONNX Runtime publishes no Mac Catalyst build, so the app links without it and a local ONNX job fails with its reason.</p>
+<table>
+<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
+<tbody>
+<tr><td><strong>A — Mac users make pictures through ComfyUI, RunPod or Venice for now</strong></td><td>Everything else works; the local ONNX picture row says it is not available on Mac. Windows keeps ONNX.</td><td>One provider is missing on Mac until B is done.</td></tr>
+<tr><td><strong>B — build and ship ONNX Runtime for Mac Catalyst</strong></td><td>Local ONNX pictures on Mac as before.</td><td>A native build and its signing; days, not hours.</td></tr>
+</tbody>
+</table>
+<p><strong>My recommendation: A now, B as a later row</strong> — it keeps tonight's app honest and shippable.</p>
+<h2 id="what-i-do-when-you-answer">What I do when you answer<a class="anchor-link" href="#what-i-do-when-you-answer">#</a></h2>
+<ol>
+<li>If you keep every recommendation, nothing changes.
+</li>
+<li>If you change one, I edit the Architecture decision it touches, the phase 3 rows it names, and the code, then run the unit tests and the headless checks again.
+</li>
+<li>Decisions 1, 3, 8 and 10B are the costliest to reverse (most of a night each); 4, 5 and 6 are about an hour each; 2 and 7 are minutes.
+</li>
+</ol>
+<h2 id="copy-this-back-to-me">Copy this back to me<a class="anchor-link" href="#copy-this-back-to-me">#</a></h2>
+<pre><code>TrStudio: decision 1 — go with option A. The screens keep their calls; the in-process library answers them.</code></pre>
+<pre><code>TrStudio: decision 2 — go with option A. The test host stays under tests/.</code></pre>
+<pre><code>TrStudio: decision 3 — go with option A. Vectors stay in TrStudio.vectors.db beside TrStudio.db.</code></pre>
+<pre><code>TrStudio: decision 4 — go with option A. Resume Venice clips, fail other running jobs with the reason.</code></pre>
+<pre><code>TrStudio: decision 5 — go with option A. One unlock key per user in the Keychain or Windows data protection.</code></pre>
+<pre><code>TrStudio: decision 6 — go with option A. Sign in each time the app opens.</code></pre>
+<pre><code>TrStudio: decision 7 — go with option A. Rows touching stored data stay at needs re-check until re-verified.</code></pre>
+<pre><code>TrStudio: decision 8 — go with option A. API project and web head stay on disk, out of the solution build.</code></pre>
+<pre><code>TrStudio: decision 9 — go with option A. Keep word matching; plan a built-in embedding model as a later row.</code></pre>
+<pre><code>TrStudio: decision 10 — go with option A. ComfyUI, RunPod or Venice for pictures on Mac; ONNX for Mac Catalyst as a later row.</code></pre>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+<script>
+// Light/dark toggle. The initial theme was already applied flash-free by the
+// <head> script (saved choice, else time-of-day). Clicking flips it, saves the
+// choice, and reloads so Mermaid re-renders in the matching theme.
+(function(){
+  var btn = document.getElementById('themeToggle');
+  if(!btn) return;
+  var relabel = function(){
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    btn.textContent = dark ? '☀ Light' : '☾ Dark';
+  };
+  relabel();
+  btn.addEventListener('click', function(){
+    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    try{ localStorage.setItem('tf-theme', next); }catch(e){}
+    location.reload();
+  });
+})();
+
+// Copy buttons on every code <pre> — but NEVER on a `pre.mermaid`:
+// mermaid reads the <pre>'s textContent as the diagram source, so a button
+// appended here glues "copy" onto the last line and breaks the parse
+// (flowcharts → "Syntax error"; sequence diagrams silently absorb it).
+// Mermaid blocks get copy/export from their own .diagram toolbar instead.
+document.querySelectorAll('pre:not(.mermaid)').forEach(pre => {
+  const btn = document.createElement('button');
+  btn.className = 'copy';
+  btn.textContent = 'copy';
+  btn.addEventListener('click', () => {
+    const text = pre.querySelector('code') ? pre.querySelector('code').innerText : pre.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'copied';
+      setTimeout(() => { btn.textContent = 'copy'; }, 1200);
+    });
+  });
+  pre.appendChild(btn);
+});
+
+// Mermaid init — theme follows the resolved light/dark theme
+if (window.mermaid) {
+  var mermaidTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default';
+  mermaid.initialize({ startOnLoad: true, theme: mermaidTheme, securityLevel: 'loose' });
+}
+
+// Mermaid toolbar wiring — run after mermaid renders
+function wireMermaidToolbars() {
+  document.querySelectorAll('.diagram').forEach(dia => {
+    if (dia.dataset.wired) return;
+    const merm = dia.querySelector('.mermaid');
+    const svg = merm && merm.querySelector('svg');
+    if (!svg) return;
+    dia.dataset.wired = '1';
+    let scale = 1;
+    const label = dia.querySelector('.zlabel');
+    const apply = () => {
+      svg.style.transform = `scale(${scale})`;
+      svg.style.transformOrigin = 'top left';
+      if (label) label.textContent = Math.round(scale * 100) + '%';
+    };
+    const setScale = (s) => { scale = Math.max(0.25, Math.min(4, s)); apply(); };
+    dia.querySelector('[data-zin]').onclick = () => setScale(scale * 1.2);
+    dia.querySelector('[data-zout]').onclick = () => setScale(scale / 1.2);
+    dia.querySelector('[data-fit]').onclick = () => {
+      svg.style.transform = '';
+      svg.removeAttribute('width');
+      svg.style.maxWidth = '100%';
+      svg.style.height = 'auto';
+      scale = 1;
+      if (label) label.textContent = 'Fit';
+    };
+    dia.querySelector('[data-one]').onclick = () => {
+      svg.style.transform = '';
+      svg.style.maxWidth = 'none';
+      svg.style.width = '';
+      svg.style.height = '';
+      scale = 1;
+      if (label) label.textContent = '100%';
+    };
+    dia.querySelector('[data-fs]').onclick = () => {
+      dia.classList.toggle('fs');
+      if (dia.classList.contains('fs')) {
+        document.addEventListener('keydown', escFs);
+      } else {
+        document.removeEventListener('keydown', escFs);
+      }
+    };
+    function escFs(e) { if (e.key === 'Escape') { dia.classList.remove('fs'); document.removeEventListener('keydown', escFs); } }
+    dia.querySelector('[data-pop]').onclick = () => openInNewTab(svg);
+    // Ctrl+wheel zoom
+    merm.addEventListener('wheel', (e) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      setScale(scale * (e.deltaY < 0 ? 1.1 : 1/1.1));
+    }, { passive: false });
+  });
+}
+
+function openInNewTab(svg) {
+  const svgSource = new XMLSerializer().serializeToString(svg);
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Diagram</title>
+<style>
+  html,body{margin:0;height:100%;background:#0f1115;color:#e6e8ee;font-family:system-ui,sans-serif}
+  .bar{position:fixed;top:0;left:0;right:0;padding:8px 12px;background:#161a22;border-bottom:1px solid #2a3142;display:flex;gap:8px;z-index:10}
+  .bar button{background:#1c2230;color:#9aa3b2;border:1px solid #2a3142;border-radius:6px;padding:5px 12px;font-size:13px;cursor:pointer}
+  .bar button:hover{color:#7cc4ff;border-color:#7cc4ff}
+  .bar .hint{margin-left:auto;color:#9aa3b2;font-size:11.5px;align-self:center}
+  #stage{position:absolute;top:42px;bottom:0;left:0;right:0;overflow:hidden}
+  #stage svg{width:100%;height:100%}
+</style>
+</head><body>
+<div class="bar">
+  <button onclick="zpz.zoomIn()">+</button>
+  <button onclick="zpz.zoomOut()">−</button>
+  <button onclick="zpz.fit();zpz.center()">Fit</button>
+  <button onclick="zpz.resetZoom();zpz.center()">1:1</button>
+  <button onclick="window.print()">Print</button>
+  <button onclick="dlPng()">PNG</button>
+  <button onclick="dlSvg()">SVG</button>
+  <span class="hint">Drag to pan · Ctrl+wheel to zoom · + / − keys</span>
+</div>
+<div id="stage">${svgSource}</div>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"><\/script>
+<script>
+  const el = document.querySelector('#stage svg');
+  const zpz = svgPanZoom(el, { zoomScaleSensitivity: .3, minZoom: .2, maxZoom: 10, controlIconsEnabled: false, fit: true, center: true });
+  document.addEventListener('keydown', e => {
+    if (e.key === '+' || e.key === '=') zpz.zoomIn();
+    if (e.key === '-' || e.key === '_') zpz.zoomOut();
+    if (e.key === '0') { zpz.resetZoom(); zpz.center(); }
+  });
+  function dlSvg() {
+    const blob = new Blob([new XMLSerializer().serializeToString(el)], { type: 'image/svg+xml' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'diagram.svg'; a.click();
+  }
+  function dlPng() {
+    const src = new XMLSerializer().serializeToString(el);
+    const img = new Image();
+    const url = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(src)));
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = el.clientWidth * 2; c.height = el.clientHeight * 2;
+      const ctx = c.getContext('2d'); ctx.scale(2,2); ctx.drawImage(img, 0, 0);
+      c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'diagram.png'; a.click(); });
+    };
+    img.src = url;
+  }
+<\/script>
+</body></html>`;
+  const w = window.open();
+  w.document.write(html);
+  w.document.close();
+}
+
+// Run wiring after mermaid finishes (it renders async)
+if (window.mermaid) {
+  setTimeout(wireMermaidToolbars, 400);
+  setTimeout(wireMermaidToolbars, 1200);  // safety re-run for slow renders
+}
+</script>
+</body>
+</html>

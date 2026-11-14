@@ -21,16 +21,19 @@ public class AesGcmKeyStore : IKeyStore
 
     private readonly IProviderKeyRepository objRepository;
     private readonly IConfiguration objConfiguration;
+    private readonly IKeyProtector? objKeyProtector;
 
     /// <summary>
     /// Initialises the key store.
     /// </summary>
     /// <param name="aRepository">Repository persisting the ciphertext rows.</param>
     /// <param name="aConfiguration">Configuration carrying <c>Security:KeyStoreKey</c>.</param>
-    public AesGcmKeyStore(IProviderKeyRepository aRepository, IConfiguration aConfiguration)
+    /// <param name="aKeyProtector">Phase 3 (ADR-020): the operating system's protection for the unlock key; when present, no configuration key is read.</param>
+    public AesGcmKeyStore(IProviderKeyRepository aRepository, IConfiguration aConfiguration, IKeyProtector? aKeyProtector = null)
     {
         objRepository = aRepository;
         objConfiguration = aConfiguration;
+        objKeyProtector = aKeyProtector;
     }
 
     /// <inheritdoc />
@@ -73,7 +76,8 @@ public class AesGcmKeyStore : IKeyStore
                 ProviderName = vRow.ProviderName,
                 IsEnabled = vRow.IsEnabled,
                 MaskedKey = vMask,
-                BaseUrl = vRow.BaseUrl
+                BaseUrl = vRow.BaseUrl,
+                Account = vRow.Account
             });
         }
 
@@ -121,12 +125,29 @@ public class AesGcmKeyStore : IKeyStore
         var vPlain = new byte[vCipher.Length];
 
         using var vAes = new AesGcm(vKey, TagSize);
-        vAes.Decrypt(vNonce, vCipher, vTag, vPlain);
+        try
+        {
+            vAes.Decrypt(vNonce, vCipher, vTag, vPlain);
+        }
+        catch (AuthenticationTagMismatchException vException)
+        {
+            // Phase 3 (ADR-020): the unlock key the operating system keeps for this user is not the one
+            // this key was saved with (for example the Keychain item was removed). Say what to do.
+            throw new InvalidOperationException(
+                "A stored provider key could not be unlocked on this computer. Enter the key again on Registry & providers.",
+                vException);
+        }
+
         return Encoding.UTF8.GetString(vPlain);
     }
 
     private byte[] DeriveKey()
     {
+        if (objKeyProtector is not null)
+        {
+            return objKeyProtector.GetOrCreateDataKey();
+        }
+
         var vKeyMaterial = objConfiguration["Security:KeyStoreKey"];
         if (string.IsNullOrWhiteSpace(vKeyMaterial))
         {

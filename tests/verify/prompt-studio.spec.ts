@@ -9,7 +9,11 @@ const OUT_DIR = path.resolve('test-results/verify-prompt');
 const RESULT_FILE = path.resolve('test-results/verify-prompt-results.json');
 fs.mkdirSync(OUT_DIR, { recursive: true });
 
-const tokens = JSON.parse(fs.readFileSync(path.resolve('.verify/tokens.json'), 'utf-8'));
+// Phase 3 (2026-11-14): these API-era checks used dev tokens signed with a signing key the desktop
+// app no longer has. Without .verify/tokens.json the file still loads and its tests skip with that reason.
+const tokensPath = path.resolve('.verify/tokens.json');
+const tokens: any = fs.existsSync(tokensPath) ? JSON.parse(fs.readFileSync(tokensPath, 'utf-8')) : {};
+test.skip(!fs.existsSync(tokensPath), 'Skipped: .verify/tokens.json (API-era signed dev tokens) is absent; phase 3 removed the signing key. Re-verify phase 1 with the test host sessions.');
 
 const out: any = { render: {}, ui082: {}, visual: {}, notes: [] };
 

@@ -106,7 +106,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <div class="layout no-toc">
   <main>
     <h1>TrStudio — UI Design</h1>
-    <div class="subtitle">Rendered 2026-11-12 &middot; source <code>TrStudio-UIDesign.md</code></div>
+    <div class="subtitle">Rendered 2026-11-14 &middot; source <code>TrStudio-UIDesign.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
@@ -215,6 +215,9 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tr><td>Submit</td><td><code>Button</code> (primary, Submit)</td><td>sign in</td><td>loading → <code>Spinner</code></td></tr>
 <tr><td>Auth note</td><td><code>TypographyMuted</code></td><td>"Authenticated via AppManager"</td><td>error → <code>Alert</code> (Danger)</td></tr>
 <tr><td>Register link</td><td><code>Button</code> (Link)</td><td>"Create an account" → <code>/register</code></td><td>—</td></tr>
+<tr><td>Missing settings (phase 3)</td><td><code>Alert</code> (Warning)</td><td>build has no AppManager id or key; Sign in disabled</td><td><code>alert-missing-sign-in-settings</code></td></tr>
+<tr><td>Unreachable (phase 3)</td><td><code>Alert</code> (Danger)</td><td>AppManager cannot be reached</td><td><code>alert-sign-in-unreachable</code></td></tr>
+<tr><td>Local data note (phase 3)</td><td><code>TypographyMuted</code></td><td>work stays on this computer</td><td><code>note-local-data</code></td></tr>
 </tbody>
 </table>
 <p><strong>Fields:</strong></p>
@@ -259,6 +262,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tr><td>Message</td><td>heading + <code>TypographyMuted</code></td><td>no model sources / models configured; ask your admin or sign in as an admin</td><td>—</td></tr>
 <tr><td>Actions</td><td><code>Button</code> (primary) + <code>Button</code> (outline)</td><td>"Sign in as admin" → <code>/login</code>; "Check again" re-runs the gate</td><td>checking → <code>Spinner</code></td></tr>
 <tr><td>Admin steps hint</td><td><code>Card</code> + numbered list</td><td>enable a source → install a model → registry row</td><td>—</td></tr>
+<tr><td>Local data (phase 3)</td><td><code>Card</code> + monospace path + <code>Badge</code></td><td>the user's data folder; library ready</td><td>problem → folder and reason</td></tr>
 </tbody>
 </table>
 <p><strong>Fields:</strong></p>
@@ -660,6 +664,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tr><td>Add / edit</td><td><code>Sheet</code> (right)</td><td>row fields + declarative params editor</td><td>saving → <code>Spinner</code></td></tr>
 <tr><td>Params editor</td><td>repeated <code>Field</code> rows (<code>Input</code>/<code>Select</code>/<code>Switch</code>)</td><td>key/type/required/default</td><td>validation inline</td></tr>
 <tr><td>Provider keys</td><td><code>Card</code> + <code>Input</code> (Password) per provider + <code>Switch</code> (enabled)</td><td>HeyGen / aggregator keys (encrypted)</td><td>masked; never logged</td></tr>
+<tr><td>Keys (phase 3)</td><td><code>Alert</code>, <code>Input</code>, <code>Select</code></td><td>protection note; RunPod; text model</td><td>Configured</td></tr>
 <tr><td>Venice card (phase 2)</td><td><code>Card</code>, <code>Input</code>, <code>Switch</code>, <code>Button</code> (Test connection)</td><td>address, masked key (BRD-93..95)</td><td>"Connected" or Venice's error</td></tr>
 <tr><td>Venice row (phase 2)</td><td><code>Select</code>, <code>Input</code>, 2 <code>Checkbox</code></td><td>model id, task, abilities (BRD-96..97)</td><td>"Venice" <code>Badge</code></td></tr>
 <tr><td>Fill from Venice (phase 2)</td><td><code>Button</code></td><td>fills the row, unsaved (BRD-122)</td><td>error → <code>Alert</code></td></tr>
@@ -676,16 +681,16 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tr><td>Provider</td><td>select</td><td>yes</td><td>a provider kind</td></tr>
 <tr><td>Tier</td><td>select</td><td>yes</td><td>Fast / High / Premium</td></tr>
 <tr><td>Params schema</td><td>editor rows</td><td>no</td><td>key, type, required, default per row</td></tr>
-<tr><td>Provider key (HeyGen, fal.ai …)</td><td>password</td><td>no</td><td>write-only; shown masked after save</td></tr>
+<tr><td>Provider key (HeyGen, fal.ai …)</td><td>password</td><td>no</td><td>write-only, masked</td></tr>
 <tr><td>Venice address (phase 2)</td><td>url</td><td>yes</td><td>https</td></tr>
-<tr><td>Venice API key (phase 2)</td><td>password</td><td>yes</td><td>masked after save</td></tr>
-<tr><td>Provider model id (phase 2)</td><td>text</td><td>Venice</td><td>e.g. z-image-turbo</td></tr>
+<tr><td>Venice API key (phase 2)</td><td>password</td><td>yes</td><td>masked</td></tr>
+<tr><td>Provider model id (phase 2)</td><td>text</td><td>Venice</td><td>model id</td></tr>
 <tr><td>Takes a reference picture (phase 2)</td><td>checkbox</td><td>no</td><td>—</td></tr>
 <tr><td>Keeps a fixed character (phase 2)</td><td>checkbox</td><td>no</td><td>—</td></tr>
 </tbody>
 </table>
-<p><strong>Notes:</strong> the params schema drives the studios' controls. <code>/admin/providers</code> renders this screen's provider panel (BRD-7). <strong>States:</strong> empty: <code>Empty</code> CTA · loading: skeleton rows · error: <code>Alert</code>; secrets masked.</p>
-<p><strong>Phase 2 (Venice, BRD-93 to BRD-117, BRD-122):</strong> Venice card; one registry row per Venice model and task; Fill from Venice pre-fills a row.</p>
+<p><strong>Notes:</strong> the params schema drives the studios' controls; <code>/admin/providers</code> renders the provider panel. <strong>States:</strong> empty: <code>Empty</code> CTA · loading: skeleton rows · error: <code>Alert</code>; secrets masked.</p>
+<p><strong>Phase 2:</strong> Venice card; one row per Venice model and task; Fill from Venice.</p>
 <h3 id="screen-admin-comfyui-import-debug"><a id="screen-admin--comfyui-import--debug"></a>Screen: Admin — ComfyUI import &amp; debug<a class="anchor-link" href="#screen-admin-comfyui-import-debug">#</a></h3>
 <p><strong>Mockup:</strong> <a href="./mockups/admin-comfy.html">docs/mockups/admin-comfy.html</a> · <strong>Role(s):</strong> Operator/Admin · <strong>BRD:</strong> BRD-34..41 · <strong>REQ:</strong> REQ-UI-072</p>
 <p><strong>Layout (one line):</strong> left: workflow drop-zone + parsed node/param list; center: input→registry-param mapping; right: run/debug panel with per-node status + WebSocket previews.</p>

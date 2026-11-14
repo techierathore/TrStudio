@@ -84,18 +84,43 @@
                 <CardDescription>Encrypted at rest · never logged.</CardDescription>
             </CardHeader>
             <CardContent Class="flex-col">
+                @if (objKeyNote is not null)
+                {
+                    @* Phase 3 (REQ-UI-104): where the keys are kept and what protects them. *@
+                    <div data-testid="key-protection-note">
+                        <Alert AccentBorder="true">
+                            <LucideIcon Name="shield-check" Size="16" />
+                            <AlertDescription>@objKeyNote</AlertDescription>
+                        </Alert>
+                    </div>
+                }
                 @foreach (var vKey in objProviderKeys)
                 {
-                    <div>
+                    <div data-testid="@($"provider-{vKey.ProviderName.ToLowerInvariant().Replace(".", "-")}")">
                         <div class="flex-between">
-                            <Label>@vKey.ProviderName</Label>
+                            <div class="flex-row">
+                                <Label>@vKey.ProviderName</Label>
+                                @if (vKey.Stored)
+                                {
+                                    <Badge Variant="BadgeVariant.Outline" data-testid="@($"badge-{vKey.ProviderName.ToLowerInvariant().Replace(".", "-")}-configured")">Configured</Badge>
+                                }
+                            </div>
                             <div class="flex-row">
                                 <span class="kpi-lbl" style="font-size:11px">@(vKey.Enabled ? "enabled" : "disabled")</span>
                                 <Switch @bind-Checked="vKey.Enabled" AriaLabel="@($"Enable {vKey.ProviderName}")" />
                             </div>
                         </div>
+                        @if (vKey.ProviderName == RunPodProvider)
+                        {
+                            @* Phase 3 (REQ-FN-096): the RunPod endpoint id is kept beside its key. *@
+                            <Label Class="mt-2">Endpoint id</Label>
+                            <Input @bind-Value="vKey.Account" Class="mt-1" Placeholder="Your RunPod serverless endpoint id"
+                                   data-testid="field-runpod-endpoint" />
+                            <Label Class="mt-2">API key</Label>
+                        }
                         <Input Type="InputType.Password" @bind-Value="vKey.Value" Class="mt-2"
-                               Placeholder="Enter a new key to replace" />
+                               Placeholder="@(vKey.Stored ? $"Stored {vKey.MaskedKey} · enter a new key to replace" : "Enter the key")"
+                               data-testid="@($"field-{vKey.ProviderName.ToLowerInvariant().Replace(".", "-")}-key")" />
                     </div>
                 }
                 <div data-testid="provider-venice">
@@ -483,12 +508,33 @@
                     string.Equals(aInfo.ProviderName, nameof(ProviderKind.Venice), StringComparison.OrdinalIgnoreCase));
                 objVenice.Load(vVeniceInfo);
                 vInfos = vInfos?.Where(aInfo => !ReferenceEquals(aInfo, vVeniceInfo)).ToList();
-                if (vInfos is { Count: > 0 })
+                // The raw secret never leaves the key store, so the password field starts empty
+                // (placeholder "Enter a new key to replace") — a saved value only sends a NEW key.
+                objProviderKeys = (vInfos ?? new List<ProviderKeyInfo>())
+                    .Select(aInfo => new ProviderKeyRow(aInfo.ProviderName, string.Empty, aInfo.IsEnabled)
+                    {
+                        Stored = true,
+                        MaskedKey = aInfo.MaskedKey,
+                        Account = aInfo.Account,
+                        StoredAccount = aInfo.Account
+                    })
+                    .ToList();
+
+                // Phase 3 (REQ-FN-096): every key a user owns is entered here, so the known providers are
+                // always listed, stored or not.
+                foreach (var vKnown in KnownProviders)
                 {
-                    // The raw secret never leaves the key store, so the password field starts empty
-                    // (placeholder "Enter a new key to replace") — a saved value only sends a NEW key.
-                    objProviderKeys = vInfos.Select(aInfo => new ProviderKeyRow(aInfo.ProviderName, string.Empty, aInfo.IsEnabled)).ToList();
+                    if (!objProviderKeys.Any(aRow => string.Equals(aRow.ProviderName, vKnown, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        objProviderKeys.Add(new ProviderKeyRow(vKnown, string.Empty, true));
+                    }
                 }
+            }
+
+            var vNote = await vClient.GetAsync(ApiRoutes.Providers + "/protection");
+            if (vNote.IsSuccessStatusCode)
+            {
+                objKeyNote = (await vNote.Content.ReadFromJsonAsync<KeyNoteLike>())?.Note;
             }
         }
         catch
@@ -737,22 +783,33 @@
         {
             try
             {
-                if (!string.IsNullOrWhiteSpace(vKey.Value))
+                var vAccountChanged = vKey.Stored && !string.Equals(vKey.Account ?? string.Empty, vKey.StoredAccount ?? string.Empty, StringComparison.Ordinal);
+                if (!string.IsNullOrWhiteSpace(vKey.Value) || vAccountChanged)
                 {
                     var vResponse = await vClient.PutAsJsonAsync(
                         ApiRoutes.Providers + "/keys",
-                        new ProviderKeyUpsertRequest { ProviderName = vKey.ProviderName, ApiKey = vKey.Value, IsEnabled = vKey.Enabled });
+                        new ProviderKeyUpsertRequest
+                        {
+                            ProviderName = vKey.ProviderName,
+                            ApiKey = vKey.Value,
+                            IsEnabled = vKey.Enabled,
+                            Account = vKey.ProviderName == RunPodProvider ? vKey.Account ?? string.Empty : null
+                        });
                     if (vResponse.IsSuccessStatusCode)
                     {
                         vSaved++;
+                        var vInfo = await vResponse.Content.ReadFromJsonAsync<ProviderKeyInfo>();
                         vKey.Value = string.Empty;
+                        vKey.Stored = true;
+                        vKey.MaskedKey = vInfo?.MaskedKey ?? vKey.MaskedKey;
+                        vKey.StoredAccount = vKey.Account;
                     }
                     else
                     {
                         vFailed = true;
                     }
                 }
-                else
+                else if (vKey.Stored)
                 {
                     // No new secret entered — reflect just the enabled toggle against the stored key.
                     var vAction = vKey.Enabled ? "enable" : "disable";
@@ -1110,6 +1167,30 @@
         public string ProviderName { get; }
         public string Value { get; set; }
         public bool Enabled { get; set; }
+
+        /// <summary>Phase 3: a key is stored for this provider.</summary>
+        public bool Stored { get; set; }
+
+        /// <summary>Phase 3: the stored key, masked.</summary>
+        public string MaskedKey { get; set; } = string.Empty;
+
+        /// <summary>Phase 3: the RunPod endpoint id (or closed-API vendor) beside the key.</summary>
+        public string? Account { get; set; }
+
+        /// <summary>Phase 3: the stored endpoint id, to see a change.</summary>
+        public string? StoredAccount { get; set; }
+    }
+
+    /// <summary>Phase 3: the provider rows always listed, so every key a user owns can be entered here.</summary>
+    private static readonly string[] KnownProviders = { RunPodProvider, "HeyGen", "ClosedApi" };
+
+    private const string RunPodProvider = "RunPod";
+
+    private string? objKeyNote;
+
+    private sealed class KeyNoteLike
+    {
+        public string? Note { get; set; }
     }
 
     private sealed class ParamRow

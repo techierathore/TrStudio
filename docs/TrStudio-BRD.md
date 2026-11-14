@@ -14,7 +14,7 @@
 
 TrStudio is a self-hosted studio for making avatar-led videos (a talking presenter who is not the owner), plus the pictures, voices and clips around them, without ComfyUI graphs or Python setup for the person using it. It runs the owner's own models on their own machine or on pay-per-second GPUs, with a HeyGen tier when studio quality is wanted, and from phase 2 a Venice cloud tier for pictures and video.
 
-It is one Blazor application whose screens depend on the signed-in role (Creator, Operator, Owner), shipped as a web app and as a Windows and Mac desktop app, over one API with a provider seam, a model registry, a durable job queue and Postgres. Identity and licences come from AppManager.
+It is one Blazor application whose screens depend on the signed-in role (Creator, Operator, Owner), shipped as a web app and as a Windows and Mac desktop app, over one API with a provider seam, a model registry, a durable job queue and Postgres. Identity and licences come from AppManager. From phase 3 (2026-11-14) it ships as one desktop app for Windows and Mac with the engine, a local SQLite database and the job queue inside it ([phase 3](TrStudio-P3-BRD.md)).
 
 Two things shape it: a budget of about $100 a month, so heavy work runs on GPUs that stop when idle, and safety rules that can never be switched off.
 
@@ -437,9 +437,9 @@ The SaaS-ready abstraction. `TrStudioApi` is designed to also serve as an extern
 
 - **BRD-1** — System shall expose a provider abstraction (`IGenerationProvider`: supports/submit/status/result/estimateCost) so any model resolves to one provider. *(F-PLAT, ADM-05 §4.2)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-2** — System shall offer an async job model (submit → poll/stream → fetch) identical across providers. *(F-PLAT, API-02)* <!-- from: TrStudio-Requirements-v0.3.md -->
-- **BRD-3** — System shall run a durable job queue (Hangfire/Postgres) with priority, concurrency caps, retries, durable jobs and back-pressure. *(F-PLAT, ADM-08)* <!-- from: TrStudio-Requirements-v0.3.md -->
-- **BRD-4** — System shall expose the unified `TrStudioApi` surface (OpenAPI, auth, versioned) consumed by `TrStudio` and serveable to third parties. *(F-PLAT, ADM-13)* <!-- from: TrStudio-Requirements-v0.3.md -->
-- **BRD-5** — System shall stream job progress (SignalR) and surface actionable failures (e.g. "out of memory — drop to 256px or route to RunPod"). *(F-PLAT, ADM-09)* <!-- from: TrStudio-Requirements-v0.3.md -->
+- **BRD-3** — System shall run a durable job queue (Hangfire/Postgres; from phase 3 an in-app queue in the local database, BRD-134 to BRD-138) with priority, concurrency caps, retries, durable jobs and back-pressure. *(F-PLAT, ADM-08)* <!-- from: TrStudio-Requirements-v0.3.md -->
+- **BRD-4** — System shall expose the unified `TrStudioApi` surface (OpenAPI, auth, versioned) consumed by `TrStudio` and serveable to third parties. Changed 2026-11-14: the same routes are answered inside the desktop app (BRD-146, BRD-147); the API project and its OpenAPI page are set aside, unused. *(F-PLAT, ADM-13)* <!-- from: TrStudio-Requirements-v0.3.md -->
+- **BRD-5** — System shall stream job progress (SignalR; from phase 3 the in-app job status the screens read, BRD-134) and surface actionable failures (e.g. "out of memory — drop to 256px or route to RunPod"). *(F-PLAT, ADM-09)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-6** — Operator can maintain the Model & Provider Registry as the single source of truth, with a declarative params schema that auto-renders UI controls. *(F-PROVIDERS, ADM-05)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-7** — Operator can configure closed-provider adapters (HeyGen, aggregator) with encrypted API-key storage, enabled per model. *(F-PROVIDERS, ADM-07)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-8** — Operator can detect host capabilities (Apple Silicon GPU cores, unified memory, MPS/CoreML, disk) and see a readiness summary. *(F-ADMIN, ADM-01)* <!-- from: TrStudio-Requirements-v0.3.md -->
@@ -492,7 +492,7 @@ The SaaS-ready abstraction. `TrStudioApi` is designed to also serve as an extern
 - **BRD-31** — Creator can generate captions/subtitles (from the script or Whisper) in EN/HI, burn-in or sidecar SRT. *(F-AVATAR, AV-05)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-32** — Creator can optionally create a digital-twin from a short base video, consent-gated (SAFE-03), off by default. *(F-AVATAR, AV-06)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-33** — Creator can assemble multiple avatar clips into one sequence with a consistent character. *(F-AVATAR, AV-07)* <!-- from: TrStudio-Requirements-v0.3.md -->
-- **BRD-55** — System shall maintain a RAG-backed character bible (persona voice/wording consistency) in PgVector. *(F-TEXT, §7)* <!-- from: TrStudio-Requirements-v0.3.md -->
+- **BRD-55** — System shall maintain a RAG-backed character bible (persona voice/wording consistency) in PgVector; from phase 3 on the local SQLite store through TechieRag (BRD-145). *(F-TEXT, §7)* <!-- from: TrStudio-Requirements-v0.3.md -->
 
 **Phase 6 — ComfyUI pipeline screen**
 
@@ -556,8 +556,8 @@ The SaaS-ready abstraction. `TrStudioApi` is designed to also serve as an extern
 - **BRD-70** — Scalability: the orchestrator scales by adding workers and never assumes a single GPU. *(NFR-02)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-71** — Portability: `TrStudioApi`/workers run on macOS + Linux; the single **`TrStudio`** app runs as **Blazor Web *and* MAUI Blazor Hybrid desktop (Win/Mac)**, presenting creator/management surfaces by role. *(NFR-03)* <!-- from: TrStudio-Requirements-v0.3.md; amended 2026-07-05 (BRD-86/87) -->
 - **BRD-86** — System shall be delivered as **one unified `TrStudio` application** presenting the creator experience and the model/provider management experience in a single app, with the surface a user sees gated by their **role** (Creator → creator studios; Operator/Admin → management; Owner → both, switchable in-app). The separate `TrStudioAdmin` app is retired; its screens move into the shared `TrStudioUI` RCL under role-gated routes. `TrStudioApi` is unchanged. *(F-SHELL — supersedes the two-app split / ADR-001)* <!-- from: owner review 2026-07-05 -->
-- **BRD-87** — System shall ship `TrStudio` as a **MAUI Blazor Hybrid desktop application for Windows and macOS** (the primary local delivery) alongside the Blazor Web head, both hosting the same `TrStudioUI` RCL against `TrStudioApi`. (Fulfils the desktop-app intent of NFR-03/BRD-71/§25, previously deferred.) *(F-SHELL / NFR-03)* <!-- from: owner review 2026-07-05 -->
-- **BRD-72** — Reliability: durable jobs (Hangfire/Postgres); worker crash → retry or graceful fail without losing the queue. *(NFR-04)* <!-- from: TrStudio-Requirements-v0.3.md -->
+- **BRD-87** — System shall ship `TrStudio` as a **MAUI Blazor Hybrid desktop application for Windows and macOS** (the primary local delivery) alongside the Blazor Web head, both hosting the same `TrStudioUI` RCL against `TrStudioApi`. Changed 2026-11-14: the desktop app is the only delivery and carries the engine inside it; the web head is no longer shipped and a test host serves the screens for headless checks only (BRD-146, BRD-150). (Fulfils the desktop-app intent of NFR-03/BRD-71/§25, previously deferred.) *(F-SHELL / NFR-03)* <!-- from: owner review 2026-07-05 -->
+- **BRD-72** — Reliability: durable jobs (Hangfire/Postgres; from phase 3 the in-app queue that picks up or fails a job left at close, BRD-136, BRD-137); worker crash → retry or graceful fail without losing the queue. *(NFR-04)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-73** — Security: API auth; encrypted provider-key store; no secrets in logs/URLs; least-privilege workers. *(NFR-05)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-74** — Privacy: local jobs stay on the machine; the UI clearly flags when a job is routed to a closed API (HeyGen/aggregator). *(NFR-06)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-75** — Cost control: per-job estimates; RunPod idle auto-stop; monthly cap + alerts across RunPod and closed APIs. *(NFR-07)* <!-- from: TrStudio-Requirements-v0.3.md -->
@@ -569,14 +569,14 @@ The SaaS-ready abstraction. `TrStudioApi` is designed to also serve as an extern
 
 Written by the status gate after every build, verify and handoff; not by hand.
 
-**Snapshot as of 2026-11-12.** Live per-requirement status: `PROJECT-STATUS.md` and the Requirements Status table in `docs/TrStudio-Checklist.md`.
+**Snapshot as of 2026-11-14.** Live per-requirement status: `PROJECT-STATUS.md` and the Requirements Status table in `docs/TrStudio-Checklist.md`.
 
 | Screen | Requirements | Verified | Open | Status |
 |---|---|---|---|---|
-| UI / Pages | 25 | 23 | 2 | Partial |
-| Functional requirements | 74 | 54 | 20 | Partial |
-| RAG / AI requirements (→ /techierag) | 5 | 2 | 3 | Partial |
-| Non-functional | 10 | 1 | 9 | Partial |
+| UI / Pages | 25 | 2 | 23 | Partial |
+| Functional requirements | 68 | 5 | 63 | Partial |
+| RAG / AI requirements (→ /techierag) | 4 | 0 | 4 | In progress |
+| Non-functional | 10 | 0 | 10 | In progress |
 
 ## 8. Context diagram
 
@@ -645,7 +645,8 @@ flowchart TB
 ---
 Last updated: 2026-07-02
 Highest BRD ID: BRD-92
-Last amended: 2026-07-07 — Prompt Studio LLM prompt-crafting chat added (F-PROMPT, BRD-88..92, Phase 10): registry-driven text-chat LLM picker, TechieRag chat-completion (no RAG), image attachment for vision models, per-user sessions, prompt → library/studio handoff.
+Last amended: 2026-11-14 — phase 3: one desktop app with the engine, SQLite and the job queue inside it; BRD-3, 4, 5, 55, 72 and 87 point at their phase-3 items (BRD-124 to BRD-152).
+Previously amended: 2026-07-07 — Prompt Studio LLM prompt-crafting chat added (F-PROMPT, BRD-88..92, Phase 10): registry-driven text-chat LLM picker, TechieRag chat-completion (no RAG), image attachment for vision models, per-user sessions, prompt → library/studio handoff.
 Previously amended: 2026-07-05 — consolidated to one role-based `TrStudio` app (BRD-86); MAUI desktop Win+Mac un-deferred (BRD-87); supersedes the two-app split (ADR-001 → ADR-012).
 Sources harvested: docs/TrStudio-Requirements-v0.3.md
 Custom instructions applied: owner revision — NSFW/unrestricted mode moved IN-scope as an owner-only, admin-gated, personal-mode capability for synthetic adult personas (BRD-79/80); per-user data isolation (BRD-81); model-repository sources (BRD-82); registration screen (BRD-83). Illegal-harm floors (CSAM/real-person/minors/public-figure) remain non-disableable. Owner review 2026-07-02 — role-based default landing pages (BRD-84) and the first-run setup gate with the Setup-required screen (BRD-85); Forgot-password screen added under BRD-57.

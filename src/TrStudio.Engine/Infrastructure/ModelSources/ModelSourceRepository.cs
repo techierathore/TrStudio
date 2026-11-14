@@ -59,7 +59,7 @@ public class ModelSourceRepository : IModelSourceRepository, IModelSourceTokenSt
     {
         const string Sql = """
             INSERT INTO "ModelSource" ("ModelSourceId", "Name", "Kind", "BaseUrl", "IsEnabled", "Status", "CreatedUtc")
-            VALUES (@aSourceId, @aName, @aKind, @aBaseUrl, @aIsEnabled, @aStatus, NOW() AT TIME ZONE 'utc')
+            VALUES (@aSourceId, @aName, @aKind, @aBaseUrl, @aIsEnabled, @aStatus, now())
             ON CONFLICT ("ModelSourceId") DO UPDATE SET
                 "Name" = EXCLUDED."Name",
                 "Kind" = EXCLUDED."Kind",

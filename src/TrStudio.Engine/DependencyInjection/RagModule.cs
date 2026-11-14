@@ -32,6 +32,7 @@ public static class RagModule
 
         // The token tracker feeds ISpendLedger (registered by AddCostModule).
         aServices.TryAddSingleton<ILlmTokenTracker, LlmTokenTracker>();
+        aServices.TryAddSingleton<ITextModelSource, RegistryTextModelSource>();
         aServices.TryAddSingleton<ITextGenerationService, TextGenerationService>();
 
         // RAG-005 (ADR-013): Prompt Studio chat over a picked text-chat registry LLM via TechieRag
@@ -50,37 +51,14 @@ public static class RagModule
     {
         aBuilder.UseOllama();
 
-        // RAG-004: the character bible is stored in PgVector on the app Postgres (BRD-55). Prefer the
-        // app's Default connection when available so persona vectors live alongside the app data; fall
-        // back to a self-contained local SQLite vector store when no Postgres connection is configured
-        // (keeps Build() self-contained in tests / offline dev). Either way, embedding calls degrade
-        // gracefully to the keyword path when no embedding model is running.
-        var vPgConnection = aConfiguration["TechieRag:VectorStore:ConnectionString"];
-        if (string.IsNullOrWhiteSpace(vPgConnection))
-        {
-            vPgConnection = aConfiguration.GetConnectionString("Default");
-        }
-
-        if (!string.IsNullOrWhiteSpace(vPgConnection))
-        {
-            aBuilder.UsePgVector(vPgConnection);
-        }
-        else
-        {
-            aBuilder.UseSqliteVec(Path.Combine(Path.GetTempPath(), "trstudio-techierag.db"));
-        }
-
-        // Wire a real LLM only when configured; otherwise Source stays None and LLM calls degrade.
-        var vSource = aConfiguration["TechieRag:Llm:Source"];
-        if (!string.IsNullOrWhiteSpace(vSource)
-            && Enum.TryParse<LlmSource>(vSource, ignoreCase: true, out var vLlmSource)
-            && vLlmSource != LlmSource.None)
-        {
-            var vEndpoint = aConfiguration["TechieRag:Llm:Endpoint"] ?? string.Empty;
-            var vApiKey = aConfiguration["TechieRag:Llm:ApiKey"] ?? string.Empty;
-            var vModel = aConfiguration["TechieRag:Llm:Model"] ?? string.Empty;
-            aBuilder.UseLlm(vLlmSource, vEndpoint, vApiKey, vModel, 0.7f, 2048);
-            aBuilder.WithUsageTracking(_ => { });
-        }
+        // Phase 3 (ADR-017): character-bible vectors live in TechieRag's own SQLite file beside the
+        // app database (LocalStore:VectorsPath, set by the host from the user's data folder). TechieRag
+        // falls back to in-process similarity when its vector extension cannot load (TR-RAG-005).
+        // Script and caption writing take their model from the registry's text-chat row
+        // (RegistryTextModelSource), never from a key in configuration (REQ-RAG-006, REQ-NFR-018).
+        var vVectorsPath = aConfiguration[TrStudio.Engine.Infrastructure.Data.LocalStoreOptions.VectorsPathKey];
+        aBuilder.UseSqliteVec(string.IsNullOrWhiteSpace(vVectorsPath)
+            ? Path.Combine(Path.GetTempPath(), "trstudio-techierag.db")
+            : vVectorsPath);
     }
 }

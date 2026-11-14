@@ -81,6 +81,13 @@ body{margin:0;font-family:var(--sans);background:var(--wash),var(--bg);color:var
     <h1 class="headline">TrStudio isn't set up yet</h1>
     <p class="gatecopy">No model sources or models are configured on this install, so the studios can't generate anything yet. Ask your admin to complete setup in TrStudioAdmin — or sign in with an admin account to do it yourself.</p>
 
+    <div class="steps" data-tf-phase="3" data-testid="card-local-data">
+      <div class="cap">Your data on this computer</div>
+      <div class="st" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;word-break:break-all" data-testid="data-folder">/Users/creator/Library/Containers/com.techierathore.trstudio/Data/Library/TrStudio</div>
+      <div class="st" data-testid="data-store-status"><span class="badge ok" data-testid="badge-store-ready"><span class="dot ok"></span>Local library ready</span></div>
+      <div class="st" style="color:var(--danger)" data-tf-state="error" data-testid="data-store-problem">TrStudio could not prepare its library in this folder: the folder is read-only. Free up the folder or move it, then reopen TrStudio.</div>
+    </div>
+
     <div class="gatebtns">
       <a class="btn brand" href="login.html" data-testid="link-sign-in-as-admin">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>
@@ -94,7 +101,7 @@ body{margin:0;font-family:var(--sans);background:var(--wash),var(--bg);color:var
 
     <div class="steps">
       <div class="cap">What your admin will do</div>
-      <div class="st"><span class="n">1</span>Enable a model source (local GPU, RunPod or a closed API) in TrStudioAdmin.</div>
+      <div class="st"><span class="n">1</span>Enable a model source (local GPU, RunPod or a closed API) on Registry &amp; providers, with its key.</div>
       <div class="st"><span class="n">2</span>Install or connect at least one model on that source.</div>
       <div class="st"><span class="n">3</span>The model appears as a registry row — studios unlock automatically for creators.</div>
     </div>

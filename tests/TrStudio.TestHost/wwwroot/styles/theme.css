@@ -1,0 +1,4 @@
+/* TrStudio host theme overrides — EMPTY on purpose (REQ-UI-005).
+   The canonical OKLCH brand tokens for both apps live in the TrStudioUI RCL:
+   _content/TrStudioUI/styles/theme.css (loaded just before this file).
+   Add TrStudio-specific token overrides here only if this app must diverge. */

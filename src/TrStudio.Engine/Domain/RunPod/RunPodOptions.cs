@@ -31,7 +31,7 @@ public class RunPodOptions
 
     /// <summary>The actionable message surfaced whenever RunPod is used while not configured.</summary>
     public const string NotConfiguredMessage =
-        "RunPod not configured — add RunPod:ApiKey and RunPod:EndpointId to appsettings to enable serverless GPU (High tier).";
+        "RunPod not configured — enter the RunPod API key and endpoint id on Registry & providers to enable serverless GPU (High tier).";
 
     /// <summary>
     /// Builds options from configuration, reading the <c>RunPod</c> section key-by-key so the
@@ -42,8 +42,7 @@ public class RunPodOptions
     public static RunPodOptions FromConfiguration(IConfiguration aConfiguration)
     {
         var vOptions = new RunPodOptions();
-        vOptions.ApiKey = aConfiguration["RunPod:ApiKey"] ?? vOptions.ApiKey;
-        vOptions.EndpointId = aConfiguration["RunPod:EndpointId"] ?? vOptions.EndpointId;
+        // Phase 3 (ADR-020): the key and endpoint id come from the local database (Registry & providers), never configuration.
         vOptions.BaseUrl = aConfiguration["RunPod:BaseUrl"] ?? vOptions.BaseUrl;
         if (bool.TryParse(aConfiguration["RunPod:AutoIdleStop"], out var vAutoIdle)) { vOptions.AutoIdleStop = vAutoIdle; }
         if (int.TryParse(aConfiguration["RunPod:IdleTimeoutSeconds"], out var vIdle)) { vOptions.IdleTimeoutSeconds = vIdle; }

@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TrStudio — Business Requirements — Phase 3: One desktop app with the engine inside</title>
+<script>
+/* Resolve the theme BEFORE first paint (no flash). Saved choice wins; otherwise
+   pick by time of day — light 07:00–19:00 local, softened dark at night. */
+(function(){
+  try{
+    var t = localStorage.getItem('tf-theme');
+    if(t!=='light' && t!=='dark'){ var h = new Date().getHours(); t = (h>=7 && h<19) ? 'light' : 'dark'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){ document.documentElement.setAttribute('data-theme','light'); }
+})();
+</script>
+<style>
+/* LIGHT is the default theme — a warm off-white, easy on the eyes (never bright white). */
+:root{
+  --bg:#f4f1e9; --panel:#efe9db; --panel2:#e7e0cd; --line:#d8cfb6;
+  --ink:#2e2a22; --muted:#6f6857; --accent:#2f6f9f; --accent2:#3f7d54;
+  --warn:#9a6b15; --danger:#b03a52; --ok:#3f7d54;
+  --code-bg:#ece5d3; --code-ink:#332f26; --row-alt:#eae2cf;
+  --h3:#3a352b; --h4:#2f6f9f; --quote:#4a4537; --cta-bg:#e6eef5;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+/* DARK — softened near-black (warmer / less harsh than pure #0f1115). */
+html[data-theme="dark"]{
+  --bg:#11141a; --panel:#171b23; --panel2:#1e2430; --line:#2b3240;
+  --ink:#dfe3ea; --muted:#99a2b1; --accent:#7cc4ff; --accent2:#a6e3a1;
+  --warn:#f9c74f; --danger:#f38ba8; --ok:#a6e3a1;
+  --code-bg:#0c1016; --code-ink:#d8dde8; --row-alt:#141821;
+  --h3:#cfd5e3; --h4:#7cc4ff; --quote:#cfd5e3; --cta-bg:#0d2030;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;font-size:15px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono);font-size:13px;background:var(--code-bg);color:var(--code-ink);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+pre{font-family:var(--mono);font-size:12.5px;background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:auto;color:var(--code-ink);position:relative}
+pre code{background:none;border:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:11px;font-family:var(--sans);cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+/* floating light/dark toggle (top-right) */
+.theme-toggle{position:fixed;top:12px;right:14px;z-index:10000;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:12.5px;font-family:var(--sans);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.theme-toggle:hover{color:var(--accent);border-color:var(--accent)}
+
+.layout{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.layout.no-toc{grid-template-columns:1fr}
+nav.side{position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid var(--line);background:var(--panel);padding:18px 14px}
+nav.side h1{font-size:14px;margin:0 0 4px;letter-spacing:.5px;color:var(--ink)}
+nav.side .sub{font-size:11.5px;color:var(--muted);margin-bottom:14px}
+nav.side ol,nav.side ul{list-style:none;padding:0;margin:0}
+nav.side li{font-size:13px;margin:2px 0}
+nav.side li a{display:block;padding:5px 8px;color:var(--ink);border-radius:6px}
+nav.side li a:hover{background:var(--panel2);text-decoration:none}
+nav.side li.h3 a{padding-left:22px;font-size:12.5px;color:var(--h3)}
+nav.side .group{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin:14px 8px 4px}
+
+main{padding:28px 40px 80px;max-width:1100px}
+.layout.no-toc main{margin:0 auto}
+
+h1{font-size:28px;margin:0 0 6px}
+h2{font-size:22px;margin:32px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line);scroll-margin-top:16px}
+h3{font-size:17px;margin:22px 0 6px;color:var(--h3);scroll-margin-top:16px}
+h4{font-size:14px;margin:14px 0 4px;color:var(--h4);scroll-margin-top:16px}
+.subtitle{color:var(--muted);font-size:14px;margin-top:-4px;margin-bottom:18px}
+p{margin:6px 0 10px}
+blockquote{border-left:3px solid var(--accent);background:var(--panel);margin:8px 0;padding:8px 14px;color:var(--quote)}
+ul,ol{padding-left:22px}
+li{margin:2px 0}
+
+table{border-collapse:collapse;width:100%;font-size:13.5px;margin:8px 0}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2);color:var(--h3);font-weight:600}
+tr:nth-child(even) td{background:var(--row-alt)}
+
+hr{border:none;border-top:1px solid var(--line);margin:24px 0}
+.anchor-link{color:var(--muted);font-weight:400;font-size:0.85em;margin-left:8px;opacity:0;transition:opacity .15s;text-decoration:none}
+h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
+
+/* inline TOC at top of main content */
+.toc-inline{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 16px;margin:14px 0 24px}
+.toc-inline > div{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.toc-inline ol,.toc-inline ul{margin:4px 0;padding-left:18px}
+.toc-inline li{font-size:13px;margin:1px 0}
+.toc-inline a{color:var(--h3)}
+
+/* mermaid diagram wrapper + toolbar */
+.diagram{position:relative;border:1px solid var(--line);border-radius:8px;background:var(--code-bg);margin:14px 0;overflow:hidden}
+.diagram .mermaid{padding:14px;margin:0;background:transparent;border:none;overflow:auto}
+.diagram .dt{display:flex;gap:6px;justify-content:flex-end;padding:6px 8px;background:var(--row-alt);border-bottom:1px solid var(--line)}
+.diagram .dt button{background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:3px 10px;font-size:12px;font-family:var(--sans);cursor:pointer;min-width:30px}
+.diagram .dt button:hover{color:var(--accent);border-color:var(--accent)}
+.diagram .dt .zlabel{padding:3px 6px;font-size:11px;color:var(--muted);font-family:var(--mono);align-self:center}
+.diagram.fs{position:fixed;inset:0;z-index:9999;border-radius:0;border:none}
+.diagram.fs .mermaid{height:calc(100vh - 40px);display:flex;align-items:center;justify-content:center}
+
+@media(max-width:900px){.layout{grid-template-columns:1fr}nav.side{position:static;height:auto}}
+</style>
+</head>
+<body>
+<button id="themeToggle" class="theme-toggle" title="Toggle light / dark">&#9790; Dark</button>
+<div class="layout no-toc">
+  <main>
+    <h1>TrStudio — Business Requirements — Phase 3: One desktop app with the engine inside</h1>
+    <div class="subtitle">Rendered 2026-11-14 &middot; source <code>TrStudio-P3-BRD.md</code></div>
+
+    <div class="toc-inline">
+      <div>Contents</div>
+      <ol>
+        <li><a href="#summary">1. Summary</a></li>
+        <li><a href="#screens-and-flow">2. Screens and flow</a></li>
+        <li><a href="#requirements">3. Requirements</a></li>
+        <li class="h3"><a href="#sign-in">Sign-in</a></li>
+        <li class="h3"><a href="#first-run">First run</a></li>
+        <li class="h3"><a href="#jobs-inside-the-app">Jobs inside the app</a></li>
+        <li class="h3"><a href="#keys-a-user-owns">Keys a user owns</a></li>
+        <li class="h3"><a href="#character-bible">Character bible</a></li>
+        <li><a href="#non-functional-requirements">4. Non-functional requirements</a></li>
+        <li><a href="#development-status">5. Development status</a></li>
+        <li><a href="#where-the-rest-lives">6. Where the rest lives</a></li>
+      </ol>
+    </div>
+<table>
+<thead><tr><th></th><th></th></tr></thead>
+<tbody>
+<tr><td>App</td><td>TrStudio</td></tr>
+<tr><td>Kind</td><td>app</td></tr>
+<tr><td>Size</td><td>Medium</td></tr>
+<tr><td>Phase</td><td>3 of 3</td></tr>
+<tr><td>Status</td><td>Draft</td></tr>
+<tr><td>Date</td><td>2026-11-14</td></tr>
+</tbody>
+</table>
+<h2 id="summary"><a id="1-summary"></a>1. Summary<a class="anchor-link" href="#summary">#</a></h2>
+<p>Today TrStudio is a web API with PostgreSQL, PgVector and Hangfire, and a desktop app that only calls that API on the same machine. Phase 3 turns it into one desktop app for Windows and Mac that a person downloads, opens and signs in to. The engine runs inside the app: there is no API process and no web server. The data lives in a local SQLite file in the app's own data folder for the signed-in user, created and migrated by the app on first start. Character-bible search runs on the same local store through TechieRag. Generation and provider polling run as jobs inside the app; a job left queued or running when the app closed is picked up or failed with its reason on the next start. Sign-in uses AppManager with the application id and one API key put into the build from a file outside the repository. Every key a user owns is entered on the existing screens and kept in the local database, protected by the operating system for that user. Everything a creator can do today stays. A test host serves the same screens and engine for the automated checks only; it is never shipped.</p>
+<h2 id="screens-and-flow"><a id="2-screens-and-flow"></a>2. Screens and flow<a class="anchor-link" href="#screens-and-flow">#</a></h2>
+<p>This phase adds no new screen. It changes controls on phase-1 screens, which are listed in <a href="TrStudio-BRD.html">phase 1</a>. In each changed mockup the new controls are marked <code>data-tf-phase="3"</code>.</p>
+<table>
+<thead><tr><th>Screen</th><th>Route</th><th>Role</th><th>Mockup</th><th>Fields</th></tr></thead>
+<tbody>
+<tr><td>Login (phase 1)</td><td><code>/login</code></td><td>Anyone</td><td><a href="mockups/login.html">mockup</a></td><td>email, password, sign-in settings notice, sign-in service alert</td></tr>
+<tr><td>Register (phase 1)</td><td><code>/register</code></td><td>Anyone</td><td><a href="mockups/register.html">mockup</a></td><td>name, email, password</td></tr>
+<tr><td>Setup required (phase 1)</td><td><code>/setup-required</code></td><td>Anyone signed in</td><td><a href="mockups/setup-required.html">mockup</a></td><td>data folder, start-up problem</td></tr>
+<tr><td>Image studio (phase 1)</td><td><code>/image</code></td><td>Creator</td><td><a href="mockups/image-studio.html">mockup</a></td><td>model, prompt, job state</td></tr>
+<tr><td>Video studio (phase 1)</td><td><code>/video</code></td><td>Creator</td><td><a href="mockups/video-studio.html">mockup</a></td><td>model, job progress</td></tr>
+<tr><td>Avatar studio (phase 1)</td><td><code>/avatar</code></td><td>Creator</td><td><a href="mockups/avatar-studio.html">mockup</a></td><td>script brief, generated script</td></tr>
+<tr><td>Character library (phase 1)</td><td><code>/avatar/characters</code></td><td>Creator</td><td><a href="mockups/character-library.html">mockup</a></td><td>bible search</td></tr>
+<tr><td>Admin — RunPod &amp; ops (phase 1)</td><td><code>/admin/ops</code></td><td>Operator</td><td><a href="mockups/admin-ops.html">mockup</a></td><td>queued, running</td></tr>
+<tr><td>Admin — Model &amp; Provider Registry (phase 1)</td><td><code>/admin/registry</code></td><td>Operator</td><td><a href="mockups/admin-registry.html">mockup</a></td><td>RunPod, HeyGen, closed-API and model keys, key-protection note</td></tr>
+</tbody>
+</table>
+<p><strong>Primary journey:</strong></p>
+<ol>
+<li>A person downloads TrStudio for Windows or Mac, installs it and opens it.
+</li>
+<li>On first start the app creates its local database in the person's own app data folder and prepares it. Nothing is asked.
+</li>
+<li>The person signs in with their AppManager email and password. The app already carries its AppManager application id and key.
+</li>
+<li>An admin opens Registry &amp; providers and enters the keys they own (Venice, RunPod, HeyGen, a text model). The keys are kept on this computer, protected for this user.
+</li>
+<li>A creator generates on any studio. The job runs inside the app. If the app is closed mid-job, the next start picks it up or says why it failed.
+</li>
+</ol>
+<h2 id="requirements"><a id="3-requirements"></a>3. Requirements<a class="anchor-link" href="#requirements">#</a></h2>
+<p>An acceptance line is at most 30 words and holds one behaviour. Each line is what a unit, integration or headless browser test asserts.</p>
+<h3 id="sign-in">Sign-in<a class="anchor-link" href="#sign-in">#</a></h3>
+<p>Sign-in goes to AppManager with the application id and one API key built into the app. There is no API secret and no signing key.</p>
+<ul>
+<li><strong>BRD-124</strong> — Sign in through AppManager with the built-in application id and API key. <em>Screen:</em> Login · <em>Mockup:</em> <a href="mockups/login.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a user signs in on Login, then the AppManager request carries the application id and API key and no secret header.
+</li>
+</ul>
+</li>
+<li><strong>BRD-125</strong> — Register through AppManager with the same id and key. <em>Screen:</em> Register · <em>Mockup:</em> <a href="mockups/register.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a user registers on Register, then the AppManager request carries the application id and API key and no secret header.
+</li>
+</ul>
+</li>
+<li><strong>BRD-126</strong> — A build without its sign-in settings says so instead of failing. <em>Screen:</em> Login · <em>Mockup:</em> <a href="mockups/login.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a build without its AppManager id or key opens on Login, then a missing-settings notice shows and Sign in is disabled.
+</li>
+</ul>
+</li>
+<li><strong>BRD-127</strong> — An unreachable sign-in service is reported in plain words. <em>Screen:</em> Login · <em>Mockup:</em> <a href="mockups/login.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When AppManager cannot be reached from Login, then an alert says the sign-in service cannot be reached and the user stays on Login.
+</li>
+</ul>
+</li>
+<li><strong>BRD-128</strong> — The signed-in user scopes every engine call; signing out ends it. <em>Screen:</em> Login · <em>Mockup:</em> <a href="mockups/login.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When the user signs out and lands on Login, then every engine call answers not signed in.
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="first-run">First run<a class="anchor-link" href="#first-run">#</a></h3>
+<p>The local database is created and kept up to date by the app itself.</p>
+<ul>
+<li><strong>BRD-129</strong> — First start creates the local database in the user's app data folder. <em>Screen:</em> Setup required · <em>Mockup:</em> <a href="mockups/setup-required.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a new user first lands on Setup required, then TrStudio.db exists in their data folder with every migration applied.
+</li>
+</ul>
+</li>
+<li><strong>BRD-130</strong> — A later start applies only new migrations and keeps the data. <em>Screen:</em> Setup required · <em>Mockup:</em> <a href="mockups/setup-required.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a user reopens the app on Setup required after a migration was added, then only the new script ran and rows remain.
+</li>
+</ul>
+</li>
+<li><strong>BRD-131</strong> — First run asks for no connection string, settings file or terminal. <em>Screen:</em> Setup required · <em>Mockup:</em> <a href="mockups/setup-required.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a new user installs, opens and signs in, then no screen asks for an address, connection string, file or command.
+</li>
+</ul>
+</li>
+<li><strong>BRD-132</strong> — Setup required shows where the data lives. <em>Screen:</em> Setup required · <em>Mockup:</em> <a href="mockups/setup-required.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a user opens Setup required, then it shows the local data folder path.
+</li>
+</ul>
+</li>
+<li><strong>BRD-133</strong> — A database that cannot be created or migrated is reported on screen. <em>Screen:</em> Setup required · <em>Mockup:</em> <a href="mockups/setup-required.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When the database cannot be created or migrated and the app opens on Setup required, then it shows the folder and the reason.
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="jobs-inside-the-app">Jobs inside the app<a class="anchor-link" href="#jobs-inside-the-app">#</a></h3>
+<p>Generation and provider polling run as jobs inside the app, kept in the local database. There is no Hangfire and no PostgreSQL storage.</p>
+<ul>
+<li><strong>BRD-134</strong> — A generation job is queued in the local database and runs inside the app. <em>Screen:</em> Image studio · <em>Mockup:</em> <a href="mockups/image-studio.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a creator generates on Image studio, then the job is stored Queued in the local database and runs inside the app.
+</li>
+</ul>
+</li>
+<li><strong>BRD-135</strong> — No more than the set number of jobs run at once. <em>Screen:</em> Image studio · <em>Mockup:</em> <a href="mockups/image-studio.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a creator submits three jobs on Image studio with two workers set, then at most two are Running at one time.
+</li>
+</ul>
+</li>
+<li><strong>BRD-136</strong> — A job still queued when the app closed runs on the next start. <em>Screen:</em> Image studio · <em>Mockup:</em> <a href="mockups/image-studio.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When the app starts with a Queued job in its database, then that job runs to Succeeded or Failed.
+</li>
+</ul>
+</li>
+<li><strong>BRD-137</strong> — A job running when the app closed is picked up or failed with its reason. <em>Screen:</em> Video studio · <em>Mockup:</em> <a href="mockups/video-studio.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When the app restarts with a Running job and a creator is on Video studio, then a Venice clip resumes and any other shows Failed, closed mid-job.
+</li>
+</ul>
+</li>
+<li><strong>BRD-138</strong> — Polling a provider runs inside the app. <em>Screen:</em> Video studio · <em>Mockup:</em> <a href="mockups/video-studio.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a Venice clip is queued on Video studio, then the app polls Venice until the clip is stored, with no Hangfire.
+</li>
+</ul>
+</li>
+<li><strong>BRD-139</strong> — RunPod &amp; ops shows the in-app queue. <em>Screen:</em> Admin — RunPod &amp; ops · <em>Mockup:</em> <a href="mockups/admin-ops.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When an admin opens RunPod &amp; ops, then queue depth shows the queued and running counts from the local database.
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="keys-a-user-owns">Keys a user owns<a class="anchor-link" href="#keys-a-user-owns">#</a></h3>
+<p>Every key is entered on Registry &amp; providers and kept in the local database, protected by the operating system for the signed-in user.</p>
+<ul>
+<li><strong>BRD-140</strong> — RunPod, HeyGen, closed-API and text-model keys are entered on Registry &amp; providers. <em>Screen:</em> Admin — Model &amp; Provider Registry · <em>Mockup:</em> <a href="mockups/admin-registry.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When an admin saves a RunPod key on Registry &amp; providers, then RunPod is listed as configured with the key masked.
+</li>
+</ul>
+</li>
+<li><strong>BRD-141</strong> — Keys are protected by the operating system for the signed-in user. <em>Screen:</em> Admin — Model &amp; Provider Registry · <em>Mockup:</em> <a href="mockups/admin-registry.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When an admin saves a key on Registry &amp; providers, then the database holds only ciphertext whose unlock key the operating system keeps for that user.
+</li>
+</ul>
+</li>
+<li><strong>BRD-142</strong> — A saved key is used on the next call without a restart. <em>Screen:</em> Admin — Model &amp; Provider Registry · <em>Mockup:</em> <a href="mockups/admin-registry.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When an admin saves a HeyGen key on Registry &amp; providers, then the next Premium avatar job uses it without restarting.
+</li>
+</ul>
+</li>
+<li><strong>BRD-143</strong> — Script and caption writing use a text-model row from the registry. <em>Screen:</em> Avatar studio · <em>Mockup:</em> <a href="mockups/avatar-studio.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a creator generates a script on Avatar studio, then the model, address and key come from the enabled text-chat registry row.
+</li>
+</ul>
+</li>
+<li><strong>BRD-144</strong> — Registry &amp; providers says where keys are kept. <em>Screen:</em> Admin — Model &amp; Provider Registry · <em>Mockup:</em> <a href="mockups/admin-registry.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When an admin opens Registry &amp; providers, then a note says keys stay on this computer, protected for this user.
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="character-bible">Character bible<a class="anchor-link" href="#character-bible">#</a></h3>
+<ul>
+<li><strong>BRD-145</strong> — Character-bible search runs on the local store through TechieRag. <em>Screen:</em> Character library · <em>Mockup:</em> <a href="mockups/character-library.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a creator searches a character's bible on Character library, then matching notes come back from TechieRag over the local SQLite store.
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="non-functional-requirements"><a id="4-non-functional-requirements"></a>4. Non-functional requirements<a class="anchor-link" href="#non-functional-requirements">#</a></h2>
+<table>
+<thead><tr><th>Id</th><th>Area</th><th>Requirement</th><th>Measure</th></tr></thead>
+<tbody>
+<tr><td>BRD-146</td><td>Architecture</td><td>The engine runs inside the desktop app: no API process, no web server, no open port</td><td>When the desktop project is built, then it references no ASP.NET Core host and the in-process handler answers without a socket.</td></tr>
+<tr><td>BRD-147</td><td>Compatibility</td><td>Every route the screens call is answered in process</td><td>When the routes the screens call are compared with the in-process route table, then every one is present.</td></tr>
+<tr><td>BRD-148</td><td>Security</td><td>No key in appsettings, in code or in environment variables</td><td>When the source is searched, then no provider key is read from configuration and no environment variable is read.</td></tr>
+<tr><td>BRD-149</td><td>Settings</td><td>The AppManager id and key come from a settings file outside the repository, put into the build</td><td>When the desktop app is built with the git-ignored AppManager file, then the id and key are in the build and no committed file holds them.</td></tr>
+<tr><td>BRD-150</td><td>Testing</td><td>A test host serves the same screens and in-process engine on SQLite for headless checks only; it is never shipped</td><td>When the headless checks run, then they drive the test host, and the desktop project does not reference it.</td></tr>
+<tr><td>BRD-151</td><td>Compatibility</td><td>ComfyUI behaves exactly as before</td><td>When the unit tests run, then the 16 ComfyUI tests pass and no file under <code>tests/unit/TrStudio.Tests.Unit/Comfy/</code> changed.</td></tr>
+<tr><td>BRD-152</td><td>Portability</td><td>One desktop project builds for Windows and Mac</td><td>When the desktop project is built for Mac and for Windows, then both builds succeed.</td></tr>
+</tbody>
+</table>
+<h2 id="development-status"><a id="5-development-status"></a>5. Development status<a class="anchor-link" href="#development-status">#</a></h2>
+<p>Written by the status gate after every build, verify and handoff; not by hand.</p>
+<p><strong>Snapshot as of 2026-11-14.</strong> Live per-requirement status: <code>PROJECT-STATUS.md</code> and the Requirements Status table in <code>docs/TrStudio-P3-Checklist.md</code>.</p>
+<table>
+<thead><tr><th>Screen</th><th>Requirements</th><th>Verified</th><th>Open</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>Login</td><td>4</td><td>3</td><td>1</td><td>Partial</td></tr>
+<tr><td>Register</td><td>1</td><td>1</td><td>0</td><td>Done</td></tr>
+<tr><td>Setup required</td><td>5</td><td>5</td><td>0</td><td>Done</td></tr>
+<tr><td>Image studio</td><td>3</td><td>3</td><td>0</td><td>Done</td></tr>
+<tr><td>Video studio</td><td>2</td><td>2</td><td>0</td><td>Done</td></tr>
+<tr><td>Admin — RunPod &amp; ops</td><td>1</td><td>1</td><td>0</td><td>Done</td></tr>
+<tr><td>Admin — Model &amp; Provider Registry</td><td>4</td><td>4</td><td>0</td><td>Done</td></tr>
+<tr><td>Avatar studio</td><td>1</td><td>1</td><td>0</td><td>Done</td></tr>
+<tr><td>Character library</td><td>1</td><td>0</td><td>1</td><td>In progress</td></tr>
+<tr><td>Non-functional</td><td>7</td><td>6</td><td>1</td><td>Partial</td></tr>
+</tbody>
+</table>
+<h2 id="where-the-rest-lives"><a id="6-where-the-rest-lives"></a>6. Where the rest lives<a class="anchor-link" href="#where-the-rest-lives">#</a></h2>
+<table>
+<thead><tr><th>What</th><th>Where</th></tr></thead>
+<tbody>
+<tr><td>Scope, users and roles, the context diagram</td><td><a href="TrStudio-BRD.html">phase 1 BRD</a></td></tr>
+<tr><td>Non-functional requirements for the whole application</td><td><a href="TrStudio-BRD.html">phase 1 BRD</a></td></tr>
+<tr><td>Constraints, assumptions and risks</td><td><a href="TrStudio-BRD.html">phase 1 BRD</a></td></tr>
+<tr><td>Every phase, its screens and its BRD range</td><td><a href="TrStudio-Phases.html">TrStudio-Phases.md</a></td></tr>
+<tr><td>This phase's work list</td><td><a href="TrStudio-P3-Checklist.md">TrStudio-P3-Checklist.md</a></td></tr>
+<tr><td>The desktop design and its decisions</td><td><a href="TrStudio-Architecture.html">Architecture, desktop section and ADR-015 to ADR-020</a></td></tr>
+</tbody>
+</table>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+<script>
+// Light/dark toggle. The initial theme was already applied flash-free by the
+// <head> script (saved choice, else time-of-day). Clicking flips it, saves the
+// choice, and reloads so Mermaid re-renders in the matching theme.
+(function(){
+  var btn = document.getElementById('themeToggle');
+  if(!btn) return;
+  var relabel = function(){
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    btn.textContent = dark ? '☀ Light' : '☾ Dark';
+  };
+  relabel();
+  btn.addEventListener('click', function(){
+    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    try{ localStorage.setItem('tf-theme', next); }catch(e){}
+    location.reload();
+  });
+})();
+
+// Copy buttons on every code <pre> — but NEVER on a `pre.mermaid`:
+// mermaid reads the <pre>'s textContent as the diagram source, so a button
+// appended here glues "copy" onto the last line and breaks the parse
+// (flowcharts → "Syntax error"; sequence diagrams silently absorb it).
+// Mermaid blocks get copy/export from their own .diagram toolbar instead.
+document.querySelectorAll('pre:not(.mermaid)').forEach(pre => {
+  const btn = document.createElement('button');
+  btn.className = 'copy';
+  btn.textContent = 'copy';
+  btn.addEventListener('click', () => {
+    const text = pre.querySelector('code') ? pre.querySelector('code').innerText : pre.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'copied';
+      setTimeout(() => { btn.textContent = 'copy'; }, 1200);
+    });
+  });
+  pre.appendChild(btn);
+});
+
+// Mermaid init — theme follows the resolved light/dark theme
+if (window.mermaid) {
+  var mermaidTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default';
+  mermaid.initialize({ startOnLoad: true, theme: mermaidTheme, securityLevel: 'loose' });
+}
+
+// Mermaid toolbar wiring — run after mermaid renders
+function wireMermaidToolbars() {
+  document.querySelectorAll('.diagram').forEach(dia => {
+    if (dia.dataset.wired) return;
+    const merm = dia.querySelector('.mermaid');
+    const svg = merm && merm.querySelector('svg');
+    if (!svg) return;
+    dia.dataset.wired = '1';
+    let scale = 1;
+    const label = dia.querySelector('.zlabel');
+    const apply = () => {
+      svg.style.transform = `scale(${scale})`;
+      svg.style.transformOrigin = 'top left';
+      if (label) label.textContent = Math.round(scale * 100) + '%';
+    };
+    const setScale = (s) => { scale = Math.max(0.25, Math.min(4, s)); apply(); };
+    dia.querySelector('[data-zin]').onclick = () => setScale(scale * 1.2);
+    dia.querySelector('[data-zout]').onclick = () => setScale(scale / 1.2);
+    dia.querySelector('[data-fit]').onclick = () => {
+      svg.style.transform = '';
+      svg.removeAttribute('width');
+      svg.style.maxWidth = '100%';
+      svg.style.height = 'auto';
+      scale = 1;
+      if (label) label.textContent = 'Fit';
+    };
+    dia.querySelector('[data-one]').onclick = () => {
+      svg.style.transform = '';
+      svg.style.maxWidth = 'none';
+      svg.style.width = '';
+      svg.style.height = '';
+      scale = 1;
+      if (label) label.textContent = '100%';
+    };
+    dia.querySelector('[data-fs]').onclick = () => {
+      dia.classList.toggle('fs');
+      if (dia.classList.contains('fs')) {
+        document.addEventListener('keydown', escFs);
+      } else {
+        document.removeEventListener('keydown', escFs);
+      }
+    };
+    function escFs(e) { if (e.key === 'Escape') { dia.classList.remove('fs'); document.removeEventListener('keydown', escFs); } }
+    dia.querySelector('[data-pop]').onclick = () => openInNewTab(svg);
+    // Ctrl+wheel zoom
+    merm.addEventListener('wheel', (e) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      setScale(scale * (e.deltaY < 0 ? 1.1 : 1/1.1));
+    }, { passive: false });
+  });
+}
+
+function openInNewTab(svg) {
+  const svgSource = new XMLSerializer().serializeToString(svg);
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Diagram</title>
+<style>
+  html,body{margin:0;height:100%;background:#0f1115;color:#e6e8ee;font-family:system-ui,sans-serif}
+  .bar{position:fixed;top:0;left:0;right:0;padding:8px 12px;background:#161a22;border-bottom:1px solid #2a3142;display:flex;gap:8px;z-index:10}
+  .bar button{background:#1c2230;color:#9aa3b2;border:1px solid #2a3142;border-radius:6px;padding:5px 12px;font-size:13px;cursor:pointer}
+  .bar button:hover{color:#7cc4ff;border-color:#7cc4ff}
+  .bar .hint{margin-left:auto;color:#9aa3b2;font-size:11.5px;align-self:center}
+  #stage{position:absolute;top:42px;bottom:0;left:0;right:0;overflow:hidden}
+  #stage svg{width:100%;height:100%}
+</style>
+</head><body>
+<div class="bar">
+  <button onclick="zpz.zoomIn()">+</button>
+  <button onclick="zpz.zoomOut()">−</button>
+  <button onclick="zpz.fit();zpz.center()">Fit</button>
+  <button onclick="zpz.resetZoom();zpz.center()">1:1</button>
+  <button onclick="window.print()">Print</button>
+  <button onclick="dlPng()">PNG</button>
+  <button onclick="dlSvg()">SVG</button>
+  <span class="hint">Drag to pan · Ctrl+wheel to zoom · + / − keys</span>
+</div>
+<div id="stage">${svgSource}</div>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"><\/script>
+<script>
+  const el = document.querySelector('#stage svg');
+  const zpz = svgPanZoom(el, { zoomScaleSensitivity: .3, minZoom: .2, maxZoom: 10, controlIconsEnabled: false, fit: true, center: true });
+  document.addEventListener('keydown', e => {
+    if (e.key === '+' || e.key === '=') zpz.zoomIn();
+    if (e.key === '-' || e.key === '_') zpz.zoomOut();
+    if (e.key === '0') { zpz.resetZoom(); zpz.center(); }
+  });
+  function dlSvg() {
+    const blob = new Blob([new XMLSerializer().serializeToString(el)], { type: 'image/svg+xml' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'diagram.svg'; a.click();
+  }
+  function dlPng() {
+    const src = new XMLSerializer().serializeToString(el);
+    const img = new Image();
+    const url = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(src)));
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = el.clientWidth * 2; c.height = el.clientHeight * 2;
+      const ctx = c.getContext('2d'); ctx.scale(2,2); ctx.drawImage(img, 0, 0);
+      c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'diagram.png'; a.click(); });
+    };
+    img.src = url;
+  }
+<\/script>
+</body></html>`;
+  const w = window.open();
+  w.document.write(html);
+  w.document.close();
+}
+
+// Run wiring after mermaid finishes (it renders async)
+if (window.mermaid) {
+  setTimeout(wireMermaidToolbars, 400);
+  setTimeout(wireMermaidToolbars, 1200);  // safety re-run for slow renders
+}
+</script>
+</body>
+</html>

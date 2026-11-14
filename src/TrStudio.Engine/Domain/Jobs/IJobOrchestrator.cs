@@ -6,7 +6,7 @@ namespace TrStudio.Engine.Domain.Jobs;
 /// <summary>
 /// The generation-job orchestrator (REQ-FN-001/002/018): validates a submission against the
 /// registry's declarative params schema, resolves the model to exactly one provider,
-/// cost-estimates, persists the job and enqueues it on the durable Hangfire queue. The caller
+/// cost-estimates, persists the job and enqueues it on the in-app job queue. The caller
 /// drives every provider through the identical submit → poll → result → cancel sequence.
 /// </summary>
 public interface IJobOrchestrator

@@ -5,7 +5,7 @@
 | App | TrStudio |
 | Kind | app |
 | Size | Medium |
-| Phase | 2 of 2 |
+| Phase | 2 of 3 |
 | Status | Draft |
 | Date | 2026-11-12 |
 

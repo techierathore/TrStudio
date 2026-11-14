@@ -18,7 +18,7 @@ namespace TrStudio.Engine.Providers;
 /// <see cref="GetStatusAsync"/> (the worker turns each poll into SignalR progress). A failure keeps
 /// Venice's own text: "Venice: …" (BRD-119).
 /// </summary>
-public class VeniceProvider : IGenerationProvider
+public class VeniceProvider : IGenerationProvider, TrStudio.Engine.Domain.Jobs.IResumableGenerationProvider
 {
     /// <summary>The tasks Venice serves.</summary>
     public static readonly IReadOnlySet<GenerationTaskType> SupportedTasks = new HashSet<GenerationTaskType>
@@ -101,6 +101,40 @@ public class VeniceProvider : IGenerationProvider
         }
 
         return aJob.JobId;
+    }
+
+    /// <inheritdoc />
+    public string? GetProviderRef(Guid aJobId)
+        => objExecutions.TryGetValue(aJobId, out var vExecution) ? vExecution.QueueId : null;
+
+    /// <inheritdoc />
+    public async Task<bool> ResumeAsync(GenerationJob aJob, string aProviderRef, CancellationToken aCancellationToken)
+    {
+        if (!VenicePriceSources.IsVideo(aJob.Task) || string.IsNullOrWhiteSpace(aProviderRef))
+        {
+            return false;
+        }
+
+        try
+        {
+            var vModel = await GetModelAsync(aJob, aCancellationToken).ConfigureAwait(false);
+            var vConnection = await objConnectionReader.ReadAsync(aCancellationToken).ConfigureAwait(false);
+            objExecutions[aJob.JobId] = new VeniceExecution(aJob)
+            {
+                Connection = vConnection,
+                ProviderModelId = vModel.ProviderModelId,
+                QueueId = aProviderRef,
+                LastPollUtc = DateTime.MinValue,
+                Status = new JobStatus(JobState.Running, Math.Max(1, aJob.Progress), null, null, null)
+            };
+            objLogger.LogInformation("Venice clip for job {JobId} resumed (queue {QueueId})", aJob.JobId, aProviderRef);
+            return true;
+        }
+        catch (Exception vException) when (vException is not OperationCanceledException)
+        {
+            objLogger.LogWarning("Venice clip for job {JobId} could not resume: {Message}", aJob.JobId, vException.Message);
+            return false;
+        }
     }
 
     /// <inheritdoc />

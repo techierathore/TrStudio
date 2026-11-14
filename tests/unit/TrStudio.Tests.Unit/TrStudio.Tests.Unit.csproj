@@ -22,6 +22,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\TrStudio.Engine\TrStudio.Engine.csproj" />
     <ProjectReference Include="..\..\..\src\TrStudio.Models\TrStudio.Models.csproj" />
+    <ProjectReference Include="..\..\..\src\TrStudio.InProcess\TrStudio.InProcess.csproj" />
+    <ProjectReference Include="..\..\..\src\TrStudioDb\TrStudioDb.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -37,8 +37,8 @@ public static class Phase9Module
         aServices.TryAddSingleton<IApiKeyRepository, ApiKeyRepository>();
         aServices.TryAddSingleton<IApiKeyService, ApiKeyService>();
 
-        // FN-064 ops dashboard: queue/worker snapshot (Hangfire) + dashboard assembly.
-        aServices.TryAddSingleton<IJobQueueMonitor, HangfireJobQueueMonitor>();
+        // FN-064 ops dashboard: queue/worker snapshot (the in-app runner, phase 3) + dashboard assembly.
+        aServices.TryAddSingleton<IJobQueueMonitor, LocalJobQueueMonitor>();
         aServices.TryAddSingleton<IOpsDashboardService, OpsDashboardService>();
 
         // FN-067 export with provenance + FN-068 account usage/spend summary.

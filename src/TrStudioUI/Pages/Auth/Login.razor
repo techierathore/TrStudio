@@ -14,6 +14,7 @@
 <PageTitle>TrStudio — Sign in</PageTitle>
 
 <Card Class="auth-card" data-testid="login-card">
+  <div data-testid="card-1">
     <div class="auth-brand">
         <div class="auth-brand-logo shell-logo brand-gradient">TR</div>
         <div>
@@ -21,6 +22,30 @@
             <div class="auth-brand-tag">Avatar-led AI image &amp; video studio</div>
         </div>
     </div>
+
+    @if (objMissingSettings is not null)
+    {
+        @* Phase 3 (REQ-UI-098): this build carries no AppManager id or key. *@
+        <div data-testid="alert-missing-sign-in-settings">
+            <Alert Variant="AlertVariant.Warning" AccentBorder="true" Class="mb-4">
+                <LucideIcon Name="alert-triangle" Size="16" />
+                <AlertTitle>Sign-in is not set up in this copy</AlertTitle>
+                <AlertDescription>@objMissingSettings</AlertDescription>
+            </Alert>
+        </div>
+    }
+
+    @if (objUnreachable is not null)
+    {
+        @* Phase 3 (REQ-UI-099): AppManager cannot be reached; the user stays on Login. *@
+        <div data-testid="alert-sign-in-unreachable">
+            <Alert Variant="AlertVariant.Danger" AccentBorder="true" Class="mb-4">
+                <LucideIcon Name="wifi-off" Size="16" />
+                <AlertTitle>Sign-in service unreachable</AlertTitle>
+                <AlertDescription>@objUnreachable</AlertDescription>
+            </Alert>
+        </div>
+    }
 
     @if (objError is not null)
     {
@@ -40,7 +65,7 @@
             </FieldLabel>
             <FieldContent>
                 <Input Id="email" Type="InputType.Email" @bind-Value="objEmail"
-                       Placeholder="you@studio.com" AriaInvalid="@(objSubmitted && !IsEmailValid)" />
+                       Placeholder="you@studio.com" AriaInvalid="@(objSubmitted && !IsEmailValid)" data-testid="field-email" />
                 @if (objSubmitted && !IsEmailValid)
                 {
                     <FieldError>Enter a valid email address.</FieldError>
@@ -52,11 +77,11 @@
     <div class="auth-field">
         <div class="auth-fieldrow">
             <Label For="pwd">Password</Label>
-            <a class="auth-link" href="/forgot-password">Forgot password?</a>
+            <a class="auth-link" href="/forgot-password" data-testid="link-forgot-password">Forgot password?</a>
         </div>
         <Field IsInvalid="@(objSubmitted && !IsPasswordValid)">
             <FieldContent>
-                <Input Id="pwd" Type="InputType.Password" @bind-Value="objPassword" Placeholder="••••••••" />
+                <Input Id="pwd" Type="InputType.Password" @bind-Value="objPassword" Placeholder="••••••••" data-testid="field-pwd" />
                 @if (objSubmitted && !IsPasswordValid)
                 {
                     <FieldError>Password is required.</FieldError>
@@ -65,8 +90,9 @@
         </Field>
     </div>
 
+    <div data-testid="sign-in">
     <Button Class="auth-submit" Type="ButtonType.Submit" OnClick="HandleSignInAsync"
-            Disabled="@(objBusy || !IsFormValid)" data-testid="signin-btn">
+            Disabled="@(objBusy || !IsFormValid || objMissingSettings is not null)" data-testid="signin-btn">
         @if (objBusy)
         {
             <Spinner Size="SpinnerSize.Small" Class="mr-2" />
@@ -78,14 +104,20 @@
             <span>Sign in</span>
         }
     </Button>
+    </div>
 
     <div class="auth-divline">AppManager</div>
     <div class="auth-note">
         Your identity and license are managed by AppManager. TrStudio never stores your password —
         only your AppManager userId.
     </div>
+    <div class="auth-note" data-testid="note-local-data">
+        Your work stays on this computer, in your own TrStudio folder. Nothing to install or configure.
+    </div>
 
-    <div class="auth-switch">New to TrStudio? <a href="/register">Create an account</a></div>
+    <div class="auth-switch" style="margin-top:6px">Workspace not set up yet? <a href="/setup-required" data-testid="setup-required-link">See the setup gate</a></div>
+    <div class="auth-switch">New to TrStudio? <a href="/register" data-testid="link-create-an-account">Create an account</a></div>
+  </div>
 </Card>
 
 @code {
@@ -94,6 +126,34 @@
     private bool objSubmitted;
     private bool objBusy;
     private string? objError;
+    private string? objMissingSettings;
+    private string? objUnreachable;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Phase 3: the engine runs in this app. If its local library could not be prepared, Setup
+        // required says why (REQ-UI-102); if the build has no sign-in settings, say so (REQ-UI-098).
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vStore = await vClient.GetAsync("/api/v1/local-store");
+            if (vStore.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
+            {
+                Navigation.NavigateTo("/setup-required");
+                return;
+            }
+
+            var vSettings = await vClient.GetFromJsonAsync<SignInSettingsLike>(ApiRoutes.Auth + "/sign-in-settings");
+            if (vSettings is { Configured: false })
+            {
+                objMissingSettings = vSettings.Message;
+            }
+        }
+        catch
+        {
+            // A host without these routes keeps the plain sign-in form.
+        }
+    }
 
     /// <summary>Whether the email field holds a syntactically valid address.</summary>
     private bool IsEmailValid =>
@@ -112,6 +172,7 @@
     {
         objSubmitted = true;
         objError = null;
+        objUnreachable = null;
         if (!IsFormValid)
         {
             return;
@@ -137,7 +198,19 @@
                 return;
             }
 
-            objError = await ReadErrorAsync(vResponse);
+            var (vTitle, vMessage) = await ReadErrorAsync(vResponse);
+            if (vTitle == "SIGN_IN_UNREACHABLE")
+            {
+                objUnreachable = vMessage;
+            }
+            else if (vTitle == "SIGN_IN_NOT_CONFIGURED")
+            {
+                objMissingSettings = vMessage;
+            }
+            else
+            {
+                objError = vMessage;
+            }
         }
         catch (Exception vException)
         {
@@ -166,14 +239,14 @@
     }
 
     /// <summary>Extracts a human-readable message from an API ProblemDetails response.</summary>
-    private static async Task<string> ReadErrorAsync(HttpResponseMessage aResponse)
+    private static async Task<(string? Title, string Message)> ReadErrorAsync(HttpResponseMessage aResponse)
     {
         try
         {
             var vProblem = await aResponse.Content.ReadFromJsonAsync<ProblemLike>();
             if (!string.IsNullOrWhiteSpace(vProblem?.Detail))
             {
-                return vProblem.Detail!;
+                return (vProblem.Title, vProblem.Detail!);
             }
         }
         catch
@@ -181,9 +254,15 @@
             // Non-JSON body — fall through to a generic message.
         }
 
-        return aResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized
+        return (null, aResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized
             ? "Invalid email or password."
-            : "Sign-in failed. Please try again.";
+            : "Sign-in failed. Please try again.");
+    }
+
+    private sealed class SignInSettingsLike
+    {
+        public bool Configured { get; set; }
+        public string? Message { get; set; }
     }
 
     private sealed class ProblemLike
