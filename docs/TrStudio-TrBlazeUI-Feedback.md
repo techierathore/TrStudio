@@ -4,13 +4,13 @@
 |---|---|
 | App | TrStudio |
 | Upstream | TrBlazeUI |
-| Updated | 2026-11-12 |
+| Updated | 2026-11-14 |
 
 ## Summary
 
-12 entries: 0 blocking now, 1 open and not blocking (TR-012), 1 fixed upstream and not yet re-checked here (TR-011), 10 closed (TR-001 to TR-010).
+14 entries: 1 blocking now (TR-014), 3 open, 0 fixed upstream and not yet re-checked, 11 closed (TR-001 to TR-011).
 
-Nothing is blocked. The library team fixed TR-001 to TR-011 in TrBlazeUI 1.0.9 on 2026-07-12; TR-001 to TR-010 were closed on that evidence. TR-011 (the Mac Catalyst desktop head could not build) is fixed upstream but its re-check here is not recorded: build the Mac Catalyst head on 1.0.9 or later, then close it. TR-012 (a `Select` disposal error in the logs) is open and minor.
+A `Select` inside a `Sheet` shows no options (TR-014), which blocks adding a model row on Registry & providers. The library team fixed TR-001 to TR-011 in TrBlazeUI 1.0.9 on 2026-07-12; TR-001 to TR-010 were closed on that evidence. TR-011 (the Mac Catalyst desktop head could not build) was re-checked and closed on 2026-11-14. TR-012 (a `Select` disposal error in the logs) and TR-013 (icon names in the reference that the package lacks) are open and minor.
 
 ## Entries
 
@@ -186,17 +186,17 @@ Closed: fixed in TrBlazeUI 1.0.9 (2026-07-12); see Detail.
 
 ### TR-011 — packages ship a `Microsoft.AspNetCore.App` FrameworkReference → MAUI Mac Catalyst head unbuildable (NETSDK1082)
 
-> ✅ **Closed 2026-11-14** — re-checked here: 2026-11-14: dotnet build src/TrStudio.Desktop/TrStudio.Desktop.csproj -f net10.0-maccatalyst built with 0 errors (no NETSDK1082), with the TrBlazeUI packages the solution pins.
+> ✅ **Closed 2026-11-14** — re-checked here: 2026-11-14: dotnet build src/TrStudio/TrStudio.csproj -f net10.0-maccatalyst built with 0 errors (no NETSDK1082), with the TrBlazeUI packages the solution pins.
 
 Fixed upstream (2026-07-12, TrBlazeUI 1.0.9), not yet re-checked in TrStudio.
 
 - **Severity:** blocker (for the Mac Catalyst desktop delivery; Windows head and web head unaffected)
 - **Blocks:** no — the Windows desktop head and the web head were unaffected and the work carried on; at the time only the Mac Catalyst head could not build
-- **Repro:** `dotnet build src/TrStudio.Desktop -f net10.0-maccatalyst -p:EnableWindowsTargeting=true` on a real Mac (Apple Silicon, .NET SDK 10.0.301, MAUI workload 10.0.20) with TrBlazeUI.{Components,Primitives,Icons.Lucide} 1.0.7 referenced via the `TrStudioUI` RCL.
+- **Repro:** `dotnet build src/TrStudio -f net10.0-maccatalyst -p:EnableWindowsTargeting=true` on a real Mac (Apple Silicon, .NET SDK 10.0.301, MAUI workload 10.0.20) with TrBlazeUI.{Components,Primitives,Icons.Lucide} 1.0.7 referenced via the `TrStudioUI` RCL.
 - **Expected:** the packages are consumable from a MAUI Blazor Hybrid head on every MAUI TFM — a Blazor component library should depend on `Microsoft.AspNetCore.Components.Web` as a *package*, not on the ASP.NET Core *shared framework*.
 - **Actual:** all three 1.0.7 nupkgs carry `frameworkReferences: ["Microsoft.AspNetCore.App"]` (visible in the consuming app's `project.assets.json`), and no ASP.NET Core runtime pack exists for `maccatalyst-arm64` → `error NETSDK1082: There was no runtime pack for Microsoft.AspNetCore.App available for the specified RuntimeIdentifier 'maccatalyst-arm64'`. The Windows MAUI head escapes only because Windows runtime packs for the shared framework happen to exist.
 - **Encountered in:** BRD-87 / REQ-FN-072 (MAUI Blazor Hybrid desktop heads — the Mac Catalyst delivery), first real-Mac run attempt per docs/TrStudio-BuildAndRun-Guide.md §3 Option A.
-- **Workaround:** none shipped. Candidate app-side mitigation (unvalidated): strip the transitive framework reference for the maccatalyst TFM in `TrStudio.Desktop.csproj` via a target that removes the `TransitiveFrameworkReference` item `Microsoft.AspNetCore.App` before `ProcessFrameworkReferences`; the proper fix belongs in the library (and the app-side strip would crash at runtime if any library code path really did call a server-only API — components almost certainly don't).
+- **Workaround:** none shipped. Candidate app-side mitigation (unvalidated): strip the transitive framework reference for the maccatalyst TFM in `TrStudio.csproj` via a target that removes the `TransitiveFrameworkReference` item `Microsoft.AspNetCore.App` before `ProcessFrameworkReferences`; the proper fix belongs in the library (and the app-side strip would crash at runtime if any library code path really did call a server-only API — components almost certainly don't).
 - **Suggested fix:** remove the `Microsoft.AspNetCore.App` framework reference from the three packages (depend on `Microsoft.AspNetCore.Components.Web` only), and assert after `dotnet pack` that no nuspec holds a `<frameworkReferences>` block.
 
 #### Detail
@@ -235,3 +235,26 @@ Fixed upstream (2026-07-12, TrBlazeUI 1.0.9), not yet re-checked in TrStudio.
 - **Encountered in:** TrStudio web-head logs while verifying the login-gate redirect (pages with model/voice `Select`s disposing on navigation).
 - **Workaround:** none needed app-side (the renderer logs and continues), but it pollutes logs and can mask real errors.
 - **Suggested fix:** wrap the JS `DisposeAsync` calls in `try { … } catch (JSDisconnectedException) { }` in `SelectContent` (and audit the other JS-interop-owning primitives for the same pattern).
+
+### TR-013 — The reference shows icon names the Lucide package does not contain (`alert-circle`)
+
+- **Severity:** minor
+- **Blocks:** no — TrStudio now uses the package's names (`circle-alert`, `triangle-alert`, `circle-check`) and the work carried on
+- **Repro:** `TrBlazeUI-AI-Reference.md` shows `<LucideIcon Name="alert-circle" Size="16" />`; with `TrBlazeUI.Icons.Lucide` 1.0.9, `LucideIconData.IconExists("alert-circle")`, `("alert-triangle")` and `("check-circle")` are all false
+- **Expected:** every name the reference shows renders, or the old Lucide names are kept as aliases of the renamed ones
+- **Actual:** `LucideIcon` renders an empty `<span data-trblazeui-missing-icon="alert-triangle">`, so alerts on Login, Register, Forgot password and four admin screens showed an empty gap where the icon belongs
+- **Encountered in:** Login smoke for REQ-FN-099 (2026-11-14), both widths
+- **Workaround:** use the current Lucide names in the app
+- **Suggested fix:** add the pre-rename Lucide names as aliases in `LucideIconData`, and correct the reference's example
+
+### TR-014 — A `Select` inside a `Sheet` opens with no options
+
+- **Severity:** major
+- **Blocks:** yes — adding or editing a model row on Registry & providers (the Provider, Task and Tier lists sit in the Add model sheet), so the phase 2 Venice rows that need a Venice row cannot be checked
+- **Repro:** TrBlazeUI 1.0.9, Blazor Server: a page with `<Sheet><SheetContent>…<Select TValue="string"><SelectTrigger/><SelectContent><SelectItem …/></SelectContent></Select>…</SheetContent></Sheet>` and one `<PortalHost />` in the layout; open the sheet, click the trigger
+- **Expected:** the list of items shows over the sheet and an item can be picked
+- **Actual:** the trigger reports `aria-expanded="true"` but no `listbox` and no `option` element is rendered anywhere in the page; no error is logged. `Select`s on ordinary pages work
+- **Encountered in:** REQ-UI-084, REQ-UI-097 and the Venice rows that start from a Registry row (2026-11-14, test host, headless)
+- **Workaround:** none taken (the framework does not work around a library gap)
+- **Suggested fix:** render `SelectContent` through the same portal layer as the open sheet, above it, or document the setting that allows it
+

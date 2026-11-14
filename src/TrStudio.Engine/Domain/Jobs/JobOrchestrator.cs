@@ -255,11 +255,16 @@ public class JobOrchestrator : IJobOrchestrator
     /// <inheritdoc />
     public async Task<JobSubmitResponse?> ReproduceAsync(Guid aLogId, string aUserId, CancellationToken aCancellationToken = default)
     {
-        var vEntry = await objLogRepository.GetAsync(aLogId, aUserId, aCancellationToken).ConfigureAwait(false);
+        // The id is a generation-log id, or the id of the job the log belongs to (the Projects screen
+        // sends the job id). Either way the same owner filter applies (REQ-FN-026, REQ-FN-027).
+        var vEntry = await objLogRepository.GetAsync(aLogId, aUserId, aCancellationToken).ConfigureAwait(false)
+            ?? (await objLogRepository.ListByJobsAsync(new[] { aLogId }, aUserId, aCancellationToken).ConfigureAwait(false)).FirstOrDefault();
         if (vEntry is null)
         {
             return null;
         }
+
+        var vOriginal = await objJobRepository.GetAsync(vEntry.JobId, aUserId, aCancellationToken).ConfigureAwait(false);
 
         var vModel = await objModelCatalog.GetVisibleAsync(vEntry.ModelId, aCancellationToken).ConfigureAwait(false)
             ?? throw new KeyNotFoundException($"Model '{vEntry.ModelId}' is no longer available to reproduce this job.");
@@ -269,7 +274,10 @@ public class JobOrchestrator : IJobOrchestrator
             ModelId = vEntry.ModelId,
             Task = vModel.Task,
             Tier = vEntry.Tier,
-            ParamsJson = vEntry.ParamsJson
+            ParamsJson = vEntry.ParamsJson,
+            // Reproduce keeps the run's project and the seed it actually used.
+            ProjectId = vOriginal?.ProjectId,
+            Seed = vOriginal?.SeedUsed
         };
 
         return await SubmitAsync(vRequest, aUserId, aCancellationToken).ConfigureAwait(false);

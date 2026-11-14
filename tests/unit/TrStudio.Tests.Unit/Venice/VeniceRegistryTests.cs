@@ -18,7 +18,7 @@ namespace TrStudio.Tests.Unit.Venice;
 public class VeniceRegistryTests
 {
     /// <summary>REQ-FN-076: only ciphertext reaches the provider-key table; the listing is masked and carries the address (REQ-FN-075).</summary>
-    [Fact]
+    [Fact(DisplayName = "REQ-FN-076 VeniceKeyIsEncryptedAndNeverReturned")]
     public async Task VeniceKeyIsEncryptedAndListedMaskedWithAddress()
     {
         var vRepository = Substitute.For<IProviderKeyRepository>();
@@ -47,7 +47,7 @@ public class VeniceRegistryTests
     }
 
     /// <summary>REQ-FN-077: the Venice columns are selected back and written on both upsert branches, so the ticks survive a reload.</summary>
-    [Theory]
+    [Theory(DisplayName = "REQ-FN-077 RegistrySqlRoundTripsAbilityTicks")]
     [InlineData("ProviderModelId")]
     [InlineData("TakesReferencePicture")]
     [InlineData("KeepsFixedCharacter")]

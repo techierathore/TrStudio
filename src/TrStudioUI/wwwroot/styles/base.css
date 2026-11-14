@@ -206,13 +206,13 @@ h1:focus {
    after trblazeui.css, so these single-class rules win over the outline defaults. */
 .badge-ok {
   background: color-mix(in oklch, var(--alert-success) 16%, transparent);
-  color: var(--alert-success);
+  color: var(--alert-success-ink);
   border-color: color-mix(in oklch, var(--alert-success) 42%, transparent);
 }
 
 .badge-warn {
   background: color-mix(in oklch, var(--alert-warning) 16%, transparent);
-  color: var(--alert-warning);
+  color: var(--alert-warning-ink);
   border-color: color-mix(in oklch, var(--alert-warning) 42%, transparent);
 }
 
@@ -296,6 +296,15 @@ h1:focus {
   justify-content: space-between;
   align-items: baseline;
   margin-bottom: 4px;
+}
+
+/* "Remember me" on the sign-in screen (owner decision 6B). */
+.auth-remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 14px;
+  font-size: 13px;
 }
 
 .auth-link {
@@ -513,7 +522,7 @@ h1:focus {
 
 .setup-stepdot.done {
   background: color-mix(in oklch, var(--alert-success) 18%, transparent);
-  color: var(--alert-success);
+  color: var(--alert-success-ink);
   border-color: color-mix(in oklch, var(--alert-success) 40%, transparent);
 }
 
@@ -1574,13 +1583,13 @@ h1:focus {
 
 .lib-typetag-script {
   background: color-mix(in oklch, var(--alert-success) 16%, transparent);
-  color: var(--alert-success);
+  color: var(--alert-success-ink);
   border: 1px solid color-mix(in oklch, var(--alert-success) 42%, transparent);
 }
 
 .lib-typetag-style {
   background: color-mix(in oklch, var(--alert-warning) 16%, transparent);
-  color: var(--alert-warning);
+  color: var(--alert-warning-ink);
   border: 1px solid color-mix(in oklch, var(--alert-warning) 42%, transparent);
 }
 
@@ -2045,7 +2054,7 @@ h1:focus {
 
 .comfy-ic-ok {
   background: color-mix(in oklch, var(--alert-success) 18%, transparent);
-  color: var(--alert-success);
+  color: var(--alert-success-ink);
 }
 
 .comfy-ic-run {

@@ -16,9 +16,10 @@ public class SqliteCharacterBibleTests
     /// <summary>
     /// REQ-RAG-007: bible notes are stored in the local SQLite database and searched through TechieRag,
     /// whose vector file sits in the same data folder. With no embedding model on the machine the search
-    /// answers from the stored notes (keyword mode) and says so.
+    /// answers from the stored notes (keyword mode) and says so. Owner decision 9A (14 Nov 2026): word
+    /// matching is the first version's search; meaning-based search is the later row REQ-RAG-008.
     /// </summary>
-    [Fact]
+    [Fact(DisplayName = "REQ-RAG-007 SearchRunsOnTheLocalStore")]
     public async Task SearchRunsOnTheLocalStore()
     {
         await using var vEngine = await DesktopEngine.StartAsync();
@@ -70,11 +71,11 @@ public sealed class EmbeddingModelFactAttribute : FactAttribute
     private const string NoModel = "No embedding model on this machine (TechieRag's default, Ollama at localhost:11434, is not running); the bible answered by keyword match instead.";
 }
 
-/// <summary>Phase 3: REQ-RAG-007 with an embedding model present.</summary>
+/// <summary>Later row REQ-RAG-008 (owner decision 9A): bible search by meaning, with an embedding model present.</summary>
 public class SqliteCharacterBibleVectorTests
 {
-    /// <summary>REQ-RAG-007: with an embedding model, matching notes come back from TechieRag's vector search on the local store.</summary>
-    [EmbeddingModelFact(DisplayName = "REQ-RAG-007 bible search comes back from TechieRag vectors on the local store")]
+    /// <summary>REQ-RAG-008 (later version): with an embedding model, matching notes come back from TechieRag's vector search on the local store.</summary>
+    [EmbeddingModelFact(DisplayName = "REQ-RAG-008 bible search comes back from TechieRag vectors on the local store")]
     public async Task SearchComesBackFromTechieRagVectors()
     {
         await using var vEngine = await DesktopEngine.StartAsync();
@@ -182,13 +183,13 @@ public class RouteParityTests
 /// <summary>Phase 3 shape rules: REQ-NFR-016, REQ-NFR-020, REQ-UI-100, REQ-FN-095.</summary>
 public class DesktopShapeRuleTests
 {
-    private static string Desktop(string aFile) => File.ReadAllText(Path.Combine(RepoPaths.Root, "src", "TrStudio.Desktop", aFile));
+    private static string Desktop(string aFile) => File.ReadAllText(Path.Combine(RepoPaths.Root, "src", "TrStudio", aFile));
 
     /// <summary>REQ-NFR-016: the desktop app hosts no web server and references the in-process engine.</summary>
     [Fact(DisplayName = "REQ-NFR-016 DesktopReferencesNoWebHost")]
     public void DesktopReferencesNoWebHost()
     {
-        var vProject = Desktop("TrStudio.Desktop.csproj");
+        var vProject = Desktop("TrStudio.csproj");
         Assert.DoesNotContain("Microsoft.NET.Sdk.Web", vProject);
         Assert.DoesNotContain("Microsoft.AspNetCore.App", vProject);
         Assert.DoesNotContain("TrStudioApi.csproj", vProject);
@@ -208,7 +209,7 @@ public class DesktopShapeRuleTests
     [Fact(DisplayName = "REQ-NFR-020 DesktopDoesNotReferenceTheTestHost")]
     public void DesktopDoesNotReferenceTheTestHost()
     {
-        Assert.DoesNotContain("TestHost", Desktop("TrStudio.Desktop.csproj"));
+        Assert.DoesNotContain("TestHost", Desktop("TrStudio.csproj"));
         var vTestHost = File.ReadAllText(Path.Combine(RepoPaths.Root, "tests", "TrStudio.TestHost", "TrStudio.TestHost.csproj"));
         Assert.Contains("<IsPackable>false</IsPackable>", vTestHost);
         Assert.Contains("TEST TOOL ONLY", vTestHost);
@@ -232,7 +233,7 @@ public class DesktopShapeRuleTests
     [Fact(DisplayName = "REQ-FN-095 NoHangfireReference")]
     public void NoHangfireReference()
     {
-        foreach (var vProject in new[] { "TrStudio.Engine/TrStudio.Engine.csproj", "TrStudio.InProcess/TrStudio.InProcess.csproj", "TrStudio.Desktop/TrStudio.Desktop.csproj" })
+        foreach (var vProject in new[] { "TrStudio.Engine/TrStudio.Engine.csproj", "TrStudio.InProcess/TrStudio.InProcess.csproj", "TrStudio/TrStudio.csproj" })
         {
             var vText = File.ReadAllText(Path.Combine(RepoPaths.Root, "src", vProject));
             Assert.DoesNotContain("Hangfire", vText);
@@ -257,7 +258,7 @@ public class KeySourceRuleTests
 
     private static readonly string[] EnvironmentReads = { "GetEnvironment" + "Variable", "AddEnvironment" + "Variables" };
 
-    private static readonly string[] ShippedFolders = { "TrStudio.Engine", "TrStudio.InProcess", "TrStudio.Desktop", "TrStudioUI", "TrStudio.Models" };
+    private static readonly string[] ShippedFolders = { "TrStudio.Engine", "TrStudio.InProcess", "TrStudio", "TrStudioUI", "TrStudio.Models" };
 
     /// <summary>REQ-NFR-018: the shipped projects read no provider key from configuration.</summary>
     [Fact(DisplayName = "REQ-NFR-018 NoProviderKeyFromConfiguration")]
@@ -271,7 +272,7 @@ public class KeySourceRuleTests
     [Fact(DisplayName = "REQ-NFR-018 DesktopHoldsNoSecretOrSigningKey")]
     public void DesktopHoldsNoSecretOrSigningKey()
     {
-        var vHits = Scan(DesktopSecrets, new[] { "TrStudio.Desktop", "TrStudio.InProcess" });
+        var vHits = Scan(DesktopSecrets, new[] { "TrStudio", "TrStudio.InProcess" });
         Assert.True(vHits.Count == 0, "Secret or signing key in the desktop: " + string.Join("; ", vHits));
     }
 
@@ -308,5 +309,60 @@ public class KeySourceRuleTests
         }
 
         return vHits;
+    }
+}
+
+/// <summary>
+/// REQ-NFR-022 (amended 14 Nov 2026, Mac first): the desktop project builds and runs on Mac. On a Mac the
+/// project targets Mac Catalyst only, is named TrStudio with no "Desktop" suffix, keeps the application
+/// id, and the solution build has produced TrStudio.app. The Windows build is the later row REQ-FN-102.
+/// </summary>
+public class MacFirstBuildTests
+{
+    private static string RepoRoot()
+    {
+        for (var vDirectory = new DirectoryInfo(AppContext.BaseDirectory); vDirectory is not null; vDirectory = vDirectory.Parent)
+        {
+            if (File.Exists(Path.Combine(vDirectory.FullName, "TrStudio.slnx")))
+            {
+                return vDirectory.FullName;
+            }
+        }
+
+        throw new InvalidOperationException("TrStudio.slnx not found above the test folder.");
+    }
+
+    [Fact(DisplayName = "REQ-NFR-022 DesktopProjectIsTrStudioAndTargetsMacCatalystOnAMac")]
+    public void DesktopProjectIsTrStudioAndTargetsMacCatalystOnAMac()
+    {
+        var vRoot = RepoRoot();
+        var vProject = Path.Combine(vRoot, "src", "TrStudio", "TrStudio.csproj");
+        Assert.True(File.Exists(vProject), "the app's project is src/TrStudio/TrStudio.csproj");
+        Assert.False(Directory.Exists(Path.Combine(vRoot, "src", "TrStudio.Desktop")), "no project carries a Desktop suffix");
+        var vText = File.ReadAllText(vProject);
+        Assert.Contains("<RootNamespace>TrStudio</RootNamespace>", vText, StringComparison.Ordinal);
+        Assert.Contains("<ApplicationId>com.techierathore.trstudio</ApplicationId>", vText, StringComparison.Ordinal);
+        Assert.Matches(new Regex(@"!\$\(\[MSBuild\]::IsOSPlatform\('windows'\)\) And '\$\(EnableWindowsTargeting\)' != 'true'"">net10\.0-maccatalyst<"), vText);
+        Assert.Contains("src/TrStudio/TrStudio.csproj", File.ReadAllText(Path.Combine(vRoot, "TrStudio.slnx")), StringComparison.Ordinal);
+    }
+
+    [Fact(DisplayName = "REQ-NFR-022 MacBuildProducesTrStudioApp")]
+    public void MacBuildProducesTrStudioApp()
+    {
+        if (!OperatingSystem.IsMacOS())
+        {
+            return;
+        }
+
+        var vBin = Path.Combine(RepoRoot(), "src", "TrStudio", "bin");
+        var vApps = Directory.Exists(vBin)
+            ? Directory.GetDirectories(vBin, "TrStudio.app", SearchOption.AllDirectories)
+                .Where(aPath => aPath.Contains("maccatalyst", StringComparison.Ordinal))
+                .ToList()
+            : new List<string>();
+        Assert.True(vApps.Count > 0, "a Mac build of src/TrStudio produced TrStudio.app (build the solution first)");
+        var vApp = vApps.OrderByDescending(Directory.GetLastWriteTimeUtc).First();
+        Assert.True(File.Exists(Path.Combine(vApp, "Contents", "MacOS", "TrStudio")), "the bundle holds the TrStudio executable");
+        Assert.Contains("com.techierathore.trstudio", File.ReadAllText(Path.Combine(vApp, "Contents", "Info.plist")), StringComparison.Ordinal);
     }
 }

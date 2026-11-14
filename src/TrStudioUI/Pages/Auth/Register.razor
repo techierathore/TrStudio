@@ -15,6 +15,7 @@
 <PageTitle>TrStudio — Create account</PageTitle>
 
 <Card Class="auth-card" data-testid="register-card">
+  <div data-testid="card-1">
     <div class="auth-brand">
         <div class="auth-brand-logo shell-logo brand-gradient">TR</div>
         <div>
@@ -27,7 +28,7 @@
     {
         <div data-testid="register-error">
             <Alert Variant="AlertVariant.Danger" AccentBorder="true" Class="mb-4">
-                <LucideIcon Name="alert-circle" Size="16" />
+                <LucideIcon Name="circle-alert" Size="16" />
                 <AlertTitle>Could not create account</AlertTitle>
                 <AlertDescription>@objError</AlertDescription>
             </Alert>
@@ -38,7 +39,7 @@
         <Field IsInvalid="@(objSubmitted && !IsNameValid)">
             <FieldLabel><Label For="name">Full name</Label></FieldLabel>
             <FieldContent>
-                <Input Id="name" @bind-Value="objName" Placeholder="Your full name" />
+                <Input Id="name" @bind-Value="objName" Placeholder="Your full name" data-testid="field-name" />
                 @if (objSubmitted && !IsNameValid)
                 {
                     <FieldError>Please enter your name.</FieldError>
@@ -51,7 +52,7 @@
         <Field IsInvalid="@(objSubmitted && !IsEmailValid)">
             <FieldLabel><Label For="email">Email</Label></FieldLabel>
             <FieldContent>
-                <Input Id="email" Type="InputType.Email" @bind-Value="objEmail" Placeholder="you@studio.com" />
+                <Input Id="email" Type="InputType.Email" @bind-Value="objEmail" Placeholder="you@studio.com" data-testid="field-email" />
                 @if (objSubmitted && !IsEmailValid)
                 {
                     <FieldError>Enter a valid email address.</FieldError>
@@ -64,7 +65,7 @@
         <Field IsInvalid="@(objSubmitted && !IsPasswordValid)">
             <FieldLabel><Label For="pwd">Password</Label></FieldLabel>
             <FieldContent>
-                <Input Id="pwd" Type="InputType.Password" @bind-Value="objPassword" Placeholder="••••••••" />
+                <Input Id="pwd" Type="InputType.Password" @bind-Value="objPassword" Placeholder="••••••••" data-testid="field-pwd" />
                 @if (objSubmitted && !IsPasswordValid)
                 {
                     <FieldError>At least 12 characters with a number and a symbol.</FieldError>
@@ -81,7 +82,7 @@
         <Field IsInvalid="@(objSubmitted && !IsConfirmValid)">
             <FieldLabel><Label For="pwd2">Confirm password</Label></FieldLabel>
             <FieldContent>
-                <Input Id="pwd2" Type="InputType.Password" @bind-Value="objConfirm" Placeholder="••••••••" />
+                <Input Id="pwd2" Type="InputType.Password" @bind-Value="objConfirm" Placeholder="••••••••" data-testid="field-pwd2" />
                 @if (objSubmitted && !IsConfirmValid)
                 {
                     <FieldError>Passwords do not match.</FieldError>
@@ -93,16 +94,17 @@
     <div class="auth-field">
         <Label>Account type</Label>
         <div class="flex-row" role="group" aria-label="Account type" style="margin-top:4px" data-testid="account-type">
-            <Button Class="grow" Variant="@(objIsAdmin ? ButtonVariant.Outline : ButtonVariant.Default)"
-                    OnClick="@(() => objIsAdmin = false)" data-testid="type-creator">Creator</Button>
-            <Button Class="grow" Variant="@(objIsAdmin ? ButtonVariant.Default : ButtonVariant.Outline)"
-                    OnClick="@(() => objIsAdmin = true)" data-testid="type-admin">Admin (Operator)</Button>
+            <span class="grow" style="display:flex" data-testid="btn-creator"><Button Class="grow" Variant="@(objIsAdmin ? ButtonVariant.Outline : ButtonVariant.Default)"
+                    OnClick="@(() => objIsAdmin = false)" data-testid="type-creator">Creator</Button></span>
+            <span class="grow" style="display:flex" data-testid="btn-admin-operator"><Button Class="grow" Variant="@(objIsAdmin ? ButtonVariant.Default : ButtonVariant.Outline)"
+                    OnClick="@(() => objIsAdmin = true)" data-testid="type-admin">Admin (Operator)</Button></span>
         </div>
         <div class="auth-hint">
             Creators make avatars, images, video &amp; voice. Admins also manage models, providers &amp; spend.
         </div>
     </div>
 
+    <div data-testid="btn-create-account">
     <Button Class="auth-submit" Type="ButtonType.Submit" OnClick="HandleCreateAsync"
             Disabled="@(objBusy || !IsFormValid)" data-testid="create-btn">
         @if (objBusy)
@@ -116,6 +118,7 @@
             <span>Create account</span>
         }
     </Button>
+    </div>
 
     <div class="auth-divline">AppManager</div>
     <div class="auth-note">
@@ -123,7 +126,8 @@
         live there. TrStudio keeps only your userId.
     </div>
 
-    <div class="auth-switch">Already have an account? <a href="/login">Sign in</a></div>
+    <div class="auth-switch">Already have an account? <a href="/login" data-testid="link-sign-in">Sign in</a></div>
+  </div>
 </Card>
 
 @code {

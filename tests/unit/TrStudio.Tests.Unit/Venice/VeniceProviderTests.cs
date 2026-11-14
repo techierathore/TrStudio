@@ -41,7 +41,7 @@ public sealed class VeniceProviderTests : IDisposable
     /// REQ-FN-078: with no Venice entry anywhere in appsettings, a picture call goes to the address
     /// and bearer key held in the database, and the stored picture is the one Venice returned.
     /// </summary>
-    [Fact]
+    [Fact(DisplayName = "REQ-FN-078 TextToImageUsesDatabaseAddressAndKey")]
     public async Task TextToImageUsesDatabaseAddressAndKey()
     {
         var vModel = objKit.AddModel(GenerationTaskType.TextToImage, "test-image-model");
@@ -67,7 +67,7 @@ public sealed class VeniceProviderTests : IDisposable
     }
 
     /// <summary>REQ-FN-084: safe mode is on unless the owner's unrestricted mode is effective.</summary>
-    [Theory]
+    [Theory(DisplayName = "REQ-FN-084 SafeModeFollowsOwnerPolicy")]
     [InlineData(false, true)]
     [InlineData(true, false)]
     public async Task SafeModeFollowsOwnerPolicy(bool aUnrestricted, bool aExpectedSafeMode)
@@ -83,7 +83,7 @@ public sealed class VeniceProviderTests : IDisposable
     }
 
     /// <summary>REQ-FN-079: an edit sends the creator's own source picture as a data URL to /image/edit and stores the edited picture.</summary>
-    [Fact]
+    [Fact(DisplayName = "REQ-FN-079 ImageToImageSendsSourceAsDataUrl")]
     public async Task ImageToImageSendsSourceAsDataUrl()
     {
         var vModel = objKit.AddModel(GenerationTaskType.ImageToImage, "test-edit-model", aRow => aRow.TakesReferencePicture = true);
@@ -120,7 +120,7 @@ public sealed class VeniceProviderTests : IDisposable
     }
 
     /// <summary>REQ-FN-080: a 2x upscale sends scale 2 and the stored picture is twice as wide as the source.</summary>
-    [Fact]
+    [Fact(DisplayName = "REQ-FN-080 UpscaleTwoTimesStoresPictureTwiceAsWide")]
     public async Task UpscaleTwoTimesStoresPictureTwiceAsWide()
     {
         var vModel = objKit.AddModel(GenerationTaskType.Upscale, "test-upscaler");
@@ -142,7 +142,7 @@ public sealed class VeniceProviderTests : IDisposable
     /// REQ-FN-081: a clip is queued with the model's own duration, resolution and aspect, polled
     /// (progress from Venice's timings) until the mp4 arrives, then Venice's copy is freed.
     /// </summary>
-    [Fact]
+    [Fact(DisplayName = "REQ-UI-090 VideoShowsProgressUntilTheClipIsReady")]
     public async Task VideoQueuesPollsAndCompletes()
     {
         var vModel = objKit.AddModel(GenerationTaskType.TextToVideo, "test-t2v", aRow => aRow.Params.AddRange(new[]
@@ -194,7 +194,7 @@ public sealed class VeniceProviderTests : IDisposable
     }
 
     /// <summary>REQ-UI-095 back end: a 422 refusal fails the job with Venice's own text, word for word.</summary>
-    [Fact]
+    [Fact(DisplayName = "REQ-UI-095 RefusalKeepsVeniceText")]
     public async Task RefusalKeepsVeniceText()
     {
         var vModel = objKit.AddModel(GenerationTaskType.TextToImage, "test-image-model");

@@ -1,6 +1,8 @@
 @implements IDisposable
 @inject AppShellNavigation Shell
 @inject NavigationManager Navigation
+@inject IAuthSession AuthSession
+@inject IHttpClientFactory HttpClientFactory
 
 @*
     Shared collapsible sidebar (REQ-UI-005 / REQ-UI-080): brand header, the active surface's nav
@@ -10,7 +12,7 @@
     the creator studios, the management surface, or both with a switch.
 *@
 
-<Sidebar Collapsible="true">
+<Sidebar Collapsible="true" data-testid="sidebar">
     <SidebarHeader>
         <SidebarHeaderContent>
             <div class="shell-logo brand-gradient">TR</div>
@@ -19,7 +21,7 @@
                     @Shell.Current.AppName
                     @if (!string.IsNullOrEmpty(Shell.Current.AppBadge))
                     {
-                        <Badge Variant="BadgeVariant.Outline" Class="text-xs">@Shell.Current.AppBadge</Badge>
+                        <Badge Variant="BadgeVariant.Outline" Class="text-xs" data-testid="@($"badge-{Shell.Current.AppBadge}")">@Shell.Current.AppBadge</Badge>
                     }
                 </span>
             </SidebarHeaderInfo>
@@ -38,7 +40,8 @@
                                 <SidebarMenuButton Href="@vItem.Href"
                                                    Match="NavLinkMatch.All"
                                                    Tooltip="@vItem.Label"
-                                                   IsActive="@(vItem == objActiveItem)">
+                                                   IsActive="@(vItem == objActiveItem)"
+                                                   data-testid="@NavTestId(vItem)">
                                     <LucideIcon Name="@vItem.Icon" Size="16" />
                                     <span>@vItem.Label</span>
                                 </SidebarMenuButton>
@@ -49,16 +52,22 @@
             </SidebarGroup>
         }
     </SidebarContent>
-    @if (Shell.CanSwitchSurface)
-    {
-        <SidebarFooter>
+    <SidebarFooter>
+        @if (Shell.CanSwitchSurface)
+        {
+            @* Named as the mockups name it: the creator surface switches to management and back. *@
             <Button Variant="ButtonVariant.Ghost" Class="w-full justify-start"
-                    OnClick="SwitchSurface" data-testid="surface-switch">
+                    OnClick="SwitchSurface" data-testid="@(Shell.Current.AppBadge == "admin" ? "link-switch-to-trstudio" : "link-switch-to-trstudioadmin")">
                 <LucideIcon Name="arrow-left-right" Size="15" />
                 <span>@Shell.SwitchLabel</span>
             </Button>
-        </SidebarFooter>
-    }
+        }
+        @* Sign out, as the mockups draw it in the sidebar footer; it also removes a kept sign-in (REQ-UI-106). *@
+        <Button Variant="ButtonVariant.Ghost" Class="w-full justify-start" OnClick="SignOutAsync" data-testid="nav-sign-out">
+            <LucideIcon Name="log-out" Size="15" />
+            <span>Sign out</span>
+        </Button>
+    </SidebarFooter>
 </Sidebar>
 
 @code {
@@ -86,6 +95,36 @@
     {
         Shell.SwitchSurface();
         Navigation.NavigateTo(Shell.CurrentLandingPath);
+    }
+
+    /// <summary>The mockups' control name for a sidebar item, from its route (e.g. /avatar → nav-avatar-studio).</summary>
+    private static string NavTestId(AppNavItem aItem) => aItem.Href switch
+    {
+        "/avatar" => "nav-avatar-studio",
+        "/avatar/characters" => "nav-character-library",
+        "/image" => "nav-image-studio",
+        "/video" => "nav-video-studio",
+        "/voice" => "nav-voice-studio",
+        "/prompt-studio" => "nav-prompt-studio",
+        "/admin/setup/hardware" => "nav-admin-hardware",
+        "/admin/comfy/import" => "nav-admin-comfy",
+        _ => "nav-" + aItem.Href.Trim('/').Replace('/', '-')
+    };
+
+    /// <summary>Ends the engine session, removes a kept sign-in and returns to Login.</summary>
+    private async Task SignOutAsync()
+    {
+        try
+        {
+            await HttpClientFactory.CreateClient("TrStudioApi").PostAsync(ApiRoutes.Auth + "/logout", null);
+        }
+        catch
+        {
+            // A host without the route still clears its own session below.
+        }
+
+        await AuthSession.ClearAsync();
+        Navigation.NavigateTo("/login", forceLoad: true);
     }
 
     /// <summary>Re-renders when the resolved role or active surface changes.</summary>

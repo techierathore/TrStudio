@@ -36,6 +36,9 @@ public sealed class EngineHostOptions
     /// <summary>The operating system's protection for the key store's unlock key (ADR-020).</summary>
     public required IKeyProtector KeyProtector { get; init; }
 
+    /// <summary>The clock for the kept sign-in's 30 days (tests move it forward); the system clock when null.</summary>
+    public TimeProvider? Clock { get; init; }
+
     /// <summary>How many jobs run at once.</summary>
     public int WorkerCount { get; init; } = 2;
 

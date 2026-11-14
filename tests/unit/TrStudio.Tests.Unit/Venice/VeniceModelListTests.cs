@@ -28,7 +28,7 @@ public class VeniceModelListTests
         """;
 
     /// <summary>A reference-to-video model fills as image to video, takes a reference picture and keeps a fixed character, with its own durations and sizes.</summary>
-    [Fact]
+    [Fact(DisplayName = "REQ-UI-097 FillReferenceToVideo")]
     public void FillReferenceToVideo()
     {
         var vFill = VeniceModelInfo.ParseList(VideoList).Single(aEntry => aEntry.Id == "vid-reference-to-video").ToFill()!;

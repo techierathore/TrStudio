@@ -75,7 +75,7 @@ test('REQ-UI-099 sign-in service unreachable', async ({ page, request }) => {
 test('REQ-UI-100 first run asks nothing', async ({ page }) => {
   await page.goto('/login');
   await expect(page.getByTestId('login-card')).toBeVisible({ timeout: 30000 });
-  await expect(page.locator('input')).toHaveCount(2);
+  await expect(page.locator('input:not([type="checkbox"]):not([role="checkbox"])')).toHaveCount(2);
   await expect(page.getByTestId('note-local-data')).toContainText('stays on this computer');
   const text = (await page.locator('body').innerText()).toLowerCase();
   for (const word of ['connection string', 'server address', 'api address', 'terminal', 'settings file']) {

@@ -123,6 +123,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
         <li class="h3"><a href="#the-api-project-and-the-old-web-head-in-the-solution">8. The API project and the old web head in the solution</a></li>
         <li class="h3"><a href="#character-bible-search-without-an-embedding-model">9. Character-bible search without an embedding model</a></li>
         <li class="h3"><a href="#local-picture-generation-onnx-inside-the-mac-app">10. Local picture generation (ONNX) inside the Mac app</a></li>
+        <li class="h3"><a href="#matching-the-older-screens-to-their-mockups-control-by-control">11. Matching the older screens to their mockups, control by control</a></li>
         <li><a href="#what-i-do-when-you-answer">What I do when you answer</a></li>
         <li><a href="#copy-this-back-to-me">Copy this back to me</a></li>
       </ol>
@@ -132,12 +133,12 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tbody>
 <tr><td>App</td><td>TrStudio</td></tr>
 <tr><td>Written</td><td>2026-11-14</td></tr>
-<tr><td>Waiting on</td><td>10 decisions. You were asleep, so I took my recommended answer for each and carried on; each can still be reversed.</td></tr>
+<tr><td>Waiting on</td><td>1 new decision (11), taken with my recommended answer so the run could finish. You answered decisions 1 to 10 on 14 Nov 2026: A for 1 to 5, 7, 9 and 10; B for 6 ("Remember me"); 8 as written below.</td></tr>
 </tbody>
 </table>
 <h2 id="what-happened">What happened<a class="anchor-link" href="#what-happened">#</a></h2>
-<p>You asked for TrStudio to become one desktop app for Windows and Mac: the engine inside the app, a local SQLite database, jobs inside the app, AppManager sign-in with the application id and one key, and your keys protected by the computer's own protection. I wrote the phase 3 documents and then built the phase overnight.</p>
-<p>Ten choices came up that change what gets built and that only you can settle. None of them stopped the work: for each I took the answer I recommend, wrote it into the documents, and built on it. If you want a different answer, paste the matching block from the last section and I will change it.</p>
+<p>You asked for TrStudio to become one desktop app (Mac first, Windows in a later version): the engine inside the app, a local SQLite database, jobs inside the app, AppManager sign-in with the application id and one key, and your keys protected by the computer's own protection. I wrote the phase 3 documents and then built the phase overnight.</p>
+<p>Ten choices came up that change what gets built and that only you can settle. None of them stopped the work: for each I took the answer I recommended and built on it. On 14 Nov 2026 you answered all ten; each answer is written under its decision and in the Architecture decisions log (ADR-021 for staying signed in, ADR-022 for the old web head).</p>
 <h2 id="what-i-need-you-to-decide">What I need you to decide<a class="anchor-link" href="#what-i-need-you-to-decide">#</a></h2>
 <h3 id="how-the-screens-reach-the-engine"><a id="1-how-the-screens-reach-the-engine"></a>1. How the screens reach the engine<a class="anchor-link" href="#how-the-screens-reach-the-engine">#</a></h3>
 <p>The 31 screens all call the engine through one named web client with addresses like <code>/api/v1/jobs</code>. The engine now runs inside the app, and ASP.NET Core, which the old API used, does not run inside a Mac Catalyst app.</p>
@@ -149,16 +150,18 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </tbody>
 </table>
 <p><strong>My recommendation: A</strong> — the screens and their tests stay exactly as they are.</p>
+<p><strong>Your answer (14 Nov 2026): A.</strong> The screens keep their calls; the in-process library answers them.</p>
 <h3 id="what-the-headless-test-host-is"><a id="2-what-the-headless-test-host-is"></a>2. What the headless test host is<a class="anchor-link" href="#what-the-headless-test-host-is">#</a></h3>
 <p>The automated screen checks need the screens in a browser. The desktop app cannot be driven while the screen is locked.</p>
 <table>
 <thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
 <tbody>
-<tr><td><strong>A — a new test-only project under <code>tests/</code></strong></td><td><code>tests/TrStudio.TestHost</code> serves the same screens and the same in-process engine on a temporary SQLite file. The old web head <code>src/TrStudio</code> is set aside, unused.</td><td>One more small project.</td></tr>
+<tr><td><strong>A — a new test-only project under <code>tests/</code></strong></td><td><code>tests/TrStudio.TestHost</code> serves the same screens and the same in-process engine on a temporary SQLite file. The old web head is not used.</td><td>One more small project.</td></tr>
 <tr><td><strong>B — turn the old web head into the test host</strong></td><td>Reuses <code>src/TrStudio</code>.</td><td>A shipped-looking project under <code>src/</code> that must never ship.</td></tr>
 </tbody>
 </table>
 <p><strong>My recommendation: A</strong> — it is plainly a test tool by where it lives.</p>
+<p><strong>Your answer (14 Nov 2026): A.</strong> The test host stays under <code>tests/</code>. The old web head is now deleted (decision 8).</p>
 <h3 id="where-the-character-bible-vectors-live"><a id="3-where-the-character-bible-vectors-live"></a>3. Where the character-bible vectors live<a class="anchor-link" href="#where-the-character-bible-vectors-live">#</a></h3>
 <p>TechieRag stores its vectors in SQLite tables of its own. Its reference does not say which tables, so sharing the app's own file is a risk.</p>
 <table>
@@ -169,6 +172,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </tbody>
 </table>
 <p><strong>My recommendation: A</strong> — no chance of a clash; filed as TR-RAG-005 for TechieRag to document.</p>
+<p><strong>Your answer (14 Nov 2026): A.</strong> Vectors stay in <code>TrStudio.vectors.db</code> beside <code>TrStudio.db</code>.</p>
 <h3 id="a-job-that-was-running-when-the-app-closed"><a id="4-a-job-that-was-running-when-the-app-closed"></a>4. A job that was running when the app closed<a class="anchor-link" href="#a-job-that-was-running-when-the-app-closed">#</a></h3>
 <table>
 <thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
@@ -178,6 +182,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </tbody>
 </table>
 <p><strong>My recommendation: A</strong> — it never charges you twice without asking.</p>
+<p><strong>Your answer (14 Nov 2026): A.</strong> Venice clips resume; other running jobs fail with the reason.</p>
 <h3 id="how-keys-are-protected-on-the-mac-and-on-windows"><a id="5-how-keys-are-protected-on-the-mac-and-on-windows"></a>5. How keys are protected on the Mac and on Windows<a class="anchor-link" href="#how-keys-are-protected-on-the-mac-and-on-windows">#</a></h3>
 <table>
 <thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
@@ -187,6 +192,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </tbody>
 </table>
 <p><strong>My recommendation: A</strong> — it matches "kept in the local database, protected by the operating system".</p>
+<p><strong>Your answer (14 Nov 2026): A.</strong> One unlock key per user, in the Keychain on Mac; the Windows data-protection design stays written for the later Windows version.</p>
 <h3 id="staying-signed-in"><a id="6-staying-signed-in"></a>6. Staying signed in<a class="anchor-link" href="#staying-signed-in">#</a></h3>
 <table>
 <thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
@@ -196,6 +202,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </tbody>
 </table>
 <p><strong>My recommendation: A</strong> — simplest and safest now; B can be a later row.</p>
+<p><strong>Your answer (14 Nov 2026): B, in this form.</strong> The sign-in screen has a "Remember me" box. Ticked, the user stays signed in for 30 days on that computer: the AppManager refresh token is kept, protected the same way as the user's keys, and on the next open the app signs in with it without asking; after 30 days, or when the server refuses or revokes the token, the user signs in again with a plain message. Not ticked, nothing is kept. Sign out always removes what was kept. The AppManager guide does not say how long a refresh token lives, so 30 days is the app's own limit and the server may end it sooner; asked in the AppManager feedback file.</p>
 <h3 id="what-happens-to-phase-1-s-checked-rows"><a id="7-what-happens-to-phase-1s-checked-rows"></a>7. What happens to phase 1's checked rows<a class="anchor-link" href="#what-happens-to-phase-1-s-checked-rows">#</a></h3>
 <p>The database, the host and the job runner under almost every feature changed, even though the screens did not.</p>
 <table>
@@ -206,6 +213,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </tbody>
 </table>
 <p><strong>My recommendation: A</strong> — a check on a database you no longer ship proves nothing about the new app.</p>
+<p><strong>Your answer (14 Nov 2026): A.</strong> The 68 rows stay at needs re-check until re-verified on the test host.</p>
 <h3 id="the-api-project-and-the-old-web-head-in-the-solution"><a id="8-the-api-project-and-the-old-web-head-in-the-solution"></a>8. The API project and the old web head in the solution<a class="anchor-link" href="#the-api-project-and-the-old-web-head-in-the-solution">#</a></h3>
 <p>You said to keep the API project and the PostgreSQL scripts, unused. The engine no longer carries Hangfire or PostgreSQL code, so the API project no longer compiles.</p>
 <table>
@@ -216,6 +224,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </tbody>
 </table>
 <p><strong>My recommendation: A</strong> — nothing is deleted, and the shipped app carries nothing it does not use.</p>
+<p><strong>Your answer (14 Nov 2026): the web head is deleted.</strong> <code>src/TrStudio</code> (the old Blazor web front end) is removed, and the desktop project takes the name <code>src/TrStudio</code>. The API project <code>src/TrStudioApi</code> and the PostgreSQL scripts stay on disk, out of the build, because the set-aside external REST API row would need them.</p>
 <h3 id="character-bible-search-without-an-embedding-model"><a id="9-character-bible-search-without-an-embedding-model"></a>9. Character-bible search without an embedding model<a class="anchor-link" href="#character-bible-search-without-an-embedding-model">#</a></h3>
 <p>Searching a character's notes by meaning needs an embedding model. TechieRag looks for one on this computer (Ollama), which a person who downloads the app will not have, so search falls back to matching words.</p>
 <table>
@@ -226,6 +235,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </tbody>
 </table>
 <p><strong>My recommendation: A</strong> — nothing breaks today, and B depends on decision 10.</p>
+<p><strong>Your answer (14 Nov 2026): A.</strong> Word matching now; a built-in embedding model is a later row.</p>
 <h3 id="local-picture-generation-onnx-inside-the-mac-app"><a id="10-local-picture-generation-onnx-inside-the-mac-app"></a>10. Local picture generation (ONNX) inside the Mac app<a class="anchor-link" href="#local-picture-generation-onnx-inside-the-mac-app">#</a></h3>
 <p>The local ONNX picture model ran in the old API on macOS. Inside the Mac app it cannot: ONNX Runtime publishes no Mac Catalyst build, so the app links without it and a local ONNX job fails with its reason.</p>
 <table>
@@ -236,13 +246,27 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </tbody>
 </table>
 <p><strong>My recommendation: A now, B as a later row</strong> — it keeps tonight's app honest and shippable.</p>
+<p><strong>Your answer (14 Nov 2026): A.</strong> Pictures on Mac come from ComfyUI, RunPod or Venice; local ONNX pictures on Mac are a later row.</p>
+<h3 id="matching-the-older-screens-to-their-mockups-control-by-control"><a id="11-matching-the-older-screens-to-their-mockups-control-by-control"></a>11. Matching the older screens to their mockups, control by control<a class="anchor-link" href="#matching-the-older-screens-to-their-mockups-control-by-control">#</a></h3>
+<p>Re-checking phase 1 on the test host, the screen checker compares each screen with its mockup by the names the mockup gives its controls. Today only Login and Setup required carry those names. I added the names of the shared frame (sidebar, its links, top bar, sign out) to every screen, and fixed the faint badge text, but the 18 other screens still lack their own names, and many mockup items are sample data a fresh app does not have. The screens render, show their data and pass the sweep at both widths.</p>
+<table>
+<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
+<tbody>
+<tr><td><strong>A — a dedicated run for the remaining names</strong></td><td>The 18 screens get their mockups' control names, the design document gets each screen's route, and each screen gets a script that puts in the sample data its mockup draws. Until then, those rows are checked by the screen sweep only.</td><td>One focused run; meanwhile the mockup comparison does not grade those screens.</td></tr>
+<tr><td><strong>B — do it inside this run</strong></td><td>Everything at once.</td><td>Several hundred names and 18 data scripts in an unattended run, with a high chance of half-done screens.</td></tr>
+</tbody>
+</table>
+<p><strong>My recommendation: A</strong> — it is a job of its own and is safer done in one pass with its own checks.</p>
+<p><strong>Taken in this run (14 Nov 2026): A.</strong> Paste the block below to confirm, or ask for B.</p>
 <h2 id="what-i-do-when-you-answer">What I do when you answer<a class="anchor-link" href="#what-i-do-when-you-answer">#</a></h2>
 <ol>
-<li>If you keep every recommendation, nothing changes.
+<li>Done on 14 Nov 2026: every answer is in the Architecture decisions log and the phase 3 documents.
 </li>
-<li>If you change one, I edit the Architecture decision it touches, the phase 3 rows it names, and the code, then run the unit tests and the headless checks again.
+<li>Decision 6B is built: five new phase 3 rows, unit tests and headless checks on the test host.
 </li>
-<li>Decisions 1, 3, 8 and 10B are the costliest to reverse (most of a night each); 4, 5 and 6 are about an hour each; 2 and 7 are minutes.
+<li>Decision 8 is done: the old web head is deleted and the desktop project is now <code>src/TrStudio</code>.
+</li>
+<li>Decisions 9 and 10 left two later rows: a built-in embedding model, and local ONNX pictures on Mac.
 </li>
 </ol>
 <h2 id="copy-this-back-to-me">Copy this back to me<a class="anchor-link" href="#copy-this-back-to-me">#</a></h2>
@@ -251,11 +275,12 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <pre><code>TrStudio: decision 3 — go with option A. Vectors stay in TrStudio.vectors.db beside TrStudio.db.</code></pre>
 <pre><code>TrStudio: decision 4 — go with option A. Resume Venice clips, fail other running jobs with the reason.</code></pre>
 <pre><code>TrStudio: decision 5 — go with option A. One unlock key per user in the Keychain or Windows data protection.</code></pre>
-<pre><code>TrStudio: decision 6 — go with option A. Sign in each time the app opens.</code></pre>
+<pre><code>TrStudio: decision 6 — answered B (14 Nov 2026). "Remember me" keeps the sign-in for 30 days; unticked keeps nothing; sign out removes it.</code></pre>
 <pre><code>TrStudio: decision 7 — go with option A. Rows touching stored data stay at needs re-check until re-verified.</code></pre>
-<pre><code>TrStudio: decision 8 — go with option A. API project and web head stay on disk, out of the solution build.</code></pre>
+<pre><code>TrStudio: decision 8 — answered (14 Nov 2026). Web head deleted; the desktop project is src/TrStudio; the API project and PostgreSQL scripts stay on disk, out of the build.</code></pre>
 <pre><code>TrStudio: decision 9 — go with option A. Keep word matching; plan a built-in embedding model as a later row.</code></pre>
 <pre><code>TrStudio: decision 10 — go with option A. ComfyUI, RunPod or Venice for pictures on Mac; ONNX for Mac Catalyst as a later row.</code></pre>
+<pre><code>TrStudio: decision 11 — go with option A. A dedicated run adds the 18 screens' mockup control names, the design document's routes and the sample-data scripts.</code></pre>
   </main>
 </div>
 

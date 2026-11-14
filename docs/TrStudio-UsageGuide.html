@@ -106,7 +106,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <div class="layout no-toc">
   <main>
     <h1>TrStudio — Usage Guide</h1>
-    <div class="subtitle">Rendered 2026-11-12 &middot; source <code>TrStudio-UsageGuide.md</code></div>
+    <div class="subtitle">Rendered 2026-11-14 &middot; source <code>TrStudio-UsageGuide.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
@@ -147,12 +147,12 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tr><td>App</td><td>TrStudio</td></tr>
 <tr><td>Kind</td><td>app</td></tr>
 <tr><td>Size</td><td>Large</td></tr>
-<tr><td>Date</td><td>2026-11-12</td></tr>
+<tr><td>Date</td><td>2026-11-14</td></tr>
 </tbody>
 </table>
-<p>How to run and test TrStudio on Windows and macOS. The smoke and verify agents and the owner's acceptance testing use the same test users and the same walkthrough below. The end-user manual is the Product Guide (<code>*productguide TrStudio</code>); this is the internal run and test reference.</p>
+<p>How to run and test TrStudio, one desktop app with the engine inside. The first version is for Mac; Windows comes in a later version. The smoke and verify agents and the owner's acceptance testing use the same test users and the same walkthrough below. The end-user manual is the Product Guide (<code>*productguide TrStudio</code>); this is the internal run and test reference.</p>
 <h2 id="test-users">Test users<a class="anchor-link" href="#test-users">#</a></h2>
-<p>Identity comes from AppManager; TrStudio stores only the AppManager <code>userId</code>, never a password. The users were registered through AppManager's register call (<code>node .tfcore/utils/tf-register-test-users.mjs</code>, run by the owner); user 1 is AppManager's own superadmin. Each password lives in the git-ignored <code>tests/verify/testsettings.Local.json</code>, laid over the committed <code>tests/verify/testsettings.json</code>; it is never written here. The developer sign-in page (<code>/dev/session</code>, needs <code>AllowDevSymmetricTokens=true</code>) stays for switching roles in smoke runs.</p>
+<p>Identity comes from AppManager; TrStudio stores only the AppManager <code>userId</code>, never a password. The users were registered through AppManager's register call (<code>node .tfcore/utils/tf-register-test-users.mjs</code>, run by the owner); user 1 is AppManager's own superadmin. Each password lives in the git-ignored <code>tests/verify/testsettings.Local.json</code>, laid over the committed <code>tests/verify/testsettings.json</code>; it is never written here. For switching roles in smoke runs, a Debug build of the app opens signed in as <code>Desktop:DevRole</code> from the git-ignored <code>src/TrStudio/appsettings.json</code>, and the test host serves the developer sign-in page <code>/dev/session</code>.</p>
 <table>
 <thead><tr><th>#</th><th>User</th><th>Password source</th><th>Role</th><th>Exists</th></tr></thead>
 <tbody>
@@ -173,15 +173,12 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </tbody>
 </table>
 <h2 id="execution-guide">Execution guide<a class="anchor-link" href="#execution-guide">#</a></h2>
-<p>Prerequisites: .NET 10 SDK (plus the .NET MAUI workload for the desktop head); PostgreSQL with PgVector and AppManager running (local containers, or another machine's over the LAN); two git-ignored files recreated on every machine: <code>nuget.config</code> from <code>nuget.config.template</code> plus a GitHub token with <code>read:packages</code> (without it: <code>NU1101: TechieRag</code>), and <code>src/TrStudioApi/appsettings.json</code> from <code>appsettings.template.json</code> plus the database connection string and the <code>AppManager</code> block. Keys can go in Visual Studio user secrets instead of <code>appsettings.json</code>. Ports come from each project's <code>launchSettings.json</code> (API 5102, web 5099); no setting is read from an environment variable.</p>
-<pre><code>docker start WinPgVectorDb appmanager-api
-dotnet restore TrStudio.slnx -p:EnableWindowsTargeting=true
-dotnet build TrStudio.slnx -p:EnableWindowsTargeting=true
-dotnet run --project src/TrStudioApi --urls http://localhost:5102
-dotnet run --project src/TrStudio --urls http://localhost:5099</code></pre>
-<p>The database migrates itself (DbUp) when <code>TrStudioApi</code> starts; wait for <code>Application started</code> before starting the web head. Open http://localhost:5099 and sign in as user 1. <code>http://localhost:5102/health</code> answers <code>{"status":"ok"}</code>; <code>/swagger</code> lists the API.</p>
-<p>In Visual Studio: open <code>TrStudio.slnx</code>, set multiple startup projects <code>TrStudioApi</code> then <code>TrStudio</code> (or <code>TrStudio.Desktop</code>, framework <code>net10.0-windows10.0.19041.0</code>), and press F5.</p>
-<p><strong>Phase 2 (Venice):</strong> sign in as user 1 or 3, open Admin — Model &amp; Provider Registry, add provider <code>Venice</code> with address <code>https://api.venice.ai/api/v1</code> and the Venice API key (stored encrypted in the database, never in appsettings), press Test connection, then add one registry row per Venice model and task.</p>
+<p>Prerequisites: a Mac with full Xcode, the .NET 10 SDK and the .NET MAUI workload; two git-ignored files recreated on every machine: <code>nuget.config</code> from <code>nuget.config.template</code> plus the private feed token (without it: <code>NU1101: TechieRag</code>), and <code>src/TrStudio/appmanager.local.json</code> from <code>src/TrStudio/appmanager.template.json</code> plus the AppManager address, application id and API key (put into the build). No database server and no API process; no setting is read from an environment variable.</p>
+<pre><code>dotnet restore TrStudio.slnx
+dotnet build src/TrStudio/TrStudio.csproj -f net10.0-maccatalyst
+open src/TrStudio/bin/Debug/net10.0-maccatalyst/maccatalyst-arm64/TrStudio.app</code></pre>
+<p>On first start the app creates and migrates <code>TrStudio.db</code> (plus <code>TrStudio.vectors.db</code>) in the user's app data folder; jobs run inside the app. Sign in as user 1. Without the AppManager settings the app still opens and Login says the copy was built without its sign-in settings.</p>
+<p><strong>Phase 2 (Venice):</strong> sign in as user 1 or 3, open Registry &amp; providers, add provider <code>Venice</code> with address <code>https://api.venice.ai/api/v1</code> and the Venice API key (kept in the local database, protected by the Mac Keychain for that user), press Test connection, then add one registry row per Venice model and task.</p>
 <h2 id="how-to-test-screen-by-screen">How to test, screen by screen<a class="anchor-link" href="#how-to-test-screen-by-screen">#</a></h2>
 <p>Screens degrade cleanly where a model, key or service is missing; those steps are marked "needs".</p>
 <h3 id="register-register">Register (<code>/register</code>)<a class="anchor-link" href="#register-register">#</a></h3>
@@ -199,11 +196,11 @@ dotnet run --project src/TrStudio --urls http://localhost:5099</code></pre>
 <ul>
 <li><strong>Sign in as:</strong> users 1 to 4
 </li>
-<li><strong>Steps:</strong> 1) open any screen signed out 2) sign in 3) note the landing screen
+<li><strong>Steps:</strong> 1) open the app signed out 2) sign in with "Remember me on this computer for 30 days" ticked, note the landing screen 3) quit and reopen 4) sign out, reopen 5) sign in unticked, quit and reopen
 </li>
-<li><strong>Expected:</strong> signed-out visits go to <code>/login</code>; each role lands as in the table above; bad credentials show a danger alert
+<li><strong>Expected:</strong> each role lands as in the table above; bad credentials show a danger alert; step 3 opens signed in; steps 4 and 5 ask for sign-in; a refused or expired kept sign-in shows "Please sign in again" with a plain message
 </li>
-<li><strong>Covers:</strong> REQ-UI-001, REQ-FN-012, REQ-FN-016, BRD-57, BRD-84
+<li><strong>Covers:</strong> REQ-UI-001, REQ-UI-105, REQ-UI-106, REQ-FN-012, REQ-FN-016, REQ-FN-100, REQ-FN-101, BRD-57, BRD-84
 </li>
 </ul>
 <h3 id="forgot-password-forgot-password">Forgot password (<code>/forgot-password</code>)<a class="anchor-link" href="#forgot-password-forgot-password">#</a></h3>
@@ -427,10 +424,11 @@ dotnet run --project src/TrStudio --urls http://localhost:5099</code></pre>
 </li>
 </ul>
 <h2 id="automated-tests">Automated tests<a class="anchor-link" href="#automated-tests">#</a></h2>
-<pre><code>dotnet test
+<pre><code>bash .tfcore/utils/tf-build.sh test
 dotnet test tests/integration/TrStudio.Tests.Integration --filter Category=Live
+bash .tfcore/utils/tf-verify-boot.sh start --head web --project tests/TrStudio.TestHost/TrStudio.TestHost.csproj --port 5099
 npx playwright test</code></pre>
-<p><code>dotnet test</code> runs the unit tests and the SignalR integration test. The paid Venice live tests (<code>Category=Live</code>, one per task type) are left out of that run by default (the integration project sets <code>--filter Category!=Live</code>); the second line runs only them. The Playwright specs in <code>tests/verify/</code> need a running API on 5102 and web head on 5099. Tests read their settings from <code>testsettings.json</code> beside them, overlaid by the git-ignored <code>testsettings.Local.json</code>; never environment variables. The Venice live tests read <code>tests/integration/TrStudio.Tests.Integration/testsettings.Local.json</code> (keys <code>Venice:BaseUrl</code>, <code>Venice:ApiKey</code>, optional <code>Venice:Models:&lt;Task&gt;</code>; an empty model picks the cheapest listed) and each is skipped with "Venice key not set in testsettings.Local.json" when the key is empty. <code>Host:DotnetRoot</code> in the same file optionally names the .NET folder the SignalR test boots the API with.</p>
+<p>The first line runs the unit tests (about 410 pass, 1 skipped) and the integration tests. The paid Venice live tests (<code>Category=Live</code>) are left out by default; the second line runs only them, and each is skipped without a Venice key. <code>tests/TrStudio.TestHost</code> is a test-only web host (never shipped) serving the same screens and engine on a temporary SQLite folder; the third line boots it, and the Playwright specs in <code>tests/verify/</code> run against http://localhost:5099 (phase 3 checks: 10 pass, 1 skipped, the real AppManager sign-in, which needs AppManager values). Test settings come only from JSON files beside the tests: <code>tests/verify/testsettings.json</code> overlaid by the git-ignored <code>tests/verify/testsettings.Local.json</code> (AppManager values for the real sign-in check, test users), and <code>tests/integration/TrStudio.Tests.Integration/testsettings.json</code> overlaid by the git-ignored <code>testsettings.Local.json</code> (<code>Venice:ApiKey</code>); never environment variables.</p>
 <h2 id="known-limitations">Known limitations<a class="anchor-link" href="#known-limitations">#</a></h2>
 <ul>
 <li>Studios run real jobs (seeds, routing, cost, safety, per-user storage) but show placeholder previews: a gradient tile with the real seed, a placeholder waveform or timeline clip. Upscale, Export MP4 or WAV and Remove background only show a message today.
@@ -449,12 +447,9 @@ npx playwright test</code></pre>
 </li>
 </ul>
 <h2 id="platform-notes">Platform notes<a class="anchor-link" href="#platform-notes">#</a></h2>
-<p><strong>Windows:</strong> containers <code>WinPgVectorDb</code> (5432) and <code>appmanager-api</code> (5101); <code>docker ps</code> should show both up. Desktop head: <code>dotnet build src/TrStudio.Desktop -f net10.0-windows10.0.19041.0</code>.</p>
-<p><strong>macOS (Apple Silicon):</strong> no Visual Studio; use the command line, VS Code or Rider. Either run local containers (a <code>pgvector/pgvector:pg16</code> Postgres with database <code>trstudio</code>, and the <code>appmanager-api</code> image on 5101 with a writable <code>/keys</code> volume), or reuse the Windows machine's containers: point <code>ConnectionStrings:Default</code> at <code>Host=&lt;windows-ip&gt;;Port=5432;…</code> and keep <code>AppManager:BaseUrl</code> at <code>https://localhost:5101/</code>, bridged by <code>python3 tools/appmanager-forward.py &amp;</code>. The address must stay localhost because the self-signed certificate is accepted on loopback only (NFR-005); the Windows machine must then be on. The desktop head needs full Xcode (<code>sudo xcode-select -s /Applications/Xcode.app/Contents/Developer</code>, licence accepted) and TrBlazeUI 1.0.9 or later:</p>
-<pre><code>dotnet build src/TrStudio.Desktop -f net10.0-maccatalyst -c Release -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false
-open src/TrStudio.Desktop/bin/Release/net10.0-maccatalyst/maccatalyst-arm64/TrStudio.app</code></pre>
-<p><code>-p:ValidateXcodeVersion=false</code> is needed only while the MacCatalyst workload trails Xcode (<code>sudo dotnet workload update</code> removes it). Start <code>TrStudioApi</code> first. The desktop head still reads <code>TrStudioApiBaseUrl</code> from an environment variable to reach another host; that is an open item against the settings-file rule. Zoom with Cmd+ / Cmd− / Cmd0 after clicking inside the window; the level persists and scales up on high-density displays.</p>
-<p><strong>Troubleshooting:</strong> <code>NETSDK1100 …targeting Windows</code> → add <code>-p:EnableWindowsTargeting=true</code>. <code>NU1101: TechieRag</code> → <code>nuget.config</code> missing or token invalid. <code>requires Xcode X.Y</code> → <code>sudo dotnet workload update</code>. Login 503 <code>APPMANAGER_UNREACHABLE</code> or an SSL error → <code>AppManager:BaseUrl</code> points at a LAN address; use localhost and the relay. Login 500 <code>UPSTREAM_ERROR</code> → AppManager's <code>/keys</code> volume is not writable. Errors at launch → a container is down or only one project started; the header's API status pill turns red when the API is unreachable, and the API logs <code>Verify PostgreSQL is running…</code> when it cannot reach Postgres.</p>
+<p><strong>macOS (Apple Silicon), first version:</strong> use the command line, VS Code or Rider. The app needs full Xcode (<code>sudo xcode-select -s /Applications/Xcode.app/Contents/Developer</code>, licence accepted). The csproj sets <code>ValidateXcodeVersion=false</code> while the Mac Catalyst workload (26.5) trails Xcode (27.2); <code>sudo dotnet workload update</code> lets it be removed. Zoom with Cmd+ / Cmd− / Cmd0 after clicking inside the window; the level persists and scales up on high-density displays. A kept "Remember me" sign-in is encrypted with the Keychain-held key; AppManager may end it sooner than 30 days.</p>
+<p><strong>Windows (later version):</strong> the Windows head stays in the project; on a Windows machine, <code>dotnet build src/TrStudio/TrStudio.csproj -f net10.0-windows10.0.19041.0</code>. No step of the first version needs Windows.</p>
+<p><strong>Troubleshooting:</strong> <code>NU1101: TechieRag</code> or <code>NU1301</code> → <code>nuget.config</code> missing or token invalid. <code>requires Xcode X.Y</code> → <code>sudo dotnet workload update</code>. Login says the copy was built without its sign-in settings → fill in <code>src/TrStudio/appmanager.local.json</code> and rebuild. Login shows "Please sign in again" → the kept sign-in ran past 30 days or AppManager refused it; sign in again. A screen errors at start → read the log under the app data folder's <code>TrStudio/logs</code>.</p>
   </main>
 </div>
 

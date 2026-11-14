@@ -5,7 +5,7 @@
     <Platform Name="x86" />
   </Configurations>
   <Folder Name="/src/">
-    <Project Path="src/TrStudio.Desktop/TrStudio.Desktop.csproj" />
+    <Project Path="src/TrStudio/TrStudio.csproj" />
     <Project Path="src/TrStudio.Engine/TrStudio.Engine.csproj" />
     <Project Path="src/TrStudio.Models/TrStudio.Models.csproj" />
     <Project Path="src/TrStudio.InProcess/TrStudio.InProcess.csproj" />

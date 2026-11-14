@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TrStudio — Build &amp; Run Guide (build on Windows · run on the Mac)</title>
+<title>TrStudio — Build &amp; Run Guide (Mac first)</title>
 <script>
 /* Resolve the theme BEFORE first paint (no flash). Saved choice wins; otherwise
    pick by time of day — light 07:00–19:00 local, softened dark at night. */
@@ -105,121 +105,100 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <button id="themeToggle" class="theme-toggle" title="Toggle light / dark">&#9790; Dark</button>
 <div class="layout no-toc">
   <main>
-    <h1>TrStudio — Build &amp; Run Guide (build on Windows · run on the Mac)</h1>
-    <div class="subtitle">Rendered 2026-11-12 &middot; source <code>TrStudio-BuildAndRun-Guide.md</code></div>
+    <h1>TrStudio — Build &amp; Run Guide (Mac first)</h1>
+    <div class="subtitle">Rendered 2026-11-14 &middot; source <code>TrStudio-BuildAndRun-Guide.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
       <ol>
         <li><a href="#what-trstudio-ships-as">1. What TrStudio ships as</a></li>
-        <li><a href="#build-run-on-windows-visual-studio">2. Build &amp;amp; run on Windows (Visual Studio)</a></li>
-        <li><a href="#run-on-the-mac-two-options">3. Run on the Mac — two options</a></li>
-        <li class="h3"><a href="#option-b-copy-to-mac-binaries-no-net-on-the-mac-the-recommended-first-path">Option B — copy-to-Mac binaries (no .NET on the Mac) — the recommended first path</a></li>
-        <li class="h3"><a href="#option-a-native-mac-desktop-app-catalyst-built-on-the-mac">Option A — native Mac desktop app (Catalyst, built on the Mac)</a></li>
+        <li><a href="#build-run-on-the-mac">2. Build &amp;amp; run on the Mac</a></li>
+        <li><a href="#settings-and-keys">3. Settings and keys</a></li>
+        <li class="h3"><a href="#windows-later-version">Windows (later version)</a></li>
         <li><a href="#mac-runtime-prerequisites-what-trstudio-needs-to-actually-generate">4. Mac runtime prerequisites (what TrStudio needs to actually generate)</a></li>
         <li><a href="#first-run-on-the-mac">5. First run on the Mac</a></li>
         <li><a href="#where-trsetup-takes-over">6. Where TrSetup takes over</a></li>
       </ol>
     </div>
 <blockquote>
-<p><strong>Audience:</strong> the owner / any human moving TrStudio between the Windows dev machine and the LAN Mac. Prerequisite installs will eventually be one click in <strong>TrSetup</strong> (see <code>TrSetup/docs/TrSetup-BRD.md</code>); until then this guide lists them manually.</p>
-<p><strong>The one rule that governs everything below:</strong> <code>-r osx-arm64</code> cross-publishes <strong>plain .NET</strong> projects only — the .NET runtime pack is just a NuGet download, so Windows can build a Mac binary. A <strong>MAUI</strong> head is different in kind: it compiles against Apple's native SDKs and is signed with Apple tools that ship only inside Xcode, <strong>macOS only</strong> — no flag, TFM, or RID makes a Catalyst <code>.app</code> buildable from Windows (VS "Pair to Mac" is iOS-only). So: API + web head → build on Windows, copy to the Mac (§3 Option B); the native desktop <code>.app</code> → one command <strong>on the Mac</strong> (§3 Option A).</p>
+<p><strong>Audience:</strong> the owner, or anyone building and running TrStudio on a Mac. Prerequisite installs will eventually be one click in <strong>TrSetup</strong> (see <code>TrSetup/docs/TrSetup-BRD.md</code>); until then this guide lists them by hand.</p>
+<p><strong>Mac first:</strong> the first released version of TrStudio is for Mac only. Windows (and possibly Linux) come in a later version. No step of the first version needs a Windows machine.</p>
 </blockquote>
 <h2 id="what-trstudio-ships-as"><a id="1-what-trstudio-ships-as"></a>1. What TrStudio ships as<a class="anchor-link" href="#what-trstudio-ships-as">#</a></h2>
-<p>TrStudio is now a <strong>unified role-based app</strong> (ADR-012 / BRD-87): one shared component set (<code>TrStudioUI</code> RCL) rendered by <strong>two interchangeable UI heads</strong> over one backend. The old separate <code>TrStudioAdmin</code> app is gone — admin screens live under <code>/admin/*</code> inside the same app, gated by role.</p>
+<p>TrStudio is <strong>one desktop app</strong>: <code>src/TrStudio/TrStudio.csproj</code>, a .NET MAUI Blazor Hybrid app (root namespace <code>TrStudio</code>, app title TrStudio, app id <code>com.techierathore.trstudio</code>). It is a unified role-based app (ADR-012 / BRD-87): creator screens and the admin screens under <code>/admin/*</code> live in the same app, gated by role.</p>
+<p>The engine runs inside the app. There is no API process, no web server and no database server.</p>
 <table>
-<thead><tr><th>Project</th><th>Kind</th><th>Role</th><th>How it runs</th></tr></thead>
+<thead><tr><th>Project</th><th>Role</th></tr></thead>
 <tbody>
-<tr><td><code>src/TrStudioApi</code></td><td>plain .NET web app (Kestrel)</td><td>Backend — jobs, registry, providers, Hangfire, JWT auth</td><td><code>http://localhost:5102</code></td></tr>
-<tr><td><code>src/TrStudio</code></td><td>plain .NET web app (Blazor Server)</td><td><strong>Web head</strong> — full app in the browser</td><td><code>http://localhost:5099</code></td></tr>
-<tr><td><code>src/TrStudio.Desktop</code></td><td><strong>MAUI Blazor Hybrid</strong></td><td><strong>Desktop head</strong> — same UI in a native window</td><td>Windows unpackaged exe · Mac Catalyst <code>.app</code></td></tr>
+<tr><td><code>src/TrStudio</code></td><td>The app: native window hosting the screens and the engine</td></tr>
+<tr><td><code>src/TrStudioUI</code></td><td>Every screen (Razor Class Library on TrBlazeUI)</td></tr>
+<tr><td><code>src/TrStudio.InProcess</code></td><td>Runs the engine inside the app process</td></tr>
+<tr><td><code>src/TrStudio.Engine</code></td><td>Jobs, providers, safety floors, cost guardrails, job runner</td></tr>
+<tr><td><code>src/TrStudio.Models</code></td><td>Shared models and contracts</td></tr>
+<tr><td><code>src/TrStudioDb</code></td><td>SQLite migrations</td></tr>
 </tbody>
 </table>
-<p>Because both heads host the same <code>TrStudioUI</code> RCL, they are feature-identical — the desktop head is a nicer window around the exact same screens. Both talk to <code>TrStudioApi</code> over HTTP (the desktop head defaults to <code>http://localhost:5102</code>). The desktop head still reads an override from the <code>TrStudioApiBaseUrl</code> environment variable; that is an open item, because settings belong in settings files, never environment variables.</p>
-<p><strong>Distribution consequence (per TrSetup guide §1b):</strong></p>
-<ul>
-<li><code>TrStudioApi</code> and the <code>TrStudio</code> web head are plain .NET → <strong>Option B works</strong>: cross-publish on Windows, copy the folder to the Mac, run — no .NET on the Mac needed.
+<p>Data lives in a local SQLite file, <code>TrStudio.db</code> (plus <code>TrStudio.vectors.db</code>), in the user's own app data folder. The app creates and migrates it on first start. Jobs run inside the app.</p>
+<p><code>src/TrStudioApi</code> and the PostgreSQL scripts stay on disk, out of the solution build, set aside for a later external REST API.</p>
+<h2 id="build-run-on-the-mac"><a id="2-build--run-on-the-mac"></a>2. Build &amp; run on the Mac<a class="anchor-link" href="#build-run-on-the-mac">#</a></h2>
+<ol>
+<li>Prerequisites: <strong>full Xcode</strong> with the licence accepted (Command Line Tools alone are not enough), the .NET 10 SDK, and <code>sudo dotnet workload install maui</code>.
 </li>
-<li><code>TrStudio.Desktop</code> is MAUI → the Mac <code>.app</code> can <strong>only be built on the Mac</strong> (Option A). The Windows exe cannot be copied over.
+<li>Private packages (TrBlazeUI, TechieRag) come from a private feed: copy <code>nuget.config.template</code> to <code>nuget.config</code> and fill in the token. The file is git-ignored, so every copy of the source needs it recreated.
+</li>
+<li>Sign-in settings: copy <code>src/TrStudio/appmanager.template.json</code> to <code>src/TrStudio/appmanager.local.json</code> (git-ignored) and fill in the AppManager address, application id and API key. They are put into the build. Without them the app still opens, and Login says the copy was built without its sign-in settings.
+</li>
+<li>Build and open:
+</li>
+</ol>
+<pre><code class="language-bash">   dotnet build src/TrStudio/TrStudio.csproj -f net10.0-maccatalyst
+   open src/TrStudio/bin/Debug/net10.0-maccatalyst/maccatalyst-arm64/TrStudio.app</code></pre>
+<ol>
+<li>The whole solution builds with <code>dotnet build TrStudio.slnx</code> on a Mac. The framework's own build script is <code>bash .tfcore/utils/tf-build.sh</code> (build) and <code>bash .tfcore/utils/tf-build.sh test</code> (unit and integration tests).
+</li>
+</ol>
+<p>The csproj sets <code>ValidateXcodeVersion=false</code> itself: this Mac has Xcode 27.2 while the Mac Catalyst workload names 26.5. A <code>sudo dotnet workload update</code> that catches the workload up lets that line be removed.</p>
+<p>Ad-hoc signing is fine for personal use.</p>
+<h2 id="settings-and-keys"><a id="3-settings-and-keys"></a>3. Settings and keys<a class="anchor-link" href="#settings-and-keys">#</a></h2>
+<ul>
+<li>No setting comes from an environment variable anywhere.
+</li>
+<li>AppManager sign-in settings: <code>src/TrStudio/appmanager.local.json</code>, put into the build (§2).
+</li>
+<li>Keys a user owns (Venice, RunPod, HeyGen, closed API, text models) are entered on <strong>Registry &amp; providers</strong> in the app and kept in the local database, protected by the Mac Keychain for that user. They need no file.
+</li>
+<li><strong>Remember me:</strong> the Login screen has a "Remember me on this computer for 30 days" box. Ticked, the AppManager refresh token is kept on this computer, encrypted with the same Keychain-held key as the provider keys, and the next open signs in without asking, for up to 30 days from that sign-in. Not ticked, nothing is kept. Sign out always removes what was kept. AppManager may end a kept sign-in sooner than 30 days.
 </li>
 </ul>
-<h2 id="build-run-on-windows-visual-studio"><a id="2-build--run-on-windows-visual-studio"></a>2. Build &amp; run on Windows (Visual Studio)<a class="anchor-link" href="#build-run-on-windows-visual-studio">#</a></h2>
-<ol>
-<li>Open <code>TrStudio.slnx</code> in Visual Studio 2022 (17.10 or newer — required to read the modern XML <code>.slnx</code> solution format; the <code>dotnet</code> CLI and VS Code open it natively) with the .NET 10 SDK + the <strong>.NET MAUI workload</strong>; the private TechieRag feed in <code>nuget.config</code> must authenticate — PAT with <code>read:packages</code>.
-</li>
-<li>Solution → <em>Configure Startup Projects…</em> → <strong>Multiple startup projects</strong>: <code>TrStudioApi</code> + <strong>either</strong> <code>TrStudio</code> (browser) <strong>or</strong> <code>TrStudio.Desktop</code> (native window) → Start.
-</li>
-<li>For <code>TrStudio.Desktop</code>, pick framework <code>net10.0-windows10.0.19041.0</code> in the debug-target dropdown. The csproj lists both TFMs unconditionally, so <strong>on Windows always build it with <code>-f net10.0-windows10.0.19041.0</code></strong> — building all frameworks would try (and fail) to build Mac Catalyst without a Mac.
-</li>
-<li>CLI equivalents:
-</li>
-</ol>
-<pre><code class="language-powershell">   dotnet run --project src/TrStudioApi                                        # backend on :5102
-   dotnet run --project src/TrStudio                                           # web head on :5099
-   dotnet build src/TrStudio.Desktop -f net10.0-windows10.0.19041.0 -c Release # desktop exe
-   # exe: src\TrStudio.Desktop\bin\Release\net10.0-windows10.0.19041.0\win10-x64\TrStudio.Desktop.exe
-   # (unpackaged MAUI app — distribute the whole win10-x64 folder, not the lone exe)</code></pre>
-<ol>
-<li>Runtime prerequisites on Windows (same list as the Mac's §4): PostgreSQL + PgVector, ffmpeg, and the isolated Python/ComfyUI env for local generation.
-</li>
-</ol>
-<h2 id="run-on-the-mac-two-options"><a id="3-run-on-the-mac--two-options"></a>3. Run on the Mac — two options<a class="anchor-link" href="#run-on-the-mac-two-options">#</a></h2>
-<h3 id="option-b-copy-to-mac-binaries-no-net-on-the-mac-the-recommended-first-path"><a id="option-b--copy-to-mac-binaries-no-net-on-the-mac--the-recommended-first-path"></a>Option B — copy-to-Mac binaries (no .NET on the Mac) — the recommended first path<a class="anchor-link" href="#option-b-copy-to-mac-binaries-no-net-on-the-mac-the-recommended-first-path">#</a></h3>
-<p>The API + web head are plain .NET, so the true "build on Windows, copy, run" flow works. You get the complete app in Safari/Chrome on the Mac; only §4's runtime prerequisites (database, ffmpeg, …) are still needed for actual generation.</p>
-<p><strong>On the Windows machine:</strong></p>
-<pre><code class="language-powershell">dotnet publish src/TrStudioApi -c Release -r osx-arm64 --self-contained true -o publish\mac\TrStudioApi
-dotnet publish src/TrStudio    -c Release -r osx-arm64 --self-contained true -o publish\mac\TrStudio</code></pre>
-<p>(<code>-r osx-arm64</code> targets Apple Silicon; <code>--self-contained true</code> bundles the .NET runtime into each folder — the folders are ~100 MB each and <strong>must be copied whole</strong>.)</p>
-<p>⚠ <strong>These two commands are the complete Option B list — <code>TrStudio.Desktop</code> is deliberately NOT here.</strong> <code>-r osx-arm64</code> only cross-compiles plain .NET (<code>TrStudioApi</code>, <code>TrStudio</code>); it cannot produce the MAUI/Catalyst <code>.app</code> from Windows — attempting it just hits the csproj's macOS-only TFM guard (<code>NETSDK1005</code>/unknown-TFM). The native desktop head's Mac build is Option A below: one command, on the Mac. There is no <code>-r osx-arm64</code> MAUI build, by design — not a missing feature of this guide.</p>
-<p><strong>Copy</strong> both <code>publish\mac\*</code> folders to the Mac (Finder <code>Cmd+K</code> → <code>smb://&lt;windows-ip&gt;</code>, <code>scp -r</code>, AirDrop a zip, or USB).</p>
-<p><strong>On the Mac:</strong></p>
-<pre><code class="language-bash">chmod +x TrStudioApi/TrStudioApi TrStudio/TrStudio      # SMB/zip copies strip the execute bit
-xattr -dr com.apple.quarantine TrStudioApi TrStudio     # clear Gatekeeper quarantine (unsigned build)
-./TrStudioApi/TrStudioApi &amp;                             # backend first → :5102
-./TrStudio/TrStudio &amp;                                   # web head → :5099
-open http://localhost:5099</code></pre>
-<p>If a port needs to be explicit, set it in the published <code>appsettings.json</code> (<code>Kestrel:Endpoints:Http:Url</code>, for example <code>http://localhost:5099</code>) or pass <code>--urls http://localhost:5099</code>; do not use environment variables. If Gatekeeper still complains, allow once via System Settings → Privacy &amp; Security.</p>
-<h3 id="option-a-native-mac-desktop-app-catalyst-built-on-the-mac"><a id="option-a--native-mac-desktop-app-catalyst-built-on-the-mac"></a>Option A — native Mac desktop app (Catalyst, built on the Mac)<a class="anchor-link" href="#option-a-native-mac-desktop-app-catalyst-built-on-the-mac">#</a></h3>
-<blockquote>
-<p>✅ <strong>UNBLOCKED same day (2026-07-12): TrBlazeUI 1.0.9 fixed TR-011 and the first Catalyst <code>TrStudio.app</code> built 0/0 + launched on the owner's Mac.</strong> (The initial real-Mac attempt on 1.0.7 failed <code>NETSDK1082</code> — the packages' <code>Microsoft.AspNetCore.App</code> FrameworkReference had no maccatalyst runtime pack; see <code>docs/TrStudio-TrBlazeUI-Feedback.md</code> TR-011 for the full analysis.) While the MacCatalyst workload band trails the installed Xcode by a minor version, add <code>-p:ValidateXcodeVersion=false</code> to the build (the SDK's own opt-out; a <code>sudo dotnet workload update</code> that catches the band up removes the need).</p>
-</blockquote>
-<p><strong>Prerequisites</strong> (TrSetup's Mac roles install all of these): <strong>full Xcode</strong> with licence accepted (Command Line Tools alone are not enough), .NET 10 SDK, <code>sudo dotnet workload install maui</code>, git, and the TechieRag feed PAT (<code>nuget.config</code> is <strong>gitignored</strong> — it does <em>not</em> come with a copy of the source tree; recreate it from <code>nuget.config.template</code>. Note the Desktop head itself doesn't reference TechieRag, so it builds without the PAT — the API does need it).</p>
-<pre><code class="language-bash">git clone &lt;TrStudio repo&gt; &amp;&amp; cd TrStudio     # or copy the source tree over the LAN (exclude bin/, obj/)
-dotnet build src/TrStudio.Desktop -f net10.0-maccatalyst -c Release -p:EnableWindowsTargeting=true -p:ValidateXcodeVersion=false
-open src/TrStudio.Desktop/bin/Release/net10.0-maccatalyst/maccatalyst-arm64/TrStudio.app</code></pre>
-<p>(<code>-p:EnableWindowsTargeting=true</code> is required on macOS for <strong>any</strong> command that restores the Desktop project or the solution — its Windows TFM is listed unconditionally and macOS refuses to restore it without the flag, <code>NETSDK1100</code>.)</p>
-<p>Ad-hoc signing is fine for personal use. The desktop head still needs <code>TrStudioApi</code> running somewhere — either the Option B copied binary on the same Mac (default <code>http://localhost:5102</code> just works), or point it elsewhere:</p>
-<pre><code class="language-bash">TrStudioApiBaseUrl=http://&lt;windows-ip&gt;:5102 open src/TrStudio.Desktop/bin/Release/net10.0-maccatalyst/maccatalyst-arm64/TrStudio.app</code></pre>
-<p><strong>Mix-and-match tip:</strong> the fastest good setup on the Mac is <em>Option B for the API</em> (no toolchain needed) + <em>Option A for the desktop head</em> (one build once TrSetup has installed the toolchain). Until then, Option B alone gives you everything in the browser.</p>
-<p><strong>Secrets caution (both options):</strong> <code>appsettings.json</code> travels inside the publish folders. Keep real keys (RunPod, HeyGen, AppManager) out of the copied files — supply them on the Mac in a local <code>appsettings.Production.json</code> that never leaves the machine (git-ignored), or in user secrets on a development machine. Provider keys (RunPod, HeyGen, aggregator, Venice) entered on Admin — Model &amp; Provider Registry are stored encrypted in the database and need no file at all. Never use environment variables.</p>
+<h3 id="windows-later-version">Windows (later version)<a class="anchor-link" href="#windows-later-version">#</a></h3>
+<p>The Windows head stays in the project; the csproj picks the Windows target only when building on Windows. On a Windows machine:</p>
+<pre><code class="language-powershell">dotnet build src/TrStudio/TrStudio.csproj -f net10.0-windows10.0.19041.0</code></pre>
 <h2 id="mac-runtime-prerequisites-what-trstudio-needs-to-actually-generate"><a id="4-mac-runtime-prerequisites-what-trstudio-needs-to-actually-generate"></a>4. Mac runtime prerequisites (what TrStudio needs to actually generate)<a class="anchor-link" href="#mac-runtime-prerequisites-what-trstudio-needs-to-actually-generate">#</a></h2>
-<p>TrSetup's "app runner" role will install all of these; manual list until then:</p>
+<p>TrSetup's "app runner" role will install these; the list by hand until then:</p>
 <table>
 <thead><tr><th>#</th><th>Requirement</th><th>Check</th><th>Install</th></tr></thead>
 <tbody>
-<tr><td>1</td><td>PostgreSQL 16+ running</td><td><code>psql --version</code> / port 5432</td><td><code>brew install postgresql@16 &amp;&amp; brew services start postgresql@16</code></td></tr>
-<tr><td>2</td><td><strong>PgVector extension</strong></td><td><code>CREATE EXTENSION IF NOT EXISTS vector;</code> succeeds</td><td><code>brew install pgvector</code></td></tr>
-<tr><td>3</td><td><code>trstudio</code> database + user matching the connection string</td><td>API starts without DB errors</td><td>create DB/user per <code>TrStudioApi/appsettings.json</code> (<code>ConnectionStrings:Default</code> — keep the real password in the local <code>appsettings.Production.json</code> or user secrets, not in the copied file)</td></tr>
-<tr><td>4</td><td>ffmpeg on PATH</td><td><code>ffmpeg -version</code></td><td><code>brew install ffmpeg</code></td></tr>
-<tr><td>5</td><td>Isolated Python + <strong>ComfyUI</strong></td><td>Admin → Hardware &amp; readiness shows green</td><td><strong>TrSetup installs the runtime</strong>; model/workflow provisioning then runs inside the app's <strong>admin area guided setup</strong> (<code>/admin/*</code>, role-gated) — that part stays in the app</td></tr>
-<tr><td>6</td><td>API keys present (only for the tiers you use)</td><td>Admin → Provider config</td><td><code>RunPod:ApiKey</code> (High tier), HeyGen key (Premium), AppManager key (identity) — in user secrets or the local <code>appsettings.Production.json</code>; provider keys entered on Admin — Model &amp; Provider Registry are stored encrypted in the database</td></tr>
-<tr><td>7</td><td>Disk space for models</td><td>—</td><td>~400 GB free is the BRD reference for a full local library; less is fine for light use</td></tr>
+<tr><td>1</td><td>ffmpeg on PATH (video export)</td><td><code>ffmpeg -version</code></td><td><code>brew install ffmpeg</code></td></tr>
+<tr><td>2</td><td>Local model runtime (Fast tier)</td><td>Admin → Hardware &amp; readiness shows green</td><td><strong>TrSetup installs the runtime</strong>; model provisioning then runs in the app's admin guided setup (<code>/admin/*</code>, role-gated)</td></tr>
+<tr><td>3</td><td>Keys, only for the tiers you use</td><td>Registry &amp; providers → Test connection</td><td>Entered in the app (§3)</td></tr>
+<tr><td>4</td><td>Disk space for models</td><td>—</td><td>~400 GB free is the BRD reference for a full local library; less is fine for light use</td></tr>
 </tbody>
 </table>
-<p>The Mac <strong>is</strong> the natural TrStudio host (capability detection targets Apple Silicon/MPS) — Fast-tier local generation only works on a machine with MPS, i.e. this Mac, not the Windows box.</p>
+<p>No database server is needed: the app creates its own SQLite files. The Mac is the natural TrStudio host (capability detection targets Apple Silicon/MPS).</p>
 <h2 id="first-run-on-the-mac"><a id="5-first-run-on-the-mac"></a>5. First run on the Mac<a class="anchor-link" href="#first-run-on-the-mac">#</a></h2>
 <ol>
-<li>Start <code>TrStudioApi</code>, then a UI head (web <code>:5099</code> or the Catalyst desktop app) → log in (AppManager superadmin bootstrap). With setup incomplete you land in the <strong>setup-required gate</strong> (BRD-85), which routes admins into guided setup.
+<li>Open <code>TrStudio.app</code> → the app creates <code>TrStudio.db</code> in your app data folder → sign in through AppManager (tick "Remember me" if you want the next opens to skip it). With setup incomplete you land in the <strong>setup-required gate</strong> (BRD-85), which routes admins into guided setup.
 </li>
-<li>Complete: hardware readiness → guided setup → Model sources → install at least one model (admin-role screens under <code>/admin/*</code>).
+<li>Complete: hardware readiness → guided setup → Model sources → install at least one model (admin screens under <code>/admin/*</code>).
 </li>
 <li>Back in the creator screens: generate a test image (Fast tier, local MPS) → check it appears in the Gallery with provenance.
 </li>
 </ol>
+<p>Headless checks do not need the app window: <code>tests/TrStudio.TestHost</code> is a test-only web host (never shipped) serving the same screens and engine on a temporary SQLite folder. Boot it with <code>bash .tfcore/utils/tf-verify-boot.sh start --head web --project tests/TrStudio.TestHost/TrStudio.TestHost.csproj --port 5099</code>, then run <code>npx playwright test</code> (specs in <code>tests/verify/</code>).</p>
 <h2 id="where-trsetup-takes-over"><a id="6-where-trsetup-takes-over"></a>6. Where TrSetup takes over<a class="anchor-link" href="#where-trsetup-takes-over">#</a></h2>
-<p>Once TrSetup P3 ships, §4 collapses to: <em>run TrSetup on the Mac → role "App runner" → app "TrStudio" → Fix all</em>, and the Option A toolchain (§3) is one more Fix click. This guide stays as the manual reference.</p>
+<p>Once TrSetup P3 ships, §4 collapses to: <em>run TrSetup on the Mac → role "App runner" → app "TrStudio" → Fix all</em>, and the Xcode and MAUI toolchain (§2) is one more Fix click. This guide stays as the manual reference.</p>
 <hr>
-<p><em>Created 2026-07-05; rewritten 2026-07-06 for the unified role-based app (ADR-012): <code>TrStudio.Desktop</code> MAUI head added, <code>TrStudioAdmin</code> head retired, API moved to :5102. Ports from each head's <code>launchSettings.json</code> + <code>TrStudio.Desktop/MauiProgram.cs</code>. Clarified 2026-07-10: the plain-.NET-only scope of the <code>-r osx-arm64</code> cross-publish made explicit (§ intro + §3 Option B) — the MAUI head is never cross-published; its Mac <code>.app</code> is Option A on the Mac. Stale pointer to the (since rewritten) TrSetup guide §1b removed. Updated 2026-07-12 after the source moved to the Mac: Option A marked BLOCKED by TrBlazeUI 1.0.7 TR-011 (<code>NETSDK1082</code>, no maccatalyst runtime pack for its <code>Microsoft.AspNetCore.App</code> FrameworkReference), <code>-p:EnableWindowsTargeting=true</code> added to the Mac commands, and the gitignored-secrets caveat (<code>nuget.config</code>, <code>appsettings.json</code>) called out. Full Mac dev-run steps: <code>docs/TrStudio-UsageGuide.md</code> §How to run — macOS.</em></p>
+<p><em>Created 2026-07-05. Rewritten 2026-11-14 for phase 3: one desktop app (<code>src/TrStudio</code>) with the engine, SQLite store and job runner inside, and no separate server process; Mac first, Windows in a later version; "Remember me" sign-in added. Full run and test steps: <code>docs/TrStudio-UsageGuide.md</code>.</em></p>
   </main>
 </div>
 

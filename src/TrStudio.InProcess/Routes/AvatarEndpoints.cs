@@ -37,13 +37,27 @@ public static class AvatarEndpoints
     private static async Task<IResult> SubmitTalkingAvatarAsync(
         AvatarTalkingRequest aRequest,
         ClaimsPrincipal aUser,
+        HttpContext aContext,
         IAvatarPipeline aPipeline,
+        ITierGate aTierGate,
         CancellationToken aCancellationToken)
     {
         var vUserId = ResolveUserId(aUser);
         if (vUserId is null)
         {
             return Results.Unauthorized();
+        }
+
+        // FN-014: when not in personal mode, a tier the user's licence does not include is refused with
+        // the upgrade prompt before anything is queued (the gate itself allows every tier in personal mode).
+        const string BearerPrefix = "Bearer ";
+        var vHeader = aContext.Request.Headers.Authorization.ToString();
+        var vToken = vHeader.StartsWith(BearerPrefix, StringComparison.OrdinalIgnoreCase) ? vHeader[BearerPrefix.Length..].Trim() : null;
+        var vGate = await aTierGate.CheckTierAsync(vUserId, aRequest.Tier, vToken, aCancellationToken);
+        if (!vGate.IsAllowed)
+        {
+            return Results.Problem(statusCode: StatusCodes.Status402PaymentRequired, title: "TIER_NOT_LICENSED",
+                detail: vGate.UpgradeMessage ?? vGate.DeniedReason ?? "Upgrade your licence to use this tier.");
         }
 
         var vResponse = await aPipeline.SubmitTalkingAvatarAsync(aRequest, vUserId, aCancellationToken);

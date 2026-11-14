@@ -2,7 +2,7 @@
 
 **An avatar-led, self-hostable AI image & video generation platform.** One clean app to produce avatar-led videos (a talking presenter that isn't you), plus the supporting images, voices and clips — **without ComfyUI graphs or Python setup for the end user** — running against models *you* control, on your own hardware or cheap on-demand GPUs, with a HeyGen-grade Premium tier on tap.
 
-Built with **.NET 10** — Blazor Web + **.NET MAUI Blazor Hybrid** desktop heads (Windows & macOS) over a single ASP.NET Core API.
+Built with **.NET 10** as **one .NET MAUI Blazor Hybrid desktop app** with the engine inside it: no API process, no web server, no database server. The first release is for **Mac**; Windows (and possibly Linux) come in a later version.
 
 ![Avatar Studio](docs/screenshots/TrStudio/avatar.png)
 
@@ -27,100 +27,82 @@ Two design drivers shape everything:
 | 💬 **Prompt Studio** | Chat with a registry-configured text LLM (vision-capable models supported) to craft generation prompts; save to library or send straight to a studio |
 | 🧩 **ComfyUI management** | Import a ComfyUI workflow, map parameters, save it as a registry model (graph hidden from creators), version-pin, sandbox-test |
 | 🗂️ **Workspace** | Gallery, projects, reproduce-from-provenance, comparison, prompt library, spend dashboard |
-| ⚙️ **Admin surface** | Hardware detection, guided runtime setup, model/provider registry, RunPod control, cost guardrails (monthly cap → HTTP 402), ops dashboard |
-| 🔐 **Identity** | Delegated to an external AppManager service (JWT auth, licensing, tiers) — TrStudio never stores passwords |
+| ⚙️ **Admin surface** | Hardware detection, guided runtime setup, model/provider registry, RunPod control, cost guardrails (monthly cap blocks new jobs), ops dashboard |
+| 🔐 **Identity** | Delegated to an external AppManager service (sign-in, licensing, tiers) — TrStudio never stores passwords; optional "Remember me" for 30 days |
 
 Adding a model is a **configuration action** (a registry row or a ComfyUI import), not a development task.
 
 ## Architecture at a glance
 
-One unified, **role-based** Blazor app: Creators see the studios, Operators see the management surface, Owners see both. It ships as two interchangeable UI heads over one backend:
+One unified, **role-based** app: Creators see the studios, Operators see the management surface, Owners see both. Everything runs inside one desktop process:
 
 ```
-┌─────────────────────────────┐   ┌──────────────────────────────┐
-│ TrStudio (Blazor Web, :5099)│   │ TrStudio.Desktop (MAUI Blazor│
-│                             │   │ Hybrid — Windows / Mac)      │
-└──────────────┬──────────────┘   └──────────────┬───────────────┘
-               │        shared TrStudioUI RCL (TrBlazeUI)        
-               ▼                                 ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ TrStudioApi (.NET 10, ASP.NET Core, :5102)                      │
-│ async job model · provider abstraction · Hangfire queue ·       │
-│ SignalR progress · OpenAPI · safety floors · cost guardrails    │
-└──────┬──────────────┬─────────────┬─────────────┬───────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│ TrStudio.app  (.NET MAUI Blazor Hybrid — Mac first)          │
+│   TrStudioUI screens (TrBlazeUI)                             │
+│   TrStudio.InProcess → TrStudio.Engine (jobs, providers,     │
+│     safety floors, cost guardrails, job runner)              │
+│   SQLite: TrStudio.db + TrStudio.vectors.db (user data dir)  │
+└──────┬──────────────┬─────────────┬─────────────┬────────────┘
        ▼              ▼             ▼             ▼
- PostgreSQL      Local (ONNX/   RunPod        Closed APIs      AppManager
- + PgVector      ComfyUI MPS)   serverless    (HeyGen, …)      (identity)
+ Local models    RunPod        Closed APIs    AppManager
+ (MPS)           serverless    (HeyGen, …)    (identity)
 ```
 
 | Project | What it is |
 |---------|------------|
-| `src/TrStudio.Models` | Shared models, interfaces & contracts |
-| `src/TrStudio.Engine` | Engine class library — `Domain/`, `Infrastructure/`, `Providers/`, `Workers/` |
-| `src/TrStudioDb` | DbUp migration runner (embedded SQL, runs on API startup) |
-| `src/TrStudioApi` | ASP.NET Core backend host |
+| `src/TrStudio` | The app — .NET MAUI Blazor Hybrid (`TrStudio.csproj`, app id `com.techierathore.trstudio`) |
 | `src/TrStudioUI` | Razor Class Library — every screen, built on [TrBlazeUI](https://github.com/techierathore) controls |
-| `src/TrStudio` | Blazor Web head |
-| `src/TrStudio.Desktop` | .NET MAUI Blazor Hybrid desktop head (Windows + Mac Catalyst) |
-| `tests/` | Unit, integration (live API), Playwright UI and verify suites — 260 tests |
+| `src/TrStudio.InProcess` | Hosts the engine inside the app process |
+| `src/TrStudio.Engine` | Engine class library — `Domain/`, `Infrastructure/`, `Providers/`, `Workers/` |
+| `src/TrStudio.Models` | Shared models, interfaces and contracts |
+| `src/TrStudioDb` | SQLite migrations, run by the app on first start |
+| `tests/` | Unit, integration, and headless checks (`tests/TrStudio.TestHost` + Playwright specs in `tests/verify/`) |
 
-**Stack:** .NET 10 · Blazor · .NET MAUI · Dapper (parameterized SQL — no EF Core) · PostgreSQL + PgVector · Hangfire (Postgres storage) · SignalR · Serilog + OpenTelemetry · [TechieRag](https://github.com/techierathore) for text/LLM/RAG · AppManager (external) for identity & licensing.
+`src/TrStudioApi` and the PostgreSQL scripts stay on disk, out of the solution build, kept for a later external REST API.
+
+**Stack:** .NET 10 · .NET MAUI Blazor Hybrid · Dapper (parameterized SQL — no EF Core) · SQLite · Serilog · [TechieRag](https://github.com/techierathore) for text/LLM/RAG · AppManager (external) for identity and licensing.
 
 Full details: [`docs/TrStudio-Architecture.md`](docs/TrStudio-Architecture.md) · [`docs/TrStudio-BRD.md`](docs/TrStudio-BRD.md)
 
 ## Getting started
 
-### Prerequisites
+### Prerequisites (Mac)
 
-- **.NET 10 SDK** with the **MAUI workload** (`dotnet workload install maui`) — the MAUI workload is only needed for the desktop head
-- **PostgreSQL 16+** with the **PgVector** extension, plus a `trstudio` database/user
-- **ffmpeg** on PATH (video export)
-- Access to the private **TrBlazeUI/TechieRag** NuGet feed (GitHub Packages) — a PAT with `read:packages`
-- Optional, per tier you actually use: RunPod API key (High), HeyGen key (Premium), a running AppManager instance (identity), local Python/ComfyUI env (Fast)
+- **.NET 10 SDK** with the **MAUI workload** (`sudo dotnet workload install maui`) and **full Xcode** (licence accepted)
+- Access to the private **TrBlazeUI/TechieRag** NuGet feed (a token with `read:packages`)
+- AppManager sign-in settings for this app (address, application id, API key)
+- Optional: **ffmpeg** on PATH (video export); keys for the tiers you use (RunPod, HeyGen, Venice, …), entered in the app
 
-### 1. Configure secrets (required before first build)
-
-```bash
-# NuGet feed credentials (repo root)
-cp nuget.config.template nuget.config           # then fill in your GitHub username + PAT
-
-# API configuration
-cp src/TrStudioApi/appsettings.template.json src/TrStudioApi/appsettings.json
-# then set your DB connection string + AppManager keys (or supply them as env vars)
-```
-
-Both target files are **gitignored** — real credentials never enter the repository. Prefer environment variables (`AppManager__ApiKey=…`, `RunPod__ApiKey=…` style) for anything sensitive.
-
-### 2. Run (web)
+### 1. Settings files (before the first build)
 
 ```bash
-dotnet run --project src/TrStudioApi     # backend      → http://localhost:5102
-dotnet run --project src/TrStudio       # web head     → http://localhost:5099
+cp nuget.config.template nuget.config                                        # fill in the feed token
+cp src/TrStudio/appmanager.template.json src/TrStudio/appmanager.local.json  # AppManager address, application id, API key
 ```
 
-Database migrations run automatically on API startup (DbUp). Log in via AppManager; with setup incomplete, admins land in the guided-setup gate.
+Both files are **git-ignored**. The AppManager values are put into the build; without them the app still opens and Login says the copy was built without its sign-in settings. Keys you own (Venice, RunPod, HeyGen, closed API, text models) are entered on **Registry & providers** inside the app and kept in the local database, protected by the Mac Keychain. No setting is read from an environment variable.
 
-### 3. Run (native desktop, MAUI)
-
-```powershell
-# Windows — always pin the framework; the csproj also lists the Mac Catalyst TFM
-dotnet build src/TrStudio.Desktop -f net10.0-windows10.0.19041.0 -c Release
-```
+### 2. Build and run on the Mac
 
 ```bash
-# macOS (Mac Catalyst .app must be built ON a Mac — Xcode + MAUI workload)
-dotnet build src/TrStudio.Desktop -f net10.0-maccatalyst -c Release
-open src/TrStudio.Desktop/bin/Release/net10.0-maccatalyst/maccatalyst-arm64/TrStudio.app
+dotnet build src/TrStudio/TrStudio.csproj -f net10.0-maccatalyst
+open src/TrStudio/bin/Debug/net10.0-maccatalyst/maccatalyst-arm64/TrStudio.app
 ```
 
-The desktop head talks to the API at `http://localhost:5102` by default; override with the `TrStudioApiBaseUrl` environment variable. See [`docs/TrStudio-BuildAndRun-Guide.md`](docs/TrStudio-BuildAndRun-Guide.md) for the full build-on-Windows / run-on-Mac playbook, including self-contained `osx-arm64` publishing.
+On first start the app creates and migrates `TrStudio.db` (and `TrStudio.vectors.db`) in your app data folder. Sign in through AppManager; tick **Remember me on this computer for 30 days** to skip the sign-in on the next opens. The whole solution builds with `dotnet build TrStudio.slnx`. See [`docs/TrStudio-BuildAndRun-Guide.md`](docs/TrStudio-BuildAndRun-Guide.md) for details.
 
-### 4. Tests
+**Windows (later version):** the Windows head stays in the project; on a Windows machine, `dotnet build src/TrStudio/TrStudio.csproj -f net10.0-windows10.0.19041.0`.
+
+### 3. Tests
 
 ```bash
-dotnet test                              # 260 unit + integration tests
-npx playwright test                      # UI smoke suite (needs API + web head running)
+bash .tfcore/utils/tf-build.sh test       # unit + integration (about 410 unit tests)
+bash .tfcore/utils/tf-verify-boot.sh start --head web --project tests/TrStudio.TestHost/TrStudio.TestHost.csproj --port 5099
+npx playwright test                       # headless checks against http://localhost:5099
 ```
+
+`tests/TrStudio.TestHost` is a test-only web host (never shipped) that serves the same screens and engine on a temporary SQLite folder.
 
 ## Screenshots
 
@@ -141,7 +123,7 @@ TrStudio enforces **non-disableable safety floors** regardless of any mode or co
 - **Consent gating** for voice cloning and likeness use
 - **Full audit trail** of every generation
 
-These fire *before* a job is enqueued and were verified to still fire with every optional filter lifted. Data is held in TrStudio's own PostgreSQL (DPDP-aligned); identity is delegated to AppManager — no local password store.
+These fire *before* a job is enqueued and were verified to still fire with every optional filter lifted. Data is held in a local SQLite file in the user's own app data folder (DPDP-aligned); identity is delegated to AppManager — no local password store.
 
 ## Documentation
 
@@ -149,7 +131,7 @@ These fire *before* a job is enqueued and were verified to still fire with every
 |-----|---------|
 | [`docs/TrStudio-BRD.md`](docs/TrStudio-BRD.md) | Business requirements — features, ledger (BRD-1..92), NFRs, risks |
 | [`docs/TrStudio-Architecture.md`](docs/TrStudio-Architecture.md) | System architecture + ADRs |
-| [`docs/TrStudio-BuildAndRun-Guide.md`](docs/TrStudio-BuildAndRun-Guide.md) | Build on Windows · run on the Mac (both options) |
+| [`docs/TrStudio-BuildAndRun-Guide.md`](docs/TrStudio-BuildAndRun-Guide.md) | Build and run on the Mac (Windows in a later version) |
 | [`docs/TrStudio-UsageGuide.md`](docs/TrStudio-UsageGuide.md) | Setup, test users & UAT test plan |
 | [`docs/devguides/`](docs/devguides/) | Screen-by-screen developer guide (page → service → data access) |
 | [`docs/TrStudio-Coding-Standards.md`](docs/TrStudio-Coding-Standards.md) | Coding standards for contributors |
@@ -157,7 +139,7 @@ These fire *before* a job is enqueued and were verified to still fire with every
 
 ## Status
 
-**Handoff / UAT.** All 10 build phases are complete: 114 tracked requirements — **82 verified live, 17 implemented** (externally gated: real models / API keys, degrade cleanly), 4 partial, 11 deferred post-MVP. 260 tests passing. The Windows desktop head is run-verified; Mac Catalyst is build-verified.
+Current status, phase by phase, is in [`PROJECT-STATUS.md`](PROJECT-STATUS.md). It lists what is verified, what is still open and the next command to run.
 
 ## License
 

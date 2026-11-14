@@ -259,7 +259,7 @@
                 <Field Class="grow">
                     <FieldLabel>Provider</FieldLabel>
                     <FieldContent>
-                        <Select @bind-Value="objEditProvider" TValue="string" Class="w-full" data-testid="field-provider">
+                        <div data-testid="field-provider"><Select @bind-Value="objEditProvider" TValue="string" Class="w-full">
                             <SelectTrigger><SelectValue Placeholder="Select provider" /></SelectTrigger>
                             <SelectContent>
                                 @foreach (var vProvider in objProviderOptions)
@@ -267,7 +267,7 @@
                                     <SelectItem Value="@vProvider.Value" Text="@vProvider.Label" TValue="string">@vProvider.Label</SelectItem>
                                 }
                             </SelectContent>
-                        </Select>
+                        </Select></div>
                     </FieldContent>
                 </Field>
                 <Field Class="grow">
@@ -675,6 +675,8 @@
         {
             objEditId = Slug(objEditName);
             vModel.Task = TaskFor(objEditTask);
+            // A newly added row is switched on so the studios list it (an edit keeps its current state).
+            vModel.IsEnabled = true;
         }
 
         if (string.IsNullOrWhiteSpace(objEditId))

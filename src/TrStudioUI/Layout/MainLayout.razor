@@ -4,6 +4,7 @@
 @inject AppShellNavigation Shell
 @inject NavigationManager Navigation
 @inject IAuthSession AuthSession
+@inject IHttpClientFactory HttpClientFactory
 
 @*
     Shared app shell (REQ-UI-005 / REQ-UI-080) for the one unified TrStudio app:
@@ -19,8 +20,8 @@
 
 <SidebarProvider DefaultOpen="true" HeightClass="h-screen">
     <AppSidebar />
-    <SidebarInset>
-        <header class="shell-topbar">
+    <SidebarInset data-testid="main">
+        <header class="shell-topbar" data-testid="topbar">
             <SidebarTrigger />
             <Breadcrumb>
                 <BreadcrumbList>
@@ -38,14 +39,14 @@
             </Breadcrumb>
             <div class="shell-topbar-spacer"></div>
             <ApiStatusIndicator />
-            <ThemeToggle />
+            <ThemeToggle TestId="icon-btn-toggle-dark-mode" />
             @* Identity chip doubles as the sign-out control: clears the session and returns to /login. *@
             <button type="button" class="shell-userchip brand-gradient" data-testid="user-chip"
                     title="@(objSignedIn ? "Sign out" : "Signed-in user")" @onclick="SignOutAsync">
                 @objUserInitial
             </button>
         </header>
-        <main class="shell-content">
+        <main class="shell-content" data-testid="content">
             @if (objAccessDenied)
             {
                 <AccessDenied />
@@ -168,6 +169,17 @@
     /// <summary>Clears the session and returns to the sign-in screen.</summary>
     private async Task SignOutAsync()
     {
+        // Ends the engine session and always removes a sign-in kept by "Remember me" (owner decision
+        // 6B, REQ-UI-106). The call carries the bearer token, so it runs before the session is cleared.
+        try
+        {
+            await HttpClientFactory.CreateClient("TrStudioApi").PostAsync(ApiRoutes.Auth + "/logout", null);
+        }
+        catch
+        {
+            // A host without the route still clears its own session below.
+        }
+
         await AuthSession.ClearAsync();
         Navigation.NavigateTo("/login", forceLoad: true);
     }

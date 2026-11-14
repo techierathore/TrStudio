@@ -10,10 +10,10 @@
 # -> copy appsettings.template.json to appsettings.json and fill in values
 src/TrStudioApi/appsettings.json
 # Desktop head settings (section Desktop, REQ-NFR-015) -> copy appsettings.template.json
-src/TrStudio.Desktop/appsettings.json
+src/TrStudio/appsettings.json
 # Desktop sign-in settings (phase 3, ADR-019): AppManager address, application id and API key,
 # put into the build; copy appmanager.template.json to appmanager.local.json and fill in.
-src/TrStudio.Desktop/appmanager.local.json
+src/TrStudio/appmanager.local.json
 # Live-test settings with the real Venice key (REQ-NFR-012..014) -> testsettings.json is the template
 tests/integration/TrStudio.Tests.Integration/testsettings.Local.json
 # Generic secret carriers

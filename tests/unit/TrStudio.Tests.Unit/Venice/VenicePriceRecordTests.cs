@@ -31,7 +31,7 @@ public class VenicePriceRecordTests
         => Assert.Equal(aExpected, VenicePriceSources.For(aKind, aTask));
 
     /// <summary>The worker writes ActualCost = the Venice price and PriceSource on the succeeded log row.</summary>
-    [Fact]
+    [Fact(DisplayName = "REQ-FN-082 SucceededVeniceRunLogsPriceAndSource")]
     public async Task SucceededVeniceRunLogsPriceAndSource()
     {
         var vJobs = Substitute.For<IJobRepository>();

@@ -12,7 +12,7 @@
 
   <!--
     This RCL is shared by the Blazor Web head (src/TrStudio, Blazor Server) AND the MAUI Blazor
-    Hybrid desktop head (src/TrStudio.Desktop, Win/Mac — ADR-012). It therefore references only the
+    Hybrid desktop head (src/TrStudio, Win/Mac — ADR-012). It therefore references only the
     cross-host Blazor component surface (Microsoft.AspNetCore.Components.Web), NOT the ASP.NET Core
     shared framework: the Blazor-Server-only auth pieces (ProtectedSessionStorage AuthSession +
     CircuitHandler bridge) live in the web host under src/TrStudio/Auth/, and the Hybrid head supplies

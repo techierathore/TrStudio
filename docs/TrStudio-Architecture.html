@@ -166,20 +166,20 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tr><td>Date</td><td>2026-11-14</td></tr>
 </tbody>
 </table>
-<p>The single <code>TrStudio</code> app has a role-based surface (ADR-012). Phase 2 adds Venice as a second cloud provider for pictures and video (ADR-014, <a href="TrStudio-P2-BRD.html">phase 2 BRD</a>). Phase 3 makes TrStudio one desktop app for Windows and Mac with the engine, a local SQLite database and the job queue inside it (ADR-015 to ADR-020, <a href="TrStudio-P3-BRD.html">phase 3 BRD</a>); the rows below say what changed.</p>
+<p>The single <code>TrStudio</code> app has a role-based surface (ADR-012). Phase 2 adds Venice as a second cloud provider for pictures and video (ADR-014, <a href="TrStudio-P2-BRD.html">phase 2 BRD</a>). Phase 3 makes TrStudio one desktop app with the engine, a local SQLite database and the job queue inside it (ADR-015 to ADR-020, <a href="TrStudio-P3-BRD.html">phase 3 BRD</a>). It is Mac first, Windows later (ADR-023); "Remember me" keeps a sign-in for 30 days (ADR-021); the desktop project is <code>src/TrStudio</code> (ADR-022). The rows below say what changed.</p>
 <h2 id="stack-decisions"><a id="1-stack-decisions"></a>1. Stack decisions<a class="anchor-link" href="#stack-decisions">#</a></h2>
 <p>One row per stack question. The project predates the stack questions, so every answer is read from the existing code ("code").</p>
 <table>
 <thead><tr><th>Q</th><th>Topic</th><th>Decision</th><th>Source</th></tr></thead>
 <tbody>
-<tr><td>Q1</td><td>Configuration</td><td>From phase 3 the desktop app needs no settings file a user edits: the data folder is the operating system's per-user app data folder, and the only build-time file is the git-ignored <code>src/TrStudio.Desktop/appmanager.local.json</code> (AppManager address, application id, API key), embedded into the build (ADR-019). Provider addresses and keys (Venice, RunPod, HeyGen, closed API, text models) live in the local database, entered on Registry &amp; providers. Never environment variables. The API project's <code>appsettings.json</code> stays, unused.</td><td>code</td></tr>
+<tr><td>Q1</td><td>Configuration</td><td>From phase 3 the desktop app needs no settings file a user edits: the data folder is the operating system's per-user app data folder, and the only build-time file is the git-ignored <code>src/TrStudio/appmanager.local.json</code> (AppManager address, application id, API key), embedded into the build (ADR-019). Provider addresses and keys (Venice, RunPod, HeyGen, closed API, text models) live in the local database, entered on Registry &amp; providers. Never environment variables. The API project's <code>appsettings.json</code> stays, unused.</td><td>code</td></tr>
 <tr><td>Q2</td><td>Secrets in development</td><td>The AppManager id and key go in the git-ignored <code>appmanager.local.json</code> beside the desktop project. Keys a user owns are stored in the local database, encrypted by <code>AesGcmKeyStore</code> with an unlock key the operating system protects for the signed-in user: Keychain on Mac, DPAPI on Windows (ADR-020). Test secrets go in a git-ignored <code>testsettings.Local.json</code> beside the tests. Nothing secret is committed.</td><td>code</td></tr>
 <tr><td>Q3</td><td>Database</td><td>From phase 3: one SQLite file, <code>TrStudio.db</code>, in the signed-in user's app data folder, created and migrated by DbUp (<code>TrStudioDb</code>, <code>SqliteScripts/</code>) on every start of the app (ADR-016). If it cannot be created or migrated the app shows the folder and the reason and opens no studio. The PostgreSQL scripts and the API stay in the repository, unused. There was no real PostgreSQL data to carry over.</td><td>code</td></tr>
 <tr><td>Q4</td><td>Authentication</td><td>AppManager as an external child application (JWT and refresh, RSA-encrypted passwords). From phase 3 the desktop app sends <code>X-App-Id</code> and one <code>X-Api-Key</code> built in; no API secret, no signing key; the signed-in user is held in the app for the session (ADR-019). AppManager owns users, roles, licences and subscriptions; TrStudio stores only the AppManager <code>userId</code>.</td><td>code</td></tr>
 <tr><td>Q5</td><td>Logging</td><td>Serilog structured logging plus OpenTelemetry metrics; job ids on every line; no secrets in logs or URLs.</td><td>code</td></tr>
 <tr><td>Q6</td><td>Tests</td><td>xUnit with NSubstitute: <code>tests/unit/TrStudio.Tests.Unit</code> and <code>tests/integration/TrStudio.Tests.Integration</code>; Playwright browser tests in <code>tests/verify/</code>. Test settings come from <code>testsettings.json</code> (committed, empty values) overlaid by git-ignored <code>testsettings.Local.json</code> beside the tests, never from environment variables. From phase 3 the headless checks drive <code>tests/TrStudio.TestHost</code>, a test-only host of the same screens and in-process engine on SQLite; it is never shipped.</td><td>code</td></tr>
-<tr><td>Q7</td><td>Layout and naming</td><td><code>src/</code> and <code>tests/</code>. From phase 3 the shipped head is <code>TrStudio.Desktop</code>; libraries <code>TrStudio.Engine</code>, <code>TrStudio.Models</code>, <code>TrStudioUI</code>, <code>TrStudioDb</code> and <code>TrStudio.InProcess</code> (the in-process routes); the test host <code>tests/TrStudio.TestHost</code>. The web head <code>TrStudio</code> and the API host <code>TrStudioApi</code> stay in the repository, unused and out of the solution build.</td><td>code</td></tr>
-<tr><td>Q8</td><td>User interface</td><td>TrBlazeUI on Blazor (<code>TrStudioUI</code> Razor Class Library) in the MAUI Blazor Hybrid desktop head (Windows and Mac); the test host renders the same library with interactive server rendering.</td><td>code</td></tr>
+<tr><td>Q7</td><td>Layout and naming</td><td><code>src/</code> and <code>tests/</code>. From phase 3 the shipped app is <code>TrStudio</code> (<code>src/TrStudio/TrStudio.csproj</code>; the app's own project carries the app's name alone, no "Desktop" suffix); libraries <code>TrStudio.Engine</code>, <code>TrStudio.Models</code>, <code>TrStudioUI</code>, <code>TrStudioDb</code> and <code>TrStudio.InProcess</code> (the in-process routes); the test host <code>tests/TrStudio.TestHost</code>. The old web head is deleted (ADR-022); the API host <code>TrStudioApi</code> and the PostgreSQL scripts stay on disk, out of the solution build, for the set-aside external REST API row.</td><td>code</td></tr>
+<tr><td>Q8</td><td>User interface</td><td>TrBlazeUI on Blazor (<code>TrStudioUI</code> Razor Class Library) in the MAUI Blazor Hybrid desktop app (Mac first; the Windows head for a later version); the test host renders the same library with interactive server rendering.</td><td>code</td></tr>
 <tr><td>Q11</td><td>Standing rules</td><td>Log files are written under the build output folder, never at the repository root. No unnecessary folders at the repository root. No setting is read from an environment variable. Provider addresses and keys never go in appsettings or in code.</td><td>code</td></tr>
 </tbody>
 </table>
@@ -189,7 +189,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <thead><tr><th>Layer</th><th>Choice</th><th>Version</th><th>Notes</th></tr></thead>
 <tbody>
 <tr><td>Runtime</td><td>.NET</td><td>10 (LTS)</td><td>Unified Blazor render modes; released Nov 2025</td></tr>
-<tr><td>Creator + Management UI</td><td><code>TrStudio</code> — <strong>one unified Blazor app</strong>, role-based surface (Blazor Web + MAUI Blazor Hybrid desktop)</td><td>.NET 10</td><td>Creator/Operator/Owner see their surface by role; Win+Mac desktop <strong>and</strong> browser</td></tr>
+<tr><td>Creator + Management UI</td><td><code>TrStudio</code> — <strong>one unified Blazor app</strong>, role-based surface (MAUI Blazor Hybrid desktop; the web head was deleted on 2026-11-14)</td><td>.NET 10</td><td>Creator/Operator/Owner see their surface by role; Mac desktop first, Windows later</td></tr>
 <tr><td><s>Management UI</s></td><td><s><code>TrStudioAdmin</code></s> — <strong>retired 2026-07-05</strong>, merged into <code>TrStudio</code> (ADR-012)</td><td>—</td><td>Screens moved to <code>TrStudioUI</code> RCL under role-gated routes</td></tr>
 <tr><td>Shared UI</td><td><code>TrStudioUI</code> — Razor Class Library on <strong>TrBlazeUI</strong></td><td>.NET 10</td><td>Components/layouts/screens shared by both apps</td></tr>
 <tr><td>Backend / API</td><td><code>TrStudioApi</code> — ASP.NET Core; <strong>from phase 3 set aside</strong>: <code>TrStudio.InProcess</code> answers the same routes inside the app (ADR-015)</td><td>.NET 10</td><td>Provider abstraction, registry, orchestrator, generation routes</td></tr>
@@ -206,19 +206,18 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tr><td>Object storage</td><td>Object store (assets) + RunPod network volume (models)</td><td>—</td><td>Big media models on <code>$0.07/GB/mo</code> network volume</td></tr>
 <tr><td>Auth / Identity</td><td><strong>AppManager</strong> (external child-app API)</td><td>—</td><td>JWT, RSA-encrypted passwords; from phase 3 <code>X-App-Id</code> + <code>X-Api-Key</code> built in, no secret (ADR-019); <strong>not</strong> the app DB</td></tr>
 <tr><td>Logging / Telemetry</td><td><strong>Serilog</strong> (structured) + <strong>OpenTelemetry</strong></td><td>—</td><td>Queue/memory/latency/spend metrics, traceable job IDs</td></tr>
-<tr><td>Packaging</td><td><s>Docker (<code>TrStudioApi</code> + workers)</s> <strong>from phase 3: the desktop app installer</strong> (Windows and Mac) + RunPod template image</td><td>—</td><td>Docker and hosting set aside</td></tr>
+<tr><td>Packaging</td><td><s>Docker (<code>TrStudioApi</code> + workers)</s> <strong>from phase 3: the desktop app installer</strong> (Mac first; Windows in a later version) + RunPod template image</td><td>—</td><td>Docker and hosting set aside</td></tr>
 </tbody>
 </table>
 <h2 id="solution-structure"><a id="2-solution-structure"></a>2. Solution structure<a class="anchor-link" href="#solution-structure">#</a></h2>
 <table>
 <thead><tr><th>Project</th><th>Kind</th><th>Purpose</th></tr></thead>
 <tbody>
-<tr><td><code>TrStudio</code></td><td>web app (Blazor)</td><td>Set aside from phase 3, unused: it only called the API</td></tr>
-<tr><td><code>TrStudio.Desktop</code></td><td>desktop app (MAUI Blazor Hybrid, Windows and Mac)</td><td>The shipped app from phase 3: the <code>TrStudioUI</code> screens, the engine, the SQLite store and the job runner in one process</td></tr>
+<tr><td><code>TrStudio</code></td><td>desktop app (MAUI Blazor Hybrid; Mac first, Windows head for a later version)</td><td>The shipped app from phase 3: the <code>TrStudioUI</code> screens, the engine, the SQLite store and the job runner in one process. Called <code>TrStudio.Desktop</code> until 2026-11-14; the old web head that held this name was deleted (ADR-022)</td></tr>
 <tr><td><code>TrStudio.InProcess</code></td><td>class library (phase 3)</td><td>The in-process route table and message handler that answer the screens' <code>/api/v1/...</code> calls without a socket; local session; start-up (migrate, recover jobs, start runner)</td></tr>
 <tr><td><code>TrStudio.TestHost</code></td><td>test host (phase 3, under <code>tests/</code>)</td><td>Serves the same screens and in-process engine on SQLite for the headless checks; never shipped</td></tr>
 <tr><td><code>TrStudioUI</code></td><td>Razor Class Library</td><td>Shared layouts, screens and components on TrBlazeUI, creator and management screens behind role-gated routes</td></tr>
-<tr><td><code>TrStudioApi</code></td><td>API (ASP.NET Core)</td><td>Set aside from phase 3, unused and out of the solution build; kept until the owner says otherwise</td></tr>
+<tr><td><code>TrStudioApi</code></td><td>API (ASP.NET Core)</td><td>Set aside from phase 3, on disk and out of the solution build, with the PostgreSQL scripts: the set-aside external REST API row would need them (owner decision 8)</td></tr>
 <tr><td><code>TrStudio.Engine</code></td><td>class library</td><td>Domain rules, Dapper data access, providers (<code>IGenerationProvider</code> implementations), workers</td></tr>
 <tr><td><code>TrStudio.Models</code></td><td>class library</td><td>Shared entities, DTOs, enums (<code>ProviderKind</code>, <code>GenerationTaskType</code>) and interfaces</td></tr>
 <tr><td><code>TrStudioDb</code></td><td>migrations project</td><td>DbUp runner with ordered embedded SQL scripts</td></tr>
@@ -458,7 +457,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </li>
 </ul>
 <h3 id="desktop-app-with-the-engine-inside-phase-3">Desktop app with the engine inside (phase 3)<a class="anchor-link" href="#desktop-app-with-the-engine-inside-phase-3">#</a></h3>
-<p>From phase 3 the shipped app is <code>TrStudio.Desktop</code>, one process holding the screens, the engine, the database and the job runner. The diagrams above still describe the routes, the providers and the safety order; only the host and the store under them change.</p>
+<p>From phase 3 the shipped app is <code>TrStudio</code> (<code>src/TrStudio</code>), one process holding the screens, the engine, the database and the job runner. The diagrams above still describe the routes, the providers and the safety order; only the host and the store under them change.</p>
 <div class="diagram">
   <div class="dt">
     <button data-zout title="Zoom out">&minus;</button>
@@ -470,7 +469,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
     <button data-pop title="Open in new tab">&#8599;</button>
   </div>
   <pre class="mermaid">flowchart LR
-  subgraph App["TrStudio.Desktop (one process, Windows or Mac)"]
+  subgraph App["TrStudio (one process, Mac first)"]
     UI["TrStudioUI screens (BlazorWebView)"]
     H["TrStudio.InProcess (route table, local session)"]
     E["TrStudio.Engine (orchestrator, providers, safety, cost)"]
@@ -491,15 +490,17 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
   J --&gt; P</pre>
 </div>
 <ul>
-<li><strong>Start-up.</strong> The app finds the per-user data folder (<code>FileSystem.AppDataDirectory</code> on Mac, <code>%LOCALAPPDATA%\TrStudio</code> on Windows), runs the SQLite scripts, recovers jobs, starts the workers, then shows Login. A failure shows the folder and the reason on Setup required.
+<li><strong>Start-up.</strong> The app finds the per-user data folder (<code>FileSystem.AppDataDirectory</code> on Mac; <code>%LOCALAPPDATA%\TrStudio</code> in the later Windows version), runs the SQLite scripts, recovers jobs, starts the workers, then shows Login. A failure shows the folder and the reason on Setup required.
 </li>
 <li><strong>Routes.</strong> Each API endpoint file has a twin in <code>TrStudio.InProcess/Routes</code> with the same path and the same answer shape. Parameters bind as before: route values, query, JSON body, the signed-in user, services. Admin routes keep the Owner or Operator check.
 </li>
 <li><strong>Session.</strong> Login posts to the in-process <code>/api/v1/auth/login</code>, which calls AppManager and keeps the returned user, role and token in the local session. Every route reads the user from that session; signed out, every protected route answers 401.
 </li>
+<li><strong>Remember me (ADR-021).</strong> Ticked, <code>RememberedSignInStore</code> keeps the refresh token in <code>remembered-sign-in.bin</code>, encrypted with the <code>IKeyProtector</code> key. On open, Login calls <code>/api/v1/auth/resume</code>, which renews it through <code>AuthSvc/refresh</code> and opens the session; ended or refused, it is removed; unreachable, it stays.
+</li>
 <li><strong>Jobs.</strong> <code>JobOrchestrator</code> stores the job Queued and signals the runner; workers (default 2) claim the oldest Queued row with an <code>UPDATE … WHERE State = 'Queued'</code> so one row runs once. Venice video polling is a job step of its own that keeps its queue id on the row.
 </li>
-<li><strong>Keys.</strong> <code>IKeyProtector</code> gives <code>AesGcmKeyStore</code> its 256-bit key. Mac: a generic-password Keychain item for the app's service name. Windows: a DPAPI current-user blob in the data folder. The test host uses a key file in its temporary folder, marked test-only.
+<li><strong>Keys.</strong> <code>IKeyProtector</code> gives <code>AesGcmKeyStore</code> its 256-bit key. Mac: a generic-password Keychain item for the app's service name. Windows (design for the later version): a DPAPI current-user blob in the data folder. The test host uses a key file in its temporary folder, marked test-only.
 </li>
 <li><strong>Test host.</strong> <code>tests/TrStudio.TestHost</code> registers the same <code>TrStudio.InProcess</code> handler and a temporary data folder, and serves the screens with interactive server rendering for Playwright. It is not referenced by the desktop project and never shipped.
 </li>
@@ -687,6 +688,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
   AM--&gt;&gt;A: "allowed or gated"
   A--&gt;&gt;W: "proceed or upgrade prompt"</pre>
 </div>
+<p><strong>Staying signed in (ADR-021).</strong> The guide documents a one-hour access token and a new refresh token on each refresh, but not a refresh token's lifetime, so 30 days is the app's own limit (asked in <code>docs/TrStudio-AppManager-Feedback.md</code>).</p>
 <p>In personal mode all tiers are available; when run multi-user/SaaS, which tiers a user may select is gated via AppManager FeatureSvc/LicenseSvc (e.g. Premium behind a paid license).</p>
 <h2 id="decisions-log"><a id="6-decisions-log"></a>6. Decisions log<a class="anchor-link" href="#decisions-log">#</a></h2>
 <p>One row per decision. Every package added to the project has a row saying why. The dates before 2026-07-05 are the day-1 date of the decision set.</p>
@@ -713,6 +715,10 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tr><td>2026-11-14</td><td>ADR-018: An in-app job runner replaces Hangfire. Jobs are rows of <code>GenerationJob</code>; a fixed number of workers take Queued rows; at start, Queued rows run, a Running Venice clip with its queue id resumes polling, any other Running row is failed with "TrStudio was closed while this job was running"</td><td>Background work survives a close without Hangfire or PostgreSQL storage (BRD-134 to BRD-139)</td><td>planned</td></tr>
 <tr><td>2026-11-14</td><td>ADR-019: AppManager sign-in with <code>X-App-Id</code> and one <code>X-Api-Key</code>, no secret and no signing key. Address, id and key come from the git-ignored <code>appmanager.local.json</code>, embedded at build; a build without it says so on Login. The signed-in user lives in the app's memory for the session</td><td>The owner's desktop apps sign in this way; nothing a user edits (BRD-124 to BRD-128, BRD-149)</td><td>planned</td></tr>
 <tr><td>2026-11-14</td><td>ADR-020: Every key a user owns (Venice, RunPod, HeyGen, closed API, text models) is a <code>ProviderKey</code> row entered on Registry &amp; providers, encrypted by <code>AesGcmKeyStore</code>; the AES key is random per user and kept by the operating system: a Keychain item on Mac, a DPAPI current-user blob on Windows. RunPod, HeyGen and closed-API settings are read from those rows at call time</td><td>Nothing in appsettings, code or environment variables; a saved key works without a restart (BRD-140 to BRD-144, BRD-148)</td><td>planned</td></tr>
+<tr><td>2026-11-14</td><td>ADR-021: "Remember me" on Login (decision 6B): ticked keeps the refresh token, encrypted with the ADR-020 key, for 30 days; each open renews it; ended or refused, it is removed with a plain message; unticked keeps nothing; sign out removes it</td><td>Stay signed in on one's own computer; 30 days because AppManager does not document a refresh token's lifetime (BRD-153 to BRD-157)</td><td>built</td></tr>
+<tr><td>2026-11-14</td><td>ADR-022: The old web head is deleted (decision 8); <code>src/TrStudio.Desktop</code> becomes <code>src/TrStudio</code>, namespace and assembly <code>TrStudio</code>; title and application id unchanged. <code>TrStudioApi</code> and the PostgreSQL scripts stay on disk, out of the build</td><td>A desktop app does not carry "Desktop" in its name; the API project serves the set-aside REST API row (REQ-FN-069)</td><td>built</td></tr>
+<tr><td>2026-11-14</td><td>ADR-023: Mac first: the first version is for Mac only; Windows, possibly Linux, later. The Windows head and ADR-020's Windows protection stay for that version</td><td>No first-version row waits on a Windows machine (BRD-152 amended, BRD-158 deferred)</td><td>planned</td></tr>
+<tr><td>2026-11-14</td><td>Owner decisions 1 to 10 answered: A for 1 to 5, 7, 9, 10; B for 6 (ADR-021); 8 as ADR-022; 9A and 10A leave two later rows (BRD-160, BRD-159)</td><td><code>docs/TrStudio-Decision-Request.md</code></td><td>answered</td></tr>
 </tbody>
 </table>
 <h2 id="module-responsibilities"><a id="7-module-responsibilities"></a>7. Module responsibilities<a class="anchor-link" href="#module-responsibilities">#</a></h2>
@@ -734,36 +740,9 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <p><strong><code>TrStudioApi</code> — the shared contract.</strong> This is the boundary that keeps the system sane. The management screens are <em>only UI</em>; they perform admin actions by calling admin-scoped <code>TrStudioApi</code> endpoints. Any capability the creator screens also need — or that may be exposed to third parties later — is a first-class <code>TrStudioApi</code> endpoint, never buried in the admin app. The registry, job, and generation services are shared; only setup/sources, ComfyUI import/debug, content-policy and ops are admin-scoped. <strong>On startup the API runs <code>TrStudioDb</code> (DbUp)</strong> to create/upgrade the schema before serving traffic.</p>
 <p><strong>Provider abstraction.</strong> Each provider (in <code>TrStudio.Engine/Providers/</code>, implementing <code>IGenerationProvider</code> from <code>TrStudio.Models</code>) is routed by the orchestrator to exactly one resolved model and treated uniformly: <code>submit → status → result → estimateCost</code>. One <code>ComfyUIProvider</code> serves <em>all</em> ComfyUI-backed models (avatar, lip-sync, video) because each model is just a workflow template (§6/§8).</p>
 <p><strong>Prompt Studio chat path (F-PROMPT, added 2026-07-07).</strong> The prompt-crafting chat spans the existing modules without new projects: <code>TrStudioUI</code> gains the Prompt Studio screen (<code>/prompt-studio</code> — chat pane, registry-driven LLM picker, image attachment, session list, prompt-use actions); <code>TrStudioApi</code> exposes the <code>prompt-chat</code> endpoints; <code>TrStudio.Engine</code> gains <code>Domain/</code> entities <code>PromptChatSession</code>/<code>PromptChatMessage</code> and an <code>Infrastructure/</code> <code>PromptChatService</code> that resolves the picked model from the registry and calls <strong>TechieRag chat-completion directly (no RAG pipeline)</strong>, applying the BRD-81 owner filter to every session/message query and recording token usage (BRD-56); <code>TrStudioDb</code> adds the DbUp script for the two tables. Text-chat LLMs are ordinary registry rows (<code>text-chat</code> modality, §6) — no separate config store.</p>
-<p><strong>Single Postgres, Dapper + DbUp.</strong> PgVector gives vector + relational in one instance, so the registry, jobs, characters, asset metadata, generation log <strong>and</strong> embeddings/vectors all live in one PostgreSQL database. Data access is <strong>Dapper</strong> (parameterized SQL, no EF Core); schema is created/upgraded by <strong>DbUp</strong> scripts in <code>TrStudioDb</code>, run automatically when <code>TrStudioApi</code> starts. Durable jobs use Hangfire's Postgres storage; there is no Redis. Provider API keys are held in an encrypted key store.</p>
+<p><strong>Dapper + DbUp.</strong> Data access is Dapper (parameterized SQL, no EF Core); DbUp scripts in <code>TrStudioDb</code> create and upgrade the schema. From phase 3 the store is one SQLite file per user (ADR-016), migrated when the app starts; the July PostgreSQL, PgVector and Hangfire setup is set aside.</p>
 <h3 id="build-roadmap-phased-target-july-2026">Build roadmap (phased target, July 2026)<a class="anchor-link" href="#build-roadmap-phased-target-july-2026">#</a></h3>
-<p>Greenfield — nothing is built yet. The §12 build order from the requirements doc is the dependency-ordered target; each phase is independently testable. (Carried into the BRD §4 status table and seeded as phase tags by <code>*split-brd</code>.)</p>
-<div class="diagram">
-  <div class="dt">
-    <button data-zout title="Zoom out">&minus;</button>
-    <span class="zlabel">100%</span>
-    <button data-zin title="Zoom in">+</button>
-    <button data-fit title="Fit to width">Fit</button>
-    <button data-one title="Actual size">1:1</button>
-    <button data-fs title="Fullscreen">&#9166;</button>
-    <button data-pop title="Open in new tab">&#8599;</button>
-  </div>
-  <pre class="mermaid">flowchart TB
-  P1["Phase 1 — Skeleton &amp; spine (apps, provider abstraction, registry, Hangfire queue, auth, storage, OpenAPI, Serilog)"]
-  P2["Phase 2 — Local image vertical (OnnxLocalProvider, Image studio, gallery/history)"]
-  P3["Phase 3 — Managed ComfyUI + RunPod (scale-to-zero, cost guardrails)"]
-  P4["Phase 4 — Voice EN+HI (XTTS / IndicF5 / OmniVoice)"]
-  P5["Phase 5 — Avatar pipeline (Character, lip-sync, script-to-video, tier selector incl. HeyGen, captions)"]
-  P6["Phase 6 — ComfyUI pipeline screen (import new models)"]
-  P7["Phase 7 — Video + closed API (I2V/T2V, aggregator, HeyGenProvider)"]
-  P8["Phase 8 — Safety + provenance throughout"]
-  P9["Phase 9 — Polish + SaaS-ready seams (comparison, libraries, spend dashboard, API seam)"]
-  P10["Phase 10 — Prompt Studio (LLM prompt-crafting chat — added 2026-07-07)"]
-  P1 --&gt; P2 --&gt; P3 --&gt; P4 --&gt; P5 --&gt; P6 --&gt; P7 --&gt; P8 --&gt; P9 --&gt; P10</pre>
-</div>
-<blockquote>
-<p>Safety (SAFE-01/04) is wired into every provider from Phase 2 onward; SAFE-02/03/05 are enforced before any real-person feature. Phase 8 is the consolidation/verification pass, not the first time safety appears.</p>
-</blockquote>
-<p>The ten build stages above are all built (see the BRD's development status). Planning phases from November 2026 are listed in <a href="TrStudio-Phases.html">TrStudio-Phases.md</a>: phase 1 is everything above, phase 2 is the Venice provider.</p>
+<p>The July build ran in ten dependency-ordered stages: the spine (apps, provider seam, registry, queue, auth, storage), the local image vertical, managed ComfyUI and RunPod, voice, the avatar pipeline, the ComfyUI pipeline screen, video and the closed API, safety and provenance, polish with the SaaS-ready seams, and Prompt Studio. Safety was wired into every provider from the image vertical onward. All ten are built (see the BRD's development status). Planning phases from November 2026 are in <a href="TrStudio-Phases.html">TrStudio-Phases.md</a>: phase 1 is everything above, phase 2 the Venice provider, phase 3 the desktop app with the engine inside.</p>
 <h2 id="open-questions"><a id="8-open-questions"></a>8. Open questions<a class="anchor-link" href="#open-questions">#</a></h2>
 <ul>
 <li><strong>Model licences</strong> vary and date quickly (XTTS Coqui CPML is non-standard; Hunyuan has a MAU cap; HeyGen has its own ToS) — the registry <code>license</code> field + a build-time check must verify each before commercial use.
@@ -774,13 +753,9 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </li>
 <li><strong>36 GB unified memory</strong> is marginal for local video — route heavy jobs to RunPod/HeyGen; Mac is image + light lip-sync only.
 </li>
-<li><strong>TechieRag / TrBlazeUI reuse assumptions</strong> — confirm against the real packages at Phase 1 before depending on them.
+<li><strong>Credentials at build and run:</strong> the private-feed token (<code>read:packages</code>) and the AppManager id and key in <code>appmanager.local.json</code>; provider keys are entered in the app.
 </li>
-<li><strong>Credentials needed at build/run</strong> (not blocking docs): GitHub PAT (<code>read:packages</code>), HeyGen API key, AppManager API key/secret.
-</li>
-<li><strong>Field-prefix:</strong> greenfield, no code to detect from — defaulted to <code>obj</code> (Coding Standards is authoritative).
-</li>
-<li><strong>Deployment.</strong> From phase 3 TrStudio ships as the desktop app for Windows and Mac; the Docker image, hosting, the Hangfire dashboard and the PostgreSQL settings are set aside (checklist rows marked N/A with the reason). Signing and notarising the Mac app and the Windows installer are decided at UAT. The paragraph below is the earlier plan. Hosting is decided after UAT and belongs in the Deployment Checklist. The July plan, kept here so it is not lost: the Windows box builds and tests; <code>TrStudioApi</code> and its workers ship as a Docker image to a host in India, with PostgreSQL + PgVector and object storage beside it; a RunPod template image runs the GPU workers on demand with models cached on a network volume; the Mac runs the local ComfyUI (MPS) and ONNX stack for the Fast tier; the host reaches AppManager with <code>X-Api-Key</code> and a JWT. The <code>TrStudio</code> app ships as the MAUI desktop app (Windows and Mac) and as a web app, both on the same <code>TrStudioUI</code> screens (ADR-012).
+<li><strong>Deployment.</strong> From phase 3 TrStudio ships as the desktop app, Mac first (Windows in a later version, ADR-023); the Docker image, hosting, the Hangfire dashboard and the PostgreSQL settings are set aside (checklist rows marked N/A with the reason). Signing and notarising the Mac app are decided at UAT; the Windows installer comes with the Windows version. Hosting is decided after UAT and belongs in the Deployment Checklist. The diagram below is the July hosting plan, set aside.
 </li>
 </ul>
 <div class="diagram">
@@ -794,7 +769,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
     <button data-pop title="Open in new tab">&#8599;</button>
   </div>
   <pre class="mermaid">flowchart LR
-  Dev["Dev box (Windows)"] --&gt; Build["dotnet build + tests"]
+  Dev["Dev box (Mac)"] --&gt; Build["dotnet build + tests"]
   Build --&gt; ApiImg["Docker: TrStudioApi + workers"]
   Build --&gt; WorkerImg["RunPod template image (GPU worker)"]
   ApiImg --&gt; Host["App host (India region)"]

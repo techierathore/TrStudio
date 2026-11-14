@@ -9,11 +9,18 @@ const OUT_DIR = path.resolve('test-results/verify-prompt');
 const RESULT_FILE = path.resolve('test-results/verify-prompt-results.json');
 fs.mkdirSync(OUT_DIR, { recursive: true });
 
-// Phase 3 (2026-11-14): these API-era checks used dev tokens signed with a signing key the desktop
-// app no longer has. Without .verify/tokens.json the file still loads and its tests skip with that reason.
-const tokensPath = path.resolve('.verify/tokens.json');
-const tokens: any = fs.existsSync(tokensPath) ? JSON.parse(fs.readFileSync(tokensPath, 'utf-8')) : {};
-test.skip(!fs.existsSync(tokensPath), 'Skipped: .verify/tokens.json (API-era signed dev tokens) is absent; phase 3 removed the signing key. Re-verify phase 1 with the test host sessions.');
+// Phase 3 (2026-11-14): sessions come from the test host's own /test/session route, one per role
+// (tests/TrStudio.TestHost, never shipped); no AppManager account is created, changed or used.
+const tokenCache: Record<string, string> = {};
+async function tokenFor(role: string): Promise<string> {
+  if (!tokenCache[role]) {
+    const response = await fetch(`${BASE}/test/session?role=${role}`, { method: 'POST' });
+    if (!response.ok) throw new Error(`test host refused a ${role} session: ${response.status}`);
+    tokenCache[role] = (await response.json()).token;
+  }
+  return tokenCache[role];
+}
+const tokens: any = new Proxy({}, { get: (_t, role: string) => tokenFor(role) });
 
 const out: any = { render: {}, ui082: {}, visual: {}, notes: [] };
 
@@ -72,7 +79,7 @@ test.describe.serial('Prompt Studio verify', () => {
   test('REQ-UI-081 REQ-UI-082 prompt studio renders and its actions work', async ({ browser }) => {
     test.setTimeout(240000);
     const ctx = await browser.newContext();
-    const page = await establishSession(ctx, tokens.Owner);
+    const page = await establishSession(ctx, await tokens.Owner);
 
     // ---- navigate ----
     await page.setViewportSize({ width: 1280, height: 800 });

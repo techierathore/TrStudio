@@ -8,11 +8,18 @@ const RESULT_FILE = path.resolve('test-results/verify-ui-results.json');
 
 fs.mkdirSync(OUT_DIR, { recursive: true });
 
-// Phase 3 (2026-11-14): these API-era checks used dev tokens signed with a signing key the desktop
-// app no longer has. Without .verify/tokens.json the file still loads and its tests skip with that reason.
-const tokensPath = path.resolve('.verify/tokens.json');
-const tokens: any = fs.existsSync(tokensPath) ? JSON.parse(fs.readFileSync(tokensPath, 'utf-8')) : {};
-test.skip(!fs.existsSync(tokensPath), 'Skipped: .verify/tokens.json (API-era signed dev tokens) is absent; phase 3 removed the signing key. Re-verify phase 1 with the test host sessions.');
+// Phase 3 (2026-11-14): sessions come from the test host's own /test/session route, one per role
+// (tests/TrStudio.TestHost, never shipped); no AppManager account is created, changed or used.
+const tokenCache: Record<string, string> = {};
+async function tokenFor(role: string): Promise<string> {
+  if (!tokenCache[role]) {
+    const response = await fetch(`${BASE}/test/session?role=${role}`, { method: 'POST' });
+    if (!response.ok) throw new Error(`test host refused a ${role} session: ${response.status}`);
+    tokenCache[role] = (await response.json()).token;
+  }
+  return tokenCache[role];
+}
+const tokens: any = new Proxy({}, { get: (_t, role: string) => tokenFor(role) });
 
 type ScreenMeta = { route: string; req: string; role: string };
 
@@ -250,9 +257,9 @@ const AUTH_SCREENS: ScreenMeta[] = [
 ];
 
 test.describe.serial('UI sweep', () => {
-  test('REQ-UI-010 REQ-UI-011 REQ-UI-020 REQ-UI-030 REQ-UI-040 REQ-UI-050 REQ-UI-051 REQ-UI-052 REQ-UI-053 REQ-UI-060 creator screens render as Owner', async ({ browser }) => {
+  test('REQ-UI-005 REQ-UI-010 REQ-UI-011 REQ-UI-020 REQ-UI-030 REQ-UI-040 REQ-UI-050 REQ-UI-051 REQ-UI-052 REQ-UI-053 REQ-UI-060 creator screens render as Owner', async ({ browser }) => {
     const ctx = await browser.newContext();
-    const page = await establishSession(ctx, tokens.Owner);
+    const page = await establishSession(ctx, await tokens.Owner);
     for (const s of CREATOR_SCREENS) {
       await sweep(page, s);
     }
@@ -261,7 +268,7 @@ test.describe.serial('UI sweep', () => {
 
   test('REQ-UI-070 REQ-UI-071 REQ-UI-072 REQ-UI-073 REQ-UI-074 REQ-UI-075 REQ-UI-076 admin screens render as Operator', async ({ browser }) => {
     const ctx = await browser.newContext();
-    const page = await establishSession(ctx, tokens.Operator);
+    const page = await establishSession(ctx, await tokens.Operator);
     for (const s of ADMIN_SCREENS) {
       await sweep(page, s);
     }
@@ -279,7 +286,7 @@ test.describe.serial('UI sweep', () => {
 
   test('REQ-FN-072 REQ-UI-080 Creator is refused the admin registry', async ({ browser }) => {
     const ctx = await browser.newContext();
-    const page = await establishSession(ctx, tokens.Creator);
+    const page = await establishSession(ctx, await tokens.Creator);
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto(`${BASE}/admin/registry`, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await page.waitForLoadState('networkidle', { timeout: 20000 }).catch(() => {});

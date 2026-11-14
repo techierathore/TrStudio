@@ -5,7 +5,8 @@ namespace TrStudio.InProcess.Routes;
 
 /// <summary>
 /// The desktop app's own session routes (phase 3, ADR-019): whether the build carries its sign-in
-/// settings (REQ-UI-098), where the user's data lives (REQ-UI-101) and signing out (REQ-FN-088).
+/// settings (REQ-UI-098), where the user's data lives (REQ-UI-101) and signing out (REQ-FN-088), which
+/// also removes a sign-in kept by "Remember me" (REQ-UI-106).
 /// </summary>
 public static class DesktopSessionEndpoints
 {
@@ -26,6 +27,14 @@ public static class DesktopSessionEndpoints
     public const string UnreachableMessage =
         "The sign-in service (AppManager) cannot be reached. Check your internet connection and try again.";
 
+    /// <summary>The words shown when a kept sign-in has passed its 30 days (owner decision 6B).</summary>
+    public const string KeptSignInEndedMessage =
+        "You chose to stay signed in on this computer for 30 days, and that time is up. Please sign in again.";
+
+    /// <summary>The words shown when AppManager no longer accepts the kept sign-in (owner decision 6B).</summary>
+    public const string KeptSignInRefusedMessage =
+        "Your saved sign-in is no longer accepted by the sign-in service. Please sign in again.";
+
     /// <summary>Maps the routes.</summary>
     /// <param name="aApp">The route table.</param>
     /// <returns>The same table.</returns>
@@ -37,8 +46,10 @@ public static class DesktopSessionEndpoints
             message = aSettings.IsConfigured ? null : MissingSettingsMessage
         })).AllowAnonymous();
 
-        aApp.MapPost(SignOutRoute, (HttpContext aContext, LocalSessionStore aSessions) =>
+        aApp.MapPost(SignOutRoute, (HttpContext aContext, LocalSessionStore aSessions, RememberedSignInStore aRemembered) =>
         {
+            // Owner decision 6B (REQ-UI-106): signing out always removes a kept sign-in.
+            aRemembered.Forget();
             const string BearerPrefix = "Bearer ";
             var vHeader = aContext.Request.Headers.Authorization;
             if (vHeader.StartsWith(BearerPrefix, StringComparison.OrdinalIgnoreCase))

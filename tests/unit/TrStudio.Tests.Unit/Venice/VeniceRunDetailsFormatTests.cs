@@ -8,7 +8,7 @@ namespace TrStudio.Tests.Unit.Venice;
 /// </summary>
 public class VeniceRunDetailsFormatTests
 {
-    [Theory]
+    [Theory(DisplayName = "REQ-UI-094 DetailsShowVeniceLinesForVeniceAssets")]
     [InlineData("Venice", true)]
     [InlineData("venice", true)]
     [InlineData(" Venice ", true)]
@@ -19,7 +19,7 @@ public class VeniceRunDetailsFormatTests
     public void IsVenice_ShowsTheLinesOnlyForVeniceRuns(string? aProvider, bool aExpected) =>
         Assert.Equal(aExpected, VeniceRunDetailsFormat.IsVenice(aProvider));
 
-    [Theory]
+    [Theory(DisplayName = "REQ-UI-093 RunDetailsShowVeniceUsDollarPrice")]
     [InlineData("0.18", "$0.18")]
     [InlineData("0.01", "$0.01")]
     [InlineData("1.5", "$1.50")]

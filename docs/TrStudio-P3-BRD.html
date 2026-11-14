@@ -115,11 +115,13 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
         <li><a href="#screens-and-flow">2. Screens and flow</a></li>
         <li><a href="#requirements">3. Requirements</a></li>
         <li class="h3"><a href="#sign-in">Sign-in</a></li>
+        <li class="h3"><a href="#staying-signed-in">Staying signed in</a></li>
         <li class="h3"><a href="#first-run">First run</a></li>
         <li class="h3"><a href="#jobs-inside-the-app">Jobs inside the app</a></li>
         <li class="h3"><a href="#keys-a-user-owns">Keys a user owns</a></li>
         <li class="h3"><a href="#character-bible">Character bible</a></li>
         <li><a href="#non-functional-requirements">4. Non-functional requirements</a></li>
+        <li class="h3"><a href="#later-versions">Later versions</a></li>
         <li><a href="#development-status">5. Development status</a></li>
         <li><a href="#where-the-rest-lives">6. Where the rest lives</a></li>
       </ol>
@@ -136,13 +138,13 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </tbody>
 </table>
 <h2 id="summary"><a id="1-summary"></a>1. Summary<a class="anchor-link" href="#summary">#</a></h2>
-<p>Today TrStudio is a web API with PostgreSQL, PgVector and Hangfire, and a desktop app that only calls that API on the same machine. Phase 3 turns it into one desktop app for Windows and Mac that a person downloads, opens and signs in to. The engine runs inside the app: there is no API process and no web server. The data lives in a local SQLite file in the app's own data folder for the signed-in user, created and migrated by the app on first start. Character-bible search runs on the same local store through TechieRag. Generation and provider polling run as jobs inside the app; a job left queued or running when the app closed is picked up or failed with its reason on the next start. Sign-in uses AppManager with the application id and one API key put into the build from a file outside the repository. Every key a user owns is entered on the existing screens and kept in the local database, protected by the operating system for that user. Everything a creator can do today stays. A test host serves the same screens and engine for the automated checks only; it is never shipped.</p>
+<p>Phase 3 turns it into one desktop app that a person downloads, opens and signs in to. TrStudio is Mac first: the first released version is for Mac only; Windows, and possibly Linux, come in a later version. The engine runs inside the app: there is no API process and no web server. The data lives in a local SQLite file in the app's own data folder for the signed-in user, created and migrated by the app on first start. Character-bible search runs on that store through TechieRag. Generation and provider polling run as jobs inside the app; a job left queued or running when the app closed is picked up or failed with its reason on the next start. Sign-in uses AppManager with the application id and one API key put into the build from a file outside the repository; a "Remember me" box keeps the sign-in on that computer for 30 days. Every key a user owns is entered on the existing screens and kept in the local database, protected by the operating system for that user. Everything a creator can do today stays. A test host, never shipped, serves the same screens for the automated checks.</p>
 <h2 id="screens-and-flow"><a id="2-screens-and-flow"></a>2. Screens and flow<a class="anchor-link" href="#screens-and-flow">#</a></h2>
 <p>This phase adds no new screen. It changes controls on phase-1 screens, which are listed in <a href="TrStudio-BRD.html">phase 1</a>. In each changed mockup the new controls are marked <code>data-tf-phase="3"</code>.</p>
 <table>
 <thead><tr><th>Screen</th><th>Route</th><th>Role</th><th>Mockup</th><th>Fields</th></tr></thead>
 <tbody>
-<tr><td>Login (phase 1)</td><td><code>/login</code></td><td>Anyone</td><td><a href="mockups/login.html">mockup</a></td><td>email, password, sign-in settings notice, sign-in service alert</td></tr>
+<tr><td>Login (phase 1)</td><td><code>/login</code></td><td>Anyone</td><td><a href="mockups/login.html">mockup</a></td><td>email, password, remember me, sign-in settings notice, sign-in service alert, sign in again notice</td></tr>
 <tr><td>Register (phase 1)</td><td><code>/register</code></td><td>Anyone</td><td><a href="mockups/register.html">mockup</a></td><td>name, email, password</td></tr>
 <tr><td>Setup required (phase 1)</td><td><code>/setup-required</code></td><td>Anyone signed in</td><td><a href="mockups/setup-required.html">mockup</a></td><td>data folder, start-up problem</td></tr>
 <tr><td>Image studio (phase 1)</td><td><code>/image</code></td><td>Creator</td><td><a href="mockups/image-studio.html">mockup</a></td><td>model, prompt, job state</td></tr>
@@ -155,11 +157,11 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </table>
 <p><strong>Primary journey:</strong></p>
 <ol>
-<li>A person downloads TrStudio for Windows or Mac, installs it and opens it.
+<li>A person downloads TrStudio for Mac, installs it and opens it. (Windows comes in a later version.)
 </li>
 <li>On first start the app creates its local database in the person's own app data folder and prepares it. Nothing is asked.
 </li>
-<li>The person signs in with their AppManager email and password. The app already carries its AppManager application id and key.
+<li>The person signs in with their AppManager email and password, ticking "Remember me" to stay signed in on this computer for 30 days. The app already carries its AppManager application id and key.
 </li>
 <li>An admin opens Registry &amp; providers and enters the keys they own (Venice, RunPod, HeyGen, a text model). The keys are kept on this computer, protected for this user.
 </li>
@@ -198,6 +200,40 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <li><strong>BRD-128</strong> — The signed-in user scopes every engine call; signing out ends it. <em>Screen:</em> Login · <em>Mockup:</em> <a href="mockups/login.html">mockup</a>
 <ul>
 <li><em>Acceptance:</em> When the user signs out and lands on Login, then every engine call answers not signed in.
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="staying-signed-in">Staying signed in<a class="anchor-link" href="#staying-signed-in">#</a></h3>
+<p>Owner decision 6B (14 Nov 2026). The refresh token is kept the same way as the user's keys (ADR-020); 30 days is the app's own limit, because the AppManager guide does not state a refresh token's lifetime.</p>
+<ul>
+<li><strong>BRD-153</strong> — A ticked "Remember me" keeps the sign-in on this computer for 30 days, protected for this user. <em>Screen:</em> Login · <em>Mockup:</em> <a href="mockups/login.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a user ticks Remember me and signs in on Login, then the refresh token is kept encrypted for 30 days and never in plain text.
+</li>
+</ul>
+</li>
+<li><strong>BRD-154</strong> — With a kept sign-in, the next open signs in without asking. <em>Screen:</em> Login · <em>Mockup:</em> <a href="mockups/login.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When the app opens on Login with a kept sign-in, then it signs in with the kept token and asks for no email or password.
+</li>
+</ul>
+</li>
+<li><strong>BRD-155</strong> — After 30 days, or when AppManager refuses or revokes the token, the user signs in again with a plain message. <em>Screen:</em> Login · <em>Mockup:</em> <a href="mockups/login.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a kept sign-in has ended or is refused and the app opens on Login, then a plain notice asks the user to sign in again.
+</li>
+</ul>
+</li>
+<li><strong>BRD-156</strong> — Without the tick nothing is kept, and the user signs in each time the app opens. <em>Screen:</em> Login · <em>Mockup:</em> <a href="mockups/login.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a user signs in on Login without Remember me, then nothing is kept and the next open shows Login.
+</li>
+</ul>
+</li>
+<li><strong>BRD-157</strong> — Signing out always removes what was kept. <em>Screen:</em> Login · <em>Mockup:</em> <a href="mockups/login.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a signed-in user signs out and lands on Login, then the kept sign-in is removed and the next open shows Login.
 </li>
 </ul>
 </li>
@@ -314,7 +350,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <ul>
 <li><strong>BRD-145</strong> — Character-bible search runs on the local store through TechieRag. <em>Screen:</em> Character library · <em>Mockup:</em> <a href="mockups/character-library.html">mockup</a>
 <ul>
-<li><em>Acceptance:</em> When a creator searches a character's bible on Character library, then matching notes come back from TechieRag over the local SQLite store.
+<li><em>Acceptance:</em> When a creator searches a character's bible on Character library, then notes matching the words come back from the local SQLite store (amended 2026-11-14, owner decision 9A: word matching now).
 </li>
 </ul>
 </li>
@@ -329,16 +365,38 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tr><td>BRD-149</td><td>Settings</td><td>The AppManager id and key come from a settings file outside the repository, put into the build</td><td>When the desktop app is built with the git-ignored AppManager file, then the id and key are in the build and no committed file holds them.</td></tr>
 <tr><td>BRD-150</td><td>Testing</td><td>A test host serves the same screens and in-process engine on SQLite for headless checks only; it is never shipped</td><td>When the headless checks run, then they drive the test host, and the desktop project does not reference it.</td></tr>
 <tr><td>BRD-151</td><td>Compatibility</td><td>ComfyUI behaves exactly as before</td><td>When the unit tests run, then the 16 ComfyUI tests pass and no file under <code>tests/unit/TrStudio.Tests.Unit/Comfy/</code> changed.</td></tr>
-<tr><td>BRD-152</td><td>Portability</td><td>One desktop project builds for Windows and Mac</td><td>When the desktop project is built for Mac and for Windows, then both builds succeed.</td></tr>
+<tr><td>BRD-152</td><td>Portability</td><td>The desktop project builds and runs on Mac (amended 2026-11-14: Mac first)</td><td>When the desktop project is built on a Mac, then the Mac app TrStudio.app is produced.</td></tr>
 </tbody>
 </table>
+<h3 id="later-versions">Later versions<a class="anchor-link" href="#later-versions">#</a></h3>
+<p>Deferred on 14 Nov 2026, each with its reason. No row of the first version waits on them.</p>
+<ul>
+<li><strong>BRD-158</strong> — The desktop project builds and runs on Windows. <em>Deferred (later version):</em> TrStudio is Mac first; the Windows head stays in the project and its data-protection design stays in ADR-020.
+<ul>
+<li><em>Acceptance:</em> When the desktop project is built on a Windows machine, then the Windows app is produced and opens on Login.
+</li>
+</ul>
+</li>
+<li><strong>BRD-159</strong> — Local ONNX pictures run inside the Mac app. <em>Deferred (later version):</em> ONNX Runtime ships no Mac Catalyst build (owner decision 10A); Mac pictures come from ComfyUI, RunPod or Venice. <em>Screen:</em> Image studio · <em>Mockup:</em> <a href="mockups/image-studio.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a creator generates with a local ONNX model on Image studio in the Mac app, then a picture is produced.
+</li>
+</ul>
+</li>
+<li><strong>BRD-160</strong> — Character-bible search by meaning with an embedding model built into the app. <em>Deferred (later version):</em> word matching now (owner decision 9A). <em>Screen:</em> Character library · <em>Mockup:</em> <a href="mockups/character-library.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a creator searches a character's bible on Character library by meaning, then notes matching the meaning come back without Ollama.
+</li>
+</ul>
+</li>
+</ul>
 <h2 id="development-status"><a id="5-development-status"></a>5. Development status<a class="anchor-link" href="#development-status">#</a></h2>
 <p>Written by the status gate after every build, verify and handoff; not by hand.</p>
 <p><strong>Snapshot as of 2026-11-14.</strong> Live per-requirement status: <code>PROJECT-STATUS.md</code> and the Requirements Status table in <code>docs/TrStudio-P3-Checklist.md</code>.</p>
 <table>
 <thead><tr><th>Screen</th><th>Requirements</th><th>Verified</th><th>Open</th><th>Status</th></tr></thead>
 <tbody>
-<tr><td>Login</td><td>4</td><td>3</td><td>1</td><td>Partial</td></tr>
+<tr><td>Login</td><td>9</td><td>8</td><td>1</td><td>Partial</td></tr>
 <tr><td>Register</td><td>1</td><td>1</td><td>0</td><td>Done</td></tr>
 <tr><td>Setup required</td><td>5</td><td>5</td><td>0</td><td>Done</td></tr>
 <tr><td>Image studio</td><td>3</td><td>3</td><td>0</td><td>Done</td></tr>
@@ -346,8 +404,10 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tr><td>Admin — RunPod &amp; ops</td><td>1</td><td>1</td><td>0</td><td>Done</td></tr>
 <tr><td>Admin — Model &amp; Provider Registry</td><td>4</td><td>4</td><td>0</td><td>Done</td></tr>
 <tr><td>Avatar studio</td><td>1</td><td>1</td><td>0</td><td>Done</td></tr>
-<tr><td>Character library</td><td>1</td><td>0</td><td>1</td><td>In progress</td></tr>
-<tr><td>Non-functional</td><td>7</td><td>6</td><td>1</td><td>Partial</td></tr>
+<tr><td>Character library</td><td>1</td><td>1</td><td>0</td><td>Done</td></tr>
+<tr><td>Non-functional</td><td>7</td><td>7</td><td>0</td><td>Done</td></tr>
+<tr><td>Other</td><td>0</td><td>0</td><td>0</td><td>Not applicable</td></tr>
+<tr><td>RAG / AI requirements</td><td>0</td><td>0</td><td>0</td><td>Not applicable</td></tr>
 </tbody>
 </table>
 <h2 id="where-the-rest-lives"><a id="6-where-the-rest-lives"></a>6. Where the rest lives<a class="anchor-link" href="#where-the-rest-lives">#</a></h2>

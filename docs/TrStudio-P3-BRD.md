@@ -11,7 +11,7 @@
 
 ## 1. Summary
 
-Today TrStudio is a web API with PostgreSQL, PgVector and Hangfire, and a desktop app that only calls that API on the same machine. Phase 3 turns it into one desktop app for Windows and Mac that a person downloads, opens and signs in to. The engine runs inside the app: there is no API process and no web server. The data lives in a local SQLite file in the app's own data folder for the signed-in user, created and migrated by the app on first start. Character-bible search runs on the same local store through TechieRag. Generation and provider polling run as jobs inside the app; a job left queued or running when the app closed is picked up or failed with its reason on the next start. Sign-in uses AppManager with the application id and one API key put into the build from a file outside the repository. Every key a user owns is entered on the existing screens and kept in the local database, protected by the operating system for that user. Everything a creator can do today stays. A test host serves the same screens and engine for the automated checks only; it is never shipped.
+Phase 3 turns it into one desktop app that a person downloads, opens and signs in to. TrStudio is Mac first: the first released version is for Mac only; Windows, and possibly Linux, come in a later version. The engine runs inside the app: there is no API process and no web server. The data lives in a local SQLite file in the app's own data folder for the signed-in user, created and migrated by the app on first start. Character-bible search runs on that store through TechieRag. Generation and provider polling run as jobs inside the app; a job left queued or running when the app closed is picked up or failed with its reason on the next start. Sign-in uses AppManager with the application id and one API key put into the build from a file outside the repository; a "Remember me" box keeps the sign-in on that computer for 30 days. Every key a user owns is entered on the existing screens and kept in the local database, protected by the operating system for that user. Everything a creator can do today stays. A test host, never shipped, serves the same screens for the automated checks.
 
 ## 2. Screens and flow
 
@@ -19,7 +19,7 @@ This phase adds no new screen. It changes controls on phase-1 screens, which are
 
 | Screen | Route | Role | Mockup | Fields |
 |---|---|---|---|---|
-| Login (phase 1) | `/login` | Anyone | [mockup](mockups/login.html) | email, password, sign-in settings notice, sign-in service alert |
+| Login (phase 1) | `/login` | Anyone | [mockup](mockups/login.html) | email, password, remember me, sign-in settings notice, sign-in service alert, sign in again notice |
 | Register (phase 1) | `/register` | Anyone | [mockup](mockups/register.html) | name, email, password |
 | Setup required (phase 1) | `/setup-required` | Anyone signed in | [mockup](mockups/setup-required.html) | data folder, start-up problem |
 | Image studio (phase 1) | `/image` | Creator | [mockup](mockups/image-studio.html) | model, prompt, job state |
@@ -30,9 +30,9 @@ This phase adds no new screen. It changes controls on phase-1 screens, which are
 | Admin — Model & Provider Registry (phase 1) | `/admin/registry` | Operator | [mockup](mockups/admin-registry.html) | RunPod, HeyGen, closed-API and model keys, key-protection note |
 
 **Primary journey:**
-1. A person downloads TrStudio for Windows or Mac, installs it and opens it.
+1. A person downloads TrStudio for Mac, installs it and opens it. (Windows comes in a later version.)
 2. On first start the app creates its local database in the person's own app data folder and prepares it. Nothing is asked.
-3. The person signs in with their AppManager email and password. The app already carries its AppManager application id and key.
+3. The person signs in with their AppManager email and password, ticking "Remember me" to stay signed in on this computer for 30 days. The app already carries its AppManager application id and key.
 4. An admin opens Registry & providers and enters the keys they own (Venice, RunPod, HeyGen, a text model). The keys are kept on this computer, protected for this user.
 5. A creator generates on any studio. The job runs inside the app. If the app is closed mid-job, the next start picks it up or says why it failed.
 
@@ -54,6 +54,21 @@ Sign-in goes to AppManager with the application id and one API key built into th
   - *Acceptance:* When AppManager cannot be reached from Login, then an alert says the sign-in service cannot be reached and the user stays on Login.
 - **BRD-128** — The signed-in user scopes every engine call; signing out ends it. *Screen:* Login · *Mockup:* [mockup](mockups/login.html)
   - *Acceptance:* When the user signs out and lands on Login, then every engine call answers not signed in.
+
+### Staying signed in
+
+Owner decision 6B (14 Nov 2026). The refresh token is kept the same way as the user's keys (ADR-020); 30 days is the app's own limit, because the AppManager guide does not state a refresh token's lifetime.
+
+- **BRD-153** — A ticked "Remember me" keeps the sign-in on this computer for 30 days, protected for this user. *Screen:* Login · *Mockup:* [mockup](mockups/login.html)
+  - *Acceptance:* When a user ticks Remember me and signs in on Login, then the refresh token is kept encrypted for 30 days and never in plain text.
+- **BRD-154** — With a kept sign-in, the next open signs in without asking. *Screen:* Login · *Mockup:* [mockup](mockups/login.html)
+  - *Acceptance:* When the app opens on Login with a kept sign-in, then it signs in with the kept token and asks for no email or password.
+- **BRD-155** — After 30 days, or when AppManager refuses or revokes the token, the user signs in again with a plain message. *Screen:* Login · *Mockup:* [mockup](mockups/login.html)
+  - *Acceptance:* When a kept sign-in has ended or is refused and the app opens on Login, then a plain notice asks the user to sign in again.
+- **BRD-156** — Without the tick nothing is kept, and the user signs in each time the app opens. *Screen:* Login · *Mockup:* [mockup](mockups/login.html)
+  - *Acceptance:* When a user signs in on Login without Remember me, then nothing is kept and the next open shows Login.
+- **BRD-157** — Signing out always removes what was kept. *Screen:* Login · *Mockup:* [mockup](mockups/login.html)
+  - *Acceptance:* When a signed-in user signs out and lands on Login, then the kept sign-in is removed and the next open shows Login.
 
 ### First run
 
@@ -105,7 +120,7 @@ Every key is entered on Registry & providers and kept in the local database, pro
 ### Character bible
 
 - **BRD-145** — Character-bible search runs on the local store through TechieRag. *Screen:* Character library · *Mockup:* [mockup](mockups/character-library.html)
-  - *Acceptance:* When a creator searches a character's bible on Character library, then matching notes come back from TechieRag over the local SQLite store.
+  - *Acceptance:* When a creator searches a character's bible on Character library, then notes matching the words come back from the local SQLite store (amended 2026-11-14, owner decision 9A: word matching now).
 
 ## 4. Non-functional requirements
 
@@ -117,7 +132,18 @@ Every key is entered on Registry & providers and kept in the local database, pro
 | BRD-149 | Settings | The AppManager id and key come from a settings file outside the repository, put into the build | When the desktop app is built with the git-ignored AppManager file, then the id and key are in the build and no committed file holds them. |
 | BRD-150 | Testing | A test host serves the same screens and in-process engine on SQLite for headless checks only; it is never shipped | When the headless checks run, then they drive the test host, and the desktop project does not reference it. |
 | BRD-151 | Compatibility | ComfyUI behaves exactly as before | When the unit tests run, then the 16 ComfyUI tests pass and no file under `tests/unit/TrStudio.Tests.Unit/Comfy/` changed. |
-| BRD-152 | Portability | One desktop project builds for Windows and Mac | When the desktop project is built for Mac and for Windows, then both builds succeed. |
+| BRD-152 | Portability | The desktop project builds and runs on Mac (amended 2026-11-14: Mac first) | When the desktop project is built on a Mac, then the Mac app TrStudio.app is produced. |
+
+### Later versions
+
+Deferred on 14 Nov 2026, each with its reason. No row of the first version waits on them.
+
+- **BRD-158** — The desktop project builds and runs on Windows. *Deferred (later version):* TrStudio is Mac first; the Windows head stays in the project and its data-protection design stays in ADR-020.
+  - *Acceptance:* When the desktop project is built on a Windows machine, then the Windows app is produced and opens on Login.
+- **BRD-159** — Local ONNX pictures run inside the Mac app. *Deferred (later version):* ONNX Runtime ships no Mac Catalyst build (owner decision 10A); Mac pictures come from ComfyUI, RunPod or Venice. *Screen:* Image studio · *Mockup:* [mockup](mockups/image-studio.html)
+  - *Acceptance:* When a creator generates with a local ONNX model on Image studio in the Mac app, then a picture is produced.
+- **BRD-160** — Character-bible search by meaning with an embedding model built into the app. *Deferred (later version):* word matching now (owner decision 9A). *Screen:* Character library · *Mockup:* [mockup](mockups/character-library.html)
+  - *Acceptance:* When a creator searches a character's bible on Character library by meaning, then notes matching the meaning come back without Ollama.
 
 ## 5. Development status
 
@@ -127,7 +153,7 @@ Written by the status gate after every build, verify and handoff; not by hand.
 
 | Screen | Requirements | Verified | Open | Status |
 |---|---|---|---|---|
-| Login | 4 | 3 | 1 | Partial |
+| Login | 9 | 8 | 1 | Partial |
 | Register | 1 | 1 | 0 | Done |
 | Setup required | 5 | 5 | 0 | Done |
 | Image studio | 3 | 3 | 0 | Done |
@@ -135,8 +161,10 @@ Written by the status gate after every build, verify and handoff; not by hand.
 | Admin — RunPod & ops | 1 | 1 | 0 | Done |
 | Admin — Model & Provider Registry | 4 | 4 | 0 | Done |
 | Avatar studio | 1 | 1 | 0 | Done |
-| Character library | 1 | 0 | 1 | In progress |
-| Non-functional | 7 | 6 | 1 | Partial |
+| Character library | 1 | 1 | 0 | Done |
+| Non-functional | 7 | 7 | 0 | Done |
+| Other | 0 | 0 | 0 | Not applicable |
+| RAG / AI requirements | 0 | 0 | 0 | Not applicable |
 
 ## 6. Where the rest lives
 

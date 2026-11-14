@@ -48,6 +48,9 @@ public sealed class EngineHost : IAsyncDisposable
     /// <summary>The signed-in users.</summary>
     public LocalSessionStore Sessions { get; }
 
+    /// <summary>The sign-in kept on this computer when "Remember me" was ticked (ADR-021).</summary>
+    public RememberedSignInStore RememberedSignIn => objServices.GetRequiredService<RememberedSignInStore>();
+
     /// <summary>Engine logger.</summary>
     public ILogger Logger { get; }
 
@@ -120,6 +123,7 @@ public sealed class EngineHost : IAsyncDisposable
 
         vServices.AddSingleton(aOptions.KeyProtector);
         vServices.AddSingleton<LocalSessionStore>();
+        vServices.AddSingleton(new RememberedSignInStore(aOptions.DataFolder, aOptions.KeyProtector, aOptions.Clock));
         if (aOptions.SignInSource is { } vSource)
         {
             vServices.AddTransient(_ => vSource());

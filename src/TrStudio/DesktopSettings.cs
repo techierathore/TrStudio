@@ -1,0 +1,83 @@
+using System.Reflection;
+using System.Text.Json;
+
+namespace TrStudio;
+
+/// <summary>
+/// The desktop head's settings, section <c>Desktop</c> (owner decision 5A, REQ-NFR-015): the
+/// DEBUG developer role and start page (phase 3: there is no API address; the engine runs inside the app). Read from <c>appsettings.json</c> shipped inside
+/// the app (embedded at build time), overlaid on the committed <c>appsettings.template.json</c>
+/// defaults — never from environment variables.
+/// </summary>
+public sealed class DesktopSettings
+{
+    /// <summary>The configuration section name.</summary>
+    public const string SectionName = "Desktop";
+
+    /// <summary>Embedded resource name of the committed template (defaults).</summary>
+    public const string TemplateResource = "TrStudio.appsettings.template.json";
+
+    /// <summary>Embedded resource name of this machine's <c>appsettings.json</c> (git-ignored, optional).</summary>
+    public const string SettingsResource = "TrStudio.appsettings.json";
+
+    /// <summary>DEBUG only: the role to boot straight into (Creator / Operator / Owner); empty for none.</summary>
+    public string DevRole { get; private set; } = string.Empty;
+
+    /// <summary>DEBUG only: a route to open after the dev role is seeded; empty for the role's landing page.</summary>
+    public string DevStartPath { get; private set; } = string.Empty;
+
+    /// <summary>Loads the settings from the app's embedded settings files.</summary>
+    /// <returns>The settings, with the defaults kept where no file sets a value.</returns>
+    public static DesktopSettings Load()
+    {
+        var vSettings = new DesktopSettings();
+        var vAssembly = typeof(DesktopSettings).Assembly;
+        vSettings.Overlay(ReadResource(vAssembly, TemplateResource));
+        vSettings.Overlay(ReadResource(vAssembly, SettingsResource));
+        return vSettings;
+    }
+
+    /// <summary>The settings as flat <c>Desktop:Key</c> pairs, for <c>IConfiguration</c>.</summary>
+    /// <returns>The pairs.</returns>
+    public IEnumerable<KeyValuePair<string, string?>> ToConfiguration() => new[]
+    {
+        new KeyValuePair<string, string?>($"{SectionName}:DevRole", DevRole),
+        new KeyValuePair<string, string?>($"{SectionName}:DevStartPath", DevStartPath)
+    };
+
+    /// <summary>Applies one settings file's <c>Desktop</c> section; blank values keep what is already set.</summary>
+    /// <param name="aJson">The file content, or null when the file is absent.</param>
+    public void Overlay(string? aJson)
+    {
+        if (string.IsNullOrWhiteSpace(aJson))
+        {
+            return;
+        }
+
+        using var vDocument = JsonDocument.Parse(aJson, new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true });
+        if (!vDocument.RootElement.TryGetProperty(SectionName, out var vSection) || vSection.ValueKind != JsonValueKind.Object)
+        {
+            return;
+        }
+
+        DevRole = Read(vSection, "DevRole") ?? DevRole;
+        DevStartPath = Read(vSection, "DevStartPath") ?? DevStartPath;
+    }
+
+    private static string? Read(JsonElement aSection, string aKey)
+        => aSection.TryGetProperty(aKey, out var vValue) && vValue.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(vValue.GetString())
+            ? vValue.GetString()!.Trim()
+            : null;
+
+    private static string? ReadResource(Assembly aAssembly, string aName)
+    {
+        using var vStream = aAssembly.GetManifestResourceStream(aName);
+        if (vStream is null)
+        {
+            return null;
+        }
+
+        using var vReader = new StreamReader(vStream);
+        return vReader.ReadToEnd();
+    }
+}

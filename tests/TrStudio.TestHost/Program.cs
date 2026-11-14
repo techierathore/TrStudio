@@ -38,8 +38,14 @@ if (string.IsNullOrWhiteSpace(vDataFolder))
 var vVerifyFolder = TestHostSettings.FindVerifyFolder(vBuilder.Environment.ContentRootPath);
 var vFileSignIn = TestHostSettings.SignInFor(vBuilder.Configuration["TestHost:SignIn"], vVerifyFolder);
 var vSignIn = new SignInModeHolder(vFileSignIn);
+var vFakeAppManager = new FakeAppManager();
 var vHost = EngineHost.Create(new EngineHostOptions
 {
+    // TEST ONLY: the engine's AppManager calls pass a switch that hands them to the stand-in AppManager
+    // while a "Remember me" check runs (mode "fake"); otherwise they go to the network as before.
+    ConfigureServices = aServices => aServices
+        .AddHttpClient<TrStudio.Models.Services.IAppManagerClient, TrStudio.Engine.Infrastructure.Identity.AppManagerClient>()
+        .ConfigurePrimaryHttpMessageHandler(() => new FakeAppManagerSwitch(vFakeAppManager)),
     DataFolder = vDataFolder,
     SignIn = vFileSignIn,
     SignInSource = () => vSignIn.Current,
@@ -72,16 +78,31 @@ vApp.MapPost("/test/session", (string? role, EngineHost aHost) =>
 });
 
 // TEST ONLY: switch what the build's sign-in settings look like: "none" (a build without them),
-// "unreachable" (an id and key, AppManager not reachable) or "file" (the test settings files).
+// "unreachable" (an id and key, AppManager not reachable), "fake" (the test-only stand-in AppManager
+// in FakeAppManager.cs, for the "Remember me" checks) or "file" (the test settings files).
 vApp.MapPost("/test/sign-in-mode", (string? mode) =>
 {
     vSignIn.Current = (mode ?? "file").ToLowerInvariant() switch
     {
         "none" => SignInSettings.None,
         "unreachable" => vFileSignIn.IsConfigured ? vFileSignIn : new SignInSettings("http://127.0.0.1:9/", 1, "test-only-key"),
+        "fake" => new SignInSettings("http://127.0.0.1:9/", 1, "test-only-key"),
         _ => vFileSignIn
     };
+    vFakeAppManager.Active = string.Equals(mode, "fake", StringComparison.OrdinalIgnoreCase);
     return Results.Ok(new { configured = vSignIn.Current.IsConfigured, realSettings = vFileSignIn.IsConfigured });
+});
+
+// TEST ONLY: what the stand-in AppManager saw, and a server-side revoke of every token it issued.
+vApp.MapGet("/test/appmanager", (EngineHost aHost) => Results.Ok(new
+{
+    logins = vFakeAppManager.LoginCount,
+    kept = aHost.RememberedSignIn.HasKept
+}));
+vApp.MapPost("/test/appmanager/revoke", () =>
+{
+    vFakeAppManager.RevokeAll();
+    return Results.NoContent();
 });
 
 vApp.MapStaticAssets();

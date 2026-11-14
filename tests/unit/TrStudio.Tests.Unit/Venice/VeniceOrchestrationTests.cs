@@ -68,7 +68,7 @@ public sealed class VeniceOrchestrationTests : IDisposable
             .Returns(aCall => new SpendGuardResult(9.9m, 10m, 9.9m + aCall.Arg<decimal>(), aWouldExceed, aWouldExceed, aWouldExceed ? "Over the monthly cap." : null));
 
     /// <summary>REQ-FN-083: a prompt that trips a safety floor is refused with ZERO HTTP calls to Venice.</summary>
-    [Theory]
+    [Theory(DisplayName = "REQ-FN-083 TrippedSafetyFloorMakesNoVeniceCall")]
     [InlineData(GenerationTaskType.TextToImage)]
     [InlineData(GenerationTaskType.TextToVideo)]
     public async Task TrippedSafetyFloorMakesNoVeniceCall(GenerationTaskType aTask)
@@ -105,7 +105,7 @@ public sealed class VeniceOrchestrationTests : IDisposable
     }
 
     /// <summary>REQ-FN-085: a picture whose listed price would pass the cap is refused; nothing is generated.</summary>
-    [Fact]
+    [Fact(DisplayName = "REQ-FN-085 OverCapPictureIsNeverGenerated")]
     public async Task OverCapPictureIsNeverGenerated()
     {
         var vModel = AddVisible(GenerationTaskType.TextToImage, "test-image-model");
@@ -156,7 +156,7 @@ public sealed class VeniceOrchestrationTests : IDisposable
     }
 
     /// <summary>REQ-NFR-011: with a Venice provider configured, a ComfyUi row still resolves to ComfyUiProvider.</summary>
-    [Fact]
+    [Fact(DisplayName = "REQ-NFR-011 ComfyUiRowStillResolvesToComfyUiProvider")]
     public void ComfyUiRowStillResolvesToComfyUiProvider()
     {
         var vComfy = new ComfyUiProvider(

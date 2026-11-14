@@ -22,7 +22,7 @@ public class VeniceLiveTests
     private readonly ImageProcessor objImages = new();
 
     /// <summary>Text to image returns a picture.</summary>
-    [VeniceLiveFact]
+    [VeniceLiveFact(DisplayName = "REQ-NFR-012 LiveTextToImage")]
     public async Task TextToImage()
     {
         var vConnection = Connection();
@@ -36,7 +36,7 @@ public class VeniceLiveTests
     }
 
     /// <summary>Image to image returns an edited picture.</summary>
-    [VeniceLiveFact]
+    [VeniceLiveFact(DisplayName = "REQ-NFR-012 LiveImageToImage")]
     public async Task ImageToImage()
     {
         var vConnection = Connection();
@@ -50,7 +50,7 @@ public class VeniceLiveTests
     }
 
     /// <summary>A 2x upscale returns a picture twice as wide.</summary>
-    [VeniceLiveFact]
+    [VeniceLiveFact(DisplayName = "REQ-NFR-012 LiveUpscale")]
     public async Task Upscale()
     {
         var vConnection = Connection();
@@ -63,7 +63,7 @@ public class VeniceLiveTests
     }
 
     /// <summary>Text to video: quote, queue, poll, download, complete.</summary>
-    [VeniceLiveFact]
+    [VeniceLiveFact(DisplayName = "REQ-NFR-012 LiveTextToVideo")]
     public async Task TextToVideo()
     {
         var vConnection = Connection();
@@ -73,7 +73,7 @@ public class VeniceLiveTests
     }
 
     /// <summary>Image to video: the start picture goes as a data URL.</summary>
-    [VeniceLiveFact]
+    [VeniceLiveFact(DisplayName = "REQ-NFR-012 LiveImageToVideo")]
     public async Task ImageToVideo()
     {
         var vConnection = Connection();

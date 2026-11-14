@@ -110,6 +110,8 @@ tr.sel td{background:var(--sel)}
 .brandblock .nm{font-size:20px;font-weight:650;letter-spacing:-.2px}
 .brandblock .tg{color:var(--muted);font-size:12.5px}
 .field{margin-bottom:14px}
+.remember{display:flex;align-items:center;gap:8px;margin:2px 0 14px;font-size:13px}
+.remember input{width:16px;height:16px;accent-color:var(--brand,#a855f7)}
 .fieldrow{display:flex;justify-content:space-between;align-items:baseline}
 .fieldrow a{font-size:12px;color:var(--brand-ink);text-decoration:none;font-weight:550}
 .btn.full{width:100%;justify-content:center;padding:10px}
@@ -135,6 +137,8 @@ tr.sel td{background:var(--sel)}
     <div class="alert warn" style="margin-bottom:12px" data-tf-phase="3" data-tf-state="missing-settings" data-testid="alert-missing-sign-in-settings">This copy of TrStudio was built without its sign-in settings, so it cannot sign you in. Download it again or ask the person who built it.</div>
     <div class="alert danger" style="margin-bottom:12px" data-tf-phase="3" data-tf-state="error" data-testid="alert-sign-in-unreachable">The sign-in service (AppManager) cannot be reached. Check your internet connection and try again.</div>
 
+    <div class="alert" style="margin-bottom:12px" data-tf-phase="3" data-tf-state="kept-sign-in-ended" data-testid="alert-kept-sign-in-ended"><b>Please sign in again.</b> Your saved sign-in is no longer accepted by the sign-in service. Please sign in again.</div>
+
     <div class="field">
       <label class="label" for="email">Email</label>
       <input class="input" id="email" type="email" value="owner@studio.example" placeholder="you@studio.com" data-testid="field-email">
@@ -143,6 +147,11 @@ tr.sel td{background:var(--sel)}
     <div class="field">
       <div class="fieldrow"><label class="label" for="pwd">Password</label><a href="forgot-password.html" data-testid="link-forgot-password">Forgot password?</a></div>
       <input class="input" id="pwd" type="password" value="············" placeholder="••••••••" data-testid="field-pwd">
+    </div>
+
+    <div class="remember" data-tf-phase="3" data-testid="remember-me-row">
+      <input type="checkbox" id="remember-me" data-testid="remember-me">
+      <label for="remember-me">Remember me on this computer for 30 days</label>
     </div>
 
     <a class="btn brand full" id="signinBtn" href="avatar-studio.html" data-testid="sign-in">

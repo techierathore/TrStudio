@@ -38,7 +38,7 @@
     {
         <div data-testid="near-cap-alert">
             <Alert Variant="@(objSpend.CapPct >= 95 ? AlertVariant.Danger : AlertVariant.Warning)" AccentBorder="true">
-                <LucideIcon Name="alert-triangle" Size="16" />
+                <LucideIcon Name="triangle-alert" Size="16" />
                 <AlertTitle>Approaching monthly cap</AlertTitle>
                 <AlertDescription>
                     Total spend is at @objSpend.CapPct.ToString("0")% of the @Money(objSpend.MonthlyCap) cap —

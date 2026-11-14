@@ -10,4 +10,11 @@ public class LoginRequest
 
     /// <summary>The user's password, RSA-encrypted client-side per the AppManager handshake — never plaintext.</summary>
     public string Password { get; set; } = string.Empty;
+
+    /// <summary>
+    /// "Remember me" (owner decision 6B, BRD-153): when true, the desktop app keeps the AppManager
+    /// refresh token on this computer, protected for this user, and signs in with it on the next open
+    /// for up to 30 days. Never sent to AppManager.
+    /// </summary>
+    public bool RememberMe { get; set; }
 }

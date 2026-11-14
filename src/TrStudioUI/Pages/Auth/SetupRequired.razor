@@ -23,9 +23,8 @@
         <LucideIcon Name="video" Size="30" />
     </div>
 
-    <Badge Variant="BadgeVariant.Outline" Class="mb-3" data-testid="badge-status">
-        <LucideIcon Name="loader" Size="12" Class="mr-1" />
-        Waiting for admin setup
+    <Badge Variant="BadgeVariant.Outline" Class="mb-3 badge-warn" data-testid="badge-status">
+        <span class="dot warn"></span> Waiting for admin setup
     </Badge>
     <h1 class="gate-headline">TrStudio isn't set up yet</h1>
     <p class="gate-copy">
@@ -48,9 +47,8 @@
         else if (objDataFolder is not null)
         {
             <div class="gate-step" data-testid="data-store-status">
-                <Badge Variant="BadgeVariant.Outline" data-testid="badge-store-ready">
-                    <LucideIcon Name="circle-check" Size="12" Class="mr-1" />
-                    Local library ready
+                <Badge Variant="BadgeVariant.Outline" Class="badge-ok" data-testid="badge-store-ready">
+                    <span class="dot ok"></span> Local library ready
                 </Badge>
             </div>
         }

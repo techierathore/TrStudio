@@ -44,7 +44,7 @@ public class VideoModelFilterTests
         Row("venice-img", GenerationTaskType.TextToImage),
     };
 
-    [Fact]
+    [Fact(DisplayName = "REQ-UI-089 TextToVideoListsVeniceRowsBadged")]
     public void TextToVideo_lists_only_enabled_text_to_video_rows_with_Venice_marked()
     {
         var vRows = VideoModelFilter.ForStudio(Catalog, aImageToVideo: false, aCharacterChosen: false);
@@ -54,7 +54,7 @@ public class VideoModelFilterTests
         Assert.True(VideoModelFilter.IsVenice(vRows[1]));
     }
 
-    [Fact]
+    [Fact(DisplayName = "REQ-UI-091 ImageToVideoListsOnlyImageToVideoRows")]
     public void ImageToVideo_lists_only_image_to_video_rows()
     {
         var vRows = VideoModelFilter.ForStudio(Catalog, aImageToVideo: true, aCharacterChosen: false);
@@ -63,7 +63,7 @@ public class VideoModelFilterTests
         Assert.All(vRows, aRow => Assert.Equal(GenerationTaskType.ImageToVideo, aRow.Task));
     }
 
-    [Theory]
+    [Theory(DisplayName = "REQ-UI-092 ChosenCharacterListsOnlyFixedCharacterRows")]
     [InlineData(true, "venice-i2v-char")]
     [InlineData(false, "venice-t2v-char")]
     public void A_chosen_character_lists_only_fixed_character_rows(bool aImageToVideo, string aExpected)
@@ -84,7 +84,7 @@ public class VideoModelFilterTests
         Assert.Null(VideoModelFilter.PickModel("x", Array.Empty<CatalogModelResponse>(), GenerationTier.High));
     }
 
-    [Fact]
+    [Fact(DisplayName = "REQ-FN-081 AllowedValuesFollowThePickedVeniceModel")]
     public void Allowed_values_follow_the_picked_Venice_model()
     {
         var vModel = Row("venice-t2v", GenerationTaskType.TextToVideo,

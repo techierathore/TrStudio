@@ -41,7 +41,7 @@ public class ImageModelFilterTests
     }
 
     /// <summary>A reference picture keeps only rows that take one (REQ-UI-087).</summary>
-    [Fact]
+    [Fact(DisplayName = "REQ-UI-087 ReferencePictureKeepsOnlyRowsThatTakeOne")]
     public void ReferencePictureKeepsOnlyRowsThatTakeOne()
     {
         var vIds = ImageModelFilter.Filter(Catalog(), true, false).Select(aRow => aRow.Id).ToArray();
@@ -50,7 +50,7 @@ public class ImageModelFilterTests
     }
 
     /// <summary>A drawn mask shows no Venice row (REQ-UI-088).</summary>
-    [Fact]
+    [Fact(DisplayName = "REQ-UI-088 MaskHidesEveryVeniceRow")]
     public void MaskHidesEveryVeniceRow()
     {
         var vRows = ImageModelFilter.Filter(Catalog(), false, true);
@@ -79,7 +79,7 @@ public class ImageModelFilterTests
     }
 
     /// <summary>Venice rows read "Name — Cloud · Venice"; others keep their own name (REQ-UI-085).</summary>
-    [Fact]
+    [Fact(DisplayName = "REQ-UI-085 OptionLabelBadgesVeniceRows")]
     public void OptionLabelBadgesVeniceRows()
     {
         Assert.Equal("z-image — Cloud · Venice", ImageModelFilter.OptionLabel(Catalog()[2]));
@@ -106,7 +106,7 @@ public class ImageModelFilterTests
         Assert.Equal(aExpected, ImageModelFilter.ScaleOf(aLabel));
 
     /// <summary>A 402 SPEND_CAP_EXCEEDED is the over-cap alert (REQ-FN-085).</summary>
-    [Fact]
+    [Fact(DisplayName = "REQ-FN-085 OverCapShowsTheOverCapAlert")]
     public void OverCapIsClassifiedAsOverCap()
     {
         var vFailure = ImageModelFilter.ClassifySubmitFailure(402, "SPEND_CAP_EXCEEDED", "Monthly cap of $20 reached.");
@@ -116,7 +116,7 @@ public class ImageModelFilterTests
     }
 
     /// <summary>A 502 PROVIDER_FAILED keeps Venice's own text word for word (BRD-113).</summary>
-    [Fact]
+    [Fact(DisplayName = "REQ-UI-095 FailureAlertKeepsVeniceTextVerbatim")]
     public void ProviderFailureKeepsVeniceTextVerbatim()
     {
         const string vText = "Venice: Insufficient balance (HTTP 402 INSUFFICIENT_BALANCE)";

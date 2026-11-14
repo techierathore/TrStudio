@@ -124,13 +124,13 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
     <div class="subtitle">Rendered 2026-11-14 &middot; source <code>PROJECT-STATUS.md</code></div>
     <div class="cta-next" style="padding:20px; background:var(--cta-bg); border:2px solid var(--accent); border-radius:10px; margin:20px 0;">
       <div style="font-size:11px; color:var(--muted); letter-spacing:.5px;">NEXT COMMAND TO RUN</div>
-      <div style="font-family:var(--mono); font-size:18px; margin-top:6px;">/TechieFlow:agents:flow-master *build-phase TrStudio</div>
+      <div style="font-family:var(--mono); font-size:18px; margin-top:6px;">/TechieFlow:agents:verifier *verify functional TrStudio --phase 1</div>
     </div>
 <table>
 <tbody>
 <tr><th>project</th><td>TrStudio</td></tr>
 <tr><th>last_updated</th><td>2026-11-14</td></tr>
-<tr><th>current_phase</th><td>Phase 3 of 3 (One desktop app with the engine inside) · Build — 2 not built, 26 of 29 verified</td></tr>
+<tr><th>current_phase</th><td>Phase 3 of 3 (One desktop app, Mac first) · Verify — 33 of 34 verified</td></tr>
 <tr><th>last_verified_build</th><td>PASS</td></tr>
 <tr><th>last_verified_date</th><td>2026-11-14</td></tr>
 </tbody>
@@ -149,13 +149,13 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
       </ol>
     </div>
 <h2 id="where-i-am">Where I am<a class="anchor-link" href="#where-i-am">#</a></h2>
-<p>Phase 3 of 3 is built: one desktop app with the engine, SQLite store and job runner inside, AppManager id-and-key sign-in, keys protected by the operating system. 26 of 29 rows Verified; real AppManager sign-in, character-bible vectors and the Windows build wait on the owner. Mac head builds; unit 404 passed, 1 skipped; headless 6 passed, 1 skipped. Phase 1 has 68 rows to re-verify; phase 2 unchanged.</p>
+<p>Phase 3 of 3: the desktop app is <code>src/TrStudio</code>, Mac first; the old web head is deleted. "Remember me" is built and verified. Verified: phase 3 33 of 34, phase 1 74 of 114, phase 2 22 of 31. Unit 489 passed, 18 skipped; headless phase 3 checks 10 passed, 1 skipped. Waiting: AppManager values, a Venice key, TrBlazeUI TR-014, decision 11, and the checks on the real app.</p>
 <h2 id="next-command-to-run">Next command to run<a class="anchor-link" href="#next-command-to-run">#</a></h2>
 <p>Claude Code:</p>
-<pre><code>/TechieFlow:agents:flow-master *build-phase TrStudio</code></pre>
+<pre><code>/TechieFlow:agents:verifier *verify functional TrStudio --phase 1</code></pre>
 <p>OpenCode:</p>
-<pre><code>/flow-master *build-phase TrStudio</code></pre>
-<p>The three open phase-3 rows need the owner first (see Known blockers); then phases 1 and 2 are re-verified on the test host.</p>
+<pre><code>/flow-verifier *verify functional TrStudio --phase 1</code></pre>
+<p>Run it after decision 11's naming run, or once AppManager values or a Venice key are in place.</p>
 <h2 id="open-requirements">Open requirements<a class="anchor-link" href="#open-requirements">#</a></h2>
 <table>
 <thead><tr><th>Status</th><th>Count</th></tr></thead>
@@ -165,32 +165,25 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tr><td>Implemented</td><td>1</td></tr>
 <tr><td>Needs re-verify</td><td>0</td></tr>
 <tr><td>Blocked</td><td>0</td></tr>
-<tr><td>PARTIAL</td><td>2</td></tr>
 </tbody>
 </table>
 <ul>
-<li>[ ] REQ-NFR-022 — One desktop project builds for Windows and Mac (PARTIAL)
-</li>
-<li>[ ] REQ-RAG-007 — Character-bible search runs on the local store through TechieRag (PARTIAL)
-</li>
 <li>[ ] REQ-FN-086 — Sign in through AppManager with the built-in application id and API key (Implemented)
 </li>
 </ul>
 <h2 id="known-blockers">Known blockers<a class="anchor-link" href="#known-blockers">#</a></h2>
 <ul>
-<li>REQ-FN-086: no AppManager id and key on this machine (<code>src/TrStudio.Desktop/appmanager.local.json</code>, <code>tests/verify/testsettings.Local.json</code>); the real sign-in check skips.
+<li>REQ-FN-086 and every real sign-in check: no <code>src/TrStudio/appmanager.local.json</code> on this Mac, so <code>tests/verify/testsettings.Local.json</code> has no AppManager values.
 </li>
-<li>REQ-NFR-022: the Windows head builds only on Windows (its XAML compiler); needs a Windows machine.
+<li>Phase 2 REQ-UI-084, UI-085, UI-086, UI-089, UI-091, UI-096, UI-097, FN-077: blocked by TrBlazeUI TR-014 (a list inside the Add model panel shows no options).
 </li>
-<li>REQ-RAG-007: meaning-based bible search needs an embedding model; none on this machine or in the app (decision 9).
+<li>Phase 2 REQ-NFR-012: the five live Venice tests wait for Venice:ApiKey in <code>tests/integration/TrStudio.Tests.Integration/testsettings.Local.json</code>.
 </li>
-<li>Local ONNX pictures cannot run inside the Mac app: ONNX Runtime has no Mac Catalyst build (decision 10, MISS-TrStudio-20261113-01).
+<li>Phase 1 screens' own mockup control names and design-document routes (REQ-UI-004, REQ-UI-075 red): decision 11, a dedicated run.
 </li>
-<li>The desktop app itself was not opened (screen locked): Keychain unlock key, first start and sign-in need a check on an unlocked Mac.
+<li>Mac Catalyst workload 26.5 against Xcode 27.2: <code>sudo dotnet workload update</code> needs the owner's password.
 </li>
-<li>This Mac: Xcode 27.2 with the 26.5 Catalyst workload (build skips the Xcode check); <code>nuget.config</code> names a missing local source, so new package versions cannot restore.
-</li>
-<li>Ten decisions taken on the owner's behalf are in <code>docs/TrStudio-Decision-Request.md</code>.
+<li>Seven checks on the real desktop app wait for a separate run on an unlocked Mac nobody is using.
 </li>
 </ul>
 <h2 id="verification-log">Verification log<a class="anchor-link" href="#verification-log">#</a></h2>
@@ -198,32 +191,38 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <table>
 <thead><tr><th>Date</th><th>Phase</th><th>Result</th><th>Status table</th></tr></thead>
 <tbody>
-<tr><td>2026-07-07</td><td>verify FN-012, FN-013, FN-015</td><td>3 Blocked to Verified</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
 <tr><td>2026-11-12</td><td>amend-docs</td><td>80/114 Verified</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
 <tr><td>2026-11-12</td><td>build-phase</td><td>0/31 Verified</td><td>docs/TrStudio-P2-Checklist.md#requirements-status</td></tr>
 <tr><td>2026-11-14</td><td>amend-docs</td><td>7/107 Verified, 7 N/A</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
 <tr><td>2026-11-14</td><td>build-phase</td><td>26/29 Verified</td><td>docs/TrStudio-P3-Checklist.md#requirements-status</td></tr>
+<tr><td>2026-11-14</td><td>triage-and-fix</td><td>33/34 Verified, 3 N/A</td><td>docs/TrStudio-P3-Checklist.md#requirements-status</td></tr>
 </tbody>
 </table>
 <h2 id="library-feedback-summary">Library feedback summary<a class="anchor-link" href="#library-feedback-summary">#</a></h2>
 <ul>
+<li>AppManager: 1 open · 0 closed — docs/TrStudio-AppManager-Feedback.md
+</li>
 <li>TechieRag: 5 open · 1 closed — docs/TrStudio-TechieRag-Feedback.md
 </li>
-<li>TrBlazeUI: 1 open · 11 closed — docs/TrStudio-TrBlazeUI-Feedback.md
+<li>TrBlazeUI: 3 open · 11 closed — docs/TrStudio-TrBlazeUI-Feedback.md
 </li>
 </ul>
 <h2 id="standards-compliance">Standards compliance<a class="anchor-link" href="#standards-compliance">#</a></h2>
 <ul>
-<li>Last check 2026-11-14: 0 findings; no provider key from configuration, no environment-variable read, no secret or signing key in the desktop (KeySourceRuleTests).
+<li>Last check 2026-11-14: 0 findings; no environment-variable read in src/ or tests/, and no project, folder or namespace carries a "Desktop" suffix (new rule in the coding standards).
 </li>
 </ul>
 <h2 id="deferred-future"><a id="deferred--future"></a>Deferred / future<a class="anchor-link" href="#deferred-future">#</a></h2>
 <ul>
+<li>Windows (and possibly Linux) build of the desktop app: a later version (REQ-FN-102).
+</li>
+<li>Local ONNX pictures inside the Mac app (REQ-FN-103, decision 10).
+</li>
+<li>A built-in embedding model for character-bible search by meaning (REQ-RAG-008, decision 9).
+</li>
 <li>Could rows behind the MVP: digital twin, multi-shot, clip extension, webhooks, MCP server.
 </li>
-<li>Set aside for the desktop shape (2026-11-14): the API host and its OpenAPI page, the Hangfire dashboard, the SignalR hub, the external REST API seam, the Docker image and hosting, the PostgreSQL settings and scripts.
-</li>
-<li>Later rows: an embedding model inside the app (decision 9); ONNX Runtime for Mac Catalyst (decision 10); remembered sign-in (decision 6B).
+<li>Set aside: the API project and the PostgreSQL scripts, kept on disk for the external REST API row (REQ-FN-069).
 </li>
 </ul>
   </main>

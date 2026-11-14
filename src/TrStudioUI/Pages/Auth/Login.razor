@@ -8,7 +8,9 @@
     Sign-in screen (REQ-UI-001) — centered brand card on the bare EmptyLayout.
     Validates email/password client-side (submit stays disabled until valid), posts to
     the AppManager-backed /api/v1/auth/login, surfaces auth failures in a Danger Alert
-    and routes to the setup-gate-aware role landing on success (BRD-84).
+    and routes to the setup-gate-aware role landing on success (BRD-84). "Remember me" (owner
+    decision 6B, BRD-153 to BRD-157) keeps the sign-in on this computer for 30 days; on open, a kept
+    sign-in is used without asking.
 *@
 
 <PageTitle>TrStudio — Sign in</PageTitle>
@@ -28,7 +30,7 @@
         @* Phase 3 (REQ-UI-098): this build carries no AppManager id or key. *@
         <div data-testid="alert-missing-sign-in-settings">
             <Alert Variant="AlertVariant.Warning" AccentBorder="true" Class="mb-4">
-                <LucideIcon Name="alert-triangle" Size="16" />
+                <LucideIcon Name="triangle-alert" Size="16" />
                 <AlertTitle>Sign-in is not set up in this copy</AlertTitle>
                 <AlertDescription>@objMissingSettings</AlertDescription>
             </Alert>
@@ -47,11 +49,23 @@
         </div>
     }
 
+    @if (objKeptEnded is not null)
+    {
+        @* Owner decision 6B (REQ-FN-101): a kept sign-in ended (30 days, or refused by AppManager). *@
+        <div data-testid="alert-kept-sign-in-ended">
+            <Alert Variant="AlertVariant.Info" AccentBorder="true" Class="mb-4">
+                <LucideIcon Name="clock" Size="16" />
+                <AlertTitle>Please sign in again</AlertTitle>
+                <AlertDescription>@objKeptEnded</AlertDescription>
+            </Alert>
+        </div>
+    }
+
     @if (objError is not null)
     {
         <div data-testid="login-error">
             <Alert Variant="AlertVariant.Danger" AccentBorder="true" Class="mb-4">
-                <LucideIcon Name="alert-circle" Size="16" />
+                <LucideIcon Name="circle-alert" Size="16" />
                 <AlertTitle>Sign-in failed</AlertTitle>
                 <AlertDescription>@objError</AlertDescription>
             </Alert>
@@ -88,6 +102,12 @@
                 }
             </FieldContent>
         </Field>
+    </div>
+
+    @* Owner decision 6B (REQ-FN-099): ticked keeps this sign-in on this computer for 30 days. *@
+    <div class="auth-remember" data-testid="remember-me-row">
+        <Checkbox @bind-Checked="objRememberMe" Id="remember-me" data-testid="remember-me" />
+        <Label For="remember-me">Remember me on this computer for 30 days</Label>
     </div>
 
     <div data-testid="sign-in">
@@ -128,6 +148,8 @@
     private string? objError;
     private string? objMissingSettings;
     private string? objUnreachable;
+    private string? objKeptEnded;
+    private bool objRememberMe;
 
     protected override async Task OnInitializedAsync()
     {
@@ -155,6 +177,53 @@
         }
     }
 
+    /// <summary>
+    /// Owner decision 6B (REQ-FN-100, REQ-FN-101): a sign-in kept with "Remember me" opens the app
+    /// without asking. Runs once, after the first live render: a pre-rendered pass must not use up the
+    /// kept token or show a notice the live pass then loses.
+    /// </summary>
+    protected override async Task OnAfterRenderAsync(bool aFirstRender)
+    {
+        if (!aFirstRender || objMissingSettings is not null)
+        {
+            return;
+        }
+
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vResume = await vClient.PostAsync(ApiRoutes.Auth + "/resume", null);
+            if (vResume.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                var vResumed = await vResume.Content.ReadFromJsonAsync<ResumedLike>();
+                if (vResumed?.Session is not null)
+                {
+                    await AuthSession.SetAsync(vResumed.Session, vResumed.Email);
+                    Navigation.NavigateTo(ResolveLanding(vResumed.Session));
+                    return;
+                }
+            }
+            else if (vResume.StatusCode != System.Net.HttpStatusCode.NoContent)
+            {
+                var (vTitle, vMessage) = await ReadErrorAsync(vResume);
+                if (vTitle == "SIGN_IN_ENDED")
+                {
+                    objKeptEnded = vMessage;
+                }
+                else if (vTitle == "SIGN_IN_UNREACHABLE")
+                {
+                    objUnreachable = vMessage;
+                }
+
+                StateHasChanged();
+            }
+        }
+        catch
+        {
+            // A host without the route keeps the plain sign-in form.
+        }
+    }
+
     /// <summary>Whether the email field holds a syntactically valid address.</summary>
     private bool IsEmailValid =>
         !string.IsNullOrWhiteSpace(objEmail)
@@ -173,6 +242,7 @@
         objSubmitted = true;
         objError = null;
         objUnreachable = null;
+        objKeptEnded = null;
         if (!IsFormValid)
         {
             return;
@@ -182,7 +252,7 @@
         try
         {
             var vClient = HttpClientFactory.CreateClient("TrStudioApi");
-            var vRequest = new LoginRequest { Email = objEmail, Password = objPassword };
+            var vRequest = new LoginRequest { Email = objEmail, Password = objPassword, RememberMe = objRememberMe };
             var vResponse = await vClient.PostAsJsonAsync(ApiRoutes.Auth + "/login", vRequest);
 
             if (vResponse.IsSuccessStatusCode)
@@ -263,6 +333,12 @@
     {
         public bool Configured { get; set; }
         public string? Message { get; set; }
+    }
+
+    private sealed class ResumedLike
+    {
+        public LoginResponse? Session { get; set; }
+        public string? Email { get; set; }
     }
 
     private sealed class ProblemLike

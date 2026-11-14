@@ -134,13 +134,13 @@ public class SignInSettingsTests
     {
         var vRoot = TrStudio.Tests.Unit.Venice.RepoPaths.Root;
         var vIgnore = File.ReadAllText(Path.Combine(vRoot, ".gitignore"));
-        Assert.Contains("src/TrStudio.Desktop/appmanager.local.json", vIgnore);
+        Assert.Contains("src/TrStudio/appmanager.local.json", vIgnore);
 
-        var vProject = File.ReadAllText(Path.Combine(vRoot, "src", "TrStudio.Desktop", "TrStudio.Desktop.csproj"));
-        Assert.Contains("LogicalName=\"TrStudio.Desktop.appmanager.local.json\"", vProject);
-        Assert.Contains("LogicalName=\"TrStudio.Desktop.appmanager.template.json\"", vProject);
+        var vProject = File.ReadAllText(Path.Combine(vRoot, "src", "TrStudio", "TrStudio.csproj"));
+        Assert.Contains("LogicalName=\"TrStudio.appmanager.local.json\"", vProject);
+        Assert.Contains("LogicalName=\"TrStudio.appmanager.template.json\"", vProject);
 
-        using var vTemplate = JsonDocument.Parse(File.ReadAllText(Path.Combine(vRoot, "src", "TrStudio.Desktop", "appmanager.template.json")));
+        using var vTemplate = JsonDocument.Parse(File.ReadAllText(Path.Combine(vRoot, "src", "TrStudio", "appmanager.template.json")));
         var vSection = vTemplate.RootElement.GetProperty("AppManager");
         Assert.Equal(string.Empty, vSection.GetProperty("ApiKey").GetString());
         Assert.Equal(0, vSection.GetProperty("ApplicationId").GetInt32());

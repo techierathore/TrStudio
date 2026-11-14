@@ -18,7 +18,7 @@ public class SettingsSourceRuleTests
     private static readonly string[] SkippedFolders = { "bin", "obj", "node_modules", ".artifacts", "TestResults" };
 
     /// <summary>REQ-NFR-014: no file under tests/ reads an environment variable.</summary>
-    [Fact]
+    [Fact(DisplayName = "REQ-NFR-014 TestsReadNoEnvironmentVariables")]
     public void TestsReadNoEnvironmentVariables()
     {
         var vHits = Scan(Path.Combine(RepoPaths.Root, "tests"), new[] { ".cs", ".ts", ".js" }, EnvironmentReads);
@@ -26,10 +26,10 @@ public class SettingsSourceRuleTests
     }
 
     /// <summary>REQ-NFR-015: the desktop head reads no environment variable and loads section Desktop from appsettings.json.</summary>
-    [Fact]
+    [Fact(DisplayName = "REQ-NFR-015 DesktopReadsSettingsFromFile")]
     public void DesktopReadsSettingsFromFile()
     {
-        var vDesktop = Path.Combine(RepoPaths.Root, "src", "TrStudio.Desktop");
+        var vDesktop = Path.Combine(RepoPaths.Root, "src", "TrStudio");
         var vHits = Scan(vDesktop, new[] { ".cs", ".razor" }, EnvironmentReads);
         Assert.True(vHits.Count == 0, "Environment-variable reads in the desktop head: " + string.Join("; ", vHits));
 
@@ -48,13 +48,13 @@ public class SettingsSourceRuleTests
 
         Assert.DoesNotContain("ApiBaseUrl", vTemplate);
 
-        var vProject = File.ReadAllText(Path.Combine(vDesktop, "TrStudio.Desktop.csproj"));
-        Assert.Contains("TrStudio.Desktop.appsettings.json", vProject);
-        Assert.Contains("TrStudio.Desktop.appsettings.template.json", vProject);
+        var vProject = File.ReadAllText(Path.Combine(vDesktop, "TrStudio.csproj"));
+        Assert.Contains("TrStudio.appsettings.json", vProject);
+        Assert.Contains("TrStudio.appsettings.template.json", vProject);
     }
 
     /// <summary>REQ-FN-078: no appsettings file mentions Venice, and no code or script holds Venice's address.</summary>
-    [Fact]
+    [Fact(DisplayName = "REQ-FN-078 VeniceLivesOnlyInTheDatabase")]
     public void VeniceLivesOnlyInTheDatabase()
     {
         var vSrc = Path.Combine(RepoPaths.Root, "src");

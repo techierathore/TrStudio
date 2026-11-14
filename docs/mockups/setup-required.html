@@ -68,7 +68,7 @@ body{margin:0;font-family:var(--sans);background:var(--wash),var(--bg);color:var
 <body>
 <button id="themeBtn" class="iconbtn" type="button" aria-label="Toggle dark mode" style="position:fixed;top:14px;right:14px;z-index:60" onclick="/* switches light and dark: page script */" data-testid="icon-btn-toggle-dark-mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></button>
 <div class="authwrap">
-  <div class="card gatecard" data-testid="card-trstudio-isn-t-set-up-yet">
+  <div class="card gatecard" data-testid="gate-card"><div data-testid="card-trstudio-isn-t-set-up-yet">
     <div class="logo">TR</div>
 
     <div class="illus">
@@ -89,14 +89,14 @@ body{margin:0;font-family:var(--sans);background:var(--wash),var(--bg);color:var
     </div>
 
     <div class="gatebtns">
-      <a class="btn brand" href="login.html" data-testid="link-sign-in-as-admin">
+      <span data-testid="link-sign-in-as-admin" style="display:inline-flex"><a class="btn brand" href="login.html" data-testid="signin-admin">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>
         Sign in as admin
-      </a>
-      <button class="btn outline" type="button" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-check-again">
+      </a></span>
+      <span data-testid="btn-check-again" style="display:inline-flex"><button class="btn outline" type="button" data-act onclick="/* shows Working then Done: page script */" data-testid="check-again">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
         Check again
-      </button>
+      </button></span>
     </div>
 
     <div class="steps">
@@ -105,7 +105,7 @@ body{margin:0;font-family:var(--sans);background:var(--wash),var(--bg);color:var
       <div class="st"><span class="n">2</span>Install or connect at least one model on that source.</div>
       <div class="st"><span class="n">3</span>The model appears as a registry row — studios unlock automatically for creators.</div>
     </div>
-  </div>
+  </div></div>
 </div>
 <script>
 (function(){
