@@ -111,6 +111,7 @@ tr.sel td{background:var(--sel)}
 .step .body{flex:1;min-width:0}
 .step .t{font-weight:600;font-size:13.5px}
 </style>
+<style data-note="tf-phone-layout: owner decision 13, the app shows the sidebar as a slide-out menu on a phone">@media (max-width:600px){.app{grid-template-columns:1fr}.side[data-testid="sidebar"]{display:none}}</style>
 </head>
 <body>
 <div class="app">
@@ -154,22 +155,22 @@ tr.sel td{background:var(--sel)}
 
   <!-- Capability detection -->
   <div class="grid" style="grid-template-columns:repeat(4,1fr)">
-    <div class="card kpi" data-testid="card-1">
+    <div class="card kpi" data-testid="card-1" data-tf-sample>
       <div class="row"><span class="lbl">GPU cores</span><span class="spacer"></span><span class="badge ok" data-testid="badge-ready">ready</span></div>
       <div class="big">32-core</div>
       <div class="lbl">Apple M4 Max GPU</div>
     </div>
-    <div class="card kpi" data-testid="card-2">
+    <div class="card kpi" data-testid="card-2" data-tf-sample>
       <div class="row"><span class="lbl">Unified memory</span><span class="spacer"></span><span class="badge ok" data-testid="badge-ready-2">ready</span></div>
       <div class="big">36 GB</div>
       <div class="lbl">unified · 31 GB usable</div>
     </div>
-    <div class="card kpi" data-testid="card-3">
+    <div class="card kpi" data-testid="card-3" data-tf-sample>
       <div class="row"><span class="lbl">MPS + CoreML</span><span class="spacer"></span><span class="badge ok" data-testid="badge-ready-3">ready</span></div>
       <div class="big">Enabled</div>
       <div class="lbl">Metal 3 · ANE available</div>
     </div>
-    <div class="card kpi" data-testid="card-4">
+    <div class="card kpi" data-testid="card-4" data-tf-sample>
       <div class="row"><span class="lbl">Disk free</span><span class="spacer"></span><span class="badge warn" data-testid="badge-low">low</span></div>
       <div class="big">412 GB</div>
       <div class="prog" style="margin:4px 0 4px" data-testid="progress"><i style="width:80%"></i></div>

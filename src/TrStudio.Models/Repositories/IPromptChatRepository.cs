@@ -71,11 +71,13 @@ public interface IPromptChatRepository
     Task<IReadOnlyList<PromptChatMessage>> ListMessagesAsync(Guid aSessionId, string aUserId, CancellationToken aCancellationToken = default);
 
     /// <summary>
-    /// Bumps a session's <c>"UpdatedUtc"</c> to now, owner-filtered (called after appending a turn).
+    /// Bumps a session's <c>"UpdatedUtc"</c> to now and adds the turn's tokens to its running count,
+    /// owner-filtered (called after appending a turn).
     /// </summary>
     /// <param name="aSessionId">The session identifier.</param>
     /// <param name="aUserId">The owning AppManager user id (owner filter, BRD-81).</param>
+    /// <param name="aTokens">Input + output tokens the turn's completion used.</param>
     /// <param name="aCancellationToken">Token to cancel the operation.</param>
     /// <returns>A task completing when the row is touched.</returns>
-    Task TouchSessionAsync(Guid aSessionId, string aUserId, CancellationToken aCancellationToken = default);
+    Task TouchSessionAsync(Guid aSessionId, string aUserId, int aTokens = 0, CancellationToken aCancellationToken = default);
 }

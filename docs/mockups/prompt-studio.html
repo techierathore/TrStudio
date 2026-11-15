@@ -114,6 +114,7 @@ body{margin:0;font-family:var(--sans);background:var(--wash),var(--bg);color:var
   .msg{max-width:92%}
 }
 </style>
+<style data-note="tf-phone-layout: owner decision 13, the app shows the sidebar as a slide-out menu on a phone">@media (max-width:600px){.app{grid-template-columns:1fr}.side[data-testid="sidebar"]{display:none}}</style>
 </head>
 <body>
 <div class="app">
@@ -187,7 +188,7 @@ body{margin:0;font-family:var(--sans);background:var(--wash),var(--bg);color:var
       <div class="thread">
         <div class="msg user">
           <div class="who">You</div>
-          <div class="attachthumb"><span class="ph"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg></span>kavya-portrait-raw.jpg · 2.1 MB</div>
+          <div class="attachthumb" data-tf-sample><span class="ph"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg></span>kavya-portrait-raw.jpg · 2.1 MB</div>
           I want to edit this photograph: keep the person exactly as she is, but change the background to a warm Diwali evening with diyas and marigold garlands, and make the lighting match. What would be the most accurate prompt for an SDXL inpaint model?
         </div>
 
@@ -208,7 +209,7 @@ body{margin:0;font-family:var(--sans);background:var(--wash),var(--bg);color:var
           Perfect. Can you also give me a version tuned for the FLUX.1 model instead?
         </div>
 
-        <div class="msg assistant">
+        <div class="msg assistant" data-tf-state="sending">
           <div class="who">GPT-4o</div>
           <span class="typing"><i></i><i></i><i></i></span>
         </div>

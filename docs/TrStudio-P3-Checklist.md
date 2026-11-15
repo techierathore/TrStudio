@@ -14,7 +14,7 @@ Phase 3 makes TrStudio one desktop app, Mac first (Windows in a later version): 
 
 | ID | Requirement | Status | % | Remarks | Details |
 |----|-------------|--------|---|---------|---------|
-| REQ-FN-086 | Sign in through AppManager with the built-in application id and API key | Implemented | 75% | 2026-11-14 verify: not measured — 1 unit test(s) named REQ-FN-086 passed but do not count while its on-app test was skipped: skipped: Skipped: AppManager id and key not set in tests/verify/testsettings.Local.json (AppManager:BaseUrl, ApplicationId, ApiKey) on this machine. | [view](#d-req-fn-086) |
+| REQ-FN-086 | Sign in through AppManager with the built-in application id and API key | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-FN-086 real sign-in through AppManager` | [view](#d-req-fn-086) |
 | REQ-FN-087 | Register through AppManager with the same id and key | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-087 RegisterSendsAppIdAndKeyAndNoSecret` | [view](#d-req-fn-087) |
 | REQ-UI-098 | A build without its sign-in settings says so instead of failing | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-UI-098 missing sign-in settings` | [view](#d-req-ui-098) |
 | REQ-UI-099 | An unreachable sign-in service is reported in plain words | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-UI-099 sign-in service unreachable` | [view](#d-req-ui-099) |
@@ -51,6 +51,7 @@ Phase 3 makes TrStudio one desktop app, Mac first (Windows in a later version): 
 | REQ-FN-102 | The desktop project builds and runs on Windows | N/A | 0% | deferred 2026-11-14 (later version): TrStudio is Mac first; the Windows head stays in the project and no first-version row waits on a Windows machine. | [view](#d-req-fn-102) |
 | REQ-FN-103 | Local ONNX pictures run inside the Mac app | N/A | 0% | deferred 2026-11-14 (later version, owner decision 10A): ONNX Runtime ships no Mac Catalyst build; Mac pictures come from ComfyUI, RunPod or Venice. | [view](#d-req-fn-103) |
 | REQ-RAG-008 | Character-bible search by meaning with an embedding model built into the app | N/A | 0% | deferred 2026-11-14 (later version, owner decision 9A): word matching now; a built-in embedding model later. | [view](#d-req-rag-008) |
+| REQ-FN-104 | Zoom keeps the Mac app's screens laid out to the window | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-FN-104 Mac zoom uses CSS zoom and --tr-zoom, never WKWeb` | [d](#d-req-fn-104) |
 
 **Status values:** `Not Started` · `In Progress` · `Implemented` · `Verified` · `Done (pre-existing)` · `Needs re-verify` · `PARTIAL` · `FAIL` · `Blocked` · `Owner-UAT` · `N/A`.
 
@@ -100,6 +101,9 @@ Phase 3 makes TrStudio one desktop app, Mac first (Windows in a later version): 
 - **REQ-UI-106** — Signing out always removes what was kept. *BRD:* BRD-157 · *Mockup:* mockups/login.html
   - *Acceptance:* When a signed-in user signs out and lands on Login, then the kept sign-in is removed and the next open shows Login.
   - *Check:* unit `RememberMeTests.SignOutRemovesTheKeptSignIn`; headless `p3-remember-me.spec.ts` "signed out: a second open asks for sign-in".
+
+- <a id="d-req-fn-104"></a> **REQ-FN-104** (BRD-pending) Zoom keeps the Mac app's screens laid out to the window
+  - *Acceptance:* When the Mac app opens Login at the saved zoom, then the card sits in the middle of the window and Cmd+= and Cmd+- change its size
 
 ## Page: Register
 
@@ -260,4 +264,3 @@ Phase 3 makes TrStudio one desktop app, Mac first (Windows in a later version): 
 <a id="d-req-rag-008"></a>
 - **REQ-RAG-008** — Character-bible search by meaning with an embedding model built into the app. *BRD:* BRD-160 · *Mockup:* mockups/character-library.html
   - *Acceptance:* When a creator searches a character's bible on Character library by meaning, then notes matching the meaning come back without Ollama.
-

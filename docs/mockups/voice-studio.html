@@ -121,6 +121,7 @@ tr.sel td{background:var(--sel)}
 .wave>span.played{background:var(--brand)}
 .dropzone{aspect-ratio:auto;height:84px;flex-direction:column;gap:5px;border:1px dashed var(--border);background:var(--hover);cursor:pointer}
 </style>
+<style data-note="tf-phone-layout: owner decision 13, the app shows the sidebar as a slide-out menu on a phone">@media (max-width:600px){.app{grid-template-columns:1fr}.side[data-testid="sidebar"]{display:none}}</style>
 </head>
 <body>
 <div class="app">
@@ -248,7 +249,7 @@ tr.sel td{background:var(--sel)}
             </div>
           </div>
 
-          <div class="card" data-testid="card-generating-preview">
+          <div class="card" data-tf-state="previewing" data-testid="card-generating-preview">
             <h3>Generating preview</h3>
             <div class="muted" style="margin-bottom:6px;font-size:12.5px">Synthesizing "Ravi (Hindi)" sample…</div>
             <div class="prog" data-testid="progress-2"><i style="width:68%"></i></div>

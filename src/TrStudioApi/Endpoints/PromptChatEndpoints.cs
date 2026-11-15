@@ -262,7 +262,8 @@ public static class PromptChatEndpoints
             CreatedUtc = DateTime.UtcNow
         };
         await aRepository.AddMessageAsync(vAssistantMessage, aCancellationToken);
-        await aRepository.TouchSessionAsync(aSessionId, vUserId, aCancellationToken);
+        var vTurnTokens = Math.Max(0, vResult.InputTokens) + Math.Max(0, vResult.OutputTokens);
+        await aRepository.TouchSessionAsync(aSessionId, vUserId, vTurnTokens, aCancellationToken);
 
         return Results.Ok(new PromptChatPostMessageResponse
         {
@@ -270,7 +271,8 @@ public static class PromptChatEndpoints
             AssistantMessage = ToMessageResponse(vAssistantMessage),
             Rejected = false,
             RejectionReason = null,
-            Degraded = vResult.Degraded
+            Degraded = vResult.Degraded,
+            SessionTokens = vSession.Tokens + vTurnTokens
         });
     }
 
@@ -279,7 +281,8 @@ public static class PromptChatEndpoints
         SessionId = aSession.SessionId,
         Title = aSession.Title,
         ModelId = aSession.ModelId,
-        UpdatedUtc = aSession.UpdatedUtc
+        UpdatedUtc = aSession.UpdatedUtc,
+        Tokens = aSession.Tokens
     };
 
     private static PromptChatMessageResponse ToMessageResponse(PromptChatMessage aMessage) => new()

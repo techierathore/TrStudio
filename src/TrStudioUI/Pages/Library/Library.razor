@@ -6,7 +6,7 @@
 
 @*
     Library (REQ-UI-053). Reusable prompts, scripts and style/voice presets — save once from any
-    studio, reuse everywhere; private per user. A search + type segmented Tabs (All / Prompts /
+    studio, reuse everywhere; private per user. A search + type segmented buttons (All / Prompts /
     Scripts / Style presets / Voice presets) filter a preset Card grid; each card carries a type tag,
     a clamped snippet or param summary, tag Badges, a use-count, and "Use in {Studio}" (routes to the
     right studio with the preset applied) + Edit. "New preset" and Edit open a Sheet form. Per-user:
@@ -33,20 +33,20 @@
 
 <div class="lib-toolbar" data-testid="library-toolbar">
     <div class="lib-search">
-        <Input @bind-Value="objSearch" @bind-Value:after="StateHasChanged" Placeholder="Search prompts, scripts, presets…" />
+        <Input @bind-Value="objSearch" @bind-Value:after="StateHasChanged" Placeholder="Search prompts, scripts, presets…" data-testid="field-search-prompts-scripts-p" />
     </div>
     <div class="lib-tabscroll">
-        <Tabs @bind-Value="objTypeTab" @bind-Value:after="StateHasChanged">
-            <TabsList>
-                @foreach (var vTab in objTabs)
-                {
-                    <TabsTrigger Value="@vTab.Key">@vTab.Value</TabsTrigger>
-                }
-            </TabsList>
-        </Tabs>
+        <div class="lib-seg" role="group" aria-label="Preset type">
+            @foreach (var vTab in objTabs)
+            {
+                var vKey = vTab.Key;
+                <button type="button" class="@(objTypeTab == vKey ? "active" : null)" aria-pressed="@(objTypeTab == vKey ? "true" : "false")"
+                        @onclick="@(() => objTypeTab = vKey)" data-testid="@($"btn-{Slug(vTab.Value)}")">@vTab.Value</button>
+            }
+        </div>
     </div>
     <div class="grow"></div>
-    <Button OnClick="@(() => OpenEditor(null))" data-testid="new-preset-btn">
+    <Button OnClick="@(() => OpenEditor(null))" data-testid="btn-new-preset">
         <LucideIcon Name="plus" Size="14" />
         New preset
     </Button>
@@ -67,19 +67,22 @@
 }
 else if (Filtered.Count == 0)
 {
-    <Card Class="emptystate" data-testid="library-empty">
+    <Card Class="emptystate" data-testid="card-no-presets-yet">
         <div class="emptyicon"><LucideIcon Name="book-open" Size="22" /></div>
         <h3 style="margin:0 0 4px">No presets yet</h3>
         <div class="muted-sm" style="margin-bottom:14px">Save a prompt from any studio composer, a script from the Avatar studio, or a voice/style setup — it lands here for reuse.</div>
-        <Button OnClick="@(() => Navigation.NavigateTo("/image"))">Go to Image Studio</Button>
+        <a class="lib-go-link" href="/image" data-testid="link-go-to-image-studio">Go to Image Studio</a>
     </Card>
 }
 else
 {
+    var vShown = Filtered;
+    var vIds = ControlNames(vShown);
     <div class="lib-presets" data-testid="preset-grid">
-        @foreach (var vPreset in Filtered)
+        @foreach (var vPreset in vShown)
         {
-            <Card Class="lib-preset" @key="vPreset.PresetId">
+            var vNames = vIds[vPreset.PresetId];
+            <Card Class="lib-preset" @key="vPreset.PresetId" data-testid="@vNames.Card">
                 <div class="lib-preset-head">
                     <span class="lib-typetag lib-typetag-@vPreset.Type">@vPreset.TypeLabel</span>
                     <div class="lib-preset-t" title="@vPreset.Name">@vPreset.Name</div>
@@ -101,14 +104,14 @@ else
                     <div class="lib-snippet">@vPreset.Snippet</div>
                 }
                 <div class="lib-tags">
-                    @foreach (var vTag in vPreset.Tags)
+                    @foreach (var (vTag, vTagName) in vPreset.Tags.Zip(vNames.Badges))
                     {
-                        <Badge Variant="BadgeVariant.Outline">@vTag</Badge>
+                        <Badge Variant="BadgeVariant.Outline" Class="@TagTone(vTag)" data-testid="@vTagName">@vTag</Badge>
                     }
                 </div>
                 <div class="lib-preset-acts">
-                    <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => UsePreset(vPreset))">Use in @vPreset.StudioName</Button>
-                    <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => OpenEditor(vPreset))">Edit</Button>
+                    <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" Class="lib-act" OnClick="@(() => UsePreset(vPreset))" data-testid="@vNames.Use">Use in @vPreset.StudioName</Button>
+                    <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" Class="lib-act" OnClick="@(() => OpenEditor(vPreset))" data-testid="@vNames.Edit">Edit</Button>
                     <span class="lib-usecount">used @vPreset.UseCount×</span>
                 </div>
             </Card>
@@ -118,7 +121,7 @@ else
 </div>
 
 @*
-    Mobile reflow (REQ-UI-053). At 390px the toolbar's filter Tabs strip and the preset Card grid
+    Mobile reflow (REQ-UI-053). At 390px the toolbar's filter button strip and the preset Card grid
     (.lib-presets) pushed the page body past the viewport (~483px). The tab strip now scrolls inside
     its own .lib-tabscroll box (never widening the page), the preset grid collapses to a single column
     at ≤430px, and the page's direct children may shrink (min-width:0). Desktop is unchanged — the
@@ -133,6 +136,72 @@ else
         max-width: 100%;
         overflow-x: auto;
         min-width: 0;
+    }
+
+    .library-page .lib-seg {
+        display: inline-flex;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        overflow: hidden;
+        background: var(--card);
+    }
+
+    .library-page .lib-seg button {
+        border: none;
+        background: transparent;
+        color: var(--foreground);
+        padding: 8px 14px;
+        cursor: pointer;
+        font-size: 13px;
+        font-family: inherit;
+        white-space: nowrap;
+        border-right: 1px solid var(--border);
+    }
+
+    .library-page .lib-seg button:last-child {
+        border-right: none;
+    }
+
+    .library-page .lib-seg button.active {
+        background: var(--brand-soft);
+        color: var(--brand-ink);
+        font-weight: 600;
+    }
+
+    .library-page .lib-act {
+        height: auto;
+        padding: 5px 10px;
+        font-size: 12px;
+        line-height: 1.4;
+        white-space: nowrap;
+    }
+
+    .library-page .lib-typetag-script {
+        background: var(--alert-success-bg);
+        color: var(--alert-success-foreground);
+    }
+
+    .library-page .lib-typetag-style {
+        background: var(--alert-warning-bg);
+        color: var(--alert-warning-foreground);
+    }
+
+    .library-page .lib-tags .badge-ok {
+        background: var(--alert-success-bg);
+        color: var(--alert-success-foreground);
+    }
+
+    .library-page .lib-go-link {
+        display: inline-flex;
+        align-items: center;
+        height: 36px;
+        padding: 0 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        background: var(--primary);
+        color: var(--primary-foreground);
     }
 
     @@media (max-width: 430px) {
@@ -391,6 +460,53 @@ else
         "voice-preset" => "voice",
         _ => aType,
     };
+
+    /// <summary>The control names of one shown preset card (the mockup's names, in screen order).</summary>
+    private sealed record CardNames(string Card, List<string> Badges, string Use, string Edit);
+
+    /// <summary>
+    /// Names each shown card's parts as the mockup does: <c>card-1</c>…, <c>badge-</c> and the tag's
+    /// words (cut at 30 characters), <c>btn-use-in-…</c> and <c>btn-edit</c>, with <c>-2</c>, <c>-3</c>,
+    /// … on repeats in screen order.
+    /// </summary>
+    private static Dictionary<Guid, CardNames> ControlNames(List<PresetView> aShown)
+    {
+        var vSeen = new Dictionary<string, int>();
+        string Next(string aBase)
+        {
+            aBase = aBase.Length > 30 ? aBase[..30].TrimEnd('-') : aBase;
+            vSeen[aBase] = vSeen.TryGetValue(aBase, out var vCount) ? vCount + 1 : 1;
+            return vSeen[aBase] == 1 ? aBase : $"{aBase}-{vSeen[aBase]}";
+        }
+
+        var vNames = new Dictionary<Guid, CardNames>();
+        for (var vIndex = 0; vIndex < aShown.Count; vIndex++)
+        {
+            var vPreset = aShown[vIndex];
+            vNames[vPreset.PresetId] = new CardNames(
+                $"card-{vIndex + 1}",
+                vPreset.Tags.Select(aTag => Next($"badge-{Slug(aTag)}")).ToList(),
+                Next($"btn-{Slug($"use in {vPreset.StudioName}")}"),
+                Next("btn-edit"));
+        }
+
+        return vNames;
+    }
+
+    /// <summary>
+    /// The tone of a tag that states a voice preset's standing: "preset voice" in the brand colour and
+    /// "no consent needed" (preset voices need no consent record) in the positive colour; others plain.
+    /// </summary>
+    private static string? TagTone(string aTag) => aTag.Trim().ToLowerInvariant() switch
+    {
+        "preset voice" => "badge-brand",
+        "no consent needed" => "badge-ok",
+        _ => null,
+    };
+
+    /// <summary>Lower-case dash form of a text for control names ("FLUX.1" → "flux-1").</summary>
+    private static string Slug(string aText) =>
+        System.Text.RegularExpressions.Regex.Replace(aText.ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
 
     /// <summary>A reusable Library preset (prompt/script/style/voice) with its reuse routing.</summary>
     private sealed record PresetView(Guid PresetId, string Name, string Type, string Snippet, List<string> Tags, int UseCount)

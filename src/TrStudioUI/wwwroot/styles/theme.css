@@ -58,6 +58,15 @@
     /* Text on a status tint: darker than the tint colour so it reads at 3:1 or better in light mode */
     --alert-success-ink: oklch(0.5274 0.1371 150.07); /* #15803d */
     --alert-warning-ink: oklch(0.5553 0.1455 48.998); /* #b45309 */
+    /* Status tints and their text, as the mockups' ok / warn / danger / brand tokens draw them */
+    --alert-success-bg: #f0fdf4;
+    --alert-success-foreground: #166534;
+    --alert-warning-bg: #fffbeb;
+    --alert-warning-foreground: #92400e;
+    --alert-danger-bg: #fef2f2;
+    --alert-danger-foreground: #991b1b;
+    --alert-info-bg: var(--brand-soft);
+    --alert-info-foreground: var(--brand-ink);
 
     /* Chart colors (brand-led ramp) */
     --chart-1: var(--brand);
@@ -115,6 +124,14 @@
     --alert-success-ink: var(--alert-success);
     --alert-warning-ink: var(--alert-warning);
     --alert-danger: oklch(0.7106 0.1661 22.22);   /* #f87171 */
+    --alert-success-bg: #0a2e1a;
+    --alert-success-foreground: #86efac;
+    --alert-warning-bg: #33210a;
+    --alert-warning-foreground: #fcd34d;
+    --alert-danger-bg: #391111;
+    --alert-danger-foreground: #fca5a5;
+    --alert-info-bg: var(--brand-soft);
+    --alert-info-foreground: var(--brand-ink);
 
     --chart-1: var(--brand);
     --chart-2: var(--brand-2);

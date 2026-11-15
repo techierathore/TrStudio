@@ -4,7 +4,7 @@
 |---|---|
 | App | TrStudio |
 | Written | 2026-11-14 |
-| Waiting on | 1 new decision (11), taken with my recommended answer so the run could finish. You answered decisions 1 to 10 on 14 Nov 2026: A for 1 to 5, 7, 9 and 10; B for 6 ("Remember me"); 8 as written below. |
+| Waiting on | 2 new decisions (12 and 13), taken with my recommended answer so the night run of 15 Nov 2026 could go on. Decision 11 you confirmed as A. You answered decisions 1 to 10 on 14 Nov 2026: A for 1 to 5, 7, 9 and 10; B for 6 ("Remember me"); 8 as written below. |
 
 ## What happened
 
@@ -151,6 +151,32 @@ Re-checking phase 1 on the test host, the screen checker compares each screen wi
 
 **Taken in this run (14 Nov 2026): A.** Paste the block below to confirm, or ask for B.
 
+### 12. Marking the mockup parts that belong to a later moment of a screen
+
+Decision 11's run names each screen's controls after its mockup. Some mockups draw, on the same page, things that only appear after an action — Forgot password's "the reset link is on its way" notice is the plainest. The screen checker expects every named part on the first view, so those parts can never match until the mockup says they belong to a later moment. The checker already reads a mark for this (`data-tf-state="…"`, and `data-tf-sample` for sample rows), which Login's mockup already uses.
+
+| Option | What happens | What it costs |
+|---|---|---|
+| **A — add the mark to those parts of the older mockups** | Only the attribute is added; nothing the mockup draws changes. Each screen's notes say which parts got it. | A small change to the approved mockups' markup. |
+| **B — leave the mockups untouched** | Those parts stay unmatched and those screens stay red on the mockup check. | Several screens can never pass. |
+
+**My recommendation: A.**
+
+**Taken in this run (15 Nov 2026): A.** Paste the block below to confirm, or ask for B and the marks are taken out.
+
+### 13. The sidebar on a phone-width window
+
+The 18 screens with the app's sidebar have mockups drawn only for a wide window: at phone width they still draw the 248-pixel sidebar beside the page. The app, at phone width, folds the sidebar into a menu behind the button in the top bar. So every one of those screens failed the phone-width check on the sidebar's names.
+
+| Option | What happens | What it costs |
+|---|---|---|
+| **A — the mockups show the app's phone behaviour** | One style rule in each of the 18 mockups hides the sidebar below 600 pixels wide; the wide drawing is unchanged. | A small change to the approved mockups. |
+| **B — the app keeps the sidebar on a phone** | The app always shows a fixed sidebar. | On a phone the page is left about 140 pixels wide. |
+
+**My recommendation: A.**
+
+**Taken in this run (15 Nov 2026): A** — the rule is marked `tf-phone-layout` in each mockup.
+
 ## What I do when you answer
 
 1. Done on 14 Nov 2026: every answer is in the Architecture decisions log and the phase 3 documents.
@@ -202,4 +228,12 @@ TrStudio: decision 10 — go with option A. ComfyUI, RunPod or Venice for pictur
 
 ```
 TrStudio: decision 11 — go with option A. A dedicated run adds the 18 screens' mockup control names, the design document's routes and the sample-data scripts.
+```
+
+```
+TrStudio: decision 12 — go with option A. Mark the mockup parts that belong to a later moment of a screen; nothing drawn changes.
+```
+
+```
+TrStudio: decision 13 — go with option A. The mockups hide the sidebar at phone width, as the app does.
 ```

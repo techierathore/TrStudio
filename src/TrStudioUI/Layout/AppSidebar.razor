@@ -27,32 +27,29 @@
             </SidebarHeaderInfo>
         </SidebarHeaderContent>
     </SidebarHeader>
-    <SidebarContent>
-        @foreach (var vGroup in Shell.Current.Groups)
-        {
-            <SidebarGroup>
-                <SidebarGroupLabel>@vGroup.Label</SidebarGroupLabel>
-                <SidebarGroupContent>
-                    <SidebarMenu>
-                        @foreach (var vItem in vGroup.Items)
-                        {
-                            <SidebarMenuItem>
-                                <SidebarMenuButton Href="@vItem.Href"
-                                                   Match="NavLinkMatch.All"
-                                                   Tooltip="@vItem.Label"
-                                                   IsActive="@(vItem == objActiveItem)"
-                                                   data-testid="@NavTestId(vItem)">
-                                    <LucideIcon Name="@vItem.Icon" Size="16" />
-                                    <span>@vItem.Label</span>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        }
-                    </SidebarMenu>
-                </SidebarGroupContent>
-            </SidebarGroup>
-        }
-    </SidebarContent>
-    <SidebarFooter>
+    @* Each group is its label and its own <nav>, side by side under the sidebar, as the mockups draw it. *@
+    @foreach (var vGroup in Shell.Current.Groups)
+    {
+        <SidebarGroupLabel Class="shell-navgroup">@vGroup.Label</SidebarGroupLabel>
+        <nav class="shell-nav" aria-label="@vGroup.Label">
+            <SidebarMenu>
+                @foreach (var vItem in vGroup.Items)
+                {
+                    <SidebarMenuItem>
+                        <SidebarMenuButton Href="@vItem.Href"
+                                           Match="NavLinkMatch.All"
+                                           Tooltip="@vItem.Label"
+                                           IsActive="@(vItem == objActiveItem)"
+                                           data-testid="@NavTestId(vItem)">
+                            <LucideIcon Name="@vItem.Icon" Size="16" />
+                            <span>@vItem.Label</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                }
+            </SidebarMenu>
+        </nav>
+    }
+    <SidebarFooter Class="shell-sidefoot">
         @if (Shell.CanSwitchSurface)
         {
             @* Named as the mockups name it: the creator surface switches to management and back. *@

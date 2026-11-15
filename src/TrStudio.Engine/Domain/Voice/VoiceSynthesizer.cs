@@ -98,7 +98,7 @@ public class VoiceSynthesizer : IVoiceSynthesizer
         // timing metadata (FN-035) are exercised without a real model.
         var vDuration = SyntheticAudio.EstimateDurationSeconds(aRequest.Text, aRequest.Speed);
         var vBytes = SyntheticAudio.BuildSilentWav(vDuration);
-        var vAsset = await PersistAudioAsync(aRequest, aUserId, vRoute.Model, vBytes, aCancellationToken).ConfigureAwait(false);
+        var vAsset = await PersistAudioAsync(aRequest, aUserId, vRoute.Model, vBytes, vDuration, aCancellationToken).ConfigureAwait(false);
 
         vResponse.Degraded = true;
         vResponse.Mode = "synthetic-dev";
@@ -158,6 +158,7 @@ public class VoiceSynthesizer : IVoiceSynthesizer
         string aUserId,
         string aModel,
         byte[] aBytes,
+        double aDurationSeconds,
         CancellationToken aCancellationToken)
     {
         var vAssetId = Guid.NewGuid();
@@ -178,7 +179,17 @@ public class VoiceSynthesizer : IVoiceSynthesizer
             Width = null,
             Height = null,
             SeedUsed = null,
-            ParamsJson = JsonSerializer.Serialize(new { aRequest.VoiceId, aRequest.Language, aRequest.Emotion, aRequest.Style, aRequest.Speed }),
+            // The spoken text and the clip length go with the clip, so the Voice studio can reopen it.
+            ParamsJson = JsonSerializer.Serialize(new
+            {
+                aRequest.VoiceId,
+                aRequest.Language,
+                aRequest.Emotion,
+                aRequest.Style,
+                aRequest.Speed,
+                aRequest.Text,
+                DurationSeconds = aDurationSeconds
+            }),
             ModelId = aModel,
             ProvenanceJson = JsonSerializer.Serialize(new
             {

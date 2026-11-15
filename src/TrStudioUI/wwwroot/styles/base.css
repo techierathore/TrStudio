@@ -32,6 +32,7 @@ body {
    (span) and state-variant classes (data-[state=checked]:bg-primary) are untouched. */
 button.bg-primary,
 a.bg-primary {
+  background-color: transparent;
   background-image: linear-gradient(135deg, var(--brand), var(--brand-2));
   box-shadow: var(--glow);
   color: #fff;
@@ -46,19 +47,43 @@ a.bg-primary:hover {
    trblazeui's disabled:opacity-50 already provides the reduced opacity. */
 
 /* ---- Active sidebar nav pill: full gradient, white ink (Branding guide) ----
-   Attribute-presence selector on purpose: TrBlazeUI 1.0.7 SidebarMenuButton renders
-   data-active="" (empty) for IsActive=true, so [data-active="true"] never matches
-   (its own data-[active=true]: utilities are dead for the same reason). */
-.peer\/menu-button[data-active],
-.peer\/menu-button[data-active]:hover,
-.peer\/menu-button[data-active]:focus-visible {
+   TrBlazeUI 2.2.x SidebarMenuButton renders data-active="true" / "false", so the match is on
+   "true" (a presence selector painted every item). The library's own active fill is cleared so
+   the gradient alone draws the pill, as the mockups' .nav a.active does. */
+.peer\/menu-button[data-active="true"],
+.peer\/menu-button[data-active="true"]:hover,
+.peer\/menu-button[data-active="true"]:focus-visible {
+  background-color: transparent;
   background-image: linear-gradient(135deg, var(--brand), var(--brand-2));
   color: #fff;
   font-weight: 600;
 }
 
-.peer\/menu-button[data-active] svg {
+.peer\/menu-button[data-active="true"] svg {
   color: #fff;
+}
+
+/* ---- Sidebar groups: a label and its <nav> straight under the sidebar (as the mockups draw it);
+   the footer keeps to the bottom. ---- */
+.shell-navgroup {
+  height: auto;
+  margin: 8px 8px 0;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.shell-nav {
+  padding: 0 8px;
+}
+
+.shell-sidefoot {
+  margin-top: auto;
+  border-top: 1px solid var(--sidebar-border);
+}
+
+/* A page's context badge in the topbar (Avatar Studio's project) is held to one clipped line. */
+.shell-topbar .topbar-project {
+  max-width: 240px;
 }
 
 /* ---- App shell chrome (MainLayout / EmptyLayout) ---- */
@@ -74,6 +99,30 @@ a.bg-primary:hover {
   position: sticky;
   top: 0;
   z-index: 40;
+}
+
+/* A phone-width topbar keeps to the screen: the breadcrumb gives way to the controls. */
+@media (max-width: 640px) {
+  .shell-topbar {
+    gap: 8px;
+    padding: 0 10px;
+  }
+
+  .shell-topbar > nav {
+    display: none;
+  }
+
+  .shell-topbar > * {
+    min-width: 0;
+  }
+
+  .shell-topbar .topbar-project {
+    max-width: none;
+  }
+
+  .shell-topbar .api-status {
+    min-width: 0;
+  }
 }
 
 .shell-topbar-spacer {
@@ -220,6 +269,12 @@ h1:focus {
   background: var(--brand-soft);
   color: var(--brand-ink);
   border-color: var(--brand-bd);
+}
+
+.badge-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
 }
 
 /* ---- Small layout helpers (host CSS — not Tailwind) ---- */
@@ -600,6 +655,115 @@ h1:focus {
   margin-top: 6px;
 }
 
+/* The registry table: the mockup's 9px x 10px cells, 13px text, upper-case 11.5px heads. */
+.registry-table th,
+.registry-table td {
+  padding: 9px 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.registry-table th {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.registry-table td:nth-child(2),
+.registry-table td:nth-child(6) {
+  white-space: normal;
+  min-width: 120px;
+}
+
+.registry-table tr.sel td {
+  background: var(--accent);
+}
+
+.registry-table th {
+  height: auto;
+}
+
+.registry-row {
+  cursor: pointer;
+}
+
+/* The row's id opens its Edit model sheet (the mockup selects a row by clicking it). */
+.registry-id {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  text-align: left;
+}
+
+.registry-id:hover {
+  color: var(--foreground);
+  text-decoration: underline;
+}
+
+/* The registry's mockup tones, scoped to the page (like .models-page) so the shared helpers stay. */
+.registry-page .badge-ok {
+  background: #f0fdf4;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+.dark .registry-page .badge-ok {
+  background: #0a2e1a;
+  color: #86efac;
+  border-color: #1d6a3c;
+}
+
+.registry-page .badge-warn {
+  background: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.dark .registry-page .badge-warn {
+  background: #33210a;
+  color: #fcd34d;
+  border-color: #92400e;
+}
+
+.registry-page .badge-primary {
+  background: #17171f;
+  color: #fafafa;
+  border-color: #17171f;
+}
+
+.dark .registry-page .badge-primary {
+  background: #f2f2f8;
+  color: #14141d;
+  border-color: #f2f2f8;
+}
+
+/* The topbar's search box and + Add model (mockup: a 220px input beside the brand button). */
+.registry-search {
+  max-width: 220px;
+  height: auto;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.registry-add {
+  flex: none;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .registry-search {
+    max-width: 120px;
+    min-width: 0;
+  }
+
+  .registry-add {
+    padding: 6px 10px;
+  }
+}
+
 @media (max-width: 980px) {
   .registry-layout {
     grid-template-columns: 1fr;
@@ -817,7 +981,8 @@ h1:focus {
 }
 
 .asset-meta {
-  padding: 10px 11px 11px;
+  padding: 10px 10px 11px;
+  min-width: 0;
 }
 
 .asset-title {
@@ -887,6 +1052,127 @@ h1:focus {
   align-items: center;
   justify-content: center;
   margin: 0 auto 12px;
+}
+
+/* Gallery tiles: the video play glyph, the audio waveform glyph and the length chip, as the mockup's
+   .playbtn / .wave / .durchip; the List layout; the removable filter chips. */
+.asset-play {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--foreground);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow);
+}
+
+.asset-play svg {
+  fill: currentColor;
+}
+
+.asset-wave {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 34px;
+}
+
+.asset-wave i {
+  width: 4px;
+  border-radius: 2px;
+  background: #c4b5fd;
+  display: block;
+}
+
+.asset-dur {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  border-radius: 6px;
+  padding: 1px 7px;
+  font-size: 10.5px;
+  font-weight: 600;
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.asset-badge {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+}
+
+.asset-acts {
+  flex-wrap: wrap;
+}
+
+/* The closed-API tile badge in the mockup's own warn tones (pale in light, deep amber in dark). */
+.asset-badge.badge-warn {
+  background: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.dark .asset-badge.badge-warn {
+  background: #33210a;
+  color: #fcd34d;
+  border-color: #92400e;
+}
+
+.asset-acts > * {
+  padding: 4px 8px;
+  font-size: 11.5px;
+  white-space: nowrap;
+  height: auto;
+}
+
+.assets-list {
+  grid-template-columns: 1fr;
+}
+
+.assets-list .asset {
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.assets-list .asset-thumb {
+  width: 120px;
+  flex: none;
+}
+
+.assets-list .asset-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.gallery-chip {
+  gap: 4px;
+}
+
+.gallery-chip-x {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: 2px;
+  cursor: pointer;
+  color: var(--muted-foreground);
+  font-weight: 600;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.gallery-clear {
+  font-size: 12px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--muted-foreground);
 }
 
 /* ---- Projects (REQ-UI-051) ---- */
@@ -974,6 +1260,70 @@ h1:focus {
 
 .detailgrid > * {
   min-width: 0;
+}
+
+/* Projects: the detail cards (header, history, run parameters) keep the mockup's 16px card padding. */
+.projlayout .projpanel {
+  padding: 16px;
+  gap: 0;
+}
+
+.projlayout .projpanel .card-h3,
+.projlayout .projpanel button {
+  white-space: nowrap;
+}
+
+.projlayout .projpanel .image-seg > button {
+  font-size: 13px;
+}
+
+/* Projects generation history: the mockup's compact table (13px, 9px 10px cells, selected row tint). */
+.histtable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.histtable th,
+.histtable td {
+  border-bottom: 1px solid var(--border);
+  padding: 9px 10px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.histtable th {
+  color: var(--muted-foreground);
+  font-weight: 600;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+
+.histtable tbody tr {
+  cursor: pointer;
+}
+
+.histtable tbody tr:hover td {
+  background: var(--accent);
+}
+
+.histtable tbody tr.sel td {
+  background: var(--brand-soft, var(--accent));
+}
+
+.histtable button {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 7px;
+  height: auto;
+}
+
+/* Projects: the positive chips (updated, C2PA signed) carry the mockup's solid success tone. */
+.projlayout .badge-ok {
+  background: var(--alert-success-bg);
+  color: var(--alert-success-foreground);
+  border-color: color-mix(in oklch, var(--alert-success) 42%, transparent);
 }
 
 .miniart {
@@ -1109,6 +1459,69 @@ h1:focus {
   }
 }
 
+/* The RunPod & ops mockup's tones (admin-ops.html), scoped to the page like .hw-page / .models-page so
+   the shared .badge-ok / .badge-warn helpers stay as they are: ok / warn / danger badges, the brand-tinted
+   info alert, the progress track with its brand (or warn, near the cap) fill, one-line Reproduce buttons. */
+.ops-page .badge-ok {
+  background: #f0fdf4;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+.dark .ops-page .badge-ok {
+  background: #0a2e1a;
+  color: #86efac;
+  border-color: #1d6a3c;
+}
+
+.ops-page .badge-warn {
+  background: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.dark .ops-page .badge-warn {
+  background: #33210a;
+  color: #fcd34d;
+  border-color: #92400e;
+}
+
+.ops-page .badge-danger {
+  background: #fef2f2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
+.dark .ops-page .badge-danger {
+  background: #391111;
+  color: #fca5a5;
+  border-color: #7f1d1d;
+}
+
+.ops-page .ops-alert-info {
+  background: var(--brand-soft);
+  border-left: 3px solid var(--brand);
+}
+
+.ops-page .ops-prog {
+  height: 8px;
+  margin: 6px 0 4px;
+  background: var(--muted);
+}
+
+.ops-page .ops-warnfill {
+  background: var(--alert-warning);
+}
+
+.ops-page .ops-reproduce {
+  height: auto;
+  padding: 8px 14px;
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: nowrap;
+  flex: none;
+}
+
 /* ---- Admin: Model sources (REQ-UI-074) ---- */
 .src-icon {
   width: 34px;
@@ -1143,6 +1556,111 @@ h1:focus {
   align-items: center;
   flex-wrap: wrap;
   margin-bottom: 14px;
+}
+
+/* The Model Library's mockup tones, scoped to the page (like .hw-page) so the shared helpers stay. */
+.models-page .badge-ok {
+  background: #f0fdf4;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+.dark .models-page .badge-ok {
+  background: #0a2e1a;
+  color: #86efac;
+  border-color: #1d6a3c;
+}
+
+.models-page .badge-warn {
+  background: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.dark .models-page .badge-warn {
+  background: #33210a;
+  color: #fcd34d;
+  border-color: #92400e;
+}
+
+/* Task filter as the mockup's segmented control: square segments, the chosen one brand-tinted. */
+.models-page .models-seg {
+  height: auto;
+  padding: 0;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  overflow: hidden;
+  background: var(--card);
+}
+
+.models-page .models-seg > button {
+  height: auto;
+  padding: 8px 14px;
+  border-radius: 0;
+  border: none;
+  border-right: 1px solid var(--border);
+  box-shadow: none;
+  background: transparent;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.models-page .models-seg > button:last-child {
+  border-right: none;
+}
+
+.models-page .models-seg > button[data-state="active"] {
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.models-page .models-install {
+  height: auto;
+  padding: 8px 14px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.models-page .models-qbtn {
+  height: auto;
+  padding: 5px 10px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.models-page .models-prog {
+  height: 8px;
+  margin: 8px 0 4px;
+  background: var(--muted);
+}
+
+.models-page .models-link {
+  color: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* The results table matches the mockup's compact rows: short cells stay on one line. */
+.models-table th,
+.models-table td {
+  padding: 9px 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.models-table th {
+  font-size: 11.5px;
+}
+
+.models-table td:nth-child(-n+3) {
+  white-space: normal;
+}
+
+.models-table td:first-child {
+  min-width: 150px;
 }
 
 .q-item {
@@ -1246,6 +1764,82 @@ h1:focus {
   cursor: pointer;
 }
 
+.voice-consent-check.is-disabled {
+  color: var(--muted-foreground);
+  cursor: default;
+}
+
+.voice-studio .voice-card {
+  padding: 16px;
+}
+
+/* The voice picker's combobox spans the card, as the mockup's .combo */
+.voice-studio .voice-combo > div {
+  width: 100%;
+}
+
+.voice-studio .voice-combo button[role="combobox"] {
+  width: 100%;
+  justify-content: space-between;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.voice-studio .voice-combo button[role="combobox"] > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Voice picker list, as the mockup's .voicelist / .voiceitem */
+.voicelist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.voiceitem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.voiceitem:hover {
+  background: var(--muted);
+}
+
+.voiceitem.sel {
+  border-color: var(--brand-bd);
+  background: var(--accent);
+}
+
+.voiceitem.is-gated {
+  cursor: default;
+}
+
+/* A gated clone's badge in the mockup's warn tint and text (.badge.warn) */
+.voiceitem .badge-warn {
+  background: var(--alert-warning-bg);
+  color: var(--alert-warning-foreground);
+  border-color: color-mix(in oklch, var(--alert-warning) 42%, transparent);
+}
+
+/* Player and preview progress on the mockup's neutral 8px track (.prog) */
+.voice-studio .voice-prog {
+  height: 8px;
+  background: var(--muted);
+}
+
+.voiceitem .muted-sm {
+  font-size: 12px;
+}
+
 @media (max-width: 1100px) {
   .voice-studio {
     grid-template-columns: 1fr;
@@ -1262,8 +1856,14 @@ h1:focus {
    surface: the owner-only NSFW toggle over an always-locked,
    non-disableable safety-floor list.
    ================================================================ */
-.policy-page {
+/* The page's parts sit directly in the shell content box (no wrapper, as the mockup draws them):
+   each part keeps the narrow 760px column and the .stack rhythm (14px). */
+.policy-part {
   max-width: 760px;
+}
+
+.policy-part + .policy-part {
+  margin-top: 14px;
 }
 
 /* Soft danger badge tone (TrBlazeUI Badge ships no danger outline variant) —
@@ -1356,25 +1956,56 @@ h1:focus {
   font-size: 12px;
 }
 
-.policy-lock-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
+/* A floor's locked-ON toggle (drawn, never interactive — floors have no client-writable state). */
+.policy-lock-toggle {
+  position: relative;
   flex: none;
-  border: 1px solid var(--border);
+  width: 36px;
+  height: 20px;
   border-radius: 999px;
-  padding: 3px 9px;
-  font-size: 11px;
-  font-weight: 550;
-  color: var(--muted-foreground);
-  background: var(--muted);
-  white-space: nowrap;
+  background: var(--brand);
+  opacity: .45;
+  cursor: not-allowed;
 }
 
-@media (max-width: 560px) {
-  .policy-lock-pill span {
-    display: none;
-  }
+.policy-lock-toggle::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 18px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
+}
+
+.policy-part.policy-card {
+  padding: 16px;
+}
+
+.policy-part .badge-warn {
+  background: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.dark .policy-part .badge-warn {
+  background: #33210a;
+  color: #fcd34d;
+  border-color: #92400e;
+}
+
+.policy-part .badge-danger {
+  background: #fef2f2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
+.dark .policy-part .badge-danger {
+  background: #391111;
+  color: #fca5a5;
+  border-color: #7f1d1d;
 }
 
 /* ================================================================
@@ -1390,9 +2021,32 @@ h1:focus {
   margin: 14px 0 16px;
 }
 
-.cmp-slot-select {
-  min-width: 220px;
+.cmp-slot-select,
+.cmp-slotbar select.cmp-slot-select {
+  width: auto;
+  min-width: 250px;
   max-width: 100%;
+  padding-left: 10px;
+  padding-right: 34px;
+  background-position: right 10px center;
+  background-size: 16px;
+}
+
+.cmp-pane {
+  padding: 16px;
+}
+
+.cmp-slot {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.cmp-slot select.cmp-slot-select {
+  min-width: 0;
+  flex: 1 1 250px;
 }
 
 .cmp-slottag {
@@ -1463,8 +2117,8 @@ h1:focus {
   padding: 1px 7px;
   font-size: 10.5px;
   font-weight: 600;
-  background: var(--primary);
-  color: var(--primary-foreground);
+  background: var(--foreground);
+  color: var(--background);
 }
 
 .cmp-pane-title {
@@ -1518,8 +2172,59 @@ h1:focus {
   padding: 1px 7px;
 }
 
-.cmp-alert {
+.cmp-alert.cmp-alert {
   margin-bottom: 8px;
+  border: 1px solid var(--brand-bd);
+  border-left: 3px solid var(--brand);
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+}
+
+.cmp-alert.cmp-alert * {
+  color: var(--brand-ink);
+}
+
+/* Compare: the "provenance ✓" chip carries the mockup's solid success tone (as Projects does). */
+.cmp-badges .badge-ok {
+  background: var(--alert-success-bg);
+  color: var(--alert-success-foreground);
+  border-color: color-mix(in oklch, var(--alert-success) 42%, transparent);
+}
+
+.cmp-acts .cmp-act.cmp-act {
+  height: auto;
+  padding: 5px 10px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.cmp-seg {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  overflow: hidden;
+  background: var(--card);
+}
+
+.cmp-seg button {
+  border: none;
+  background: transparent;
+  color: var(--foreground);
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  border-right: 1px solid var(--border);
+}
+
+.cmp-seg button:last-child {
+  border-right: none;
+}
+
+.cmp-seg button.active {
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  font-weight: 600;
 }
 
 /* ================================================================
@@ -1744,6 +2449,84 @@ h1:focus {
   background-image: linear-gradient(90deg, var(--brand), var(--brand-2));
 }
 
+/* Account cards carry the mockup's 16px card padding; the spend split bar + legend. */
+.acct-card {
+  padding: 16px;
+}
+
+.acct-splitbar {
+  display: flex;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--muted);
+  margin: 8px 0 6px;
+}
+
+.acct-splitbar > i {
+  display: block;
+  height: 100%;
+}
+
+.acct-split-runpod {
+  background-image: linear-gradient(90deg, var(--brand), var(--brand-2));
+}
+
+.acct-split-closed {
+  background-color: var(--alert-warning);
+}
+
+/* Spend bars on the mockup's neutral 8px track (.prog); near-cap badges in its own warn tones. */
+.acct-prog {
+  height: 8px;
+  background: var(--muted);
+}
+
+.acct-badge-warn {
+  background: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.dark .acct-badge-warn {
+  background: #33210a;
+  color: #fcd34d;
+  border-color: #92400e;
+}
+
+.acct-badge-ok {
+  background: #f0fdf4;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+.dark .acct-badge-ok {
+  background: #0a2e1a;
+  color: #86efac;
+  border-color: #1d6a3c;
+}
+
+.acct-badge-ok,
+.acct-badge-warn,
+.acct-page .badge-danger {
+  gap: 5px;
+}
+
+/* The licence tier badge: solid ink pill, as the mockup's .badge.primary. */
+.acct-badge-tier {
+  background: var(--foreground);
+  color: var(--background);
+  border-color: var(--foreground);
+}
+
+.acct-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
 @media (max-width: 980px) {
   .acct-top {
     grid-template-columns: 1fr;
@@ -1834,6 +2617,160 @@ h1:focus {
   background: var(--accent);
 }
 
+/* ---- Avatar Studio segmented choices (language, render tier) and tier rows ---- */
+.avatar-seg {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  overflow: hidden;
+  background: var(--card);
+}
+
+.avatar-seg-full {
+  display: flex;
+  width: 100%;
+}
+
+.avatar-seg > button {
+  flex: 1;
+  border: none;
+  border-right: 1px solid var(--border);
+  background: transparent;
+  color: var(--foreground);
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.avatar-seg > button:last-child {
+  border-right: none;
+}
+
+.avatar-seg > button.is-on {
+  background: var(--brand-soft, var(--accent));
+  color: var(--brand-ink, var(--accent-foreground));
+  font-weight: 600;
+}
+
+.avatar-tier {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  margin-top: 8px;
+  cursor: pointer;
+}
+
+.avatar-tier.is-sel {
+  border-color: var(--brand-bd, var(--primary));
+  background: var(--brand-soft, var(--accent));
+}
+
+.avatar-dot {
+  width: 7px;
+  height: 7px;
+  margin-top: 6px;
+  border-radius: 999px;
+  background: var(--muted-foreground);
+  flex: none;
+}
+
+.avatar-dot.is-on {
+  background: var(--brand);
+}
+
+.avatar-studio .avatar-empty {
+  gap: 6px;
+}
+
+/* Studio cards carry the mockup's 16px card padding */
+.avatar-studio .avatar-card,
+.image-studio .image-card {
+  padding: 16px;
+}
+
+/* Image Studio parameter sliders draw the mockup's 6px rounded track on the slider itself */
+.image-studio .param-field > [role="slider"],
+.voice-studio .param-field > [role="slider"] {
+  height: 6px;
+  margin: 10px 0;
+  border-radius: 999px;
+  background: var(--muted);
+}
+
+.image-studio .param-field > [role="slider"] > div:first-child,
+.voice-studio .param-field > [role="slider"] > div:first-child {
+  height: 100%;
+  background: transparent;
+}
+
+/* Image Studio segmented choices (ControlNet, canvas tools, 2K / 4K), as the mockup's .seg / .toolbar */
+.image-seg {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  overflow: hidden;
+  background: var(--card);
+  font-size: 12px;
+}
+
+.image-seg > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  border-right: 1px solid var(--border);
+  background: transparent;
+  color: var(--foreground);
+  padding: 8px 14px;
+  font-size: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.image-seg.image-tools > button {
+  padding: 7px 11px;
+  font-size: 12.5px;
+}
+
+.image-seg > button:last-child {
+  border-right: none;
+}
+
+.image-seg > button:hover {
+  background: var(--accent);
+}
+
+.image-seg > button.is-on {
+  background: var(--brand-soft, var(--accent));
+  color: var(--brand-ink, var(--accent-foreground));
+  font-weight: 600;
+}
+
+.avatar-studio .avatar-count {
+  white-space: nowrap;
+}
+
+/* The mockup's dark "primary" chip (HeyGen on the Premium tier) */
+.avatar-studio .badge-ink {
+  background-color: var(--foreground);
+  color: var(--background);
+  border-color: var(--foreground);
+}
+
+/* Progress tracks drawn as the mockup's neutral track with the brand-gradient fill */
+.avatar-studio .avatar-prog {
+  background-color: var(--muted);
+}
+
+.avatar-studio .avatar-prog > * {
+  background-image: linear-gradient(90deg, var(--brand), var(--brand-2));
+}
+
 /* ---- Cost estimate key/value rows ---- */
 .cost-row {
   display: flex;
@@ -1866,7 +2803,6 @@ h1:focus {
   z-index: 1;
 }
 
-.char-search :deep(input),
 .char-search input {
   padding-left: 32px;
 }
@@ -1878,6 +2814,7 @@ h1:focus {
 }
 
 .char-card {
+  padding: 12px;
   cursor: pointer;
   transition: border-color 0.12s;
 }
@@ -2105,6 +3042,80 @@ h1:focus {
   }
 }
 
+/* ComfyUI import & debug: the drop zone (a real InputFile laid over it) and the mockup's tones. */
+.comfy-drop {
+  position: relative;
+  display: block;
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  padding: 22px;
+  text-align: center;
+  color: var(--muted-foreground);
+  background: var(--muted);
+  cursor: pointer;
+  font-size: 13px;
+}
+.comfy-drop:hover {
+  border-color: var(--primary);
+}
+.comfy-drop-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.comfy-page .comfy-card {
+  padding: 16px;
+  gap: 0;
+  min-width: 0;
+}
+.comfy-col > * {
+  min-width: 0;
+}
+.comfy-page .comfy-card .card-h3 {
+  margin-bottom: 10px;
+}
+.comfy-page .flex-between > .card-h3 {
+  white-space: nowrap;
+}
+.comfy-page .comfy-map-table th,
+.comfy-page .comfy-map-table td {
+  padding-left: 4px;
+  padding-right: 4px;
+}
+.comfy-map-table input,
+.comfy-map-table select {
+  height: auto;
+  padding: 5px 6px;
+  font-size: 12px;
+  width: 58px;
+  min-width: 0;
+}
+.comfy-map-table select {
+  padding-right: 20px;
+  width: 66px;
+  background-position: right 4px center;
+}
+.comfy-page textarea.comfy-mono {
+  width: 100%;
+  max-width: 100%;
+  field-sizing: fixed;
+  white-space: pre;
+  overflow: auto;
+}
+.comfy-page .badge-ok {
+  background: #f0fdf4;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+.dark .comfy-page .badge-ok {
+  background: #0a2e1a;
+  color: #86efac;
+  border-color: #1d6a3c;
+}
+
 /* ================================================================
    Video Studio (REQ-UI-040). Host CSS (not Tailwind) — appended;
    existing classes untouched. Reuses the shared .studio /
@@ -2181,4 +3192,172 @@ h1:focus {
   background: var(--brand-soft);
   color: var(--brand-ink);
   border: 1px solid var(--brand-bd);
+}
+
+/* ---- Video Studio: mockup parity (decision 11). Reuses .avatar-seg for the mode and tier
+   segmented buttons; the rest mirrors the mockup's .tierseg / .edittools / .slider / .playbtn. ---- */
+.video-studio .vid-card {
+  padding: 16px;
+}
+
+.vid-tierseg > button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 9px 6px;
+}
+
+.vid-tierseg small {
+  font-size: 10.5px;
+  color: var(--muted-foreground);
+  font-weight: 400;
+}
+
+.vid-tierseg > button.is-on small {
+  color: var(--brand-ink, var(--accent-foreground));
+}
+
+.vid-edittools {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 6px;
+  background: var(--muted);
+  margin: 12px 0;
+}
+
+.vid-playbtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #18181b;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.vid-clip.is-sel {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+}
+
+.vid-track > .vid-clip:not(.vid-clip-add):not(.vid-clip-audio) {
+  cursor: pointer;
+}
+
+.video-studio .param-field [role="slider"] {
+  height: 6px;
+  margin: 10px 0;
+  border-radius: 999px;
+  background: var(--muted);
+}
+
+.video-studio .param-field [role="slider"] > div:first-child {
+  height: 100%;
+  background: transparent;
+}
+
+.video-studio .vid-prog {
+  background-color: var(--muted);
+}
+
+.video-studio .vid-prog > * {
+  background-image: linear-gradient(90deg, var(--brand), var(--brand-2));
+}
+
+/* Video Studio keeps the mockup's 320px controls column; the "Rendered" badge takes the mockup's
+   ok-bg / ok-ink tokens (the alert-success set) so it reads green in both themes. */
+.studio.video-studio {
+  grid-template-columns: 320px minmax(0, 1fr) 300px;
+}
+
+.vid-tierseg > button {
+  min-width: 0;
+}
+
+.video-studio .badge-ok {
+  background: var(--alert-success-bg);
+  color: var(--alert-success-foreground);
+  border-color: color-mix(in oklch, var(--alert-success) 42%, transparent);
+  gap: 5px;
+}
+
+@media (max-width: 1100px) {
+  .studio.video-studio {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vid-track > .vid-clip-add {
+  min-width: max-content;
+  white-space: nowrap;
+}
+
+/* ---- Admin: Hardware & setup (REQ-UI-070) — the mockup's ok / warn tones and progress track,
+   scoped to the page so the shared .badge-ok / .badge-warn / .setup-stepdot stay as they are. ---- */
+.hw-page .badge-ok,
+.hw-page .setup-stepdot.done {
+  background: #f0fdf4;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+.dark .hw-page .badge-ok,
+.dark .hw-page .setup-stepdot.done {
+  background: #0a2e1a;
+  color: #86efac;
+  border-color: #1d6a3c;
+}
+
+.hw-page .badge-warn {
+  background: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.dark .hw-page .badge-warn {
+  background: #33210a;
+  color: #fcd34d;
+  border-color: #92400e;
+}
+
+.hw-prog {
+  height: 8px;
+  background: var(--muted);
+}
+
+.hw-redetect,
+.hw-page .hw-link {
+  white-space: nowrap !important;
+  flex: none;
+  min-width: max-content;
+}
+
+.hw-ind {
+  background-image: linear-gradient(90deg, var(--brand), var(--brand-2));
+}
+
+/* Re-detect sits in the topbar as the mockup's 8px x 14px outline button (one text row). */
+.hw-redetect {
+  height: auto;
+  padding: 8px 14px;
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.hw-status {
+  flex: none;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .hw-redetect {
+    padding: 6px 10px;
+  }
 }

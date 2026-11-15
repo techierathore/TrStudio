@@ -24,4 +24,7 @@ public class PromptChatSession
 
     /// <summary>UTC timestamp when the session (or its messages) was last updated.</summary>
     public DateTime UpdatedUtc { get; set; }
+
+    /// <summary>Input + output tokens every completion in this chat has used so far.</summary>
+    public int Tokens { get; set; }
 }

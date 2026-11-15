@@ -1,4 +1,7 @@
 @page "/gallery"
+@using TrBlazeUI.Components.NativeSelect
+@using System.Text.Json
+@using System.Text.RegularExpressions
 @using TrStudioUI.Pages.Projects
 @inject IHttpClientFactory HttpClientFactory
 @inject ToastService ToastService
@@ -8,11 +11,14 @@
 @*
     Gallery — "My Library" (REQ-UI-050). A per-user asset grid (the server owner-filters
     /api/v1/assets, so only the signed-in user's assets are ever returned) with a search +
-    type/model/project filter bar that narrows the grid, selectable Cards carrying a provenance
-    Badge, a bulk-export Toolbar showing the live selection count, and a detail Sheet that shows a
-    run's full params with a one-click reproduce (generation-log reproduce endpoint) and a compare
-    hand-off. Skeleton tiles cover load; honest empty states cover a genuinely empty library and
-    over-narrow filters — no representative seed; an unreachable API raises a warning Alert.
+    type/model/project filter bar that narrows the grid, a Grid / List switch, the active filters as
+    removable chips, selectable tiles carrying a provenance badge (model + seed, language, or where it
+    ran), a bulk-export bar showing the live selection count, and a detail sheet that shows a run's
+    params with a one-click reproduce (generation-log reproduce endpoint) and a compare hand-off.
+    Control names follow docs/mockups/gallery.html; a tile's names follow its place in the grid
+    (card-1, btn-reuse-as-input, btn-reproduce-2, …) and its badge's words. Skeleton tiles cover load;
+    honest empty states cover a genuinely empty library and over-narrow filters — no sample data; an
+    unreachable API raises a warning Alert.
 *@
 
 <PageTitle>TrStudio — Gallery</PageTitle>
@@ -31,56 +37,68 @@
     </div>
 }
 
-<div class="filterbar" data-testid="filter-bar">
+<div class="filterbar">
     <div class="filterbar-search">
-        <Input @bind-Value="objSearch" @bind-Value:after="ApplyFilters" Placeholder="Search prompts, seeds, titles…" />
+        <Input @bind-Value="objSearch" @bind-Value:after="ApplyFilters" Placeholder="Search prompts, seeds, titles…" aria-label="Search" data-testid="field-search-prompts-seeds-tit" />
     </div>
-    <Select @bind-Value="objTypeFilter" TValue="string" Class="w-40">
-        <SelectTrigger><SelectValue Placeholder="Type: All" /></SelectTrigger>
-        <SelectContent>
-            @foreach (var vOption in objTypeOptions)
-            {
-                <SelectItem Value="@vOption.Key" Text="@vOption.Value" TValue="string">@vOption.Value</SelectItem>
-            }
-        </SelectContent>
-    </Select>
-    <Select @bind-Value="objModelFilter" TValue="string" Class="w-48">
-        <SelectTrigger><SelectValue Placeholder="Model: All" /></SelectTrigger>
-        <SelectContent>
-            <SelectItem Value="@("all")" Text="Model: All" TValue="string">Model: All</SelectItem>
-            @foreach (var vModel in ModelOptions)
-            {
-                <SelectItem Value="@vModel" Text="@vModel" TValue="string">@vModel</SelectItem>
-            }
-        </SelectContent>
-    </Select>
-    <Select @bind-Value="objProjectFilter" TValue="string" Class="w-48">
-        <SelectTrigger><SelectValue Placeholder="Project: All" /></SelectTrigger>
-        <SelectContent>
-            <SelectItem Value="@("all")" Text="Project: All" TValue="string">Project: All</SelectItem>
-            @foreach (var vProject in ProjectOptions)
-            {
-                <SelectItem Value="@vProject" Text="@vProject" TValue="string">@vProject</SelectItem>
-            }
-        </SelectContent>
-    </Select>
+    <NativeSelect TValue="string" @bind-Value="objTypeFilter" Class="w-auto" aria-label="Type" data-testid="field-2">
+        @foreach (var vOption in objTypeOptions)
+        {
+            <option value="@vOption.Key">@vOption.Value</option>
+        }
+    </NativeSelect>
+    <NativeSelect TValue="string" @bind-Value="objModelFilter" Class="w-auto" aria-label="Model" data-testid="field-3">
+        <option value="all">Model: All</option>
+        @foreach (var vModel in ModelOptions)
+        {
+            <option value="@vModel">@vModel</option>
+        }
+    </NativeSelect>
+    <NativeSelect TValue="string" @bind-Value="objProjectFilter" Class="w-auto" aria-label="Project" data-testid="field-4">
+        <option value="all">Project: All</option>
+        @foreach (var vProject in ProjectOptions)
+        {
+            <option value="@vProject">@vProject</option>
+        }
+    </NativeSelect>
+    <div class="grow"></div>
+    <div class="image-seg" role="radiogroup" aria-label="Layout">
+        <button type="button" role="radio" aria-checked="@(objListView ? "false" : "true")" class="@(objListView ? null : "is-on")"
+                @onclick="@(() => objListView = false)" data-testid="btn-grid">Grid</button>
+        <button type="button" role="radio" aria-checked="@(objListView ? "true" : "false")" class="@(objListView ? "is-on" : null)"
+                @onclick="@(() => objListView = true)" data-testid="btn-list">List</button>
+    </div>
 </div>
+
+@if (ActiveChips.Count > 0)
+{
+    <div class="chips">
+        @foreach (var vChip in ActiveChips)
+        {
+            <Badge Class="badge-brand gallery-chip" data-testid="@($"badge-{Slug(vChip.Text)}")">
+                @vChip.Text
+                <button type="button" class="gallery-chip-x" aria-label="@($"Remove {vChip.Text}")" @onclick="vChip.Clear">✕</button>
+            </Badge>
+        }
+        <button type="button" class="gallery-clear" @onclick="ClearFilters" data-testid="btn-clear-all">Clear all</button>
+    </div>
+}
 
 @if (objSelected.Count > 0)
 {
-    <div class="exportbar" data-testid="export-bar">
-        <Badge Class="badge-brand">@objSelected.Count selected</Badge>
+    <div class="exportbar">
+        <Badge data-testid="@($"badge-{Slug($"{objSelected.Count} selected")}")">@objSelected.Count selected</Badge>
         <span class="muted-sm">of @objAssets.Count assets</span>
         <div class="grow"></div>
-        <Button Variant="ButtonVariant.Outline" OnClick="Compare">
+        <Button Variant="ButtonVariant.Outline" Href="/compare" data-testid="link-compare">
             <LucideIcon Name="git-compare" Size="14" />
             Compare
         </Button>
-        <Button Variant="ButtonVariant.Outline" OnClick="ReproduceSelected">
+        <Button Variant="ButtonVariant.Outline" OnClick="ReproduceSelected" data-testid="btn-reproduce">
             <LucideIcon Name="refresh-cw" Size="14" />
             Reproduce
         </Button>
-        <Button OnClick="ExportSelected" data-testid="export-selected-btn">
+        <Button OnClick="ExportSelected" data-testid="btn-export-selected">
             <LucideIcon Name="download" Size="14" />
             Export selected
         </Button>
@@ -90,13 +108,13 @@
 @if (objLoading)
 {
     <div class="assets">
-        @for (var vIndex = 0; vIndex < 8; vIndex++)
+        @for (var vIndex = 1; vIndex <= 8; vIndex++)
         {
-            <Card Class="asset">
-                <Skeleton Class="asset-thumb" />
+            <Card Class="asset" data-testid="@($"card-{vIndex}")">
+                <div class="asset-thumb"><span class="muted-sm">loading…</span></div>
                 <div class="asset-meta">
-                    <Skeleton Class="h-4 w-4/5 mb-2" />
-                    <Skeleton Class="h-4 w-1/2" />
+                    <Skeleton Class="h-3.5 w-4/5 mb-2" />
+                    <Skeleton Class="h-3.5 w-1/2" />
                 </div>
             </Card>
         }
@@ -104,37 +122,60 @@
 }
 else if (Filtered.Count == 0)
 {
-    <Card Class="emptystate" data-testid="empty-state">
+    var vNone = objAssets.Count == 0;
+    <Card Class="emptystate" data-testid="@(vNone ? "card-no-assets-yet" : "card-no-assets-match-these-filters")">
         <div class="emptyicon"><LucideIcon Name="layout-grid" Size="22" /></div>
-        <h3 style="margin:0 0 4px">@(objAssets.Count == 0 ? "No assets yet" : "No assets match these filters")</h3>
+        <h3 style="margin:0 0 4px">@(vNone ? "No assets yet" : "No assets match these filters")</h3>
         <div class="muted-sm" style="margin-bottom:14px">
-            @(objAssets.Count == 0
+            @(vNone
                 ? "Generate something in a studio — every output lands here, private to your account."
                 : "Try clearing a filter, or generate something new in a studio.")
         </div>
-        <Button OnClick="@(() => Navigation.NavigateTo("/image"))">Go to Image Studio</Button>
+        <Button OnClick="@(() => Navigation.NavigateTo("/image"))" data-testid="btn-go-to-image-studio">Go to Image Studio</Button>
     </Card>
 }
 else
 {
-    <div class="assets" data-testid="asset-grid">
-        @foreach (var vAsset in Filtered)
+    var vShown = Filtered;
+    var vBadgeIds = BadgeTestIds(vShown);
+    <div class="assets @(objListView ? "assets-list" : null)">
+        @for (var vIndex = 0; vIndex < vShown.Count; vIndex++)
         {
-            <Card Class="asset" @key="vAsset.AssetId">
+            var vAsset = vShown[vIndex];
+            var vPlace = vIndex + 1;
+            var vSelected = objSelected.Contains(vAsset.AssetId);
+            <Card Class="asset" @key="vAsset.AssetId" data-testid="@($"card-{vPlace}")">
                 <div class="asset-thumb @vAsset.Art" @onclick="@(() => OpenDetail(vAsset))">
-                    <span class="selbox @(objSelected.Contains(vAsset.AssetId) ? "selbox-on" : null)"
-                          @onclick:stopPropagation="true" @onclick="@(() => ToggleSelect(vAsset.AssetId))">
-                        @(objSelected.Contains(vAsset.AssetId) ? "✓" : string.Empty)
-                    </span>
+                    <span class="selbox @(vSelected ? "selbox-on" : null)" role="checkbox" aria-checked="@(vSelected ? "true" : "false")"
+                          aria-label="@($"Select {vAsset.Title}")"
+                          @onclick:stopPropagation="true" @onclick="@(() => ToggleSelect(vAsset.AssetId))">@(vSelected ? "✓" : string.Empty)</span>
                     <span class="typechip">@vAsset.TypeChip</span>
-                    @vAsset.ThumbCaption
+                    @if (vAsset.Kind == "video")
+                    {
+                        <span class="asset-play"><LucideIcon Name="play" Size="16" /></span>
+                    }
+                    else if (vAsset.Kind == "audio")
+                    {
+                        <span class="asset-wave" aria-hidden="true">
+                            @foreach (var vBar in WaveBars)
+                            {
+                                <i style="@($"height:{vBar}px")"></i>
+                            }
+                        </span>
+                    }
+                    @if (vAsset.Duration is not null)
+                    {
+                        <span class="asset-dur">@vAsset.Duration</span>
+                    }
                 </div>
                 <div class="asset-meta">
                     <div class="asset-title" title="@vAsset.Title">@vAsset.Title</div>
-                    <Badge Variant="BadgeVariant.Outline" Class="@vAsset.BadgeTone">@vAsset.Provenance</Badge>
+                    <Badge Variant="BadgeVariant.Outline" Class="@($"asset-badge {vAsset.BadgeTone}")" title="@vAsset.Provenance" data-testid="@vBadgeIds[vAsset.AssetId]">@vAsset.Provenance</Badge>
                     <div class="asset-acts">
-                        <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => ReuseAsInput(vAsset))">Reuse as input</Button>
-                        <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => ReproduceOne(vAsset))">Reproduce</Button>
+                        <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => ReuseAsInput(vAsset))"
+                                data-testid="@(vPlace == 1 ? "btn-reuse-as-input" : $"btn-reuse-as-input-{vPlace}")">Reuse as input</Button>
+                        <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => ReproduceOne(vAsset))"
+                                data-testid="@($"btn-reproduce-{vPlace + 1}")">Reproduce</Button>
                     </div>
                 </div>
             </Card>
@@ -143,17 +184,16 @@ else
 }
 
 <Sheet @bind-Open="objSheetOpen">
-    <SheetContent Class="w-[400px] sm:w-[460px]">
+    <SheetContent Class="w-[400px] sm:w-[460px]" data-testid="card-asset-details">
         <SheetHeader>
-            <SheetTitle>@(objDetail?.Title ?? "Asset")</SheetTitle>
+            <SheetTitle>Asset details</SheetTitle>
             <SheetDescription>Full run parameters · one-click reproduce from provenance.</SheetDescription>
         </SheetHeader>
         @if (objDetail is not null)
         {
-            <div style="padding:14px 0" data-testid="detail-params">
-                <div class="kv"><span class="muted">Type</span><b>@objDetail.TypeChip</b></div>
+            <div style="padding:14px 0">
+                <div class="kv"><span class="muted">Title</span><b>@objDetail.Title</b></div>
                 <div class="kv"><span class="muted">Model</span><b>@objDetail.ModelDisplay</b></div>
-                <div class="kv"><span class="muted">Provenance</span><b>@objDetail.Provenance</b></div>
                 <div class="kv"><span class="muted">Seed</span><b>@(objDetail.Seed?.ToString() ?? "—")</b></div>
                 @if (VeniceRunDetailsFormat.IsVenice(objDetail.ProviderKind))
                 {
@@ -161,6 +201,12 @@ else
                         <div class="kv"><span class="muted">Provider</span><b><Badge Class="badge-brand" data-testid="badge-provider-venice">Venice</Badge></b></div>
                         <div class="kv"><span class="muted">Venice price</span><b data-testid="venice-price">@VeniceRunDetailsFormat.PriceLabel(objDetail.ActualCost)</b></div>
                     </div>
+                }
+                <div class="kv"><span class="muted">Type</span><b>@objDetail.TypeChip</b></div>
+                <div class="kv"><span class="muted">Provenance</span><b>@objDetail.Provenance</b></div>
+                @if (objDetail.Prompt is not null)
+                {
+                    <div class="kv"><span class="muted">@(objDetail.Kind == "audio" ? "Text" : "Prompt")</span><b>@objDetail.Prompt</b></div>
                 }
                 <div class="kv"><span class="muted">Dimensions</span><b>@objDetail.Dimensions</b></div>
                 <div class="kv"><span class="muted">Project</span><b>@(objDetail.ProjectName ?? "—")</b></div>
@@ -171,7 +217,7 @@ else
                     <LucideIcon Name="git-compare" Size="14" />
                     Compare
                 </Button>
-                <Button OnClick="@(() => ReproduceOne(objDetail))" data-testid="reproduce-btn">
+                <Button Variant="ButtonVariant.Outline" OnClick="@(() => ReproduceOne(objDetail))" data-testid="btn-reproduce">
                     <LucideIcon Name="refresh-cw" Size="14" />
                     Reproduce
                 </Button>
@@ -181,10 +227,21 @@ else
 </Sheet>
 
 @code {
+    /// <summary>The bar heights of the audio tile's waveform glyph, as the mockup draws it.</summary>
+    private static readonly int[] WaveBars = { 10, 22, 32, 16, 28, 12, 24, 8 };
+
+    private static readonly Dictionary<string, string> LanguageNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["hi"] = "Hindi",
+        ["en"] = "English",
+        ["hinglish"] = "Hinglish",
+    };
+
     private readonly List<GalleryAsset> objAssets = new();
     private bool objLoading = true;
     private bool objApiDown;
     private bool objSheetOpen;
+    private bool objListView;
     private GalleryAsset? objDetail;
 
     private readonly HashSet<Guid> objSelected = new();
@@ -214,6 +271,31 @@ else
     /// <summary>The assets remaining after the search + type/model/project filters are applied.</summary>
     private List<GalleryAsset> Filtered => objAssets.Where(Matches).ToList();
 
+    /// <summary>The filters in force, each as a removable chip ("Type: Videos", "Model: MuseTalk", …).</summary>
+    private List<FilterChip> ActiveChips
+    {
+        get
+        {
+            var vChips = new List<FilterChip>();
+            if (objTypeFilter != "all")
+            {
+                vChips.Add(new FilterChip($"Type: {objTypeOptions[objTypeFilter]}", () => objTypeFilter = "all"));
+            }
+
+            if (objModelFilter != "all")
+            {
+                vChips.Add(new FilterChip($"Model: {objModelFilter}", () => objModelFilter = "all"));
+            }
+
+            if (objProjectFilter != "all")
+            {
+                vChips.Add(new FilterChip($"Project: {objProjectFilter}", () => objProjectFilter = "all"));
+            }
+
+            return vChips;
+        }
+    }
+
     /// <summary>
     /// Loads owner-scoped assets AFTER the first interactive render — the point at which JS interop is
     /// available and <see cref="IAuthSession"/> can hydrate the bearer token from encrypted session
@@ -235,9 +317,10 @@ else
     }
 
     /// <summary>
-    /// Loads the owner-scoped asset page. With no session the grid stays empty (the real empty/login
-    /// state). Zero rows render the honest empty state — never sample data — and a failed fetch
-    /// raises the API-down Alert.
+    /// Loads the owner-scoped asset page, plus the model catalog (display names, where each model
+    /// runs) and the creator's projects (names). With no session the grid stays empty (the real
+    /// empty/login state). Zero rows render the honest empty state — never sample data — and a failed
+    /// asset fetch raises the API-down Alert.
     /// </summary>
     /// <param name="aHasSession">Whether a signed-in session is present.</param>
     private async Task TryLoadAssetsAsync(bool aHasSession)
@@ -247,20 +330,36 @@ else
             return;
         }
 
+        var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+        var vModels = new Dictionary<string, CatalogModelResponse>(StringComparer.OrdinalIgnoreCase);
+        var vProjects = new Dictionary<Guid, string>();
         try
         {
-            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            foreach (var vModel in await vClient.GetFromJsonAsync<List<CatalogModelResponse>>(ApiRoutes.Models) ?? new())
+            {
+                vModels[vModel.Id] = vModel;
+            }
+
+            foreach (var vProject in await vClient.GetFromJsonAsync<List<ProjectResponse>>(ApiRoutes.Projects) ?? new())
+            {
+                vProjects[vProject.ProjectId] = vProject.Name;
+            }
+        }
+        catch
+        {
+            // Names are a nicety: without them a tile shows the model id and no project.
+        }
+
+        try
+        {
             var vPage = await vClient.GetFromJsonAsync<PagedResult<AssetResponse>>($"{ApiRoutes.Assets}?aPageSize=100");
             objAssets.Clear();
-            if (vPage is { Items.Count: > 0 })
+            var vArts = new[] { "art-a", "art-b", "art-c" };
+            var vImages = 0;
+            foreach (var vAsset in vPage?.Items ?? new List<AssetResponse>())
             {
-                var vArts = new[] { "art-a", "art-b", "art-c", "art-v" };
-                var vIndex = 0;
-                foreach (var vAsset in vPage.Items)
-                {
-                    objAssets.Add(GalleryAsset.FromResponse(vAsset, vArts[vIndex % vArts.Length]));
-                    vIndex++;
-                }
+                var vArt = vAsset.Kind == "image" ? vArts[vImages++ % vArts.Length] : "art-v";
+                objAssets.Add(GalleryAsset.FromResponse(vAsset, vArt, vModels, vProjects));
             }
         }
         catch
@@ -290,7 +389,7 @@ else
         if (!string.IsNullOrWhiteSpace(objSearch))
         {
             var vNeedle = objSearch.Trim();
-            var vHay = $"{aAsset.Title} {aAsset.ModelDisplay} {aAsset.Seed} {aAsset.Provenance}";
+            var vHay = $"{aAsset.Title} {aAsset.Prompt} {aAsset.ModelDisplay} {aAsset.Seed} {aAsset.Provenance}";
             if (vHay.IndexOf(vNeedle, StringComparison.OrdinalIgnoreCase) < 0)
             {
                 return false;
@@ -300,7 +399,38 @@ else
         return true;
     }
 
+    /// <summary>
+    /// The control name of each shown tile's badge: <c>badge-</c> and the badge's words, cut at 30
+    /// characters as the mockup's names are, with <c>-2</c>, <c>-3</c>, … on repeats.
+    /// </summary>
+    private static Dictionary<Guid, string> BadgeTestIds(List<GalleryAsset> aShown)
+    {
+        var vSeen = new Dictionary<string, int>();
+        var vIds = new Dictionary<Guid, string>();
+        foreach (var vAsset in aShown)
+        {
+            var vBase = $"badge-{Slug(vAsset.Provenance)}";
+            vBase = vBase.Length > 30 ? vBase[..30].TrimEnd('-') : vBase;
+            vSeen[vBase] = vSeen.TryGetValue(vBase, out var vCount) ? vCount + 1 : 1;
+            vIds[vAsset.AssetId] = vSeen[vBase] == 1 ? vBase : $"{vBase}-{vSeen[vBase]}";
+        }
+
+        return vIds;
+    }
+
+    /// <summary>Lower-case dash form of a text for control names ("Type: Videos" → "type-videos").</summary>
+    private static string Slug(string aText) =>
+        Regex.Replace(aText.ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
+
     private void ApplyFilters() => StateHasChanged();
+
+    private void ClearFilters()
+    {
+        objTypeFilter = "all";
+        objModelFilter = "all";
+        objProjectFilter = "all";
+        objSearch = string.Empty;
+    }
 
     private void ToggleSelect(Guid aAssetId)
     {
@@ -319,7 +449,7 @@ else
     private void ReuseAsInput(GalleryAsset aAsset)
     {
         ToastService.Show($"\"{aAsset.Title}\" queued as a new input.", "Reuse as input");
-        Navigation.NavigateTo("/image");
+        Navigation.NavigateTo(aAsset.Kind switch { "video" => "/video", "audio" => "/voice", _ => "/image" });
     }
 
     private async Task ReproduceOne(GalleryAsset aAsset)
@@ -329,16 +459,21 @@ else
         objSheetOpen = false;
     }
 
-    private void ReproduceSelected()
-        => ToastService.Success($"Reproducing {objSelected.Count} asset(s) from provenance.", "Reproduce");
+    private async Task ReproduceSelected()
+    {
+        foreach (var vAsset in objAssets.Where(aAsset => objSelected.Contains(aAsset.AssetId)))
+        {
+            await TryReproduceAsync(vAsset.JobId);
+        }
+
+        ToastService.Success($"Reproducing {objSelected.Count} asset(s) from provenance.", "Reproduce");
+    }
 
     private void CompareOne(GalleryAsset aAsset)
     {
         objSelected.Add(aAsset.AssetId);
         Navigation.NavigateTo("/compare");
     }
-
-    private void Compare() => Navigation.NavigateTo("/compare");
 
     private void ExportSelected()
         => ToastService.Success($"Exporting {objSelected.Count} selected asset(s).", "Export");
@@ -353,28 +488,112 @@ else
         }
         catch
         {
-            // Requires a session — the toast still confirms the intent for the demo flow.
+            // Requires a session — the toast still confirms the intent.
         }
     }
 
-    /// <summary>A gallery card's display projection over an asset (owner-scoped) plus provenance chrome.</summary>
+    /// <summary>An active filter shown as a chip, with what its ✕ clears.</summary>
+    private sealed record FilterChip(string Text, Action Clear);
+
+    /// <summary>A gallery tile's display projection over an asset (owner-scoped) plus provenance chrome.</summary>
     private sealed record GalleryAsset(
-        Guid AssetId, Guid JobId, string Kind, string Title, string ModelDisplay, string Provenance,
+        Guid AssetId, Guid JobId, string Kind, string Title, string? Prompt, string ModelDisplay, string Provenance,
         string? BadgeTone, long? Seed, string Dimensions, string? ProjectName, string Created,
-        string TypeChip, string ThumbCaption, string Art, string? ProviderKind = null, decimal? ActualCost = null)
+        string TypeChip, string? Duration, string Art, string? ProviderKind = null, decimal? ActualCost = null)
     {
-        /// <summary>Projects an owner-scoped API asset into a gallery card model.</summary>
-        public static GalleryAsset FromResponse(AssetResponse aAsset, string aArt)
+        /// <summary>
+        /// Projects an owner-scoped API asset into a tile. The title is the run's own title, else its
+        /// kind and date (the prompt or spoken text is searched and shown in the details); the badge names the model and then the seed,
+        /// the spoken language (audio), or where it ran (local GPU, closed API, …).
+        /// </summary>
+        public static GalleryAsset FromResponse(
+            AssetResponse aAsset, string aArt,
+            IReadOnlyDictionary<string, CatalogModelResponse> aModels, IReadOnlyDictionary<Guid, string> aProjects)
         {
-            var vType = aAsset.Kind.ToUpperInvariant();
+            var vKind = aAsset.Kind.ToLowerInvariant();
+            var vParams = ReadParams(aAsset.ParamsJson);
+            aModels.TryGetValue(aAsset.ModelId, out var vModel);
+            var vModelName = vModel?.DisplayName ?? aAsset.ModelId;
+            var vProvider = aAsset.ProviderKind ?? vModel?.ProviderKind.ToString();
+
+            var vPrompt = Text(vParams, "prompt") ?? Text(vParams, "Text");
+            var vTitle = Text(vParams, "title") ?? $"{char.ToUpperInvariant(vKind[0])}{vKind[1..]} · {aAsset.CreatedUtc:d MMM}";
+
+            string vWhere;
+            string? vTone = null;
+            var vLanguage = Text(vParams, "Language") ?? Text(vParams, "language");
+            if (aAsset.SeedUsed is not null)
+            {
+                vWhere = $"seed {aAsset.SeedUsed}";
+            }
+            else if (vKind == "audio" && vLanguage is not null)
+            {
+                vWhere = LanguageNames.TryGetValue(vLanguage, out var vName) ? vName : vLanguage;
+            }
+            else
+            {
+                (vWhere, vTone) = vProvider switch
+                {
+                    nameof(TrStudio.Models.Enums.ProviderKind.ComfyUi) or nameof(TrStudio.Models.Enums.ProviderKind.OnnxLocal) => ("local GPU", "badge-ok"),
+                    nameof(TrStudio.Models.Enums.ProviderKind.HeyGen) or nameof(TrStudio.Models.Enums.ProviderKind.ClosedApi) => ("closed API", "badge-warn"),
+                    nameof(TrStudio.Models.Enums.ProviderKind.RunPod) => ("cloud GPU", null),
+                    null => (string.Empty, null),
+                    _ => (vProvider, null)
+                };
+            }
+
+            var vSeconds = Number(vParams, "durationSeconds") ?? Number(vParams, "DurationSeconds");
+            var vAspect = Aspect(aAsset.Width, aAsset.Height);
+            var vTypeChip = vKind == "audio" || vAspect is null ? vKind.ToUpperInvariant() : $"{vKind.ToUpperInvariant()} {vAspect}";
             var vDims = aAsset is { Width: not null, Height: not null } ? $"{aAsset.Width}×{aAsset.Height}" : "—";
+            string? vProject = null;
+            if (aAsset.ProjectId is { } vProjectId)
+            {
+                vProject = aProjects.TryGetValue(vProjectId, out var vProjectName) ? vProjectName : null;
+            }
+
             return new GalleryAsset(
-                aAsset.AssetId, aAsset.JobId, aAsset.Kind,
-                $"{aAsset.Kind} · {aAsset.CreatedUtc:d MMM}", aAsset.ModelId,
-                $"{aAsset.ModelId}{(aAsset.SeedUsed is null ? string.Empty : $" · seed {aAsset.SeedUsed}")}",
-                null, aAsset.SeedUsed, vDims,
-                aAsset.ProjectId?.ToString()[..8], aAsset.CreatedUtc.ToString("d MMM yyyy"),
-                vType, string.Empty, aArt, aAsset.ProviderKind, aAsset.ActualCost);
+                aAsset.AssetId, aAsset.JobId, vKind, vTitle, vPrompt, vModelName,
+                vWhere.Length == 0 ? vModelName : $"{vModelName} · {vWhere}",
+                vTone, aAsset.SeedUsed, vDims, vProject, aAsset.CreatedUtc.ToString("d MMM yyyy"),
+                vTypeChip,
+                vKind is "video" or "audio" && vSeconds is > 0 ? TimeSpan.FromSeconds(Math.Round(vSeconds.Value)).ToString(@"m\:ss") : null,
+                aArt, aAsset.ProviderKind, aAsset.ActualCost);
+        }
+
+        private static Dictionary<string, JsonElement> ReadParams(string? aJson)
+        {
+            try
+            {
+                return string.IsNullOrWhiteSpace(aJson)
+                    ? new()
+                    : JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(aJson) ?? new();
+            }
+            catch (JsonException)
+            {
+                return new();
+            }
+        }
+
+        private static string? Text(Dictionary<string, JsonElement> aParams, string aKey) =>
+            aParams.TryGetValue(aKey, out var vValue) && vValue.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(vValue.GetString())
+                ? vValue.GetString()
+                : null;
+
+        private static double? Number(Dictionary<string, JsonElement> aParams, string aKey) =>
+            aParams.TryGetValue(aKey, out var vValue) && vValue.ValueKind == JsonValueKind.Number ? vValue.GetDouble() : null;
+
+        /// <summary>The picture's shape as a ratio ("16:9", "4:5"), or null when its size is unknown.</summary>
+        private static string? Aspect(int? aWidth, int? aHeight)
+        {
+            if (aWidth is not > 0 || aHeight is not > 0)
+            {
+                return null;
+            }
+
+            static int Gcd(int aA, int aB) => aB == 0 ? aA : Gcd(aB, aA % aB);
+            var vDivisor = Gcd(aWidth.Value, aHeight.Value);
+            return $"{aWidth / vDivisor}:{aHeight / vDivisor}";
         }
     }
 }

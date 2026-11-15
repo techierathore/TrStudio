@@ -2,6 +2,8 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject ToastService ToastService
 @inject IAuthSession AuthSession
+@using Microsoft.AspNetCore.Components.Sections
+@using TrBlazeUI.Components.NativeSelect
 
 @*
     Character Library (REQ-UI-011). A grid of reusable, identity-locked characters (reference set +
@@ -15,6 +17,14 @@
 
 <PageTitle>TrStudio — Characters</PageTitle>
 
+@* The live character count, shown in the shell topbar beside the status pill. *@
+@if (!objLoading && !objApiDown)
+{
+    <SectionContent SectionName="topbar-context">
+        <Badge Variant="BadgeVariant.Outline" data-testid="@($"badge-{objCharacters.Count}-characters")">@CountLabel</Badge>
+    </SectionContent>
+}
+
 <div class="chars-page">
 <div class="flex-between" style="align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px">
     <div>
@@ -24,9 +34,9 @@
     <div class="flex-row" style="gap:10px;align-items:center">
         <div class="char-search">
             <LucideIcon Name="search" Size="15" />
-            <Input @bind-Value="objSearch" Placeholder="Search characters…" data-testid="character-search" />
+            <Input @bind-Value="objSearch" Placeholder="Search characters…" data-testid="field-search-characters" />
         </div>
-        <Button OnClick="OpenCreate" data-testid="new-character-btn">
+        <Button OnClick="OpenCreate" data-testid="btn-new-character">
             <LucideIcon Name="plus" Size="14" />
             <span>New Character</span>
         </Button>
@@ -46,7 +56,7 @@
 
 @if (objLoading)
 {
-    <div class="char-grid" data-testid="char-skeletons">
+    <div class="char-grid">
         @for (var vIndex = 0; vIndex < 6; vIndex++)
         {
             <Card Class="char-card">
@@ -59,42 +69,44 @@
 }
 else if (FilteredCharacters.Count == 0)
 {
-    <div data-testid="char-empty">
-    <Card Class="char-empty">
+    <Card Class="char-empty" data-testid="card-new-character">
         <div class="char-empty-icon"><LucideIcon Name="user-round" Size="22" /></div>
         <div style="font-weight:600">
             @(string.IsNullOrWhiteSpace(objSearch) ? "No characters yet" : $"No characters match “{objSearch}”")
         </div>
         <div class="muted-sm" style="margin:4px 0 12px">Create an identity-locked character to reuse across every studio.</div>
-        <Button OnClick="OpenCreate" data-testid="empty-create-btn">
+        <Button OnClick="OpenCreate" data-testid="btn-create-a-character">
             <LucideIcon Name="plus" Size="14" />
             <span>Create a character</span>
         </Button>
     </Card>
-    </div>
 }
 else
 {
-    <div class="char-grid" data-testid="char-grid">
+    var vBadgeNames = new Dictionary<string, int>();
+    var vPosition = 0;
+    <div class="char-grid">
         @foreach (var vChar in FilteredCharacters)
         {
-            <div class="char-card" data-testid="char-card" @key="vChar.Id" @onclick="@(() => OpenBibleAsync(vChar))">
-                <Card>
-                    <div class="char-face @vChar.FaceClass">@vChar.Initial</div>
-                    <div style="margin-top:10px;font-weight:600">@vChar.Name</div>
-                    <div class="muted-sm">seed @vChar.Seed · @vChar.RefCount refs@(vChar.HasLora ? " · LoRA" : "")</div>
-                    <div style="margin-top:6px">
-                        @if (vChar.Photoreal)
-                        {
-                            <Badge Variant="BadgeVariant.Outline">Photoreal</Badge>
-                        }
-                        else
-                        {
-                            <Badge Variant="BadgeVariant.Secondary">Stylized</Badge>
-                        }
-                    </div>
-                </Card>
-            </div>
+            vPosition++;
+            var vRealism = vChar.Photoreal ? "photoreal" : "stylized";
+            vBadgeNames[vRealism] = vBadgeNames.GetValueOrDefault(vRealism) + 1;
+            var vBadgeId = vBadgeNames[vRealism] == 1 ? $"badge-{vRealism}" : $"badge-{vRealism}-{vBadgeNames[vRealism]}";
+            <Card @key="vChar.Id" Class="char-card" data-testid="@($"card-{vPosition}")" @onclick="@(() => OpenBibleAsync(vChar))">
+                <div class="char-face @vChar.FaceClass">@vChar.Initial</div>
+                <div style="margin-top:10px;font-weight:600">@vChar.Name</div>
+                <div class="muted-sm">seed @vChar.Seed · @vChar.RefCount refs@(vChar.HasLora ? " · LoRA" : "")</div>
+                <div style="margin-top:6px">
+                    @if (vChar.Photoreal)
+                    {
+                        <Badge Variant="BadgeVariant.Success" data-testid="@vBadgeId">Photoreal</Badge>
+                    }
+                    else
+                    {
+                        <Badge Variant="BadgeVariant.Warning" data-testid="@vBadgeId">Stylized</Badge>
+                    }
+                </div>
+            </Card>
         }
     </div>
 }
@@ -111,6 +123,26 @@ else
 <style>
     .chars-page > * {
         min-width: 0;
+    }
+
+    .char-dlg-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .char-dlg-head > :first-child {
+        flex: 1;
+        min-width: 0;
+    }
+
+    [role="radiogroup"].char-realism-group {
+        display: flex;
+        gap: 8px;
+    }
+
+    .char-bible-card {
+        padding: 16px;
     }
 
     @@media (max-width: 430px) {
@@ -130,55 +162,51 @@ else
 
 @* ---- Create / edit character dialog ---- *@
 <Dialog @bind-Open="objCreateOpen">
-    <DialogContent>
+    <DialogContent ShowClose="false">
         <DialogHeader>
-            <DialogTitle>New Character</DialogTitle>
+            <div class="char-dlg-head">
+                <DialogTitle>New Character</DialogTitle>
+                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" aria-label="Close" OnClick="@(() => objCreateOpen = false)" data-testid="btn-action">✕</Button>
+            </div>
             <DialogDescription>Generate a face from a prompt, then lock its identity (seed + reference set).</DialogDescription>
         </DialogHeader>
 
-        <div style="padding:8px 0" data-testid="create-dialog">
+        <div style="padding:8px 0">
             <label class="param-label">Image-gen prompt</label>
-            <Textarea @bind-Value="objDraftPrompt" Placeholder="Describe the character's face and style…" data-testid="draft-prompt" />
+            <Textarea @bind-Value="objDraftPrompt" Rows="3" Placeholder="Describe the character's face and style…" data-testid="field-image-gen-prompt" />
 
             <label class="param-label" style="margin-top:12px">Realism</label>
-            <div data-testid="realism-group">
-                <RadioGroup @bind-Value="objDraftRealism" TValue="string" Class="flex gap-2">
-                    <label class="char-realism @(objDraftRealism == "photoreal" ? "is-sel" : "")" for="realism-photoreal">
-                        <RadioGroupItem Value="@("photoreal")" Id="realism-photoreal" TValue="string" />
-                        <span>Photoreal</span>
-                    </label>
-                    <label class="char-realism @(objDraftRealism == "stylized" ? "is-sel" : "")" for="realism-stylized">
-                        <RadioGroupItem Value="@("stylized")" Id="realism-stylized" TValue="string" />
-                        <span>Stylized</span>
-                    </label>
-                </RadioGroup>
-            </div>
+            <RadioGroup @bind-Value="objDraftRealism" TValue="string" Class="char-realism-group">
+                <label class="char-realism @(objDraftRealism == "photoreal" ? "is-sel" : "")" for="realism-photoreal">
+                    <RadioGroupItem Value="@("photoreal")" Id="realism-photoreal" TValue="string" />
+                    <span>Photoreal</span>
+                </label>
+                <label class="char-realism @(objDraftRealism == "stylized" ? "is-sel" : "")" for="realism-stylized">
+                    <RadioGroupItem Value="@("stylized")" Id="realism-stylized" TValue="string" />
+                    <span>Stylized</span>
+                </label>
+            </RadioGroup>
 
             <div class="flex-row" style="gap:12px;margin-top:12px">
                 <div style="flex:1">
                     <label class="param-label">Seed lock</label>
-                    <Input @bind-Value="objDraftSeed" Placeholder="Random when empty" data-testid="draft-seed" />
+                    <Input @bind-Value="objDraftSeed" Placeholder="Random when empty" data-testid="field-seed-lock" />
                 </div>
                 <div style="flex:1">
                     <label class="param-label">LoRA</label>
-                    <Select @bind-Value="objDraftLora" TValue="string" Class="w-full">
-                        <SelectTrigger><SelectValue Placeholder="None" /></SelectTrigger>
-                        <SelectContent>
-                            @foreach (var vLora in objLoras)
-                            {
-                                <SelectItem Value="@vLora" Text="@vLora" TValue="string">@vLora</SelectItem>
-                            }
-                        </SelectContent>
-                    </Select>
+                    <NativeSelect @bind-Value="objDraftLora" Class="w-full" data-testid="field-lora">
+                        @foreach (var vLora in objLoras)
+                        {
+                            <option value="@vLora">@vLora</option>
+                        }
+                    </NativeSelect>
                 </div>
             </div>
         </div>
 
         <DialogFooter>
-            <DialogClose AsChild>
-                <Button Variant="ButtonVariant.Outline">Cancel</Button>
-            </DialogClose>
-            <Button OnClick="SaveCharacterAsync" data-testid="save-character-btn">
+            <Button Variant="ButtonVariant.Outline" OnClick="@(() => objCreateOpen = false)" data-testid="btn-cancel">Cancel</Button>
+            <Button OnClick="SaveCharacterAsync" data-testid="btn-create-character">
                 <LucideIcon Name="check" Size="14" />
                 <span>Create character</span>
             </Button>
@@ -188,31 +216,31 @@ else
 
 @* ---- Character-bible sheet (TechieRag persona notes, per character) ---- *@
 <Sheet @bind-Open="objBibleOpen">
-    <SheetContent>
+    <SheetContent ShowClose="false">
         <SheetHeader>
-            <SheetTitle>Character Bible</SheetTitle>
+            <div class="char-dlg-head">
+                <SheetTitle>Character Bible</SheetTitle>
+                @if (objBibleChar is not null)
+                {
+                    <Badge Class="badge-brand" Variant="BadgeVariant.Outline" data-testid="@($"badge-{Slug(objBibleChar.Name)}")">@objBibleChar.Name</Badge>
+                }
+                <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" aria-label="Close" OnClick="@(() => objBibleOpen = false)" data-testid="btn-action-2">✕</Button>
+            </div>
             <SheetDescription>Persona notes (TechieRag / PgVector) used by script-assist.</SheetDescription>
         </SheetHeader>
         @if (objBibleChar is not null)
         {
-            <div style="padding:14px 0;display:grid;gap:12px" data-testid="bible-sheet">
-                <div class="flex-row" style="gap:10px;align-items:center">
-                    <div class="char-face @objBibleChar.FaceClass" style="width:40px;height:40px;aspect-ratio:auto;font-size:14px">@objBibleChar.Initial</div>
-                    <div>
-                        <div style="font-weight:600">@objBibleChar.Name</div>
-                        <div class="muted-sm">seed @objBibleChar.Seed · @objBibleChar.RefCount refs</div>
-                    </div>
-                </div>
+            <div style="padding:14px 0;display:grid;gap:12px">
                 @if (objBibleLoading)
                 {
-                    <Card data-testid="bible-loading">
+                    <Card Class="char-bible-card">
                         <Skeleton Class="h-4 w-32 mb-2" />
                         <Skeleton Class="h-3 w-full" />
                     </Card>
                 }
                 else if (objBibleEntries.Count == 0)
                 {
-                    <Card Class="emptystate" data-testid="bible-empty">
+                    <Card Class="emptystate char-bible-card">
                         <div class="muted-sm">No bible entries yet for @objBibleChar.Name. Add persona notes (voice &amp; tone, wording rules) to guide script-assist.</div>
                     </Card>
                 }
@@ -220,23 +248,18 @@ else
                 {
                     @foreach (var vEntry in objBibleEntries)
                     {
-                        <Card @key="vEntry.EntryId" data-testid="bible-entry">
+                        <Card @key="vEntry.EntryId" Class="char-bible-card" data-testid="@($"card-{Slug(vEntry.Title)}")">
                             <h3 class="card-h3">@vEntry.Title</h3>
                             <div class="muted-sm">@vEntry.Content</div>
                         </Card>
                     }
                 }
-                <Card>
+                <Card Class="char-bible-card" data-testid="card-reference-embeddings">
                     <h3 class="card-h3">Reference embeddings</h3>
-                    <div class="muted-sm">@objBibleChar.RefCount reference images@(objBibleChar.HasLora ? " · 1 LoRA" : "") · indexed for retrieval</div>
+                    <div class="muted-sm">@objBibleChar.RefCount reference images@(objBibleChar.HasLora ? " · 1 LoRA" : "")@(objBibleEntries.Count > 0 ? $" · last indexed {objBibleEntries.Max(aEntry => aEntry.CreatedUtc):yyyy-MM-dd}" : " · not indexed yet")</div>
                 </Card>
             </div>
         }
-        <SheetFooter>
-            <SheetClose AsChild>
-                <Button Variant="ButtonVariant.Outline">Close</Button>
-            </SheetClose>
-        </SheetFooter>
     </SheetContent>
 </Sheet>
 
@@ -338,7 +361,12 @@ else
     private static string ToInitials(string aName)
     {
         var vParts = aName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        var vInitials = new string(vParts.Take(2).Select(aPart => char.ToUpperInvariant(aPart[0])).ToArray());
+        var vInitials = new string(vParts
+            .Select(aPart => aPart.FirstOrDefault(char.IsLetterOrDigit))
+            .Where(aChar => aChar != default)
+            .Take(2)
+            .Select(char.ToUpperInvariant)
+            .ToArray());
         return string.IsNullOrEmpty(vInitials) ? "?" : vInitials;
     }
 
@@ -444,6 +472,14 @@ else
         var vTake = string.Join(' ', vWords.Take(3));
         return string.IsNullOrWhiteSpace(vTake) ? "New character" : vTake;
     }
+
+    /// <summary>The topbar count label ("7 characters", "1 character").</summary>
+    private string CountLabel => objCharacters.Count == 1 ? "1 character" : $"{objCharacters.Count} characters";
+
+    /// <summary>Turns a display name into the lower-case, dash-separated form used in control names.</summary>
+    /// <param name="aName">The display name.</param>
+    private static string Slug(string aName) =>
+        System.Text.RegularExpressions.Regex.Replace(aName.ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
 
     /// <summary>A library-facing character with its locked identity, realism flag and reference counts.</summary>
     private sealed class CharacterCard

@@ -1,6 +1,7 @@
 @inherits LayoutComponentBase
 @implements IDisposable
 @using TrStudioUI.Components
+@using Microsoft.AspNetCore.Components.Sections
 @inject AppShellNavigation Shell
 @inject NavigationManager Navigation
 @inject IAuthSession AuthSession
@@ -39,6 +40,8 @@
             </Breadcrumb>
             <div class="shell-topbar-spacer"></div>
             <ApiStatusIndicator />
+            @* A page's own topbar context (e.g. Avatar Studio's "Project: …" badge) renders here. *@
+            <SectionOutlet SectionName="topbar-context" />
             <ThemeToggle TestId="icon-btn-toggle-dark-mode" />
             @* Identity chip doubles as the sign-out control: clears the session and returns to /login. *@
             <button type="button" class="shell-userchip brand-gradient" data-testid="user-chip"

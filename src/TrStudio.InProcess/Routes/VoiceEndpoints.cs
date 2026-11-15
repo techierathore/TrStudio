@@ -3,6 +3,7 @@ using System.Security.Claims;
 using TrStudio.Models;
 using TrStudio.Models.Contracts;
 using TrStudio.Models.Entities;
+using TrStudio.Models.Repositories;
 using TrStudio.Models.Services;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +30,7 @@ public static class VoiceEndpoints
     {
         var vVoice = aApp.MapGroup(ApiRoutes.Voice).WithTags("Voice");
         vVoice.MapGet("preset-voices", ListPresetVoicesAsync).WithName("ListPresetVoices");
+        vVoice.MapGet("clones", ListClonesAsync).WithName("ListVoiceClones");
         vVoice.MapPost("synthesize", SynthesizeAsync).WithName("SynthesizeVoice");
         vVoice.MapPost("consent", RecordConsentAsync).WithName("RecordVoiceConsent");
         vVoice.MapPost("clone", CloneVoiceAsync).WithName("CloneVoice");
@@ -44,6 +46,33 @@ public static class VoiceEndpoints
     {
         var vVoices = string.IsNullOrWhiteSpace(aLanguage) ? aCatalog.GetAll() : aCatalog.GetByLanguage(aLanguage);
         var vResult = vVoices.Select(aVoice => ToResponse(aVoice, aRouter)).ToList();
+        return Results.Ok(vResult);
+    }
+
+    /// <summary>FN-032: lists the caller's registered voice clones, newest first, with the model each routes to.</summary>
+    private static async Task<IResult> ListClonesAsync(
+        ClaimsPrincipal aUser,
+        IVoiceCloneRepository aRepository,
+        IVoiceModelRouter aRouter,
+        CancellationToken aCancellationToken)
+    {
+        var vUserId = ResolveUserId(aUser);
+        if (vUserId is null)
+        {
+            return Results.Unauthorized();
+        }
+
+        var vClones = await aRepository.ListAsync(vUserId, aCancellationToken);
+        var vResult = vClones.Select(aClone => new VoiceCloneListItemResponse
+        {
+            CloneId = aClone.CloneId,
+            VoiceName = aClone.VoiceName,
+            Language = aClone.Language,
+            IsRealPerson = aClone.IsRealPerson,
+            Status = aClone.Status,
+            RoutedModel = aRouter.Route(aClone.Language).Model,
+            CreatedUtc = aClone.CreatedUtc
+        }).ToList();
         return Results.Ok(vResult);
     }
 
@@ -130,6 +159,7 @@ public static class VoiceEndpoints
         DisplayName = aVoice.DisplayName,
         Language = aVoice.Language,
         Gender = aVoice.Gender,
+        Tone = aVoice.Tone,
         IsSynthetic = aVoice.IsSynthetic,
         RoutedModel = aRouter.Route(aVoice.Language).Model,
         SupportsEmotion = aVoice.SupportsEmotion,

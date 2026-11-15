@@ -6,8 +6,8 @@
 | Kind | app |
 | Size | Medium |
 | Phase | 3 of 3 |
-| Verified on | 2026-11-14 |
-| Date | 2026-11-14 |
+| Verified on | 2026-11-15 |
+| Date | 2026-11-15 |
 
 ## Architecture cheat-sheet
 
@@ -251,6 +251,29 @@ See the app frame entry: `DesktopSessionEndpoints.cs:49` ends the session and al
 
 The test host uses `TestKeyProtector` (`tests/TrStudio.TestHost/TestKeyProtector.cs:19`), an in-memory key.
 
+### Zoom in the Mac app (REQ-FN-104)
+
+**Call chain:** `MainPage` `BlazorWebViewInitialized` → `BlazorZoom.Attach` → `WKUserScript` at document start + `BlazorZoom.Apply` → CSS `zoom` and `--tr-zoom` on `<html>`
+
+| File and line | Function | Watch | Expected value |
+|---|---|---|---|
+| `src/TrStudio/BlazorZoom.cs:64` | `Attach` | the user script text | the saved level (`tf.zoom`, default 1.6 on a 4K panel) |
+| `src/TrStudio/BlazorZoom.cs:122` | `Apply` | `Level` | 0.5 to 3.0 in 0.1 steps |
+| `src/TrStudio/BlazorZoom.cs:131` | `Apply` | `PageZoom` | always 1: `WKWebView.PageZoom` magnifies without laying the page out again, which put the Login card right of centre |
+| `src/TrStudio/BlazorZoom.cs:140` | `ApplyScript` | `--tr-zoom` | equal to `zoom`; `.auth-shell` divides `100vh` by it |
+
+### Job result and the provider of each picture (REQ-UI-086)
+
+`GET /api/v1/jobs/{id}/result` (`src/TrStudio.InProcess/Routes/SpineEndpoints.cs:175`) adds the run details from the generation log through `WorkspaceEndpoints.WithRunInfoAsync`, as the gallery and history calls do; Image studio badges a tile "Venice" from `AssetResponse.ProviderKind`.
+
+### Venice's own reason on a refused call (REQ-UI-095)
+
+`VeniceApiException.FromResponse` keeps Venice's `details` on a 400 word for word (`src/TrStudio.Engine/Domain/Venice/VeniceApiException.cs:98`) and reads a rate-limit reset given in seconds, as a Unix time in seconds, or in milliseconds (`:152`), never below zero.
+
+### Sample data for the screen checks (decision 11)
+
+Each screen's mockup data is put into the test host by `tests/verify/seed/<mockup name>.sh`, which calls a TEST ONLY `POST /test/seed/<mockup name>` in `tests/TrStudio.TestHost/Program.cs` (18 endpoints from line 120) for the stand-in AppManager's user 4242. `tf-verify-list.sh` finds each script and `tf-verify-screens.sh` runs it before the screen. Never shipped.
+
 ### Configuration, logging, errors
 
 - Configuration: `DesktopSettings.Load` (`src/TrStudio/MauiProgram.cs:44`); engine settings in memory (`EngineHost.cs:78`). No environment variables.
@@ -259,7 +282,8 @@ The test host uses `TestKeyProtector` (`tests/TrStudio.TestHost/TestKeyProtector
 
 ## Known issues
 
-- Register and the signed-in screens lack some of their mockups' control names; a dedicated run adds them (owner decision 11, MISS-TrStudio-20261114-03).
-- Sign-in against the real AppManager waits for the AppManager values in `appmanager.local.json`; until then it was checked on the test host's stand-in AppManager. The desktop app itself was not opened in this run.
+- Login, Register and Setup required still differ from their mockups in the structure comparison (a link box on Login, the chosen account-type colour on Register, a badge colour, an icon and a border on Setup required): REQ-UI-001, REQ-UI-002, REQ-UI-004, REQ-FN-015 and REQ-FN-016 are red on the mockup check only.
+- The real Mac app cannot be driven by the framework's checker until Automation Mode is allowed without a password (`sudo automationmodetool enable-automationmode-without-authentication`, owner only). On 15 Nov 2026 it was checked by screenshots instead.
 - AppManager does not document a refresh token's lifetime, so 30 days is the app's own limit (`docs/TrStudio-AppManager-Feedback.md`, AM-001).
-- Icon names in the TrBlazeUI reference that the Lucide package lacks were fixed in the screens today (TrBlazeUI TR-013, `docs/TrStudio-TrBlazeUI-Feedback.md`).
+- ComfyUI import: Run falls back to made-up per-node results when the debug route cannot be reached (`src/TrStudioUI/Pages/Admin/AdminComfy.razor`).
+- Libraries: TrBlazeUI 2.2.5 and TechieRag 1.1.5 from nuget.org (15 Nov 2026); open TechieRag entries TR-RAG-002 to TR-RAG-006, none blocking.

@@ -121,6 +121,7 @@ tr.sel td{background:var(--sel)}
 .field{margin-bottom:12px}
 .spin{animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
 </style>
+<style data-note="tf-phone-layout: owner decision 13, the app shows the sidebar as a slide-out menu on a phone">@media (max-width:600px){.app{grid-template-columns:1fr}.side[data-testid="sidebar"]{display:none}}</style>
 </head>
 <body>
 <div class="app">
@@ -177,8 +178,8 @@ tr.sel td{background:var(--sel)}
               <option data-tf-phase="2">Nano Banana Pro — Cloud · Venice</option>
               <option data-tf-phase="2">Krea v2 Large (takes a reference picture) — Cloud · Venice</option>
             </select>
-            <div class="row" style="margin-top:6px" data-tf-phase="2"><span class="badge brand" data-testid="badge-cloud-venice">Cloud · Venice</span><span class="muted" style="font-size:11.5px">shown when a Venice model is picked</span></div>
-            <div class="alert" style="margin-top:6px;font-size:12px" data-tf-phase="2" data-testid="alert-sent-to-venice">Your prompt and pictures are sent to Venice.</div>
+            <div class="row" style="margin-top:6px" data-tf-phase="2" data-tf-state="venice-picked"><span class="badge brand" data-testid="badge-cloud-venice">Cloud · Venice</span><span class="muted" style="font-size:11.5px">shown when a Venice model is picked</span></div>
+            <div class="alert" style="margin-top:6px;font-size:12px" data-tf-phase="2" data-tf-state="venice-picked" data-testid="alert-sent-to-venice">Your prompt and pictures are sent to Venice.</div>
             <div class="muted" style="font-size:11.5px;margin-top:6px" data-tf-phase="2" data-testid="model-filter-note">Only models that can do this task are listed: a reference picture keeps models that take one; a drawn mask hides Venice models.</div>
             <div class="muted" style="font-size:11.5px;margin-top:6px">Params below auto-rendered from registry schema</div>
           </div>
@@ -252,7 +253,7 @@ tr.sel td{background:var(--sel)}
                   Generate
                 </button>
               </div>
-              <div class="prog" style="margin-top:8px" data-testid="progress"><i style="width:64%"></i></div>
+              <div class="prog" style="margin-top:8px" data-tf-state="generating" data-testid="progress"><i style="width:64%"></i></div>
               <div class="err" style="margin-top:8px" data-tf-phase="2" data-tf-state="error" data-testid="alert-venice-failed">Venice refused this prompt: content policy violation (CONTENT_POLICY_VIOLATION). Try rewording it.</div>
             </div>
           </div>

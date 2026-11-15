@@ -104,42 +104,41 @@ test.describe.serial('Prompt Studio verify', () => {
     out.render.h1 = (await page.locator('h1').first().innerText().catch(() => '')) || '';
     out.render.root = await ctrl('[data-testid=prompt-studio]');
     out.render.sessionRail = await ctrl('[data-testid=session-rail]');
-    out.render.newChat = await ctrl('[data-testid=new-chat-btn]');
-    out.render.llmSelect = await ctrl('[data-testid=llm-select]');
-    // picker is a TrBlazeUI <Select> (popover), not a native <select>. Read the trigger
-    // label (shows the selected registry model) and open it to count SelectItems.
+    out.render.newChat = await ctrl('[data-testid=btn-new-chat]');
+    out.render.llmSelect = await ctrl('[data-testid=field-llmsel]');
+    // picker is a TrBlazeUI <NativeSelect> (a native <select>, as the mockup draws it). Read the
+    // selected option's label (the selected registry model) and count its options.
     out.render.llmTriggerText =
-      (await page.locator('[data-testid=llm-select]').first().innerText().catch(() => '')) || '';
+      (await page
+        .locator('[data-testid=field-llmsel]')
+        .first()
+        .evaluate((el: any) => (el.selectedOptions && el.selectedOptions[0] ? el.selectedOptions[0].text : ''))
+        .catch(() => '')) || '';
     try {
-      await page.locator('[data-testid=llm-select]').first().click({ timeout: 5000 });
-      await page.waitForTimeout(700);
       out.render.llmOptions = await page
-        .locator('[role=option], [data-slot=select-item], [data-testid=llm-select] [role=option]')
+        .locator('[data-testid=field-llmsel] option:not([value=""])')
         .count()
         .catch(() => 0);
-      // close the popover
-      await page.keyboard.press('Escape').catch(() => {});
-      await page.waitForTimeout(300);
     } catch (e: any) {
       out.render.llmOptions = 0;
       out.notes.push('picker open failed: ' + e.message);
     }
-    out.render.visionBadge = await ctrl('[data-testid=vision-badge]');
+    out.render.visionBadge = await ctrl('[data-testid=card-1] [data-testid=badge-status]');
     out.render.visionBadgeText =
-      (await page.locator('[data-testid=vision-badge]').first().innerText().catch(() => '')) || '';
-    out.render.composer = await ctrl('[data-testid=composer-text]');
-    out.render.sendBtn = await ctrl('[data-testid=send-btn]');
-    out.render.attachBtn = await ctrl('[data-testid=attach-btn]');
+      (await page.locator('[data-testid=card-1] [data-testid=badge-status]').first().innerText().catch(() => '')) || '';
+    out.render.composer = await ctrl('[data-testid=field-describe-what-you-want-t]');
+    out.render.sendBtn = await ctrl('[data-testid=btn-send]');
+    out.render.attachBtn = await ctrl('[data-testid=icon-btn-attach-image]');
     out.render.apiAlert = await ctrl('[data-testid=api-alert]');
 
     // ---- UI-082: exercise a round-trip so prompt-use actions render ----
     try {
-      await page.locator('[data-testid=new-chat-btn]').first().click({ timeout: 8000 }).catch(() => {});
+      await page.locator('[data-testid=btn-new-chat]').first().click({ timeout: 8000 }).catch(() => {});
       await page.waitForTimeout(800);
-      const composer = page.locator('[data-testid=composer-text]').first();
+      const composer = page.locator('[data-testid=field-describe-what-you-want-t]').first();
       await composer.click({ timeout: 8000 });
       await composer.fill('cinematic portrait of a knight, dramatic lighting');
-      await page.locator('[data-testid=send-btn]').first().click({ timeout: 8000 });
+      await page.locator('[data-testid=btn-send]').first().click({ timeout: 8000 });
       // wait for assistant reply block
       await page.waitForSelector('[data-testid=prompt-block]', { timeout: 25000 }).catch(() => {});
       await page.waitForTimeout(1200);
@@ -147,10 +146,10 @@ test.describe.serial('Prompt Studio verify', () => {
       out.notes.push('ui082 round-trip exception: ' + e.message);
     }
     out.ui082.promptBlock = await page.locator('[data-testid=prompt-block]').count().catch(() => 0);
-    out.ui082.copyBtn = await page.locator('[data-testid=copy-btn]').count().catch(() => 0);
-    out.ui082.saveBtn = await page.locator('[data-testid=save-btn]').count().catch(() => 0);
+    out.ui082.copyBtn = await page.locator('[data-testid=btn-copy]').count().catch(() => 0);
+    out.ui082.saveBtn = await page.locator('[data-testid=btn-save-to-library]').count().catch(() => 0);
     out.ui082.sendStudioBtn = await page
-      .locator('[data-testid=send-studio-btn]')
+      .locator('[data-testid=btn-send-to-image-studio]')
       .count()
       .catch(() => 0);
     // session rail now shows a session card
@@ -172,7 +171,7 @@ test.describe.serial('Prompt Studio verify', () => {
     out.visual.threadBox = threadBox;
     out.visual.railThreadOverlap = overlaps(railBox, threadBox);
     // key controls sized > 0
-    for (const s of ['llm-select', 'composer-text', 'send-btn']) {
+    for (const s of ['field-llmsel', 'field-describe-what-you-want-t', 'btn-send']) {
       const bb = await page.locator(`[data-testid=${s}]`).first().boundingBox().catch(() => null);
       out.visual[`${s}_1280`] = bb;
       if (!bb || bb.width <= 0 || bb.height <= 0) out.notes.push(`1280 ${s} zero-size box`);

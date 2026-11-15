@@ -4,8 +4,8 @@
 |---|---|
 | App | TrStudio |
 | Project type | app |
-| Written | 2026-11-14 (daytime run), from `docs/metrics/*.jsonl` by `tf-metrics.sh --report` |
-| Streams | runs 15 · gates 166 (0 backfilled) · sessions 3 · commits 8 · misses 27 |
+| Written | 2026-11-15 (end of the night run), from `docs/metrics/*.jsonl` by `tf-metrics.sh --report` |
+| Streams | runs 25 · gates 261 (0 backfilled) · sessions 4 · commits 9 · misses 38 |
 
 All figures below are live records; there are no backfilled records, so nothing is split by provenance.
 
@@ -13,90 +13,83 @@ All figures below are live records; there are no backfilled records, so nothing 
 
 | Records | Requirements scored | First-pass rate |
 |---|---|---|
-| 166 gate records (live, app) | 139 | 92% |
-
-The 139 now include phase 1 (re-verified on the desktop shape through the test host), phase 2 (Venice, without a key) and phase 3.
+| 261 gate records (live, app) | 142 | 92% |
 
 ## 2. Gate catch distribution
 
 | Gate | Failures caught | Share |
 |---|---|---|
-| acceptance | 8 | 73% |
-| render | 2 | 18% |
-| test-users | 1 | 9% |
+| acceptance | 8 | 35% |
+| mockup-parity | 5 | 22% |
+| render | 2 | 9% |
+| test-users | 1 | 4% |
+| escaped (no gate caught it) | 7 | 30% |
 
-11 failures in all. The 8 acceptance failures are the phase 2 Venice rows stopped by one library gap (TrBlazeUI TR-014); the 2 render failures are the two phase 1 screens whose design entries carry no route (decision 11). The mockup comparison ran on 2 records and caught 0: insufficient data (n=2).
+23 failures in all. The mockup comparison ran on 44 records and caught 5 (11%): Login, Register and Setup required, the three screens that were already named before decision 11's run. The 7 escapes are the defects this run found outside a gate: the job-result provider (REQ-UI-086), three faulty Venice checks (REQ-UI-089, REQ-UI-091, REQ-UI-097 with REQ-FN-077), the Mac zoom (REQ-FN-104) and the Venice reset-time reader (REQ-UI-095).
 
 ## 3. Escape rate
 
-0% on the gate records. Separately, from the miss stream: 0 of 27 misses were found by a person (17 by agent review, 10 by a gate). The two are different measures and are not combined.
+41% on the gate records. Separately, from the miss stream: 7 of 38 misses were found by a person (18%). The two are different measures and are not combined.
 
 ## 4. Throughput and rework — poolable
 
 | Figure | Value |
 |---|---|
-| Runs | 15: amend-docs 4, build-phase 4, verify-phase 5, estimate-phase 1, metrics-report 1 (this one is written after) |
-| Rework ratio | 25% (fix-mode runs over build-phase runs) |
+| Runs | 25: amend-docs 4, build-phase 4, estimate-phase 1, metrics-report 2, triage-and-fix 5, verify-phase 9 |
+| Rework ratio | 150% (fix-mode runs over build-phase runs) |
 | Batch size (median) | 18 requirements per build-phase run |
-| Tokens per Verified | 11,529.9 output tokens (what was billed is never estimated) |
+| Tokens per Verified | 10,170.4 output tokens (what was billed is never estimated) |
 
 ## 5. Misses — what was missed, who missed it, what the fix cost
 
 | Figure | Value |
 |---|---|
-| Misses logged | 27 (13 open, 14 fixed) |
-| Classes | partial-implementation 13 · wrong-behaviour 11 · unspecified-gap 3 |
-| Whose gap (16 sorted) | weak-check 10 · spec 5 · unsaid 1 |
-| Found by | agent review 17 · gate 10 |
+| Misses logged | 38 (5 open, 33 resolved) |
+| Classes | wrong-behaviour 16 · partial-implementation 13 · regression 5 · unspecified-gap 4 |
+| Whose gap (23 sorted) | weak-check 16 · spec 6 · unsaid 1 |
+| Found by | agent review 17 · gate 14 · owner 7 |
 
-Of the 13 open: 8 are the phase 2 rows blocked by TR-014, 2 are the phase 1 screens without a route (decision 11), 1 is the screens' own control names (decision 11), 1 is the Registry panel defect now fixed but not re-checked while TR-014 blocks the panel, and 1 is the older picture-file route miss.
+The 5 open misses are the mockup-comparison failures on Login (REQ-UI-001, REQ-FN-016), Register (REQ-UI-002, REQ-FN-015) and Setup required (REQ-UI-004).
 
 ### 5a. Attribution — `linked` records only
 
-8 of 27 misses are linked to the run that made them; 19 are excluded as inferred or unknown. Too few for a per-model or per-phase miss rate; none is printed.
+14 of 38 misses are linked to the run that made them (all build-phase, builder, claude-opus-5-5); 24 are excluded as inferred or unknown. Observational only: which model gets which work is not random.
 
 ### 5b. Discovery cost — measured only
 
 | Miss | Row | Found after |
 |---|---|---|
-| MISS-TrStudio-20261114-01 | REQ-FN-101 | 5.1k tokens, 0.6 min — the sign-in-again notice vanished on the test host |
-| MISS-TrStudio-20261114-02 | REQ-UI-098 | 8.7k tokens, 1.2 min — three icon names missing from the icon package |
-| MISS-TrStudio-20261114-03 | REQ-UI-005 | 5.2k tokens, 0.8 min — the app frame lacked the mockups' control names |
-| MISS-TrStudio-20261114-04 | REQ-UI-005 | 10.1k tokens, 1.3 min — light-mode status badges below 3:1 contrast |
-| MISS-TrStudio-20261114-05 | REQ-FN-026 | 30.6k tokens, 0.8 min — Reproduce lost seed and project, Projects sent the wrong id |
-| MISS-TrStudio-20261114-06 | REQ-FN-014 | 4.0k tokens, 0.4 min — Premium tier never checked outside personal mode |
-| MISS-TrStudio-20261114-09 | REQ-UI-084 | 4.6k tokens, 0.8 min — Add model panel crashed; new rows saved switched off |
+| MISS-TrStudio-20261114-09 | REQ-UI-084 | 4.6k tokens, 0.8 min |
+| MISS-TrStudio-20261114-23 | REQ-FN-104 | 41.9k tokens, 5.2 min — Login card right of centre in the Mac app |
+| MISS-TrStudio-20261114-24 | REQ-UI-095 | 17.2k tokens, 3.0 min — Venice's millisecond reset time crashed the error reader |
 
-Discovery per miss: 8,811 output tokens and 0.7 minutes (n=14 measured, 13 not measured: a verify pass that finds several defects at once has no window per defect). Fix cost: not measured — fixes were made inside the run that found them.
+Discovery per miss: 11,403.6 output tokens and 1.1 minutes (n=16 measured, 22 not measured: a verify pass that finds several defects at once has no window per defect). Fix cost: 5.4k output tokens per miss-fix, apportioned (1/24 of the night run's fix window each), never a measured sole cost.
+
+Root causes found on the host, outside any row (from the run's own marks): the app template deleted from the working tree broke the build (about 1 minute to find); stale `obj` output made the Mac app quit at start (about 1 minute from the look mark at 19:46:49Z); Automation Mode needing a password stopped the mac2 driver (about 9 minutes, including updating the driver).
 
 ## 6. Effort per phase — time, tokens, model, fan-out
 
 | Command | Runs | Wall clock | Output tokens | Share of output |
 |---|---|---|---|---|
-| build-phase | 4 | 1h43m | 1.4M | 51% |
-| amend-docs | 4 | 45m36s | 1.2M | 44% |
-| estimate-phase | 1 | 1m15s | 115.6k | 4% |
-| verify-phase | 5 | 25m27s | 21.1k | 1% |
-| metrics-report | 1 | 0m19s | 6.6k | 0% |
+| triage-and-fix | 5 | 6h21m | 2.1M | 43% |
+| build-phase | 4 | 1h43m | 1.4M | 28% |
+| amend-docs | 4 | 45m36s | 1.2M | 25% |
+| estimate-phase | 1 | 1m15s | 115.6k | 2% |
+| verify-phase | 9 | 51m46s | 66.7k | 1% |
+| metrics-report | 2 | 0m53s | 13.7k | 0% |
 
-### 6a. Which model did the work
-
-claude-opus-5-5 on every run (claude-code). Observational only: which model gets which work is not random.
-
-### 6b. Subagent fan-out
-
-Observed on the runs whose window read the subagents. Today's amend-docs fanned out to one writer (the run guides); the phase 1 re-verify fanned out to six test writers, one Venice test writer and one guide writer, inside the verify windows.
+Token windows measured on all 25 runs (9 main, 16 tree). triage-and-fix fanned out 18 subagents over the night run (measured; it declared 2 kinds), which wrote 79% of that phase's observed output: one per decision 11 screen, and one for the developer guide.
 
 ## 6c. Estimate against actual — two columns, never one number
 
 | Phase 3 | Estimate | Actual |
 |---|---|---|
 | build [0/29] | no precedent | insufficient data (n=0) |
-| machine QA [0/29] | no precedent | insufficient data |
-| after handoff [0/29] | no precedent | insufficient data |
+| machine QA [0/29] | no precedent | insufficient data (n=0) |
+| after handoff [0/29] | no precedent | insufficient data (n=0) |
 
 ## 7. What is missing
 
-- Fix cost per miss: fixes made inside the finding run have no window of their own.
-- Checks on the real desktop app: none ran today (the owner was using the Mac).
+- Fix cost per miss as a sole figure: every fix tonight shared one run's window.
+- Driven checks on the real Mac app: the mac2 driver needs Automation Mode without a password (owner-only `sudo`); the app was checked by screenshots instead.
 - Owner UAT time: no stream records it.

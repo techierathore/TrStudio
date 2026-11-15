@@ -14,8 +14,7 @@
 
 <PageTitle>TrStudio — Create account</PageTitle>
 
-<Card Class="auth-card" data-testid="register-card">
-  <div data-testid="card-1">
+<Card Class="auth-card" data-testid="card-1">
     <div class="auth-brand">
         <div class="auth-brand-logo shell-logo brand-gradient">TR</div>
         <div>
@@ -104,7 +103,7 @@
         </div>
     </div>
 
-    <div data-testid="btn-create-account">
+    <span data-testid="btn-create-account" style="display:block">
     <Button Class="auth-submit" Type="ButtonType.Submit" OnClick="HandleCreateAsync"
             Disabled="@(objBusy || !IsFormValid)" data-testid="create-btn">
         @if (objBusy)
@@ -118,7 +117,7 @@
             <span>Create account</span>
         }
     </Button>
-    </div>
+    </span>
 
     <div class="auth-divline">AppManager</div>
     <div class="auth-note">
@@ -127,7 +126,6 @@
     </div>
 
     <div class="auth-switch">Already have an account? <a href="/login" data-testid="link-sign-in">Sign in</a></div>
-  </div>
 </Card>
 
 @code {

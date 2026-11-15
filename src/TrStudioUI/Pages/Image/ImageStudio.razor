@@ -1,7 +1,8 @@
 @page "/image"
-@using TrBlazeUI.Components.Toolbar
+@using TrBlazeUI.Components.NativeSelect
 @using TrBlazeUI.Components.FileUpload
 @using System.Text.Json
+@using Microsoft.AspNetCore.Components.Sections
 @inject IHttpClientFactory HttpClientFactory
 @inject ToastService ToastService
 @inject IAuthSession AuthSession
@@ -11,10 +12,12 @@
     Image Studio (REQ-UI-020). Left panel renders the parameter controls DYNAMICALLY from the
     selected registry model's declarative params schema (/api/v1/models) — switching model
     re-renders the controls with no code change. Centre canvas carries the generate / image-to-image
-    / inpaint mask Toolbar and the prompt; ControlNet Tabs (pose/depth/edges) + a reference upload
+    / inpaint mask tool strip and the prompt; ControlNet choices (pose/depth/edges) + a reference upload
     condition the run; results strip shows per-result seed Badges; export presets + background-remove
     finish the flow. Job submit/poll/result go through the shared spine (POST/GET /api/v1/jobs);
     representative output is shown when the API is unreachable so the studio stays demonstrable.
+    On open the studio reopens the creator's last picture run (newest image asset's job): its model,
+    prompt, settings, seed and result tiles, read from /api/v1/assets.
     Phase 2 (Venice): the list comes from CatalogModelResponse and is filtered by ImageModelFilter —
     picture rows only, a reference picture keeps rows that take one (REQ-UI-087), a drawn mask hides
     Venice rows (REQ-UI-088); a Venice pick shows the Cloud · Venice badge and the "sent to Venice"
@@ -24,26 +27,29 @@
 
 <PageTitle>TrStudio — Image Studio</PageTitle>
 
+@* The model this studio runs, shown in the shell topbar beside the status pill. *@
+@if (SelectedModel is not null)
+{
+    <SectionContent SectionName="topbar-context">
+        <Badge Variant="BadgeVariant.Outline" Truncate="true" Class="topbar-project" title="@($"Model: {SelectedModel.DisplayName}")" data-testid="@($"badge-{Slug(SelectedModel.DisplayName)}")">@SelectedModel.DisplayName</Badge>
+    </SectionContent>
+}
+
 <h1 class="page-title">Image Studio</h1>
 <p class="page-sub">Generate, image-to-image and inpaint. Parameters render from the model registry schema.</p>
 
-<div class="studio" data-testid="image-studio">
+<div class="studio image-studio" data-testid="image-studio">
 
     @* ---- LEFT: model + schema-driven params ---- *@
     <div class="studio-col">
-        <Card>
+        <Card Class="image-card" data-testid="card-model">
             <h3 class="card-h3">Model</h3>
-            <div data-testid="model-select">
-                <Select Value="@objSelectedModelId" ValueChanged="OnModelChangedAsync" TValue="string" Class="w-full">
-                    <SelectTrigger><SelectValue Placeholder="Select a model" /></SelectTrigger>
-                    <SelectContent>
-                        @foreach (var vModel in VisibleModels)
-                        {
-                            <SelectItem Value="@vModel.Id" Text="@ImageModelFilter.OptionLabel(vModel)" TValue="string">@ImageModelFilter.OptionLabel(vModel)</SelectItem>
-                        }
-                    </SelectContent>
-                </Select>
-            </div>
+            <NativeSelect TValue="string" Value="@objSelectedModelId" ValueChanged="OnModelChangedAsync" Placeholder="Select a model" Class="w-full" aria-label="Model" data-testid="field-1">
+                @foreach (var vModel in VisibleModels)
+                {
+                    <option value="@vModel.Id">@ImageModelFilter.OptionLabel(vModel)</option>
+                }
+            </NativeSelect>
             @if (SelectedModel is not null && ImageModelFilter.IsVenice(SelectedModel))
             {
                 @* REQ-UI-085 badge + REQ-UI-096 notice: shown only when a Venice row is picked. *@
@@ -59,9 +65,8 @@
             <div class="seg-hint">Params below auto-render from the registry schema · @objTierLabel tier</div>
         </Card>
 
-        <Card>
+        <Card Class="image-card" data-testid="card-parameters">
             <h3 class="card-h3">Parameters</h3>
-            <div data-testid="params-panel">
                 @if (SelectedModel is null)
                 {
                     <div class="muted-sm">Select a model to configure parameters.</div>
@@ -86,20 +91,17 @@
                                 case "bool":
                                     <div class="flex-between">
                                         <label class="param-label">@LabelOf(vSpec)</label>
-                                        <Switch @bind-Checked="objBool[vSpec.Key]" AriaLabel="@LabelOf(vSpec)" />
+                                        <Switch @bind-Checked="objBool[vSpec.Key]" AriaLabel="@LabelOf(vSpec)" data-testid="@SwitchTestId(vSpec)" />
                                     </div>
                                     break;
                                 case "enum":
                                     <label class="param-label">@LabelOf(vSpec)</label>
-                                    <Select @bind-Value="objText[vSpec.Key]" TValue="string" Class="w-full">
-                                        <SelectTrigger><SelectValue Placeholder="@LabelOf(vSpec)" /></SelectTrigger>
-                                        <SelectContent>
-                                            @foreach (var vOption in vSpec.Values ?? Array.Empty<string>())
-                                            {
-                                                <SelectItem Value="@vOption" Text="@vOption" TValue="string">@vOption</SelectItem>
-                                            }
-                                        </SelectContent>
-                                    </Select>
+                                    <NativeSelect TValue="string" @bind-Value="objText[vSpec.Key]" Class="w-full" aria-label="@LabelOf(vSpec)" data-testid="@($"field-{Slug(vSpec.Key)}")">
+                                        @foreach (var vOption in vSpec.Values ?? Array.Empty<string>())
+                                        {
+                                            <option value="@vOption">@vOption</option>
+                                        }
+                                    </NativeSelect>
                                     break;
                                 default:
                                     <label class="param-label">@LabelOf(vSpec)</label>
@@ -111,22 +113,22 @@
 
                     <div class="param-field">
                         <label class="param-label">Seed</label>
-                        <Input @bind-Value="objSeedText" Placeholder="Random when empty" />
+                        <Input @bind-Value="objSeedText" Placeholder="Random when empty" data-testid="field-seed" />
                     </div>
                 }
-            </div>
         </Card>
 
-        <Card>
+        <Card Class="image-card" data-testid="card-conditioning-controlnet">
             <h3 class="card-h3">Conditioning (ControlNet)</h3>
-            <Tabs @bind-Value="objControlTab" Class="mb-3">
-                <TabsList Class="w-full">
-                    @foreach (var vTab in objControlTabs)
-                    {
-                        <TabsTrigger Value="@vTab">@vTab</TabsTrigger>
-                    }
-                </TabsList>
-            </Tabs>
+            <div class="image-seg" role="radiogroup" aria-label="Conditioning" style="margin-bottom:10px">
+                @foreach (var vTab in objControlTabs)
+                {
+                    <button type="button" role="radio" aria-checked="@(vTab == objControlTab ? "true" : "false")"
+                            class="@(vTab == objControlTab ? "is-on" : null)"
+                            @onclick="@(() => objControlTab = vTab)"
+                            data-testid="@($"btn-{vTab.ToLowerInvariant()}")">@vTab</button>
+                }
+            </div>
             <div data-testid="controlnet-upload">
                 <FileUpload Files="@objReferenceFiles" FilesChanged="OnReferenceFilesChangedAsync" Accept="image/*" />
             </div>
@@ -135,26 +137,34 @@
 
     @* ---- CENTER: canvas ---- *@
     <div class="studio-col">
-        <Card>
+        <Card Class="image-card" data-testid="card-canvas">
             <div class="flex-between" style="margin-bottom:10px">
                 <h3 class="card-h3" style="margin:0">Canvas</h3>
-                <Toolbar AriaLabel="Canvas tools">
-                    <ToolbarGroup>
-                        @foreach (var vTool in objTools)
-                        {
-                            <ToolbarButton AriaLabel="@vTool"
-                                           Class="@(vTool == objActiveTool ? "badge-brand" : null)"
-                                           OnClick="@(() => OnToolChangedAsync(vTool))">
-                                @vTool
-                            </ToolbarButton>
-                        }
-                    </ToolbarGroup>
-                </Toolbar>
+                <div class="image-seg image-tools" role="toolbar" aria-label="Canvas tools">
+                    @foreach (var vTool in objTools)
+                    {
+                        <button type="button" aria-pressed="@(vTool == objActiveTool ? "true" : "false")"
+                                class="@(vTool == objActiveTool ? "is-on" : null)"
+                                @onclick="@(() => OnToolChangedAsync(vTool))"
+                                data-testid="@($"btn-{vTool.ToLowerInvariant()}")">
+                            @if (ToolIcon(vTool) is { } vIcon)
+                            {
+                                <LucideIcon Name="@vIcon" Size="13" />
+                            }
+                            @vTool
+                        </button>
+                    }
+                </div>
             </div>
 
             <div class="canvas-stage" data-testid="canvas">
-                @if (objResults.Count == 0)
+                @if (objResults.FirstOrDefault(aTile => !string.IsNullOrEmpty(aTile.PictureDataUrl)) is { } vShown)
                 {
+                    <img src="@vShown.PictureDataUrl" alt="Result, seed @vShown.Seed" style="width:100%;height:100%;object-fit:contain;border-radius:10px" />
+                }
+                else
+                {
+                    @* No picture to show yet: the prompt it is made from. *@
                     <div>
                         <LucideIcon Name="image" Size="30" />
                         <div class="canvas-stage-caption">
@@ -162,22 +172,16 @@
                         </div>
                     </div>
                 }
-                else
-                {
-                    <div class="restile @objResults[0].Art" style="width:100%;height:100%;border-radius:10px">
-                        <Badge Class="seed-badge">#@objResults[0].Seed</Badge>
-                    </div>
-                }
             </div>
 
             <div style="margin-top:12px">
                 <label class="param-label">Prompt</label>
-                <Textarea @bind-Value="PromptText" Placeholder="Describe the image to generate…" />
+                <Textarea @bind-Value="PromptText" Placeholder="Describe the image to generate…" data-testid="field-prompt" />
                 <div class="flex-between" style="margin-top:8px">
                     <span class="muted-sm">
                         @(objGenerating ? $"Generating batch of {objBatchSize} — {objProgress}%" : "Ready")
                     </span>
-                    <Button OnClick="GenerateAsync" Disabled="@objGenerating" data-testid="generate-btn">
+                    <Button OnClick="GenerateAsync" Disabled="@objGenerating" data-testid="btn-generate">
                         @if (objGenerating)
                         {
                             <Spinner Size="SpinnerSize.Small" Class="mr-2" />
@@ -192,7 +196,7 @@
                 </div>
                 @if (objGenerating)
                 {
-                    <Progress Value="@objProgress" Class="mt-2" />
+                    <Progress Value="@objProgress" Class="mt-2" data-testid="progress" />
                 }
                 @if (objOverCapMessage is not null)
                 {
@@ -215,45 +219,40 @@
             </div>
         </Card>
 
-        <Card>
+        <Card Class="image-card" data-testid="card-upscale-restore">
             <div class="flex-between">
                 <h3 class="card-h3" style="margin:0">Upscale &amp; restore</h3>
-                <div class="flex-row">
+                <div class="image-seg" role="radiogroup" aria-label="Upscale to">
                     @foreach (var vScale in objUpscaleOptions)
                     {
-                        <Button Size="ButtonSize.Small"
-                                Variant="@(vScale == objUpscale ? ButtonVariant.Default : ButtonVariant.Outline)"
-                                OnClick="@(() => objUpscale = vScale)"
-                                data-testid="@($"btn-{vScale.ToLowerInvariant()}")">@vScale</Button>
+                        <button type="button" role="radio" aria-checked="@(vScale == objUpscale ? "true" : "false")"
+                                class="@(vScale == objUpscale ? "is-on" : null)"
+                                @onclick="@(() => objUpscale = vScale)"
+                                data-testid="@($"btn-{vScale.ToLowerInvariant()}")">@vScale</button>
                     }
                 </div>
             </div>
-            <div class="flex-row" style="margin-top:10px">
-                <Button Variant="ButtonVariant.Outline" OnClick="UpscaleAsync" data-testid="upscale-btn">
+            <div class="flex-row" style="margin-top:10px;flex-wrap:wrap">
+                <Button Variant="ButtonVariant.Outline" OnClick="UpscaleAsync" style="white-space:nowrap" data-testid="btn-upscaling-face-restore">
                     <LucideIcon Name="maximize-2" Size="14" />
                     Upscale to @objUpscale
                 </Button>
-                <div data-testid="field-upscale-model" style="min-width:200px">
-                    <Select @bind-Value="objUpscaleModelId" TValue="string" Class="w-full">
-                        <SelectTrigger><SelectValue Placeholder="@ImageModelFilter.LocalUpscalerLabel" /></SelectTrigger>
-                        <SelectContent>
-                            @foreach (var vChoice in ImageModelFilter.UpscaleChoices(objModels))
-                            {
-                                <SelectItem Value="@vChoice.Key" Text="@vChoice.Value" TValue="string">@vChoice.Value</SelectItem>
-                            }
-                        </SelectContent>
-                    </Select>
-                </div>
+                <NativeSelect TValue="string" @bind-Value="objUpscaleModelId" style="flex:1 1 180px;min-width:0" aria-label="Upscale model" data-testid="field-upscale-model">
+                    @foreach (var vChoice in ImageModelFilter.UpscaleChoices(objModels))
+                    {
+                        <option value="@vChoice.Key">@vChoice.Value</option>
+                    }
+                </NativeSelect>
             </div>
         </Card>
     </div>
 
     @* ---- RIGHT: results + export ---- *@
     <div class="studio-col">
-        <Card>
+        <Card Class="image-card" data-testid="card-results">
             <div class="flex-between">
                 <h3 class="card-h3" style="margin:0">Results</h3>
-                <Badge Variant="BadgeVariant.Outline">batch · @objBatchSize</Badge>
+                <Badge Variant="BadgeVariant.Outline" data-testid="@($"badge-batch-{objBatchSize}")">batch · @objBatchSize</Badge>
             </div>
             <div class="resgrid" data-testid="results-strip">
                 @if (objResults.Count == 0 && !objGenerating)
@@ -271,7 +270,7 @@
                             {
                                 <img src="@vResult.PictureDataUrl" alt="Result, seed @vResult.Seed" data-testid="result-picture" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" />
                             }
-                            <Badge Class="seed-badge">#@vResult.Seed</Badge>
+                            <Badge Class="seed-badge" data-testid="@($"badge-{vResult.Seed}")">#@vResult.Seed</Badge>
                             @if (vResult.FromVenice)
                             {
                                 <Badge Variant="BadgeVariant.Outline" data-testid="badge-result-venice">Venice</Badge>
@@ -287,26 +286,23 @@
             <div class="seg-hint">Seed shown per tile for one-click reproduction</div>
         </Card>
 
-        <Card>
+        <Card Class="image-card" data-testid="card-export">
             <h3 class="card-h3">Export</h3>
             <label class="param-label">Aspect / preset</label>
-            <Select @bind-Value="objExportPreset" TValue="string" Class="w-full">
-                <SelectTrigger><SelectValue Placeholder="Select preset" /></SelectTrigger>
-                <SelectContent>
-                    @foreach (var vPreset in objExportPresets)
-                    {
-                        <SelectItem Value="@vPreset.Key" Text="@vPreset.Value" TValue="string">@vPreset.Value</SelectItem>
-                    }
-                </SelectContent>
-            </Select>
+            <NativeSelect TValue="string" @bind-Value="objExportPreset" Class="w-full" aria-label="Aspect / preset" data-testid="field-aspect-preset">
+                @foreach (var vPreset in objExportPresets)
+                {
+                    <option value="@vPreset.Key">@vPreset.Value</option>
+                }
+            </NativeSelect>
             <div class="flex-between" style="margin-top:12px">
                 <div>
                     <div class="param-label">Remove background</div>
                     <div class="muted-sm">transparent PNG</div>
                 </div>
-                <Switch @bind-Checked="objRemoveBackground" AriaLabel="Remove background" />
+                <Switch @bind-Checked="objRemoveBackground" AriaLabel="Remove background" data-testid="switch-2" />
             </div>
-            <Button Class="w-full mt-3" OnClick="ExportAsync" data-testid="export-btn">
+            <Button Class="w-full mt-3" OnClick="ExportAsync" data-testid="btn-export">
                 <LucideIcon Name="download" Size="14" />
                 Export
             </Button>
@@ -395,6 +391,7 @@
         await TryLoadModelsAsync(vHasSession);
         objSelectedModelId = VisibleModels.FirstOrDefault()?.Id;
         RebuildParamValues();
+        await TryReopenLastRunAsync(vHasSession);
 
         // Send-to-studio (REQ-UI-082): pre-fill the prompt when Prompt Studio routes here with ?prompt=…
         // (seeded after RebuildParamValues, which resets the param stores including the prompt slot).
@@ -440,6 +437,87 @@
         {
             // Authenticated call failed (API unreachable) — leave the catalog empty rather than
             // flashing a fallback list.
+        }
+    }
+
+    /// <summary>
+    /// Reopens the creator's last picture run: the newest image asset's job gives the model, its
+    /// prompt and settings, the seed and the result tiles (each with its seed). Nothing changes when
+    /// there is no earlier run, its model is no longer listed, or the call fails.
+    /// </summary>
+    /// <param name="aHasSession">Whether a signed-in session is present.</param>
+    private async Task TryReopenLastRunAsync(bool aHasSession)
+    {
+        if (!aHasSession)
+        {
+            return;
+        }
+
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vPage = await vClient.GetFromJsonAsync<PagedResult<AssetResponse>>($"{ApiRoutes.Assets}?aKind=image&aPageSize=24");
+            var vNewest = vPage?.Items.FirstOrDefault();
+            if (vNewest is null || !VisibleModels.Any(aModel => aModel.Id == vNewest.ModelId))
+            {
+                return;
+            }
+
+            objSelectedModelId = vNewest.ModelId;
+            RebuildParamValues();
+            ApplyParams(vNewest.ParamsJson);
+
+            var vRun = vPage!.Items
+                .Where(aAsset => aAsset.JobId == vNewest.JobId)
+                .OrderBy(aAsset => aAsset.SeedUsed ?? long.MaxValue)
+                .ToList();
+            var vArts = new[] { "art-a", "art-b", "art-c" };
+            for (var vIndex = 0; vIndex < vRun.Count; vIndex++)
+            {
+                var vAsset = vRun[vIndex];
+                var vFromVenice = string.Equals(vAsset.ProviderKind, nameof(ProviderKind.Venice), StringComparison.OrdinalIgnoreCase);
+                var vPicture = await LoadPictureDataUrlAsync(vClient, vAsset.AssetId);
+                objResults.Add(new ResultTile(vAsset.SeedUsed ?? 0, vArts[vIndex % vArts.Length], vAsset.AssetId, vFromVenice, vPicture));
+            }
+
+            objSeedText = vRun.FirstOrDefault()?.SeedUsed?.ToString() ?? string.Empty;
+        }
+        catch
+        {
+            // The last run could not be read — the studio opens fresh.
+        }
+    }
+
+    /// <summary>Puts a run's saved settings (prompt, numbers, switches, choices) back on the controls.</summary>
+    /// <param name="aParamsJson">The run's params document.</param>
+    private void ApplyParams(string? aParamsJson)
+    {
+        if (string.IsNullOrWhiteSpace(aParamsJson))
+        {
+            return;
+        }
+
+        using var vDocument = JsonDocument.Parse(aParamsJson);
+        if (vDocument.RootElement.ValueKind != JsonValueKind.Object)
+        {
+            return;
+        }
+
+        foreach (var vProperty in vDocument.RootElement.EnumerateObject())
+        {
+            var vValue = vProperty.Value;
+            if (objNumeric.ContainsKey(vProperty.Name) && vValue.ValueKind == JsonValueKind.Number)
+            {
+                objNumeric[vProperty.Name] = vValue.GetDouble();
+            }
+            else if (objBool.ContainsKey(vProperty.Name) && vValue.ValueKind is JsonValueKind.True or JsonValueKind.False)
+            {
+                objBool[vProperty.Name] = vValue.GetBoolean();
+            }
+            else if (vValue.ValueKind == JsonValueKind.String && (objText.ContainsKey(vProperty.Name) || vProperty.Name == "prompt"))
+            {
+                objText[vProperty.Name] = vValue.GetString();
+            }
         }
     }
 
@@ -770,6 +848,28 @@
         ToastService.Success($"Exported as {vLabel}{vSuffix}.", "Export");
         return Task.CompletedTask;
     }
+
+    /// <summary>The topbar badge / control name form of a text: "FLUX.1-dev (GGUF)" → "flux-1-dev-gguf".</summary>
+    private static string Slug(string aName) =>
+        System.Text.RegularExpressions.Regex.Replace(aName.ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
+
+    /// <summary>
+    /// The control name of a switch in the Parameters card: the first one is "switch" (the Export
+    /// card's background switch is "switch-2"), any further one "switch-&lt;key&gt;".
+    /// </summary>
+    private string SwitchTestId(ModelParamSpec aSpec)
+    {
+        var vFirst = SelectedModel?.Params.Where(IsSidePanelParam).FirstOrDefault(aParam => aParam.Type == "bool");
+        return vFirst?.Key == aSpec.Key ? "switch" : $"switch-{Slug(aSpec.Key)}";
+    }
+
+    /// <summary>The icon a canvas tool carries, as in the mockup (Brush and Mask); null for none.</summary>
+    private static string? ToolIcon(string aTool) => aTool switch
+    {
+        "Brush" => "brush",
+        "Mask" => "square",
+        _ => null
+    };
 
     private static string LabelOf(ModelParamSpec aSpec) =>
         string.IsNullOrWhiteSpace(aSpec.Label) ? aSpec.Key : aSpec.Label!;

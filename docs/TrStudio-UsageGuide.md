@@ -5,7 +5,7 @@
 | App | TrStudio |
 | Kind | app |
 | Size | Large |
-| Date | 2026-11-14 |
+| Date | 2026-11-15 |
 
 How to run and test TrStudio, one desktop app with the engine inside. The first version is for Mac; Windows comes in a later version. The smoke and verify agents and the owner's acceptance testing use the same test users and the same walkthrough below. The end-user manual is the Product Guide (`*productguide TrStudio`); this is the internal run and test reference.
 
@@ -188,7 +188,7 @@ dotnet test tests/integration/TrStudio.Tests.Integration --filter Category=Live
 bash .tfcore/utils/tf-verify-boot.sh start --head web --project tests/TrStudio.TestHost/TrStudio.TestHost.csproj --port 5099
 npx playwright test
 ```
-The first line runs the unit tests (about 410 pass, 1 skipped) and the integration tests. The paid Venice live tests (`Category=Live`) are left out by default; the second line runs only them, and each is skipped without a Venice key. `tests/TrStudio.TestHost` is a test-only web host (never shipped) serving the same screens and engine on a temporary SQLite folder; the third line boots it, and the Playwright specs in `tests/verify/` run against http://localhost:5099 (phase 3 checks: 10 pass, 1 skipped, the real AppManager sign-in, which needs AppManager values). Test settings come only from JSON files beside the tests: `tests/verify/testsettings.json` overlaid by the git-ignored `tests/verify/testsettings.Local.json` (AppManager values for the real sign-in check, test users), and `tests/integration/TrStudio.Tests.Integration/testsettings.json` overlaid by the git-ignored `testsettings.Local.json` (`Venice:ApiKey`); never environment variables.
+The first line runs the unit tests (497 pass, 18 skipped on 15 Nov 2026) and the integration tests. The paid Venice live tests (`Category=Live`) are left out by default; the second line runs only them, and each is skipped without a Venice key. `tests/TrStudio.TestHost` is a test-only web host (never shipped) serving the same screens and engine on a temporary SQLite folder; the third line boots it, and the Playwright specs in `tests/verify/` run against http://localhost:5099 (phase 3 checks: 10 pass, 1 skipped, the real AppManager sign-in, which needs AppManager values). Test settings come only from JSON files beside the tests: `tests/verify/testsettings.json` overlaid by the git-ignored `tests/verify/testsettings.Local.json` (AppManager values for the real sign-in check, test users), and `tests/integration/TrStudio.Tests.Integration/testsettings.json` overlaid by the git-ignored `testsettings.Local.json` (`Venice:ApiKey`); never environment variables.
 
 ## Known limitations
 
@@ -198,12 +198,16 @@ The first line runs the unit tests (about 410 pass, 1 skipped) and the integrati
 - Data residency and retention (REQ-NFR-010) are deployment settings.
 - Not built (could-haves): digital twin, multi-shot, clip extension, webhooks, MCP server.
 - Every studio needs at least one enabled model source and one ready registry model; the development seed provides `stub-echo` and `onnx-sdxl-local`.
-- Library feedback: TrBlazeUI TR-011 fixed upstream and not yet re-checked here, TR-012 open; TechieRag TR-RAG-002 to TR-RAG-004 open, none blocking.
+- Libraries (15 Nov 2026): TrBlazeUI 2.2.5 and TechieRag 1.1.5 from nuget.org. TrBlazeUI has no open entry (TR-012 to TR-014 closed); TechieRag TR-RAG-002 to TR-RAG-006 are open and none blocks.
+- Each screen's sample data for the checks comes from `tests/verify/seed/<screen>.sh`, run against the test host (decision 11); a fresh app shows its own, mostly empty, data instead.
+- ComfyUI import: "Save as model" now sends what the save needs and says when it fails (15 Nov 2026); Run still shows made-up per-node results when the debug service cannot be reached.
 
 ## Platform notes
 
-**macOS (Apple Silicon), first version:** use the command line, VS Code or Rider. The app needs full Xcode (`sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`, licence accepted). The csproj sets `ValidateXcodeVersion=false` while the Mac Catalyst workload (26.5) trails Xcode (27.2); `sudo dotnet workload update` lets it be removed. Zoom with Cmd+ / Cmd− / Cmd0 after clicking inside the window; the level persists and scales up on high-density displays. A kept "Remember me" sign-in is encrypted with the Keychain-held key; AppManager may end it sooner than 30 days.
+**macOS (Apple Silicon), first version:** use the command line, VS Code or Rider. The app needs full Xcode (`sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`, licence accepted). The csproj sets `ValidateXcodeVersion=false` while the Mac Catalyst workload (26.5) trails Xcode (27.2); `sudo dotnet workload update` lets it be removed. Zoom with Cmd+ / Cmd− / Cmd0 (the page is laid out again at each size and stays centred, fixed 15 Nov 2026) after clicking inside the window; the level persists and scales up on high-density displays. A kept "Remember me" sign-in is encrypted with the Keychain-held key; AppManager may end it sooner than 30 days.
 
 **Windows (later version):** the Windows head stays in the project; on a Windows machine, `dotnet build src/TrStudio/TrStudio.csproj -f net10.0-windows10.0.19041.0`. No step of the first version needs Windows.
 
-**Troubleshooting:** `NU1101: TechieRag` or `NU1301` → `nuget.config` missing or token invalid. `requires Xcode X.Y` → `sudo dotnet workload update`. Login says the copy was built without its sign-in settings → fill in `src/TrStudio/appmanager.local.json` and rebuild. Login shows "Please sign in again" → the kept sign-in ran past 30 days or AppManager refused it; sign in again. A screen errors at start → read the log under the app data folder's `TrStudio/logs`.
+**Checking the real Mac app with the framework's driver:** Appium's mac2 driver needs macOS Automation Mode on without a password prompt. Run once, as an administrator: `sudo automationmodetool enable-automationmode-without-authentication`. Until then `tf-verify-boot.sh start --head maccatalyst` cannot open a session ("Timed out while enabling automation mode").
+
+**Troubleshooting:** The Mac app quits the moment it starts, with a crash in `load_aot_module` → old build output; delete `src/TrStudio/bin` and `src/TrStudio/obj` and build again. `NU1101: TechieRag` or `NU1301` → `nuget.config` missing or token invalid. `requires Xcode X.Y` → `sudo dotnet workload update`. Login says the copy was built without its sign-in settings → fill in `src/TrStudio/appmanager.local.json` and rebuild. Login shows "Please sign in again" → the kept sign-in ran past 30 days or AppManager refused it; sign in again. A screen errors at start → read the log under the app data folder's `TrStudio/logs`.

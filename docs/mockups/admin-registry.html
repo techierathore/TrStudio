@@ -108,6 +108,7 @@ tr.sel td{background:var(--sel)}
 .pgrid .del:hover{color:var(--danger)}
 .err{color:var(--danger);font-size:11.5px;margin-top:6px}
 </style>
+<style data-note="tf-phone-layout: owner decision 13, the app shows the sidebar as a slide-out menu on a phone">@media (max-width:600px){.app{grid-template-columns:1fr}.side[data-testid="sidebar"]{display:none}}</style>
 </head>
 <body>
 <div class="app">
@@ -193,7 +194,7 @@ tr.sel td{background:var(--sel)}
 
     <!-- Edit panel + provider keys -->
     <div class="grid">
-      <div class="card" data-testid="card-edit-model">
+      <div class="card" data-testid="card-edit-model" data-tf-state="edit-open">
         <div class="row"><h3 style="margin:0">Edit model</h3><span class="spacer"></span><span class="badge brand" data-testid="badge-musetalk-v1">musetalk-v1</span></div>
         <div class="col" style="margin-top:10px">
           <div><label class="label">Display name</label><input class="input" value="MuseTalk" data-testid="field-display-name"></div>
@@ -277,7 +278,7 @@ tr.sel td{background:var(--sel)}
             <input class="input" value="https://api.venice.ai/api/v1" data-testid="field-venice-address">
             <label class="label" style="margin-top:6px">API key</label>
             <input class="input" type="password" value="••••••••••••3f9a" data-testid="field-venice-key">
-            <div class="row" style="margin-top:8px"><button class="btn outline" style="padding:4px 10px" onclick="alert('Test connection: asks Venice for its model list with this key and shows Connected or Venice\'s own error text')" data-testid="btn-test-connection">Test connection</button><span class="badge ok" data-testid="badge-connected">Connected</span></div>
+            <div class="row" style="margin-top:8px"><button class="btn outline" style="padding:4px 10px" onclick="alert('Test connection: asks Venice for its model list with this key and shows Connected or Venice\'s own error text')" data-testid="btn-test-connection">Test connection</button><span class="badge ok" data-testid="badge-connected" data-tf-state="connected">Connected</span></div>
             <div class="err" style="margin-top:6px" data-testid="venice-error" data-tf-state="error">Venice said: Authentication failed (AUTHENTICATION_FAILED)</div>
           </div>
           <div class="alert" style="margin-top:4px;font-size:12px" data-testid="alert-info">Keys are write-only — saved values are masked and cannot be read back.</div>

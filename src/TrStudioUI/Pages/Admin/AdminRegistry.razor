@@ -2,6 +2,9 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject ToastService ToastService
 @inject IAuthSession AuthSession
+@using Microsoft.AspNetCore.Components.Sections
+@using TrBlazeUI.Components.Table
+@using TrBlazeUI.Components.NativeSelect
 
 @*
     Admin Registry & providers (REQ-UI-071). A filter/sortable DataTable of registry rows
@@ -12,73 +15,94 @@
     Phase 2 (REQ-UI-083/084/097): Venice provider card (address, masked key, enabled, Test
     connection), Provider / Provider model id / Fill from Venice and two ability checkboxes in the
     edit sheet, and a Venice badge in the table. No Venice address, key or model id lives in code.
+    Control names follow docs/mockups/admin-registry.html (the search box and + Add model sit in the
+    topbar; the mockup's inline Edit model card is this Sheet, drawn open as state "edit-open").
 *@
 
 <PageTitle>TrStudio — Registry &amp; Providers</PageTitle>
 
-<div class="stack">
-    <div class="flex-between">
-        <div>
-            <h1 class="page-title">Registry &amp; Providers</h1>
-            <p class="page-sub" style="margin-bottom:0">
-                Declarative model rows. The params schema here auto-renders TrStudio's controls —
-                no code change.
-            </p>
-        </div>
-        <Button OnClick="OpenAddSheet" data-testid="add-model">
-            <LucideIcon Name="plus" Size="14" />
-            Add model
-        </Button>
+<SectionContent SectionName="topbar-context">
+    <Input @bind-Value="objSearch" @bind-Value:event="oninput" Placeholder="Search registry…" Class="registry-search"
+           aria-label="Search registry" data-testid="field-search-registry" />
+    <Button OnClick="OpenAddSheet" Class="registry-add" data-testid="btn-add-model">+ Add model</Button>
+</SectionContent>
+
+<div class="stack registry-page">
+    <div>
+        <h1 class="page-title">Registry &amp; Providers</h1>
+        <p class="page-sub" style="margin-bottom:0">
+            Declarative model rows. The params schema here auto-renders TrStudio's controls —
+            no code change.
+        </p>
     </div>
 
     <div class="registry-layout">
-        <Card Class="p-0" data-testid="registry-table">
+        <Card Class="p-0 overflow-hidden" data-testid="card-1">
             <div class="table-scroll">
-            <DataTable TData="RegistryRow" Data="@objRows" InitialPageSize="10" IsLoading="@objLoading">
-                <Columns>
-                    <DataTableColumn TData="RegistryRow" TValue="string" Property="@(r => r.Id)" Header="id" Sortable Filterable />
-                    <DataTableColumn TData="RegistryRow" TValue="string" Property="@(r => r.Name)" Header="name" Sortable Filterable>
-                        <CellTemplate Context="objRow">
-                            <div><b>@objRow.Name</b></div>
-                            <div class="kpi-lbl" style="font-size:11px">@objRow.Subtitle</div>
-                        </CellTemplate>
-                    </DataTableColumn>
-                    <DataTableColumn TData="RegistryRow" TValue="string" Property="@(r => r.Task)" Header="task" Sortable Filterable />
-                    <DataTableColumn TData="RegistryRow" TValue="string" Property="@(r => r.Provider)" Header="provider" Sortable Filterable>
-                        <CellTemplate Context="objRow">
-                            @if (objRow.IsVenice)
-                            {
-                                <Badge Variant="BadgeVariant.Outline" Class="badge-brand" data-testid="badge-venice">Venice</Badge>
-                            }
-                            else
-                            {
-                                @objRow.Provider
-                            }
-                        </CellTemplate>
-                    </DataTableColumn>
-                    <DataTableColumn TData="RegistryRow" TValue="string" Property="@(r => r.Tier)" Header="tier" Sortable>
-                        <CellTemplate Context="objRow">
-                            <Badge Variant="BadgeVariant.Outline" Class="@objRow.TierTone">@objRow.Tier</Badge>
-                        </CellTemplate>
-                    </DataTableColumn>
-                    <DataTableColumn TData="RegistryRow" TValue="string" Property="@(r => r.License)" Header="license" Sortable />
-                    <DataTableColumn TData="RegistryRow" TValue="string" Property="@(r => r.Safety)" Header="safety" Sortable>
-                        <CellTemplate Context="objRow">
-                            <div class="flex-row">
-                                <Badge Variant="BadgeVariant.Outline" Class="@objRow.SafetyTone">@objRow.Safety</Badge>
-                                <Button Size="ButtonSize.IconSmall" Variant="ButtonVariant.Ghost"
-                                        AriaLabel="Edit model" OnClick="@(() => OpenEditSheet(objRow))">
-                                    <LucideIcon Name="pencil" Size="14" />
-                                </Button>
-                            </div>
-                        </CellTemplate>
-                    </DataTableColumn>
-                </Columns>
-            </DataTable>
+                <Table Class="registry-table" data-testid="table-1">
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>id</TableHead>
+                            <TableHead>name</TableHead>
+                            <TableHead>task</TableHead>
+                            <TableHead>provider</TableHead>
+                            <TableHead>tier</TableHead>
+                            <TableHead>license</TableHead>
+                            <TableHead>safety</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        @if (objLoading)
+                        {
+                            <TableRow><TableCell colspan="7" Class="kpi-lbl">Loading the registry…</TableCell></TableRow>
+                        }
+                        else if (VisibleRows.Count == 0)
+                        {
+                            <TableRow><TableCell colspan="7" Class="kpi-lbl">@(objRows.Count == 0 ? "No registry rows yet — add a model." : "No rows match this search.")</TableCell></TableRow>
+                        }
+                        @{
+                            var vBadgeCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+                        }
+                        @foreach (var vRow in objLoading ? new List<RegistryRow>() : VisibleRows)
+                        {
+                            var vSuffix = vRow.IsVenice ? "-venice" : string.Empty;
+                            var vProviderId = vRow.IsVenice ? NextId(vBadgeCounts, "badge-venice") : null;
+                            var vTierId = NextId(vBadgeCounts, $"badge-{vRow.Tier}{vSuffix}");
+                            var vSafetyId = NextId(vBadgeCounts, $"badge-{vRow.Safety}{vSuffix}");
+                            <TableRow Class="@(objSheetOpen && !objIsNew && vRow.Id == objEditId ? "registry-row sel" : "registry-row")"
+                                      @onclick="@(() => OpenEditSheet(vRow))">
+                                <TableCell>
+                                    <button type="button" class="registry-id" aria-label="@($"Edit model {vRow.Name}")"
+                                            @onclick="@(() => OpenEditSheet(vRow))" @onclick:stopPropagation="true">@vRow.Id</button>
+                                </TableCell>
+                                <TableCell>
+                                    <div><b>@vRow.Name</b></div>
+                                    <div class="kpi-lbl" style="font-size:11px">@vRow.Subtitle</div>
+                                </TableCell>
+                                <TableCell>@vRow.Task</TableCell>
+                                <TableCell>
+                                    @if (vRow.IsVenice)
+                                    {
+                                        <Badge Variant="BadgeVariant.Outline" Class="badge-brand" data-testid="@vProviderId">Venice</Badge>
+                                    }
+                                    else
+                                    {
+                                        @vRow.Provider
+                                    }
+                                </TableCell>
+                                <TableCell><Badge Variant="BadgeVariant.Outline" Class="@vRow.TierTone" data-testid="@vTierId">@vRow.Tier</Badge></TableCell>
+                                <TableCell>@vRow.License</TableCell>
+                                <TableCell>
+                                    <Badge Variant="BadgeVariant.Outline" Class="@vRow.SafetyTone" data-testid="@vSafetyId">@vRow.Safety</Badge>
+                                </TableCell>
+                            </TableRow>
+                        }
+                    </TableBody>
+                </Table>
             </div>
         </Card>
 
-        <Card>
+        <Card data-testid="card-provider-keys">
             <CardHeader>
                 <CardTitle>Provider keys</CardTitle>
                 <CardDescription>Encrypted at rest · never logged.</CardDescription>
@@ -88,26 +112,26 @@
                 {
                     @* Phase 3 (REQ-UI-104): where the keys are kept and what protects them. *@
                     <div data-testid="key-protection-note">
-                        <Alert AccentBorder="true">
-                            <LucideIcon Name="shield-check" Size="16" />
+                        <Alert Variant="AlertVariant.Info" AccentBorder="true">
                             <AlertDescription>@objKeyNote</AlertDescription>
                         </Alert>
                     </div>
                 }
                 @foreach (var vKey in objProviderKeys)
                 {
-                    <div data-testid="@($"provider-{vKey.ProviderName.ToLowerInvariant().Replace(".", "-")}")">
+                    var vSlug = KeySlug(vKey);
+                    <div data-testid="@($"provider-{vSlug}")">
                         <div class="flex-between">
                             <div class="flex-row">
-                                <Label>@vKey.ProviderName</Label>
+                                <Label>@KeyLabel(vKey)</Label>
                                 @if (vKey.Stored)
                                 {
-                                    <Badge Variant="BadgeVariant.Outline" data-testid="@($"badge-{vKey.ProviderName.ToLowerInvariant().Replace(".", "-")}-configured")">Configured</Badge>
+                                    <Badge Variant="BadgeVariant.Outline" Class="badge-ok" data-testid="@($"badge-{vSlug}-configured")">Configured</Badge>
                                 }
                             </div>
                             <div class="flex-row">
                                 <span class="kpi-lbl" style="font-size:11px">@(vKey.Enabled ? "enabled" : "disabled")</span>
-                                <Switch @bind-Checked="vKey.Enabled" AriaLabel="@($"Enable {vKey.ProviderName}")" />
+                                <Switch @bind-Checked="vKey.Enabled" AriaLabel="@($"Enable {KeyLabel(vKey)}")" data-testid="@SwitchId(vKey, vSlug)" />
                             </div>
                         </div>
                         @if (vKey.ProviderName == RunPodProvider)
@@ -120,8 +144,30 @@
                         }
                         <Input Type="InputType.Password" @bind-Value="vKey.Value" Class="mt-2"
                                Placeholder="@(vKey.Stored ? $"Stored {vKey.MaskedKey} · enter a new key to replace" : "Enter the key")"
-                               data-testid="@($"field-{vKey.ProviderName.ToLowerInvariant().Replace(".", "-")}-key")" />
+                               data-testid="@(vKey.ProviderName == RunPodProvider ? "field-runpod-key" : $"field-{vSlug}")" />
                     </div>
+                    @if (vKey.ProviderName == RunPodProvider)
+                    {
+                        @* Phase 3 (REQ-RAG-006): scripts and captions use the enabled text-chat row that has an
+                           address, a model and a key; the list shows which one that is. *@
+                        <div data-testid="provider-text-model">
+                            <div class="flex-between">
+                                <Label>Text model (scripts and captions)</Label>
+                                <span class="kpi-lbl" style="font-size:11px">from the enabled text-chat row</span>
+                            </div>
+                            <NativeSelect TValue="string" Value="@TextModelInUse" disabled Class="w-full mt-2"
+                                          aria-label="Text model (scripts and captions)" data-testid="field-text-model">
+                                @if (TextChatRows.Count == 0)
+                                {
+                                    <option value="">No text-chat row yet</option>
+                                }
+                                @foreach (var vText in TextChatRows)
+                                {
+                                    <option value="@vText.Id">@TextModelLabel(vText)</option>
+                                }
+                            </NativeSelect>
+                        </div>
+                    }
                 }
                 <div data-testid="provider-venice">
                     <div class="flex-between">
@@ -163,7 +209,7 @@
                         <div class="field-err" style="margin-top:6px" data-testid="venice-error">@objVenice.Message</div>
                     }
                 </div>
-                <Alert Variant="AlertVariant.Default">
+                <Alert Variant="AlertVariant.Info" AccentBorder="true" data-testid="alert-info">
                     <AlertDescription>
                         Keys are write-only — saved values are masked and cannot be read back.
                     </AlertDescription>
@@ -175,9 +221,15 @@
 </div>
 
 <Sheet @bind-Open="objSheetOpen">
-    <SheetContent Class="w-[400px] sm:w-[560px]">
+    <SheetContent Class="w-[400px] sm:w-[560px]" data-testid="card-edit-model">
         <SheetHeader>
-            <SheetTitle>@(objIsNew ? "Add model" : "Edit model")</SheetTitle>
+            <div class="flex-row">
+                <SheetTitle>@(objIsNew ? "Add model" : "Edit model")</SheetTitle>
+                @if (!objIsNew && !string.IsNullOrWhiteSpace(objEditId))
+                {
+                    <Badge Variant="BadgeVariant.Outline" Class="badge-brand" data-testid="@($"badge-{objEditId}")">@objEditId</Badge>
+                }
+            </div>
             <SheetDescription>
                 Declarative row — the params schema below auto-renders the studio controls.
             </SheetDescription>
@@ -187,7 +239,7 @@
             <Field>
                 <FieldLabel>Display name</FieldLabel>
                 <FieldContent>
-                    <Input @bind-Value="objEditName" Placeholder="e.g. MuseTalk" />
+                    <Input @bind-Value="objEditName" Placeholder="e.g. MuseTalk" data-testid="field-display-name" />
                 </FieldContent>
             </Field>
 
@@ -196,7 +248,7 @@
                     <FieldLabel>Task</FieldLabel>
                     <FieldContent>
                         <Select @bind-Value="objEditTask" TValue="string" Class="w-full">
-                            <SelectTrigger><SelectValue Placeholder="Select task" /></SelectTrigger>
+                            <SelectTrigger data-testid="field-task"><SelectValue Placeholder="Select task" /></SelectTrigger>
                             <SelectContent>
                                 @foreach (var vTask in objTaskOptions)
                                 {
@@ -210,7 +262,7 @@
                     <FieldLabel>Tier</FieldLabel>
                     <FieldContent>
                         <Select @bind-Value="objEditTier" TValue="string" Class="w-full">
-                            <SelectTrigger><SelectValue Placeholder="Select tier" /></SelectTrigger>
+                            <SelectTrigger data-testid="field-tier"><SelectValue Placeholder="Select tier" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem Value="@("fast")" Text="fast" TValue="string">fast</SelectItem>
                                 <SelectItem Value="@("high")" Text="high" TValue="string">high</SelectItem>
@@ -259,15 +311,15 @@
                 <Field Class="grow">
                     <FieldLabel>Provider</FieldLabel>
                     <FieldContent>
-                        <div data-testid="field-provider"><Select @bind-Value="objEditProvider" TValue="string" Class="w-full">
-                            <SelectTrigger><SelectValue Placeholder="Select provider" /></SelectTrigger>
+                        <Select @bind-Value="objEditProvider" TValue="string" Class="w-full">
+                            <SelectTrigger data-testid="field-provider"><SelectValue Placeholder="Select provider" /></SelectTrigger>
                             <SelectContent>
                                 @foreach (var vProvider in objProviderOptions)
                                 {
                                     <SelectItem Value="@vProvider.Value" Text="@vProvider.Label" TValue="string">@vProvider.Label</SelectItem>
                                 }
                             </SelectContent>
-                        </Select></div>
+                        </Select>
                     </FieldContent>
                 </Field>
                 <Field Class="grow">
@@ -300,7 +352,7 @@
             <div>
                 <div class="flex-between">
                     <Label>Params schema</Label>
-                    <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="AddParamRow" data-testid="add-param-row">
+                    <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="AddParamRow" data-testid="btn-row">
                         <LucideIcon Name="plus" Size="14" />
                         row
                     </Button>
@@ -311,11 +363,14 @@
                     <div class="hd">req</div>
                     <div class="hd">default</div>
                     <div></div>
-                    @foreach (var vParam in objParams)
+                    @for (var vIndex = 0; vIndex < objParams.Count; vIndex++)
                     {
-                        <Input @bind-Value="vParam.Key" Placeholder="key" />
+                        var vParam = objParams[vIndex];
+                        var vBad = IsBadParam(vParam);
+                        <Input @bind-Value="vParam.Key" Placeholder="key" Class="@(vBad ? "border-destructive" : null)"
+                               data-testid="@(vIndex == 0 ? "field-params-schema" : $"field-{5 + 3 * vIndex}")" />
                         <Select @bind-Value="vParam.Type" TValue="string">
-                            <SelectTrigger><SelectValue Placeholder="type" /></SelectTrigger>
+                            <SelectTrigger data-testid="@($"field-{6 + 3 * vIndex}")"><SelectValue Placeholder="type" /></SelectTrigger>
                             <SelectContent>
                                 @foreach (var vType in objTypeOptions)
                                 {
@@ -323,8 +378,9 @@
                                 }
                             </SelectContent>
                         </Select>
-                        <Switch @bind-Checked="vParam.Required" AriaLabel="Required" />
-                        <Input @bind-Value="vParam.Default" Placeholder="—" />
+                        <Switch @bind-Checked="vParam.Required" AriaLabel="Required" data-testid="@(vIndex == 0 ? "switch" : $"switch-{vIndex + 1}")" />
+                        <Input @bind-Value="vParam.Default" Placeholder="—" Class="@(vBad ? "border-destructive" : null)"
+                               data-testid="@($"field-{7 + 3 * vIndex}")" />
                         <button type="button" class="params-del" aria-label="Remove row" @onclick="@(() => RemoveParamRow(vParam))">✕</button>
                     }
                 </div>
@@ -336,7 +392,7 @@
                 }
                 @if (objSchemaError is not null)
                 {
-                    <div class="field-err" data-testid="schema-error">⚠ @objSchemaError</div>
+                    <div class="field-err" data-testid="field-error">⚠ @objSchemaError</div>
                 }
             </div>
             }
@@ -344,9 +400,9 @@
 
         <SheetFooter>
             <SheetClose AsChild>
-                <Button Variant="ButtonVariant.Outline">Cancel</Button>
+                <Button Variant="ButtonVariant.Outline" data-testid="btn-cancel">Cancel</Button>
             </SheetClose>
-            <Button OnClick="SaveModelAsync" Disabled="@(objSchemaError is not null)">Save</Button>
+            <Button OnClick="SaveModelAsync" Disabled="@(objSchemaError is not null)" data-testid="btn-save">Save</Button>
         </SheetFooter>
     </SheetContent>
 </Sheet>
@@ -485,25 +541,24 @@
             {
                 var vModels = await vRegistry.Content.ReadFromJsonAsync<List<RegistryModel>>();
                 objModelsById.Clear();
-                if (vModels is { Count: > 0 })
+                foreach (var vModel in vModels ?? new List<RegistryModel>())
                 {
-                    foreach (var vModel in vModels)
-                    {
-                        objModelsById[vModel.Id] = vModel;
-                    }
+                    objModelsById[vModel.Id] = vModel;
+                }
 
-                    objRows = vModels.Select(MapRow).ToList();
-                }
-                else
-                {
-                    objRows = BuildRepresentativeRows();
-                }
+                objRows = (vModels ?? new List<RegistryModel>()).Select(aModel => MapRow(aModel, objClosedApiLabel)).ToList();
             }
 
             var vKeys = await vClient.GetAsync(ApiRoutes.Providers + "/keys");
             if (vKeys.IsSuccessStatusCode)
             {
                 var vInfos = await vKeys.Content.ReadFromJsonAsync<List<ProviderKeyInfo>>();
+                // A text-chat row's key is stored under the row's id; it belongs to that row, not to this list.
+                objRowKeyIds = (vInfos ?? new List<ProviderKeyInfo>())
+                    .Where(aInfo => objModelsById.ContainsKey(aInfo.ProviderName))
+                    .Select(aInfo => aInfo.ProviderName)
+                    .ToHashSet(StringComparer.Ordinal);
+                vInfos = vInfos?.Where(aInfo => !objRowKeyIds.Contains(aInfo.ProviderName)).ToList();
                 var vVeniceInfo = vInfos?.FirstOrDefault(aInfo =>
                     string.Equals(aInfo.ProviderName, nameof(ProviderKind.Venice), StringComparison.OrdinalIgnoreCase));
                 objVenice.Load(vVeniceInfo);
@@ -529,6 +584,16 @@
                         objProviderKeys.Add(new ProviderKeyRow(vKnown, string.Empty, true));
                     }
                 }
+
+                // The mockup's order: HeyGen, the closed-API aggregator, RunPod, then any other stored key.
+                objProviderKeys = objProviderKeys
+                    .OrderBy(aRow => KnownOrder(aRow.ProviderName))
+                    .ToList();
+
+                // The closed-API aggregator's vendor (its Account) names the table's provider column.
+                var vClosed = objProviderKeys.FirstOrDefault(aRow => aRow.ProviderName == ClosedApiProvider);
+                objClosedApiLabel = VendorLabel(vClosed?.Account);
+                objRows = objRows.Select(aRow => MapRow(objModelsById[aRow.Id], objClosedApiLabel)).ToList();
             }
 
             var vNote = await vClient.GetAsync(ApiRoutes.Providers + "/protection");
@@ -544,39 +609,121 @@
         }
     }
 
-    private static RegistryRow MapRow(RegistryModel aModel)
+    /// <summary>Maps a registry model onto a table row: the task category, the provider's own name and the safety class.</summary>
+    /// <param name="aModel">The registry model.</param>
+    /// <param name="aClosedApiLabel">The closed-API aggregator's display name (its vendor).</param>
+    private static RegistryRow MapRow(RegistryModel aModel, string aClosedApiLabel)
     {
         var (vTier, vTierTone) = aModel.Tier switch
         {
             GenerationTier.Fast => ("fast", "badge-ok"),
             GenerationTier.High => ("high", "badge-brand"),
-            _ => ("premium", "")
+            _ => ("premium", "badge-primary")
         };
-        var (vSafety, vSafetyTone) = aModel.SafetyClass == SafetyClass.RealPersonGated
-            ? ("gated", "badge-warn")
-            : ("general", "");
+        var (vSafety, vSafetyTone) = SafetyOf(aModel);
         var vIsVenice = aModel.ProviderKind == ProviderKind.Venice;
-        var vSubtitle = vIsVenice && !string.IsNullOrWhiteSpace(aModel.ProviderModelId)
-            ? $"{aModel.ProviderModelId} · {aModel.Task}"
-            : aModel.Task.ToString();
-        return new RegistryRow(aModel.Id, aModel.DisplayName, vSubtitle, aModel.Task.ToString().ToLowerInvariant(),
-            aModel.ProviderKind.ToString(), vTier, vTierTone, aModel.License, vSafety, vSafetyTone, vIsVenice);
+        var vTaskText = TaskText(aModel.Task);
+        var vSubtitle = !string.IsNullOrWhiteSpace(aModel.ProviderModelId)
+            ? $"{aModel.ProviderModelId} · {vTaskText}"
+            : vTaskText;
+        var vProvider = aModel.ProviderKind == ProviderKind.ClosedApi
+            ? aClosedApiLabel
+            : aModel.ProviderKind == ProviderKind.TextLlm
+            ? "Text LLM"
+            : objProviderOptions.FirstOrDefault(aOption => aOption.Value == aModel.ProviderKind.ToString()).Label ?? aModel.ProviderKind.ToString();
+        return new RegistryRow(aModel.Id, aModel.DisplayName, vSubtitle, CategoryFor(aModel.Task),
+            vProvider, vTier, vTierTone, aModel.License, vSafety, vSafetyTone, vIsVenice);
     }
 
     /// <summary>
-    /// A representative registry sample shown only as an empty-state illustration when the
-    /// authenticated registry call succeeds with zero rows — clearly example models, never a 401
-    /// fallback.
+    /// The table's safety column: "gated" for a real-person-gated row, "consent" for a voice row (a voice is
+    /// only cloned with the speaker's consent), "restricted" for a row whose license limits use
+    /// (non-commercial, community or responsible-AI terms), otherwise "general".
     /// </summary>
-    private static List<RegistryRow> BuildRepresentativeRows() => new()
+    /// <param name="aModel">The registry model.</param>
+    private static (string Label, string Tone) SafetyOf(RegistryModel aModel)
     {
-        new("musetalk-v1", "MuseTalk", "lip-sync", "avatar", "local (Mac)", "fast", "badge-ok", "MIT", "general", ""),
-        new("sdxl-1.0", "SDXL", "image base+refiner", "image", "RunPod", "high", "badge-brand", "OpenRAIL++", "restricted", "badge-warn"),
-        new("hunyuan-avatar", "Hunyuan-Avatar", "talking head", "video", "RunPod", "high", "badge-brand", "Tencent Comm.", "restricted", "badge-warn"),
-        new("heygen-avatar-iv", "HeyGen Avatar IV", "premium avatar", "video", "HeyGen", "premium", "", "Commercial API", "gated", "badge-warn"),
-        new("flux-pro-fal", "FLUX.1 [pro]", "image premium", "image", "fal.ai", "premium", "", "Commercial API", "general", ""),
-        new("xtts-v2", "XTTS v2", "voice clone", "voice", "local (Mac)", "fast", "badge-ok", "Coqui CPML", "consent", "badge-warn")
+        if (aModel.SafetyClass == SafetyClass.RealPersonGated)
+        {
+            return ("gated", "badge-warn");
+        }
+
+        if (aModel.Task == GenerationTaskType.TextToSpeech)
+        {
+            return ("consent", "badge-warn");
+        }
+
+        var vLicense = aModel.License ?? string.Empty;
+        return RestrictiveLicenseWords.Any(aWord => vLicense.Contains(aWord, StringComparison.OrdinalIgnoreCase))
+            ? ("restricted", "badge-warn")
+            : ("general", "");
+    }
+
+    /// <summary>License words that mark a restricted use.</summary>
+    private static readonly string[] RestrictiveLicenseWords = { "non-commercial", "community", "comm.", "openrail" };
+
+    /// <summary>The row's task in words, shown under its name.</summary>
+    private static string TaskText(GenerationTaskType aTask) => aTask switch
+    {
+        GenerationTaskType.LipSync => "lip-sync",
+        GenerationTaskType.TextToImage => "text to image",
+        GenerationTaskType.ImageToVideo => "image to video",
+        GenerationTaskType.TextToVideo => "text to video",
+        GenerationTaskType.TextToSpeech => "text to speech",
+        GenerationTaskType.TextChat => "text chat",
+        _ => aTask.ToString()
     };
+
+    /// <summary>The rows the search box leaves (id, name, task, provider or license containing the text).</summary>
+    private List<RegistryRow> VisibleRows => string.IsNullOrWhiteSpace(objSearch)
+        ? objRows
+        : objRows.Where(aRow => new[] { aRow.Id, aRow.Name, aRow.Task, aRow.Provider, aRow.License, aRow.Subtitle }
+            .Any(aText => (aText ?? string.Empty).Contains(objSearch.Trim(), StringComparison.OrdinalIgnoreCase))).ToList();
+
+    /// <summary>The next control name for a repeated badge: the first is the bare name, later ones -2, -3 …</summary>
+    private static string NextId(Dictionary<string, int> aCounts, string aName)
+    {
+        aCounts[aName] = aCounts.TryGetValue(aName, out var vCount) ? vCount + 1 : 1;
+        return aCounts[aName] <= 1 ? aName : $"{aName}-{aCounts[aName]}";
+    }
+
+    /// <summary>The closed-API aggregator's name for its vendor (the engine's default vendor is fal).</summary>
+    private static string VendorLabel(string? aVendor) =>
+        string.IsNullOrWhiteSpace(aVendor) || string.Equals(aVendor, "fal", StringComparison.OrdinalIgnoreCase) ? "fal.ai" : aVendor.Trim();
+
+    /// <summary>The name a provider-key row shows.</summary>
+    private string KeyLabel(ProviderKeyRow aRow) => aRow.ProviderName == ClosedApiProvider ? objClosedApiLabel : aRow.ProviderName;
+
+    /// <summary>The provider-key row's part of its control names (e.g. heygen, fal-ai, runpod).</summary>
+    private string KeySlug(ProviderKeyRow aRow) => KeyLabel(aRow).ToLowerInvariant().Replace(".", "-").Replace(" ", "-");
+
+    /// <summary>The enabled switch's control name, as the mockup numbers them (HeyGen switch-5, fal.ai switch-6).</summary>
+    private static string SwitchId(ProviderKeyRow aRow, string aSlug) => aRow.ProviderName switch
+    {
+        "HeyGen" => "switch-5",
+        ClosedApiProvider => "switch-6",
+        _ => $"switch-{aSlug}"
+    };
+
+    /// <summary>The enabled text-chat rows, in registry order.</summary>
+    private List<RegistryModel> TextChatRows => objModelsById.Values
+        .Where(aModel => aModel.Task == GenerationTaskType.TextChat && aModel.IsEnabled)
+        .OrderBy(aModel => aModel.DisplayName, StringComparer.Ordinal)
+        .ToList();
+
+    /// <summary>True when the text-chat row can write scripts and captions: an address, a model and a stored key.</summary>
+    private bool IsTextModelReady(RegistryModel aModel) =>
+        !string.IsNullOrWhiteSpace(aModel.Endpoint) && !string.IsNullOrWhiteSpace(aModel.ChatModel) && objRowKeyIds.Contains(aModel.Id);
+
+    /// <summary>The row scripts and captions use (the first ready one), else the first enabled row.</summary>
+    private string? TextModelInUse => (TextChatRows.FirstOrDefault(IsTextModelReady) ?? TextChatRows.FirstOrDefault())?.Id;
+
+    private string TextModelLabel(RegistryModel aModel) =>
+        IsTextModelReady(aModel) ? aModel.DisplayName : $"{aModel.DisplayName} (not set up)";
+
+    /// <summary>True for the bool param the schema check stops on.</summary>
+    private static bool IsBadParam(ParamRow aParam) =>
+        string.Equals(aParam.Type, "bool", StringComparison.Ordinal) && string.IsNullOrWhiteSpace(aParam.Default);
 
     private void OpenAddSheet()
     {
@@ -1184,9 +1331,27 @@
     }
 
     /// <summary>Phase 3: the provider rows always listed, so every key a user owns can be entered here.</summary>
-    private static readonly string[] KnownProviders = { RunPodProvider, "HeyGen", "ClosedApi" };
+    private static readonly string[] KnownProviders = { "HeyGen", ClosedApiProvider, RunPodProvider };
 
     private const string RunPodProvider = "RunPod";
+
+    private const string ClosedApiProvider = "ClosedApi";
+
+    /// <summary>A provider's place in <see cref="KnownProviders"/>; other providers come after.</summary>
+    private static int KnownOrder(string aProviderName)
+    {
+        var vAt = Array.FindIndex(KnownProviders, aKnown => string.Equals(aKnown, aProviderName, StringComparison.OrdinalIgnoreCase));
+        return vAt >= 0 ? vAt : KnownProviders.Length;
+    }
+
+    /// <summary>The search box's text.</summary>
+    private string objSearch = string.Empty;
+
+    /// <summary>The closed-API aggregator's display name, from its stored vendor.</summary>
+    private string objClosedApiLabel = "fal.ai";
+
+    /// <summary>Registry row ids that have a key stored under them (text-chat rows).</summary>
+    private HashSet<string> objRowKeyIds = new(StringComparer.Ordinal);
 
     private string? objKeyNote;
 

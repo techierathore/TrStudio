@@ -106,7 +106,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <div class="layout no-toc">
   <main>
     <h1>TrStudio — Developer Guide, phase 3</h1>
-    <div class="subtitle">Rendered 2026-11-14 &middot; source <code>TrStudio-P3-DevGuide.md</code></div>
+    <div class="subtitle">Rendered 2026-11-15 &middot; source <code>TrStudio-P3-DevGuide.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
@@ -128,6 +128,10 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
         <li class="h3"><a href="#sign-out">Sign out</a></li>
         <li class="h3"><a href="#in-app-job-runner-and-recovery">In-app job runner and recovery</a></li>
         <li class="h3"><a href="#key-protection">Key protection</a></li>
+        <li class="h3"><a href="#zoom-in-the-mac-app-req-fn-104">Zoom in the Mac app (REQ-FN-104)</a></li>
+        <li class="h3"><a href="#job-result-and-the-provider-of-each-picture-req-ui-086">Job result and the provider of each picture (REQ-UI-086)</a></li>
+        <li class="h3"><a href="#venice-s-own-reason-on-a-refused-call-req-ui-095">Venice&#x27;s own reason on a refused call (REQ-UI-095)</a></li>
+        <li class="h3"><a href="#sample-data-for-the-screen-checks-decision-11">Sample data for the screen checks (decision 11)</a></li>
         <li class="h3"><a href="#configuration-logging-errors">Configuration, logging, errors</a></li>
         <li><a href="#known-issues">Known issues</a></li>
       </ol>
@@ -139,8 +143,8 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tr><td>Kind</td><td>app</td></tr>
 <tr><td>Size</td><td>Medium</td></tr>
 <tr><td>Phase</td><td>3 of 3</td></tr>
-<tr><td>Verified on</td><td>2026-11-14</td></tr>
-<tr><td>Date</td><td>2026-11-14</td></tr>
+<tr><td>Verified on</td><td>2026-11-15</td></tr>
+<tr><td>Date</td><td>2026-11-15</td></tr>
 </tbody>
 </table>
 <h2 id="architecture-cheat-sheet">Architecture cheat-sheet<a class="anchor-link" href="#architecture-cheat-sheet">#</a></h2>
@@ -370,6 +374,23 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </tbody>
 </table>
 <p>The test host uses <code>TestKeyProtector</code> (<code>tests/TrStudio.TestHost/TestKeyProtector.cs:19</code>), an in-memory key.</p>
+<h3 id="zoom-in-the-mac-app-req-fn-104">Zoom in the Mac app (REQ-FN-104)<a class="anchor-link" href="#zoom-in-the-mac-app-req-fn-104">#</a></h3>
+<p><strong>Call chain:</strong> <code>MainPage</code> <code>BlazorWebViewInitialized</code> → <code>BlazorZoom.Attach</code> → <code>WKUserScript</code> at document start + <code>BlazorZoom.Apply</code> → CSS <code>zoom</code> and <code>--tr-zoom</code> on <code>&lt;html&gt;</code></p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudio/BlazorZoom.cs:64</code></td><td><code>Attach</code></td><td>the user script text</td><td>the saved level (<code>tf.zoom</code>, default 1.6 on a 4K panel)</td></tr>
+<tr><td><code>src/TrStudio/BlazorZoom.cs:122</code></td><td><code>Apply</code></td><td><code>Level</code></td><td>0.5 to 3.0 in 0.1 steps</td></tr>
+<tr><td><code>src/TrStudio/BlazorZoom.cs:131</code></td><td><code>Apply</code></td><td><code>PageZoom</code></td><td>always 1: <code>WKWebView.PageZoom</code> magnifies without laying the page out again, which put the Login card right of centre</td></tr>
+<tr><td><code>src/TrStudio/BlazorZoom.cs:140</code></td><td><code>ApplyScript</code></td><td><code>--tr-zoom</code></td><td>equal to <code>zoom</code>; <code>.auth-shell</code> divides <code>100vh</code> by it</td></tr>
+</tbody>
+</table>
+<h3 id="job-result-and-the-provider-of-each-picture-req-ui-086">Job result and the provider of each picture (REQ-UI-086)<a class="anchor-link" href="#job-result-and-the-provider-of-each-picture-req-ui-086">#</a></h3>
+<p><code>GET /api/v1/jobs/{id}/result</code> (<code>src/TrStudio.InProcess/Routes/SpineEndpoints.cs:175</code>) adds the run details from the generation log through <code>WorkspaceEndpoints.WithRunInfoAsync</code>, as the gallery and history calls do; Image studio badges a tile "Venice" from <code>AssetResponse.ProviderKind</code>.</p>
+<h3 id="venice-s-own-reason-on-a-refused-call-req-ui-095"><a id="venices-own-reason-on-a-refused-call-req-ui-095"></a>Venice's own reason on a refused call (REQ-UI-095)<a class="anchor-link" href="#venice-s-own-reason-on-a-refused-call-req-ui-095">#</a></h3>
+<p><code>VeniceApiException.FromResponse</code> keeps Venice's <code>details</code> on a 400 word for word (<code>src/TrStudio.Engine/Domain/Venice/VeniceApiException.cs:98</code>) and reads a rate-limit reset given in seconds, as a Unix time in seconds, or in milliseconds (<code>:152</code>), never below zero.</p>
+<h3 id="sample-data-for-the-screen-checks-decision-11">Sample data for the screen checks (decision 11)<a class="anchor-link" href="#sample-data-for-the-screen-checks-decision-11">#</a></h3>
+<p>Each screen's mockup data is put into the test host by <code>tests/verify/seed/&lt;mockup name&gt;.sh</code>, which calls a TEST ONLY <code>POST /test/seed/&lt;mockup name&gt;</code> in <code>tests/TrStudio.TestHost/Program.cs</code> (18 endpoints from line 120) for the stand-in AppManager's user 4242. <code>tf-verify-list.sh</code> finds each script and <code>tf-verify-screens.sh</code> runs it before the screen. Never shipped.</p>
 <h3 id="configuration-logging-errors">Configuration, logging, errors<a class="anchor-link" href="#configuration-logging-errors">#</a></h3>
 <ul>
 <li>Configuration: <code>DesktopSettings.Load</code> (<code>src/TrStudio/MauiProgram.cs:44</code>); engine settings in memory (<code>EngineHost.cs:78</code>). No environment variables.
@@ -381,13 +402,15 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </ul>
 <h2 id="known-issues">Known issues<a class="anchor-link" href="#known-issues">#</a></h2>
 <ul>
-<li>Register and the signed-in screens lack some of their mockups' control names; a dedicated run adds them (owner decision 11, MISS-TrStudio-20261114-03).
+<li>Login, Register and Setup required still differ from their mockups in the structure comparison (a link box on Login, the chosen account-type colour on Register, a badge colour, an icon and a border on Setup required): REQ-UI-001, REQ-UI-002, REQ-UI-004, REQ-FN-015 and REQ-FN-016 are red on the mockup check only.
 </li>
-<li>Sign-in against the real AppManager waits for the AppManager values in <code>appmanager.local.json</code>; until then it was checked on the test host's stand-in AppManager. The desktop app itself was not opened in this run.
+<li>The real Mac app cannot be driven by the framework's checker until Automation Mode is allowed without a password (<code>sudo automationmodetool enable-automationmode-without-authentication</code>, owner only). On 15 Nov 2026 it was checked by screenshots instead.
 </li>
 <li>AppManager does not document a refresh token's lifetime, so 30 days is the app's own limit (<code>docs/TrStudio-AppManager-Feedback.md</code>, AM-001).
 </li>
-<li>Icon names in the TrBlazeUI reference that the Lucide package lacks were fixed in the screens today (TrBlazeUI TR-013, <code>docs/TrStudio-TrBlazeUI-Feedback.md</code>).
+<li>ComfyUI import: Run falls back to made-up per-node results when the debug route cannot be reached (<code>src/TrStudioUI/Pages/Admin/AdminComfy.razor</code>).
+</li>
+<li>Libraries: TrBlazeUI 2.2.5 and TechieRag 1.1.5 from nuget.org (15 Nov 2026); open TechieRag entries TR-RAG-002 to TR-RAG-006, none blocking.
 </li>
 </ul>
   </main>

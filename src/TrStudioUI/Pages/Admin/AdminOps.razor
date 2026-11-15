@@ -2,6 +2,7 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject ToastService ToastService
 @inject IAuthSession AuthSession
+@using Microsoft.AspNetCore.Components.Sections
 
 @*
     Admin RunPod & ops (REQ-UI-073). Spend guardrail cards (RunPod GPU, closed APIs, total vs the
@@ -13,6 +14,11 @@
 *@
 
 <PageTitle>TrStudio — RunPod &amp; Ops</PageTitle>
+
+@* The spend ledger counts the calendar month (UTC), so the billing cycle is this month's first to last day. *@
+<SectionContent SectionName="topbar-context">
+    <Badge Variant="BadgeVariant.Outline" data-testid="badge-billing-cycle-jun-1-jun">Billing cycle: @BillingCycle</Badge>
+</SectionContent>
 
 <div class="stack ops-page" style="max-width:1100px">
     <div>
@@ -36,9 +42,8 @@
 
     @if (objSpend is not null && objSpend.CapPct >= 80)
     {
-        <div data-testid="near-cap-alert">
-            <Alert Variant="@(objSpend.CapPct >= 95 ? AlertVariant.Danger : AlertVariant.Warning)" AccentBorder="true">
-                <LucideIcon Name="triangle-alert" Size="16" />
+        <div>
+            <Alert Variant="@(objSpend.CapPct >= 95 ? AlertVariant.Danger : AlertVariant.Warning)" AccentBorder="true" data-testid="alert-warn">
                 <AlertTitle>Approaching monthly cap</AlertTitle>
                 <AlertDescription>
                     Total spend is at @objSpend.CapPct.ToString("0")% of the @Money(objSpend.MonthlyCap) cap —
@@ -66,39 +71,39 @@
     }
     else if (objSpend is not null)
     {
-        <div class="ops-grid-3" data-testid="spend-cards">
-            <Card>
+        <div class="ops-grid-3">
+            <Card data-testid="card-1">
                 <CardContent Class="pt-6">
                     <div class="flex-between">
                         <span class="kpi-lbl">RunPod (GPU)</span>
-                        <Badge Variant="BadgeVariant.Outline">this cycle</Badge>
+                        <Badge Variant="BadgeVariant.Outline" data-testid="badge-this-cycle">this cycle</Badge>
                     </div>
                     <div class="kpi-big">@Money(objSpend.RunPodSpend)</div>
-                    <Progress Value="@Pct(objSpend.RunPodSpend, objSpend.MonthlyCap)" Class="h-2" />
+                    <Progress Value="@Pct(objSpend.RunPodSpend, objSpend.MonthlyCap)" Class="ops-prog" IndicatorClass="hw-ind" data-testid="progress" />
                     <div class="kpi-lbl" style="margin-top:6px">GPU serverless compute</div>
                 </CardContent>
             </Card>
-            <Card>
+            <Card data-testid="card-2">
                 <CardContent Class="pt-6">
                     <div class="flex-between">
                         <span class="kpi-lbl">Closed APIs</span>
-                        <Badge Variant="BadgeVariant.Outline">HeyGen · fal.ai</Badge>
+                        <Badge Variant="BadgeVariant.Outline" data-testid="badge-heygen-fal-ai">HeyGen · fal.ai</Badge>
                     </div>
                     <div class="kpi-big">@Money(objSpend.ClosedApiSpend)</div>
-                    <Progress Value="@Pct(objSpend.ClosedApiSpend, objSpend.MonthlyCap)" Class="h-2" />
+                    <Progress Value="@Pct(objSpend.ClosedApiSpend, objSpend.MonthlyCap)" Class="ops-prog" IndicatorClass="hw-ind" data-testid="progress-2" />
                     <div class="kpi-lbl" style="margin-top:6px">Metered per-call generation keys</div>
                 </CardContent>
             </Card>
-            <Card>
+            <Card data-testid="card-3">
                 <CardContent Class="pt-6">
                     <div class="flex-between">
                         <span class="kpi-lbl">Total vs @Money(objSpend.MonthlyCap) cap</span>
-                        <Badge Variant="BadgeVariant.Outline" Class="@(objSpend.CapPct >= 80 ? "badge-warn" : "badge-ok")">
+                        <Badge Variant="BadgeVariant.Outline" Class="@(objSpend.CapPct >= 80 ? "badge-warn" : "badge-ok")" data-testid="badge-88">
                             @objSpend.CapPct.ToString("0")%
                         </Badge>
                     </div>
                     <div class="kpi-big" style="@(objSpend.CapPct >= 80 ? "color:var(--alert-warning)" : "")">@Money(objSpend.TotalSpend)</div>
-                    <Progress Value="@objSpend.CapPct" Class="h-2" IndicatorClass="@(objSpend.CapPct >= 80 ? "bg-destructive" : "")" />
+                    <Progress Value="@objSpend.CapPct" Class="ops-prog" IndicatorClass="@(objSpend.CapPct >= 80 ? "ops-warnfill" : "hw-ind")" data-testid="progress-3" />
                     <div class="kpi-lbl" style="margin-top:6px">@Money(objSpend.Remaining) remaining</div>
                 </CardContent>
             </Card>
@@ -106,7 +111,7 @@
     }
 
     <div class="ops-grid-2">
-        <Card data-testid="runpod-control">
+        <Card data-testid="card-runpod-control">
             <CardContent Class="pt-6">
                 @if (objRunPodLoading)
                 {
@@ -118,7 +123,7 @@
                 {
                     <div class="flex-between">
                         <h3 class="card-h3" style="margin:0">RunPod control</h3>
-                        <Badge Variant="BadgeVariant.Outline" Class="@objRunPod.StateTone">
+                        <Badge Variant="BadgeVariant.Outline" Class="@objRunPod.StateTone" data-testid="badge-status">
                             <span class="dot @objRunPod.StateDot"></span> @objRunPod.WorkerState
                         </Badge>
                     </div>
@@ -128,7 +133,7 @@
                             <span style="font-weight:600;font-size:13px">Auto idle-stop</span>
                             <span class="kpi-lbl">Scale endpoint to zero after 60s idle</span>
                         </div>
-                        <Switch @bind-Checked="objRunPod.AutoIdleStop" AriaLabel="Auto idle-stop" />
+                        <Switch Checked="objRunPod.AutoIdleStop" CheckedChanged="SetAutoIdleStopAsync" AriaLabel="Auto idle-stop" data-testid="switch" />
                     </div>
                     <Separator />
                     <div class="flex-row" style="margin-top:12px;align-items:flex-start">
@@ -136,17 +141,28 @@
                             <span style="font-weight:600;font-size:13px">Endpoint state</span>
                             <span class="kpi-lbl">@objRunPod.EndpointName · serverless</span>
                         </div>
-                        <Button OnClick="StartEndpointAsync" data-testid="runpod-start">Start endpoint</Button>
-                        <Button Variant="ButtonVariant.Outline" OnClick="StopEndpointAsync" data-testid="runpod-stop">Stop</Button>
+                        <Button OnClick="StartEndpointAsync" data-testid="btn-start-endpoint">Start endpoint</Button>
+                        <Button Variant="ButtonVariant.Outline" OnClick="StopEndpointAsync" data-testid="btn-stop">Stop</Button>
                     </div>
 
-                    @if (objRunPod.ColdStart)
+                    @if (objRunPod.Unreachable)
                     {
                         <div style="margin-top:12px">
-                            <Alert Variant="AlertVariant.Default">
+                            <Alert Variant="AlertVariant.Default" Class="ops-alert-info" data-testid="alert-info">
+                                <AlertDescription>
+                                    RunPod's health check didn't answer for this endpoint — check the endpoint id and API key.
+                                    <Badge Variant="BadgeVariant.Outline" Class="badge-warn" data-testid="badge-starting">unreachable</Badge>
+                                </AlertDescription>
+                            </Alert>
+                        </div>
+                    }
+                    else if (objRunPod.ColdStart)
+                    {
+                        <div style="margin-top:12px">
+                            <Alert Variant="AlertVariant.Default" Class="ops-alert-info" data-testid="alert-info">
                                 <AlertDescription>
                                     Endpoint is scaled to zero — the next request pays a cold-start penalty.
-                                    <Badge Variant="BadgeVariant.Outline" Class="badge-warn">cold</Badge>
+                                    <Badge Variant="BadgeVariant.Outline" Class="badge-warn" data-testid="badge-starting">cold</Badge>
                                 </AlertDescription>
                             </Alert>
                         </div>
@@ -173,7 +189,7 @@
             </CardContent>
         </Card>
 
-        <Card data-testid="worker-health">
+        <Card data-testid="card-worker-health">
             <CardContent Class="pt-6">
                 <h3 class="card-h3">Worker health</h3>
                 @if (objOps is null)
@@ -186,7 +202,7 @@
                 {
                     <div class="kv-row">
                         <span class="kv-lbl">Status</span>
-                        <Badge Variant="BadgeVariant.Outline" Class="@(objOps.Healthy ? "badge-ok" : "badge-warn")">
+                        <Badge Variant="BadgeVariant.Outline" Class="@(objOps.Healthy ? "badge-ok" : "badge-warn")" data-testid="badge-status-2">
                             <span class="dot @(objOps.Healthy ? "ok" : "warn")"></span> @(objOps.Healthy ? "healthy" : "no recent heartbeat")
                         </Badge>
                     </div>
@@ -196,11 +212,11 @@
                     </div>
                     <div class="kv-row">
                         <span class="kv-lbl">Queue depth</span>
-                        <Badge Variant="BadgeVariant.Outline" Class="badge-brand">@objOps.Queue.TotalEnqueued queued · @objOps.Queue.TotalProcessing running</Badge>
+                        <Badge Variant="BadgeVariant.Outline" Class="badge-brand" data-testid="badge-2-jobs">@objOps.Queue.TotalEnqueued queued · @objOps.Queue.TotalProcessing running</Badge>
                     </div>
                     <div class="kv-row">
                         <span class="kv-lbl">Error rate (@(objOps.Errors.WindowHours)h)</span>
-                        <Badge Variant="BadgeVariant.Outline" Class="@(objOps.Errors.ErrorRatePct > 5 ? "badge-warn" : "badge-ok")">
+                        <Badge Variant="BadgeVariant.Outline" Class="@(objOps.Errors.ErrorRatePct > 5 ? "badge-warn" : "badge-ok")" data-testid="badge-0-8">
                             @objOps.Errors.ErrorRatePct.ToString("0.0")%
                         </Badge>
                     </div>
@@ -208,32 +224,39 @@
                         <span class="kv-lbl">Outcomes in window</span>
                         <b>@objOps.Errors.Succeeded ok · @objOps.Errors.Failed failed · @objOps.Errors.Blocked blocked</b>
                     </div>
+                    @if (AvgLatency is { } vLatency)
+                    {
+                        <div class="kv-row">
+                            <span class="kv-lbl">Avg job latency</span>
+                            <b>@vLatency</b>
+                        </div>
+                    }
                 }
             </CardContent>
         </Card>
     </div>
 
-    <Card Class="p-0" data-testid="generation-log">
-        <div class="flex-between" style="padding:14px 16px">
-            <h3 class="card-h3" style="margin:0">Generation log</h3>
-            <Input @bind-Value="objLogFilter" Placeholder="Filter by user / model…" Class="max-w-[220px]" />
+    <Card Class="p-0" data-testid="card-generation-log">
+        <div class="flex-between" style="padding:14px 16px;gap:12px">
+            <h3 class="card-h3" style="margin:0;white-space:nowrap">Generation log</h3>
+            <Input @bind-Value="objLogFilter" Placeholder="Filter by user / model…" Class="ops-log-filter" aria-label="Filter by user or model" data-testid="field-filter-by-user-model" />
         </div>
         <div class="table-scroll">
-            <DataTable TData="LogRow" Data="@FilteredLog" IsLoading="@objLogLoading" ShowToolbar="false" InitialPageSize="10">
+            <DataTable TData="LogRow" Data="@FilteredLog" IsLoading="@objLogLoading" ShowToolbar="false" InitialPageSize="10" data-testid="table-1">
                 <Columns>
-                    <DataTableColumn TData="LogRow" TValue="string" Property="@(r => r.User)" Header="User" Sortable />
-                    <DataTableColumn TData="LogRow" TValue="string" Property="@(r => r.Model)" Header="Model" Sortable />
+                    <DataTableColumn TData="LogRow" TValue="string" Property="@(r => r.User)" Header="User" />
+                    <DataTableColumn TData="LogRow" TValue="string" Property="@(r => r.Model)" Header="Model" />
                     <DataTableColumn TData="LogRow" TValue="string" Property="@(r => r.Params)" Header="Params" />
-                    <DataTableColumn TData="LogRow" TValue="string" Property="@(r => r.Cost)" Header="Cost" Sortable />
+                    <DataTableColumn TData="LogRow" TValue="string" Property="@(r => r.Cost)" Header="Cost" />
                     <DataTableColumn TData="LogRow" TValue="string" Property="@(r => r.Duration)" Header="Duration" />
-                    <DataTableColumn TData="LogRow" TValue="string" Property="@(r => r.Outcome)" Header="Outcome" Sortable>
+                    <DataTableColumn TData="LogRow" TValue="string" Property="@(r => r.Outcome)" Header="Outcome">
                         <CellTemplate Context="objRow">
-                            <Badge Variant="BadgeVariant.Outline" Class="@objRow.OutcomeTone">@objRow.Outcome</Badge>
+                            <Badge Variant="BadgeVariant.Outline" Class="@objRow.OutcomeTone" data-testid="@objRow.OutcomeTestId">@objRow.Outcome</Badge>
                         </CellTemplate>
                     </DataTableColumn>
                     <DataTableColumn TData="LogRow" TValue="string" Property="@(r => r.Model)" Header="">
                         <CellTemplate Context="objRow">
-                            <Button Size="ButtonSize.Small" Variant="ButtonVariant.Outline" OnClick="@(() => ReproduceAsync(objRow))">
+                            <Button Size="ButtonSize.Small" Variant="ButtonVariant.Outline" Class="ops-reproduce" OnClick="@(() => ReproduceAsync(objRow))" data-testid="@objRow.ReproduceTestId">
                                 Reproduce
                             </Button>
                         </CellTemplate>
@@ -256,6 +279,10 @@
         min-width: 0;
     }
 
+    .ops-page .ops-log-filter {
+        max-width: 220px;
+    }
+
     @@media (max-width: 430px) {
         .ops-page .ops-grid-3,
         .ops-page .ops-grid-2 {
@@ -275,6 +302,7 @@
     private bool objRunPodLoading = true;
     private bool objLogLoading = true;
     private bool objApiDown;
+    private double objLatencyMs = -1;
 
     /// <summary>The generation-log rows narrowed by the free-text user/model filter.</summary>
     private IEnumerable<LogRow> FilteredLog => string.IsNullOrWhiteSpace(objLogFilter)
@@ -356,6 +384,7 @@
                         WorkerState = vStatus.WorkerState,
                         EndpointName = vStatus.EndpointId ?? "endpoint",
                         ColdStart = vStatus.ColdStart,
+                        Unreachable = string.Equals(vStatus.WorkerState, "unreachable", StringComparison.OrdinalIgnoreCase),
                     };
                 }
             }
@@ -372,7 +401,11 @@
             if (vLog.IsSuccessStatusCode)
             {
                 var vPage = await vLog.Content.ReadFromJsonAsync<PagedResult<GenerationLogEntry>>();
-                objLogRows = (vPage?.Items ?? Array.Empty<GenerationLogEntry>()).Select(MapLog).ToList();
+                objLogRows = NameRows((vPage?.Items ?? Array.Empty<GenerationLogEntry>()).Select(MapLog).ToList());
+                objLatencyMs = (vPage?.Items ?? Array.Empty<GenerationLogEntry>())
+                    .Where(aEntry => aEntry.DurationMs is > 0 && aEntry.CreatedUtc >= DateTime.UtcNow.AddHours(-24))
+                    .Select(aEntry => (double)aEntry.DurationMs!.Value)
+                    .DefaultIfEmpty(-1).Average();
             }
         }
         catch
@@ -403,6 +436,7 @@
         var (vOutcome, vTone) = OutcomeTone(aEntry.Outcome);
         return new LogRow(
             aEntry.LogId,
+            aEntry.Outcome,
             Shorten(aEntry.UserId),
             aEntry.ModelId,
             $"{aEntry.Tier.ToString().ToLowerInvariant()} · {SummariseParams(aEntry.ParamsJson)}",
@@ -432,6 +466,36 @@
         ToastService.Error($"Couldn't reach the API — \"{aRow.Model}\" wasn't re-queued.", "Generation log");
     }
 
+    /// <summary>Saves the auto idle-stop toggle; on failure the switch returns to its saved value.</summary>
+    /// <param name="aEnabled">The new toggle value.</param>
+    private async Task SetAutoIdleStopAsync(bool aEnabled)
+    {
+        if (objRunPod is null)
+        {
+            return;
+        }
+
+        var vPrevious = objRunPod.AutoIdleStop;
+        objRunPod.AutoIdleStop = aEnabled;
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vResponse = await vClient.PostAsync($"{ApiRoutes.RunPod}/auto-idle-stop?enabled={(aEnabled ? "true" : "false")}", content: null);
+            if (vResponse.IsSuccessStatusCode)
+            {
+                ToastService.Success(aEnabled ? "Auto idle-stop is on." : "Auto idle-stop is off.", "RunPod");
+                return;
+            }
+        }
+        catch
+        {
+            // Fall through to the honest failure toast.
+        }
+
+        objRunPod.AutoIdleStop = vPrevious;
+        ToastService.Error("Couldn't reach the API — auto idle-stop wasn't changed.", "RunPod");
+    }
+
     private Task StartEndpointAsync() => ControlRunPodAsync("start", "Endpoint start requested.");
 
     private Task StopEndpointAsync() => ControlRunPodAsync("stop", "Endpoint stop requested.");
@@ -459,9 +523,10 @@
     private static (string, string) OutcomeTone(string aOutcome) => aOutcome.ToLowerInvariant() switch
     {
         "succeeded" or "success" => ("success", "badge-ok"),
-        "capped" or "blocked" => ("capped", "badge-warn"),
+        "capped" => ("capped", "badge-warn"),
+        "blocked" => ("blocked", "badge-warn"),
         "cancelled" => ("cancelled", ""),
-        _ => ("failed", "badge-warn")
+        _ => ("failed", "badge-danger")
     };
 
     private static string SummariseParams(string aParamsJson)
@@ -518,14 +583,56 @@
         public string EndpointName { get; set; } = "endpoint";
         public bool ColdStart { get; set; }
 
+        /// <summary>Whether RunPod's health check failed for the configured endpoint.</summary>
+        public bool Unreachable { get; set; }
+
         /// <summary>Badge tone reflecting whether the endpoint is warm, cold or scaled to zero.</summary>
-        public string StateTone => ColdStart ? "badge-warn" : "badge-ok";
+        public string StateTone => ColdStart || Unreachable ? "badge-warn" : "badge-ok";
 
         /// <summary>Status-dot tone paired with <see cref="StateTone"/>.</summary>
-        public string StateDot => ColdStart ? "warn" : "ok";
+        public string StateDot => ColdStart || Unreachable ? "warn" : "ok";
     }
 
     private sealed record LogRow(
-        Guid LogId, string User, string Model, string Params, string Cost, string Duration,
-        string Outcome, string OutcomeTone);
+        Guid LogId, string RawOutcome, string User, string Model, string Params, string Cost, string Duration,
+        string Outcome, string OutcomeTone)
+    {
+        /// <summary>The outcome badge's control name: badge-&lt;outcome&gt;, numbered from the second of a kind.</summary>
+        public string OutcomeTestId { get; set; } = string.Empty;
+
+        /// <summary>The Reproduce button's control name: btn-reproduce, numbered from the second row.</summary>
+        public string ReproduceTestId { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Gives each log row its mockup control names in list order: the Reproduce buttons are numbered
+    /// btn-reproduce, btn-reproduce-2, …, and each outcome's badges badge-success, badge-success-2, ….
+    /// </summary>
+    private static List<LogRow> NameRows(List<LogRow> aRows)
+    {
+        var vSeen = new Dictionary<string, int>();
+        for (var vIndex = 0; vIndex < aRows.Count; vIndex++)
+        {
+            var vRow = aRows[vIndex];
+            var vCount = vSeen[vRow.Outcome] = vSeen.GetValueOrDefault(vRow.Outcome) + 1;
+            vRow.OutcomeTestId = vCount == 1 ? $"badge-{vRow.Outcome}" : $"badge-{vRow.Outcome}-{vCount}";
+            vRow.ReproduceTestId = vIndex == 0 ? "btn-reproduce" : $"btn-reproduce-{vIndex + 1}";
+        }
+
+        return aRows;
+    }
+
+    /// <summary>The billing cycle the spend ledger counts: this calendar month (UTC), e.g. "Nov 1 – Nov 30".</summary>
+    private static string BillingCycle
+    {
+        get
+        {
+            var vNow = DateTime.UtcNow;
+            var vMonth = System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.GetAbbreviatedMonthName(vNow.Month);
+            return $"{vMonth} 1 – {vMonth} {DateTime.DaysInMonth(vNow.Year, vNow.Month)}";
+        }
+    }
+
+    /// <summary>Average duration of the logged jobs in the last 24 h, or null when none ran.</summary>
+    private string? AvgLatency => objLatencyMs < 0 ? null : FormatDuration((long)objLatencyMs);
 }

@@ -27,6 +27,12 @@ public sealed class FakeAppManager
     /// <summary>How many logins it answered (a check proves a second open asked for none).</summary>
     public int LoginCount;
 
+    /// <summary>
+    /// The licence LicenseSvc/validate answers with (the Account sample data puts one in); while it is
+    /// null the stand-in answers "not found", so the app shows "No license" as before.
+    /// </summary>
+    public FakeLicense? License { get; set; }
+
     /// <summary>Revokes every refresh token it issued, as a server-side revoke would.</summary>
     public void RevokeAll() => objRefreshTokens.Clear();
 
@@ -72,6 +78,12 @@ public sealed class FakeAppManager
                 : Refuse("UNAUTHORIZED", "Invalid token");
         }
 
+        if (vPath.EndsWith("LicenseSvc/validate", StringComparison.OrdinalIgnoreCase) && License is { } vLicense)
+        {
+            var vDays = (int)Math.Ceiling((vLicense.ExpiryUtc - DateTime.UtcNow).TotalDays);
+            return Ok(new { isValid = true, license = new { licenseId = 1, licenseName = vLicense.Name, status = vLicense.Tier, expiryDate = vLicense.ExpiryUtc, daysRemaining = vDays } });
+        }
+
         if (vPath.EndsWith("AuthSvc/logout", StringComparison.OrdinalIgnoreCase))
         {
             return Ok(new { });
@@ -102,6 +114,12 @@ public sealed class FakeAppManager
     private sealed record Issued(int userId, string email, string applicationRole, string appManagerRole, string accessToken, string refreshToken, DateTime tokenExpiresAt);
 #pragma warning restore IDE1006
 }
+
+/// <summary>TEST ONLY: a licence the stand-in AppManager's LicenseSvc reports.</summary>
+/// <param name="Name">The licence name (e.g. "Creator Pro").</param>
+/// <param name="Tier">The licence status / tier badge (e.g. "Pro").</param>
+/// <param name="ExpiryUtc">When it renews / expires.</param>
+public sealed record FakeLicense(string Name, string Tier, DateTime ExpiryUtc);
 
 /// <summary>TEST ONLY: sends AppManager calls to the stand-in while it is active, else to the network.</summary>
 public sealed class FakeAppManagerSwitch : DelegatingHandler

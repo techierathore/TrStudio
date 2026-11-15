@@ -1,5 +1,5 @@
 @page "/video"
-@using TrBlazeUI.Components.Toolbar
+@using TrBlazeUI.Components.NativeSelect
 @using TrBlazeUI.Components.FileUpload
 @using System.Text.Json
 @inject IHttpClientFactory HttpClientFactory
@@ -28,26 +28,25 @@
 <h1 class="page-title">Video Studio</h1>
 <p class="page-sub">Image→Video / Text→Video generation, timeline editing and export.</p>
 
-<div class="studio" data-testid="video-studio">
+<div class="studio video-studio" data-testid="video-studio">
 
     @* ---- LEFT: mode + conditioning + controls + tier ---- *@
     <div class="studio-col">
-        <Card>
+        <Card Class="vid-card" data-testid="card-mode">
             <h3 class="card-h3">Mode</h3>
-            <div data-testid="mode-tabs">
-                <Tabs Value="@objMode" ValueChanged="OnModeChanged">
-                    <TabsList Class="grid w-full grid-cols-2">
-                        <TabsTrigger Value="i2v">Image → Video</TabsTrigger>
-                        <TabsTrigger Value="t2v">Text → Video</TabsTrigger>
-                    </TabsList>
-                </Tabs>
+            <div class="avatar-seg avatar-seg-full" role="radiogroup" aria-label="Mode" data-testid="mode-tabs">
+                <button type="button" role="radio" aria-checked="@(IsImageToVideo ? "true" : "false")"
+                        class="@(IsImageToVideo ? "is-on" : null)"
+                        @onclick="@(() => OnModeChanged("i2v"))" data-testid="btn-image-video">Image → Video</button>
+                <button type="button" role="radio" aria-checked="@(IsImageToVideo ? "false" : "true")"
+                        class="@(IsImageToVideo ? null : "is-on")"
+                        @onclick="@(() => OnModeChanged("t2v"))" data-testid="btn-text-video">Text → Video</button>
             </div>
-            <div class="seg-hint">@(IsImageToVideo ? "Animates a source frame into a clip." : "Synthesises a clip from a prompt.")</div>
         </Card>
 
         @if (IsImageToVideo)
         {
-            <Card data-testid="i2v-frames">
+            <Card Class="vid-card" data-testid="card-conditioning-frames">
                 <h3 class="card-h3">Conditioning frames</h3>
                 <div class="vid-frames">
                     <div>
@@ -69,34 +68,29 @@
         }
         else
         {
-            <Card data-testid="t2v-prompt">
+            <Card Class="vid-card" data-testid="t2v-prompt">
                 <h3 class="card-h3">Prompt</h3>
                 <Textarea @bind-Value="objPrompt" Placeholder="Describe the motion and scene to generate…" MaxLength="600" />
                 <div class="seg-hint">Text→Video needs no source frame.</div>
             </Card>
         }
 
-        <Card>
+        <Card Class="vid-card" data-testid="card-controls">
             <h3 class="card-h3">Controls</h3>
             <div class="param-field">
                 <div class="param-head">
                     <label class="param-label">Duration</label>
-                    <span class="param-val">@DurationSeconds s</span>
+                    <span class="param-val">@(DurationSeconds)s</span>
                 </div>
                 @if (ModelStatesDurations)
                 {
                     @* REQ-FN-081: a row that states its durations offers only those. *@
-                    <div data-testid="duration-select">
-                        <Select Value="@objDurationValue" ValueChanged="@((string? aVal) => objDurationValue = aVal)" TValue="string" Class="w-full">
-                            <SelectTrigger><SelectValue Placeholder="Duration" /></SelectTrigger>
-                            <SelectContent>
-                                @foreach (var vDur in AllowedValues.Durations)
-                                {
-                                    <SelectItem Value="@vDur" Text="@vDur" TValue="string">@vDur</SelectItem>
-                                }
-                            </SelectContent>
-                        </Select>
-                    </div>
+                    <NativeSelect TValue="string" @bind-Value="objDurationValue" Class="w-full" aria-label="Duration" data-testid="duration-select">
+                        @foreach (var vDur in AllowedValues.Durations)
+                        {
+                            <option value="@vDur">@vDur</option>
+                        }
+                    </NativeSelect>
                 }
                 else
                 {
@@ -109,17 +103,12 @@
             {
                 <div class="param-field">
                     <label class="param-label">Resolution</label>
-                    <div data-testid="resolution-select">
-                        <Select Value="@objResolution" ValueChanged="@((string? aVal) => objResolution = aVal)" TValue="string" Class="w-full">
-                            <SelectTrigger><SelectValue Placeholder="Resolution" /></SelectTrigger>
-                            <SelectContent>
-                                @foreach (var vRes in AllowedValues.Resolutions)
-                                {
-                                    <SelectItem Value="@vRes" Text="@vRes" TValue="string">@vRes</SelectItem>
-                                }
-                            </SelectContent>
-                        </Select>
-                    </div>
+                    <NativeSelect TValue="string" @bind-Value="objResolution" Class="w-full" aria-label="Resolution" data-testid="resolution-select">
+                        @foreach (var vRes in AllowedValues.Resolutions)
+                        {
+                            <option value="@vRes">@vRes</option>
+                        }
+                    </NativeSelect>
                 </div>
             }
             <div class="param-field">
@@ -132,81 +121,50 @@
                 </div>
             </div>
             <label class="param-label">Aspect ratio</label>
-            <div data-testid="aspect-select">
-                <Select @bind-Value="objAspect" TValue="string" Class="w-full">
-                    <SelectTrigger><SelectValue Placeholder="Aspect ratio" /></SelectTrigger>
-                    <SelectContent>
-                        @foreach (var vAspect in AllowedValues.AspectRatios)
-                        {
-                            var vAspectLabel = objAspects.GetValueOrDefault(vAspect, vAspect);
-                            <SelectItem Value="@vAspect" Text="@vAspectLabel" TValue="string">@vAspectLabel</SelectItem>
-                        }
-                    </SelectContent>
-                </Select>
-            </div>
+            <NativeSelect TValue="string" @bind-Value="objAspect" Class="w-full" aria-label="Aspect ratio" data-testid="field-1">
+                @foreach (var vAspect in AllowedValues.AspectRatios)
+                {
+                    <option value="@vAspect">@objAspects.GetValueOrDefault(vAspect, vAspect)</option>
+                }
+            </NativeSelect>
         </Card>
 
-        <Card>
+        <Card Class="vid-card" data-testid="card-quality-tier">
             <h3 class="card-h3">Quality tier</h3>
-            <div data-testid="tier-group">
-                <RadioGroup Value="@objTier" ValueChanged="@((string? aTier) => OnTierChanged(aTier))" TValue="string" Class="grid gap-2">
-                    @foreach (var vTier in objTiers)
-                    {
-                        <label class="tier-option @(vTier.Key == objTier ? "is-sel" : "")" for="@($"vtier-{vTier.Key}")">
-                            <RadioGroupItem Value="@vTier.Key" Id="@($"vtier-{vTier.Key}")" TValue="string" />
-                            <div style="flex:1;min-width:0">
-                                <div class="flex-between">
-                                    <strong>@vTier.Name</strong>
-                                    @if (vTier.HeyGen)
-                                    {
-                                        <span data-testid="tier-heygen-badge"><Badge>HeyGen</Badge></span>
-                                    }
-                                    else
-                                    {
-                                        <span class="muted-sm">@FormatCost(vTier.Cost) · @vTier.Eta</span>
-                                    }
-                                </div>
-                                <div class="muted-sm">@vTier.Detail</div>
-                                @if (vTier.HeyGen)
-                                {
-                                    <div class="muted-sm">@FormatCost(vTier.Cost) · @vTier.Eta</div>
-                                }
-                            </div>
-                        </label>
-                    }
-                </RadioGroup>
+            <div class="avatar-seg avatar-seg-full vid-tierseg" role="radiogroup" aria-label="Quality tier" data-testid="tier-group">
+                @foreach (var vTier in objTiers)
+                {
+                    <button type="button" role="radio" aria-checked="@(vTier.Key == objTier ? "true" : "false")"
+                            class="@(vTier.Key == objTier ? "is-on" : null)" title="@vTier.Detail"
+                            @onclick="@(() => OnTierChanged(vTier.Key))"
+                            data-testid="@($"btn-{Slug($"{vTier.Name} {TierLine(vTier)}")}")">
+                        <b>@vTier.Name</b><small>@TierLine(vTier)</small>
+                    </button>
+                }
             </div>
             <div style="margin-top:10px">
-                <Badge Class="badge-brand">Provider: @SelectedTier.Provider</Badge>
+                <Badge Class="badge-brand" data-testid="@($"badge-{Slug($"provider {SelectedTier.Provider}")}")">Provider: @SelectedTier.Provider</Badge>
             </div>
             @if (SelectedTier.CloudRouted)
             {
-                <div data-testid="routing-alert" style="margin-top:10px">
-                    <Alert Variant="AlertVariant.Info" AccentBorder="true">
-                        <LucideIcon Name="cloud" Size="16" />
-                        <AlertTitle>Routed to @SelectedTier.Provider@(SelectedTier.HeyGen ? " (closed API)" : " (serverless GPU)")</AlertTitle>
-                        <AlertDescription>
-                            Output is billed against your monthly cap and stamped with provenance on export.
-                        </AlertDescription>
-                    </Alert>
-                </div>
+                <Alert Variant="AlertVariant.Info" AccentBorder="true" Class="mt-2" data-testid="alert-info">
+                    <AlertDescription>
+                        @SelectedTier.Name tier routes to <strong>@SelectedTier.Provider@(SelectedTier.HeyGen ? " (closed API)" : " (serverless GPU)")</strong>.
+                        Output is billed against your monthly cap and stamped with provenance.
+                    </AlertDescription>
+                </Alert>
             }
 
             @* Phase 2 (decision 3A): registry-driven model picker under the tier buttons (REQ-UI-089..092). *@
             <div data-testid="video-model-picker" style="margin-top:12px">
                 <label class="param-label">Model</label>
-                <div data-testid="field-video-model">
-                    <Select Value="@objModelId" ValueChanged="@((string? aId) => OnModelChanged(aId))" TValue="string" Class="w-full" Disabled="@(ListedModels.Count == 0)">
-                        <SelectTrigger><SelectValue Placeholder="@(ListedModels.Count == 0 ? "No model for this choice" : "Model")" /></SelectTrigger>
-                        <SelectContent>
-                            @foreach (var vModel in ListedModels)
-                            {
-                                var vLabel = VideoModelFilter.IsVenice(vModel) ? $"{vModel.DisplayName} — Cloud · Venice" : vModel.DisplayName;
-                                <SelectItem Value="@vModel.Id" Text="@vLabel" TValue="string">@vLabel</SelectItem>
-                            }
-                        </SelectContent>
-                    </Select>
-                </div>
+                <NativeSelect TValue="string" Value="@objModelId" ValueChanged="@((string? aId) => OnModelChanged(aId))" Class="w-full" aria-label="Model"
+                              Placeholder="@(ListedModels.Count == 0 ? "No model for this choice" : null)" data-testid="field-video-model">
+                    @foreach (var vModel in ListedModels)
+                    {
+                        <option value="@vModel.Id">@(VideoModelFilter.IsVenice(vModel) ? $"{vModel.DisplayName} — Cloud · Venice" : vModel.DisplayName)</option>
+                    }
+                </NativeSelect>
                 <div class="muted-sm" style="margin-top:6px">
                     @(objCharacterId != NoCharacter
                         ? "Only models that keep a fixed character are listed."
@@ -214,37 +172,28 @@
                 </div>
 
                 <label class="param-label" style="margin-top:10px">Character</label>
-                <div data-testid="field-character">
-                    <Select Value="@objCharacterId" ValueChanged="@((string? aId) => OnCharacterChanged(aId))" TValue="string" Class="w-full">
-                        <SelectTrigger><SelectValue Placeholder="No character" /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem Value="@NoCharacter" Text="No character" TValue="string">No character</SelectItem>
-                            @foreach (var vChar in objCharacters)
-                            {
-                                var vCharLabel = $"{vChar.Name} (reference set)";
-                                <SelectItem Value="@vChar.CharacterId.ToString()" Text="@vCharLabel" TValue="string">@vCharLabel</SelectItem>
-                            }
-                        </SelectContent>
-                    </Select>
-                </div>
+                <NativeSelect TValue="string" Value="@objCharacterId" ValueChanged="@((string? aId) => OnCharacterChanged(aId))" Class="w-full" aria-label="Character" data-testid="field-character">
+                    <option value="@NoCharacter">No character</option>
+                    @foreach (var vChar in objCharacters)
+                    {
+                        <option value="@vChar.CharacterId.ToString()">@($"{vChar.Name} (reference set)")</option>
+                    }
+                </NativeSelect>
 
                 @if (SelectedModel is not null && VideoModelFilter.IsVenice(SelectedModel))
                 {
                     <div class="flex-between" style="margin-top:8px;gap:8px">
-                        <span data-testid="badge-cloud-venice"><Badge Class="badge-brand">Cloud · Venice</Badge></span>
+                        <Badge Class="badge-brand" data-testid="badge-cloud-venice">Cloud · Venice</Badge>
                         <span class="muted-sm">@AllowedSummary</span>
                     </div>
-                    <div data-testid="alert-sent-to-venice" style="margin-top:6px">
-                        <Alert Variant="AlertVariant.Info">
-                            <LucideIcon Name="cloud" Size="16" />
-                            <AlertDescription>
-                                Your prompt and pictures are sent to Venice.
-                                @(objVenicePrice is decimal vPrice
-                                    ? $"Venice price for this clip: {FormatCost(vPrice)}."
-                                    : "Venice prices this clip when you generate.")
-                            </AlertDescription>
-                        </Alert>
-                    </div>
+                    <Alert Variant="AlertVariant.Info" Class="mt-2" data-testid="alert-sent-to-venice">
+                        <AlertDescription>
+                            Your prompt and pictures are sent to Venice.
+                            @(objVenicePrice is decimal vPrice
+                                ? $"Venice price for this clip: {FormatCost(vPrice)}."
+                                : "Venice prices this clip when you generate.")
+                        </AlertDescription>
+                    </Alert>
                 }
             </div>
         </Card>
@@ -252,16 +201,16 @@
 
     @* ---- CENTER: timeline / editor + rendering ---- *@
     <div class="studio-col">
-        <Card>
+        <Card Class="vid-card" data-testid="card-timeline-editor">
             <div class="flex-between" style="margin-bottom:10px">
                 <h3 class="card-h3" style="margin:0">Timeline / editor</h3>
                 @if (objClips.Count > 0)
                 {
-                    <Badge Variant="BadgeVariant.Outline">Rendered</Badge>
+                    <Badge Variant="BadgeVariant.Outline" Class="badge-ok" data-testid="badge-status-2"><span class="dot ok"></span>Rendered</Badge>
                 }
                 else
                 {
-                    <Badge Variant="BadgeVariant.Secondary">Empty</Badge>
+                    <Badge Variant="BadgeVariant.Secondary" data-testid="badge-status-2">Empty</Badge>
                 }
             </div>
 
@@ -274,52 +223,42 @@
             }
             else
             {
+                var vShown = SelectedClip ?? objClips[0];
                 <div class="vid-stage" data-testid="timeline-preview">
-                    <div class="avatar-playbtn">
-                        <LucideIcon Name="play" Size="20" />
+                    <div class="vid-playbtn">
+                        <LucideIcon Name="play" Size="18" />
                     </div>
-                    <div>Preview — @objClips[0].Label (@ModelLabel, @objAspect)</div>
+                    <div>Preview — @vShown.Label (@vShown.Model, @vShown.Aspect)</div>
                 </div>
             }
 
-            <div data-testid="timeline-toolbar" style="margin:12px 0">
-                <Toolbar AriaLabel="Timeline editing tools">
-                    <ToolbarGroup>
-                        @foreach (var vTool in objEditTools)
-                        {
-                            <ToolbarButton AriaLabel="@vTool" Variant="ToolbarButtonVariant.Outline" OnClick="@(() => EditAsync(vTool))">
-                                @vTool
-                            </ToolbarButton>
-                        }
-                    </ToolbarGroup>
-                    <ToolbarSeparator />
-                    <ToolbarGroup>
-                        <span class="muted-sm">@TimelineDuration</span>
-                    </ToolbarGroup>
-                </Toolbar>
+            <div class="vid-edittools" role="toolbar" aria-label="Timeline editing tools" data-testid="timeline-toolbar">
+                @foreach (var vTool in objEditTools)
+                {
+                    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(() => EditAsync(vTool.Name))" data-testid="@($"btn-{Slug(vTool.Name)}")">
+                        <LucideIcon Name="@vTool.Icon" Size="13" />
+                        @vTool.Name
+                    </Button>
+                }
+                <span style="flex:1"></span>
+                <span class="muted-sm">@TimelineDuration</span>
             </div>
 
             <label class="param-label">Video track</label>
             <div class="vid-track">
-                @if (objClips.Count == 0)
+                @foreach (var vClip in objClips)
                 {
-                    <div class="vid-clip vid-clip-add" style="flex:1" @onclick="GenerateAsync">+ add clip</div>
+                    <div class="vid-clip @(vClip == SelectedClip ? "is-sel" : null)" style="@($"flex:{vClip.Seconds}")" @key="vClip.Label"
+                         @onclick="@(() => objSelectedClip = vClip.Label)">@vClip.Label · @(vClip.Seconds)s</div>
                 }
-                else
-                {
-                    @foreach (var vClip in objClips)
-                    {
-                        <div class="vid-clip" style="@($"flex:{vClip.Seconds}")" @key="vClip.Label">@vClip.Label · @vClip.Seconds s</div>
-                    }
-                    <div class="vid-clip vid-clip-add" style="flex:1" @onclick="GenerateAsync">+ add</div>
-                }
+                <div class="vid-clip vid-clip-add" style="flex:1" @onclick="GenerateAsync">@(objClips.Count == 0 ? "+ add clip" : "+ add")</div>
             </div>
 
             <label class="param-label" style="margin-top:12px">Audio track</label>
             <div class="vid-track">
-                @if (objHasAudio)
+                @if (objAudioLabel is not null)
                 {
-                    <div class="vid-clip vid-clip-audio" style="flex:9">Narration · from Voice Studio</div>
+                    <div class="vid-clip vid-clip-audio" style="flex:9">@objAudioLabel</div>
                 }
                 else
                 {
@@ -328,7 +267,7 @@
             </div>
         </Card>
 
-        <Card>
+        <Card Class="vid-card" data-testid="card-rendering">
             <h3 class="card-h3">Rendering</h3>
             @if (objRendering)
             {
@@ -337,7 +276,7 @@
                         <span class="muted-sm">Generating clip · @ModelLabel</span>
                         <span class="muted-sm">@objProgress% · eta @RenderEta</span>
                     </div>
-                    <Progress Value="@objProgress" Class="mt-2" />
+                    <Progress Value="@objProgress" Class="mt-2 vid-prog" data-testid="progress" />
                     @if (objVeniceRun)
                     {
                         <div class="muted-sm" style="margin-top:6px" data-testid="venice-progress">
@@ -354,12 +293,10 @@
             }
             @if (objVeniceFailure is not null)
             {
-                <div data-testid="alert-venice-failed" style="margin-top:6px">
-                    <Alert Variant="AlertVariant.Danger" AccentBorder="true">
-                        <LucideIcon Name="circle-alert" Size="16" />
-                        <AlertDescription>@objVeniceFailure</AlertDescription>
-                    </Alert>
-                </div>
+                <Alert Variant="AlertVariant.Danger" AccentBorder="true" Class="mt-2" data-testid="alert-venice-failed">
+                    <LucideIcon Name="circle-alert" Size="16" />
+                    <AlertDescription>@objVeniceFailure</AlertDescription>
+                </Alert>
             }
             <Button Class="w-full mt-3" OnClick="GenerateAsync" Disabled="@objRendering" data-testid="generate-btn">
                 @if (objRendering)
@@ -369,7 +306,6 @@
                 }
                 else
                 {
-                    <LucideIcon Name="clapperboard" Size="14" />
                     <span>@(IsImageToVideo ? "Generate from frame" : "Generate from prompt")</span>
                 }
             </Button>
@@ -378,61 +314,53 @@
 
     @* ---- RIGHT: post-processing + export ---- *@
     <div class="studio-col">
-        <Card>
+        <Card Class="vid-card" data-testid="card-post-processing">
             <h3 class="card-h3">Post-processing</h3>
-            <div class="flex-between" style="margin-bottom:12px">
-                <div>
-                    <div class="param-label">Interpolate (RIFE/FILM)</div>
-                    <div class="muted-sm">Smooth frame interpolation</div>
-                </div>
-                <div data-testid="interpolate-switch">
-                    <Switch @bind-Checked="objInterpolate" AriaLabel="Interpolate" />
-                </div>
+            <div class="flex-between" style="margin-bottom:14px">
+                <span style="font-size:13px">Interpolate (RIFE/FILM)</span>
+                <Switch @bind-Checked="objInterpolate" AriaLabel="Interpolate (RIFE/FILM)" data-testid="switch" />
             </div>
-            <div class="flex-between" style="margin-bottom:12px">
-                <div>
-                    <div class="param-label">Smooth motion</div>
-                    <div class="muted-sm">Reduce judder</div>
-                </div>
-                <div data-testid="smooth-switch">
-                    <Switch @bind-Checked="objSmooth" AriaLabel="Smooth motion" />
-                </div>
+            <div class="flex-between" style="margin-bottom:14px">
+                <span style="font-size:13px">Smooth motion</span>
+                <Switch @bind-Checked="objSmooth" AriaLabel="Smooth motion" data-testid="switch-2" />
             </div>
-            <Button Variant="ButtonVariant.Outline" Class="w-full" OnClick="UpscaleAsync" data-testid="upscale-btn">
-                <LucideIcon Name="maximize-2" Size="14" />
+            <Button Variant="ButtonVariant.Outline" Class="w-full" OnClick="UpscaleAsync" data-testid="btn-upscale-to-1080p">
+                <LucideIcon Name="upload" Size="14" />
                 <span>Upscale to 1080p</span>
             </Button>
             <div class="muted-sm" style="margin-top:8px">Upscaling adds ~40s of RunPod time.</div>
         </Card>
 
-        <Card>
+        <Card Class="vid-card" data-testid="card-export">
             <h3 class="card-h3">Export</h3>
             <label class="param-label">Platform preset</label>
-            <div data-testid="export-select">
-                <Select @bind-Value="objExportPreset" TValue="string" Class="w-full">
-                    <SelectTrigger><SelectValue Placeholder="Select preset" /></SelectTrigger>
-                    <SelectContent>
-                        @foreach (var vPreset in objExportPresets)
-                        {
-                            <SelectItem Value="@vPreset.Key" Text="@vPreset.Value" TValue="string">@vPreset.Value</SelectItem>
-                        }
-                    </SelectContent>
-                </Select>
-            </div>
+            <NativeSelect TValue="string" @bind-Value="objExportPreset" Class="w-full" aria-label="Platform preset" data-testid="field-2">
+                @foreach (var vPreset in objExportPresets)
+                {
+                    <option value="@vPreset.Key">@vPreset.Value</option>
+                }
+            </NativeSelect>
             <div class="cost-row" style="margin-top:12px">
                 <span class="muted-sm">Est. export cost</span>
                 <strong>@FormatCost(SelectedTier.Cost)</strong>
             </div>
-            <Button Class="w-full mt-3" OnClick="ExportAsync" Disabled="@(objClips.Count == 0)" data-testid="export-mp4">
+            <Button Class="w-full mt-3" OnClick="ExportAsync" Disabled="@(objClips.Count == 0)" data-testid="btn-export-mp4">
                 <LucideIcon Name="download" Size="14" />
                 <span>Export MP4</span>
             </Button>
         </Card>
 
-        <Card>
-            <h3 class="card-h3">Selected segment</h3>
-            <div class="vid-empty" style="aspect-ratio:16/9" data-testid="segment-empty">
-                @(objClips.Count == 0 ? "No clip selected — generate a segment to edit" : $"{objClips[0].Label} selected · {objClips[0].Seconds}s")
+        <Card Class="vid-card" data-testid="card-empty-segment">
+            <h3 class="card-h3">@(SelectedClip is null ? "Empty segment" : "Selected segment")</h3>
+            <div class="vid-empty" data-testid="segment-empty">
+                @if (SelectedClip is { } vSel)
+                {
+                    @($"{vSel.Label} · {vSel.Seconds}s · {vSel.Model}")
+                }
+                else
+                {
+                    @(objClips.Count == 0 ? "No clip selected — generate a segment to edit" : "No clip selected — pick a segment to edit")
+                }
             </div>
         </Card>
     </div>
@@ -454,9 +382,9 @@
 
     private readonly List<TierInfo> objTiers = new()
     {
-        new TierInfo("Fast", "Fast", "Local Mac (MPS)", "SVD local", 0.00m, "~30 s", "Local Mac (MPS) · Stable Video Diffusion", GenerationTier.Fast, false, false),
-        new TierInfo("High", "High", "Wan 2.x (RunPod)", "Wan 2.x", 0.18m, "~2 min", "Serverless GPU · high-motion HD", GenerationTier.High, true, false),
-        new TierInfo("Premium", "Premium", "HeyGen", "HeyGen Video", 0.90m, "~4 min", "Closed API · studio quality", GenerationTier.Premium, true, true),
+        new TierInfo("Fast", "Fast", "Mac", "Local Mac (MPS)", "SVD local", 0.00m, "~30s", "Local Mac (MPS) · Stable Video Diffusion", GenerationTier.Fast, false, false),
+        new TierInfo("High", "High", "Wan 2.x", "Wan 2.x (RunPod)", "Wan 2.x", 0.18m, "~2m", "Serverless GPU · high-motion HD", GenerationTier.High, true, false),
+        new TierInfo("Premium", "Premium", "HeyGen", "HeyGen", "HeyGen Video", 0.90m, "~4m", "Closed API · studio quality", GenerationTier.Premium, true, true),
     };
     private string objTier = "High";
 
@@ -475,10 +403,14 @@
     };
     private string objExportPreset = "youtube";
 
-    private readonly string[] objEditTools = { "Trim", "Join", "Reframe", "Add audio", "Split" };
+    private readonly (string Name, string Icon)[] objEditTools =
+    {
+        ("Trim", "scissors"), ("Join", "link"), ("Reframe", "crop"), ("Add audio", "volume-2"), ("Split", "split")
+    };
 
     private readonly List<ClipSegment> objClips = new();
-    private bool objHasAudio;
+    private string? objSelectedClip;
+    private string? objAudioLabel;
 
     private bool objRendering;
     private int objProgress;
@@ -544,10 +476,23 @@
     {
         get
         {
-            var vTotal = objClips.Sum(aClip => aClip.Seconds);
-            return $"00:00 / 00:{vTotal:00}";
+            var vTotal = TimeSpan.FromSeconds(objClips.Sum(aClip => aClip.Seconds));
+            return $"00:00 / {(int)vTotal.TotalMinutes:00}:{vTotal.Seconds:00}";
         }
     }
+
+    /// <summary>The clip the creator picked on the video track, or null when none is picked.</summary>
+    private ClipSegment? SelectedClip => objClips.FirstOrDefault(aClip => aClip.Label == objSelectedClip);
+
+    /// <summary>A tier button's second line: where it runs, its eta and its cost (<c>Mac · ~30s · $0</c>).</summary>
+    /// <param name="aTier">The tier.</param>
+    private static string TierLine(TierInfo aTier) =>
+        $"{aTier.Short} · {aTier.Eta} · {(aTier.Cost == 0m ? "$0" : FormatCost(aTier.Cost))}";
+
+    /// <summary>Lower-case dash slug for control names (<c>Wan 2.x (RunPod)</c> → <c>wan-2-x-runpod</c>).</summary>
+    /// <param name="aText">The text to slug.</param>
+    private static string Slug(string aText) =>
+        System.Text.RegularExpressions.Regex.Replace(aText.ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
 
     /// <summary>A simple eta string derived from the render progress.</summary>
     private string RenderEta => objProgress >= 100 ? "0:00" : $"0:{Math.Max(1, (100 - objProgress) / 2):00}";
@@ -579,6 +524,7 @@
         if (vHasSession)
         {
             await LoadPickerAsync();
+            await LoadTimelineAsync();
         }
 
         SyncPicker();
@@ -608,6 +554,70 @@
         catch (Exception aEx) when (aEx is not OperationCanceledException)
         {
             objCharacters = new();
+        }
+    }
+
+    /// <summary>
+    /// Puts the creator's generated video clips (not talking-head renders) on the video track, oldest first (clip01, clip02, …),
+    /// each with its length, model and aspect from the run's own params, and their newest Voice Studio
+    /// narration on the audio track. Nothing is shown when there are none or they can't be read.
+    /// </summary>
+    private async Task LoadTimelineAsync()
+    {
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vPage = await vClient.GetFromJsonAsync<PagedResult<AssetResponse>>($"{ApiRoutes.Assets}?aKind=video&aPageSize=50", objCts.Token);
+            // Talking-head renders (lip-sync models, the Avatar studio's output) are not clips of this timeline.
+            var vAssets = (vPage?.Items ?? Array.Empty<AssetResponse>())
+                .Where(aAsset => objCatalog.FirstOrDefault(aModel => aModel.Id == aAsset.ModelId)?.Task != GenerationTaskType.LipSync)
+                .OrderBy(aAsset => aAsset.CreatedUtc).ToList();
+            objClips.Clear();
+            foreach (var vAsset in vAssets)
+            {
+                using var vDoc = JsonDocument.Parse(string.IsNullOrWhiteSpace(vAsset.ParamsJson) ? "{}" : vAsset.ParamsJson);
+                var vRoot = vDoc.RootElement;
+                var vSeconds = vRoot.ValueKind == JsonValueKind.Object && vRoot.TryGetProperty("durationSeconds", out var vDur) && vDur.TryGetInt32(out var vSec) ? vSec : 0;
+                var vAspect = vRoot.ValueKind == JsonValueKind.Object && vRoot.TryGetProperty("aspectRatio", out var vAsp) && vAsp.ValueKind == JsonValueKind.String ? vAsp.GetString() ?? "16:9" : "16:9";
+                var vModel = objCatalog.FirstOrDefault(aModel => aModel.Id == vAsset.ModelId)?.DisplayName ?? vAsset.ModelId;
+                objClips.Add(new ClipSegment($"clip{objClips.Count + 1:00}", Math.Max(1, vSeconds), vModel, vAspect));
+            }
+        }
+        catch (Exception aEx) when (aEx is not OperationCanceledException)
+        {
+            // Unreadable list: the timeline stays empty.
+        }
+
+        objAudioLabel = await FindNarrationAsync();
+    }
+
+    /// <summary>
+    /// Names the creator's newest Voice Studio narration as <c>&lt;voice&gt; narration · from Voice Studio</c>,
+    /// or null when they have none.
+    /// </summary>
+    private async Task<string?> FindNarrationAsync()
+    {
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vPage = await vClient.GetFromJsonAsync<PagedResult<AssetResponse>>($"{ApiRoutes.Assets}?aKind=audio&aPageSize=1", objCts.Token);
+            var vNewest = vPage?.Items.FirstOrDefault();
+            if (vNewest is null)
+            {
+                return null;
+            }
+
+            using var vDoc = JsonDocument.Parse(string.IsNullOrWhiteSpace(vNewest.ParamsJson) ? "{}" : vNewest.ParamsJson);
+            var vVoiceId = vDoc.RootElement.ValueKind == JsonValueKind.Object && vDoc.RootElement.TryGetProperty("VoiceId", out var vId) && vId.ValueKind == JsonValueKind.String
+                ? vId.GetString()
+                : null;
+            var vVoices = await vClient.GetFromJsonAsync<List<PresetVoiceResponse>>("/api/v1/voice/preset-voices", objCts.Token) ?? new();
+            var vName = vVoices.FirstOrDefault(aVoice => aVoice.VoiceId == vVoiceId)?.DisplayName;
+            return vName is null ? "Narration · from Voice Studio" : $"{vName} narration · from Voice Studio";
+        }
+        catch (Exception aEx) when (aEx is not OperationCanceledException)
+        {
+            return null;
         }
     }
 
@@ -729,7 +739,7 @@
         }
 
         var vIndex = objClips.Count + 1;
-        objClips.Add(new ClipSegment($"clip{vIndex:00}", DurationSeconds));
+        objClips.Add(new ClipSegment($"clip{vIndex:00}", DurationSeconds, ModelLabel, objAspect));
         ToastService.Success($"clip{vIndex:00} generated with {ModelLabel}.", "Rendered");
     }
 
@@ -882,7 +892,12 @@
     {
         if (aTool == "Add audio")
         {
-            objHasAudio = true;
+            objAudioLabel = await FindNarrationAsync();
+            if (objAudioLabel is null)
+            {
+                ToastService.Show("Make a narration in Voice Studio first, then add it here.", "Editor");
+                return;
+            }
         }
 
         try
@@ -938,11 +953,14 @@
     /// <summary>A single timeline video segment.</summary>
     /// <param name="Label">The clip label shown on the track.</param>
     /// <param name="Seconds">The clip length in seconds (also its track flex weight).</param>
-    private sealed record ClipSegment(string Label, int Seconds);
+    /// <param name="Model">The model that made the clip.</param>
+    /// <param name="Aspect">The clip's aspect ratio.</param>
+    private sealed record ClipSegment(string Label, int Seconds, string Model, string Aspect);
 
     /// <summary>A quality-tier row: cost, eta, provider, closed-API/HeyGen flags and the spine enum.</summary>
     /// <param name="Key">Stable tier key (matches the RadioGroup value).</param>
     /// <param name="Name">Display name.</param>
+    /// <param name="Short">Where the tier runs, as its button's second line names it.</param>
     /// <param name="Provider">Provider shown in the routing Alert and provider Badge.</param>
     /// <param name="Model">Underlying model shown in the preview caption.</param>
     /// <param name="Cost">Estimated per-render cost.</param>
@@ -954,6 +972,7 @@
     private sealed record TierInfo(
         string Key,
         string Name,
+        string Short,
         string Provider,
         string Model,
         decimal Cost,

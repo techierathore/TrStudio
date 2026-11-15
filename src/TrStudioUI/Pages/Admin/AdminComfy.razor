@@ -3,7 +3,8 @@
 @using System.Text
 @using System.Text.Json
 @using Microsoft.AspNetCore.Components.Forms
-@using TrBlazeUI.Components.FileUpload
+@using TrBlazeUI.Components.NativeSelect
+@using Microsoft.AspNetCore.Components.Sections
 @inject IHttpClientFactory HttpClientFactory
 @inject ToastService ToastService
 @inject IAuthSession AuthSession
@@ -21,42 +22,46 @@
 
 <PageTitle>TrStudio — ComfyUI Import &amp; Debug</PageTitle>
 
-<div class="stack">
-    <div>
+<SectionContent SectionName="topbar-context">
+    @if (!string.IsNullOrWhiteSpace(objWorkflowName))
+    {
+        <Badge Variant="BadgeVariant.Outline" Class="comfy-mono" data-testid="badge-workflow-sdxl-portrait-a">workflow: @objWorkflowName</Badge>
+    }
+</SectionContent>
+
+<div style="margin-bottom:14px">
         <h1 class="page-title">ComfyUI Import &amp; Debug</h1>
         <p class="page-sub" style="margin-bottom:0">
             Import an API-format workflow, map inputs to registry params, smoke-test, then save as a
             registry model. The graph stays hidden from end users.
         </p>
-    </div>
+</div>
 
-    <div class="comfy-work">
+    <div class="comfy-work comfy-page">
         @* ---- LEFT: import ---- *@
         <div class="comfy-col">
-            <Card>
+            <Card Class="comfy-card" data-testid="card-import-workflow">
                 <h3 class="card-h3">Import workflow</h3>
 
-                <div data-testid="comfy-dropzone">
-                    <FileUpload Accept=".json,application/json" Multiple="false"
-                                Files="objFiles" FilesChanged="OnFilesChangedAsync" />
+                <div class="comfy-drop">
+                    ⬆ Drag &amp; drop <b>workflow_api.json</b><br><span style="font-size:12px">or click to browse</span>
+                    <InputFile OnChange="OnFileChosenAsync" accept=".json,application/json" class="comfy-drop-input" aria-label="Workflow file" />
                 </div>
 
                 <div class="comfy-divider">— or paste JSON —</div>
 
                 <Textarea @bind-Value="objWorkflowJson" Class="comfy-mono" Rows="8"
-                          Placeholder="Paste workflow_api.json…" data-testid="comfy-json" />
+                          Placeholder="Paste workflow_api.json…" data-testid="field-1" />
 
                 <Button Variant="ButtonVariant.Outline" OnClick="ParseWorkflow"
-                        Class="w-full justify-center mt-2" data-testid="comfy-parse">
-                    <LucideIcon Name="scan-line" Size="14" />
+                        Class="w-full justify-center mt-2" data-testid="btn-parse-workflow">
                     Parse workflow
                 </Button>
 
                 @if (objParseError is not null)
                 {
-                    <div data-testid="comfy-parse-error" style="margin-top:10px">
+                    <div style="margin-top:10px">
                         <Alert Variant="AlertVariant.Danger" AccentBorder="true">
-                            <LucideIcon Name="circle-alert" Size="16" />
                             <AlertTitle>Invalid workflow JSON</AlertTitle>
                             <AlertDescription>@objParseError</AlertDescription>
                         </Alert>
@@ -64,44 +69,24 @@
                 }
                 else if (objParsed)
                 {
-                    <div data-testid="comfy-parse-ok" style="margin-top:10px">
-                        <Alert Variant="AlertVariant.Default">
+                    <div style="margin-top:10px">
+                        <Alert Variant="AlertVariant.Info" AccentBorder="true" data-testid="alert-info">
                             <AlertDescription>
                                 Parsed <b>@objNodes.Count nodes</b> · @objMapping.Count parameterizable
-                                input@(objMapping.Count == 1 ? "" : "s") detected.
+                                input@(objMapping.Count == 1 ? "" : "s") @(objFromStore ? "mapped" : "detected").
                             </AlertDescription>
                         </Alert>
                     </div>
                 }
             </Card>
 
-            @if (objParsed)
-            {
-                <Card Class="p-0" data-testid="comfy-nodes">
-                    <div style="padding:12px 16px 0"><h3 class="card-h3">Parsed nodes</h3></div>
-                    <div class="table-scroll">
-                        <DataTable TData="NodeRow" Data="@objNodes" ShowToolbar="false"
-                                   ShowPagination="@(objNodes.Count > 6)" InitialPageSize="6">
-                            <Columns>
-                                <DataTableColumn TData="NodeRow" TValue="string" Property="@(n => n.Id)" Header="id" Sortable />
-                                <DataTableColumn TData="NodeRow" TValue="string" Property="@(n => n.ClassType)" Header="class_type" Sortable Filterable />
-                                <DataTableColumn TData="NodeRow" TValue="string" Property="@(n => n.State)" Header="status">
-                                    <CellTemplate Context="objNode">
-                                        <Badge Variant="BadgeVariant.Outline" Class="@NodeToneClass(objNode.State)">@objNode.State</Badge>
-                                    </CellTemplate>
-                                </DataTableColumn>
-                            </Columns>
-                        </DataTable>
-                    </div>
-                </Card>
-            }
         </div>
 
         @* ---- CENTER: input -> registry param mapping ---- *@
-        <Card data-testid="comfy-mapping">
+        <Card Class="comfy-card" data-testid="card-input-registry-param-mapping">
             <div class="flex-between">
                 <h3 class="card-h3" style="margin:0">Input → registry param mapping</h3>
-                <Badge Variant="BadgeVariant.Outline" Class="badge-brand">@objMapping.Count inputs</Badge>
+                <Badge Variant="BadgeVariant.Outline" Class="badge-brand" data-testid="badge-4-inputs">@objMapping.Count input@(objMapping.Count == 1 ? "" : "s")</Badge>
             </div>
 
             @if (objMapping.Count == 0)
@@ -113,34 +98,33 @@
             else
             {
                 <div class="table-scroll" style="margin-top:10px">
-                    <table class="comfy-map-table">
+                    <table class="comfy-map-table" data-testid="table-1">
                         <thead>
                             <tr>
                                 <th>node input</th><th>param key</th><th>type</th><th>req</th><th>default</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var vRow in objMapping)
+                            @for (var vIndex = 0; vIndex < objMapping.Count; vIndex++)
                             {
+                                var vRow = objMapping[vIndex];
+                                var vBase = 2 + 3 * vIndex;
                                 <tr>
                                     <td>
                                         <span class="comfy-mono">@vRow.NodeInput</span>
                                         <div class="comfy-node-sub">@vRow.ClassType</div>
                                     </td>
-                                    <td><Input @bind-Value="vRow.ParamKey" Placeholder="key" /></td>
+                                    <td><Input @bind-Value="vRow.ParamKey" Placeholder="key" data-testid="@($"field-{vBase}")" /></td>
                                     <td>
-                                        <Select @bind-Value="vRow.Type" TValue="string">
-                                            <SelectTrigger><SelectValue Placeholder="type" /></SelectTrigger>
-                                            <SelectContent>
-                                                @foreach (var vType in objTypeOptions)
-                                                {
-                                                    <SelectItem Value="@vType" Text="@vType" TValue="string">@vType</SelectItem>
-                                                }
-                                            </SelectContent>
-                                        </Select>
+                                        <NativeSelect TValue="string" @bind-Value="vRow.Type" aria-label="Type" data-testid="@($"field-{vBase + 1}")">
+                                            @foreach (var vType in TypeOptionsFor(vRow.Type))
+                                            {
+                                                <option value="@vType">@vType</option>
+                                            }
+                                        </NativeSelect>
                                     </td>
-                                    <td><Switch @bind-Checked="vRow.Required" AriaLabel="Required" /></td>
-                                    <td><Input @bind-Value="vRow.Default" Placeholder="—" /></td>
+                                    <td><Switch @bind-Checked="vRow.Required" AriaLabel="Required" data-testid="@(vIndex == 0 ? "switch" : $"switch-{vIndex + 1}")" /></td>
+                                    <td><Input @bind-Value="vRow.Default" Placeholder="—" data-testid="@($"field-{vBase + 2}")" /></td>
                                 </tr>
                             }
                         </tbody>
@@ -151,20 +135,16 @@
 
         @* ---- RIGHT: run / debug ---- *@
         <div class="comfy-col">
-            <Card data-testid="comfy-run">
+            <Card Class="comfy-card" data-testid="card-run-debug">
                 <div class="flex-between">
                     <h3 class="card-h3" style="margin:0">Run / debug</h3>
-                    <Button OnClick="RunAsync" Disabled="@(!objParsed || objRunning)">
-                        <LucideIcon Name="play" Size="14" />
-                        Run
-                    </Button>
+                    <Button OnClick="RunAsync" Disabled="@(!objParsed || objRunning)" data-testid="btn-run">▶ Run</Button>
                 </div>
 
-                @if (!objComfyConfigured && !objHasRun)
+                @if (!objComfyConfigured)
                 {
                     <div style="margin-top:10px">
                         <Alert Variant="AlertVariant.Info">
-                            <LucideIcon Name="info" Size="16" />
                             <AlertTitle>ComfyUI not configured</AlertTitle>
                             <AlertDescription>
                                 No reachable ComfyUI host for this instance — configure one in Hardware
@@ -177,13 +157,25 @@
 
                 @if (objHasRun)
                 {
-                    <div class="comfy-preview" data-testid="comfy-preview">live WebSocket preview</div>
-                    <Progress Value="@objProgress" Class="h-2" />
+                    @if (objComfyConfigured)
+                    {
+                        <div class="comfy-preview">live WebSocket preview</div>
+                        <Progress Value="@objProgress" Class="h-2" data-testid="progress" />
+                    }
                     <div class="muted-sm" style="margin:8px 0">@objRunCaption</div>
+                    var vErrNamed = false;
                     @foreach (var vStat in objStatuses)
                     {
                         <div class="comfy-nstat">
-                            <span class="comfy-ic @NodeIcClass(vStat.State)">@NodeGlyph(vStat.State)</span>
+                            @if (vStat.State == "err" && !vErrNamed)
+                            {
+                                vErrNamed = true;
+                                <span class="comfy-ic @NodeIcClass(vStat.State)" data-testid="field-error">@NodeGlyph(vStat.State)</span>
+                            }
+                            else
+                            {
+                                <span class="comfy-ic @NodeIcClass(vStat.State)">@NodeGlyph(vStat.State)</span>
+                            }
                             <span>@vStat.Name</span>
                             @if (vStat.State == "err")
                             {
@@ -198,36 +190,36 @@
                 }
             </Card>
 
-            <Card data-testid="comfy-exact-json">
-                <h3 class="card-h3">Exact JSON sent</h3>
-                <div class="comfy-code">@objExactJson</div>
+            <Card Class="comfy-card" data-testid="card-exact-json-sent">
+                    <h3 class="card-h3">Exact JSON sent</h3>
+                    <div class="comfy-code">@objExactJson</div>
             </Card>
 
             @if (objMissingDep is not null)
             {
-                <div data-testid="comfy-missing-dep">
-                    <Alert Variant="AlertVariant.Warning" AccentBorder="true">
-                        <LucideIcon Name="package-x" Size="16" />
-                        <AlertTitle>Missing dependency</AlertTitle>
+                <div>
+                    <Alert Variant="AlertVariant.Warning" AccentBorder="true" data-testid="alert-warn">
                         <AlertDescription>
-                            Custom node <span class="comfy-mono">@objMissingDep</span> is not installed.
+                            <b>Missing dependency.</b> Custom node <span class="comfy-mono">@MissingPackFor(objMissingDep)</span>
+                            @if (MissingPackFor(objMissingDep) != objMissingDep)
+                            {
+                                <text>(@objMissingDep)</text>
+                            }
+                            is not installed.
                             <div style="margin-top:8px">
-                                <Button OnClick="InstallDependencyAsync" Disabled="@objInstalling">
-                                    <LucideIcon Name="download" Size="14" />
-                                    Install node
-                                </Button>
+                                <Button OnClick="InstallDependencyAsync" Disabled="@objInstalling" data-testid="btn-install-node">Install node</Button>
                             </div>
                         </AlertDescription>
                     </Alert>
                 </div>
             }
 
-            <Card data-testid="comfy-save">
+            <Card Class="comfy-card" data-testid="card-save-version">
                 <div class="flex-between">
                     <h3 class="card-h3" style="margin:0">Save / version</h3>
-                    @if (objKnownGood)
+                    @if (IsKnownGood)
                     {
-                        <Badge Variant="BadgeVariant.Outline" Class="badge-ok">known-good</Badge>
+                        <Badge Variant="BadgeVariant.Outline" Class="badge-ok" data-testid="badge-known-good">known-good</Badge>
                     }
                     else
                     {
@@ -235,20 +227,17 @@
                     }
                 </div>
                 <div class="flex-col" style="margin-top:8px">
-                    <Input @bind-Value="objModelName" Placeholder="Model name e.g. sdxl-portrait" />
+                    <Input @bind-Value="objModelName" Placeholder="Model name e.g. sdxl-portrait" data-testid="field-model-name-e-g-sdxl-port" />
                     <div class="flex-row">
-                        <Select @bind-Value="objVersion" TValue="string" Class="grow">
-                            <SelectTrigger><SelectValue Placeholder="version" /></SelectTrigger>
-                            <SelectContent>
-                                @foreach (var vVer in objVersionOptions)
-                                {
-                                    <SelectItem Value="@vVer" Text="@vVer" TValue="string">@vVer</SelectItem>
-                                }
-                            </SelectContent>
-                        </Select>
+                        <NativeSelect TValue="string" @bind-Value="objVersion" Class="grow" aria-label="Version" data-testid="field-15">
+                            @foreach (var vVer in objVersionOptions)
+                            {
+                                <option value="@vVer">@vVer</option>
+                            }
+                        </NativeSelect>
                         <Button OnClick="SaveAsModelAsync"
-                                Disabled="@(!objKnownGood || string.IsNullOrWhiteSpace(objModelName))"
-                                data-testid="comfy-save-btn">
+                                Disabled="@(!CanSave)"
+                                data-testid="btn-save-as-model">
                             Save as model
                         </Button>
                     </div>
@@ -256,7 +245,7 @@
                         <Label For="comfy-pin">Pin this version as known-good</Label>
                         <Switch @bind-Checked="objPinned" Id="comfy-pin" AriaLabel="Pin known-good" />
                     </div>
-                    @if (!objKnownGood)
+                    @if (!IsKnownGood || objMissingDep is not null)
                     {
                         <p class="muted-sm">Smoke-test must pass before saving — resolve any missing node first.</p>
                     }
@@ -264,10 +253,8 @@
             </Card>
         </div>
     </div>
-</div>
 
 @code {
-    private IReadOnlyList<FileUploadItem> objFiles = new List<FileUploadItem>();
     private string objWorkflowJson = string.Empty;
 
     private bool objParsed;
@@ -289,8 +276,24 @@
     private string objModelName = string.Empty;
     private string? objVersion = "v1";
 
+    // The stored workflow this page reopens (newest imported workflow of the signed-in admin), if any.
+    private string? objWorkflowName;
+    private bool objFromStore;
+    private List<(string Label, ComfyWorkflowVersion Version)> objVersions = new();
+
     private readonly string[] objTypeOptions = { "string", "int", "float", "bool", "file", "image", "audio", "mask", "enum" };
-    private readonly string[] objVersionOptions = { "v1", "v2", "v3 (current)" };
+
+    /// <summary>The type choices for a row: the standard list, plus the row's own type if it is not in it.</summary>
+    private IEnumerable<string> TypeOptionsFor(string aType) =>
+        objTypeOptions.Contains(aType) ? objTypeOptions : objTypeOptions.Prepend(aType);
+    private string[] objVersionOptions = { "v1" };
+
+    /// <summary>Known-good when the last debug found no missing dependency, or the selected stored version passed its sandbox smoke.</summary>
+    private bool IsKnownGood =>
+        objKnownGood
+        || objVersions.Any(aV => aV.Label == objVersion && string.Equals(aV.Version.SmokeStatus, "Passed", StringComparison.OrdinalIgnoreCase));
+
+    private bool CanSave => IsKnownGood && objMissingDep is null && !string.IsNullOrWhiteSpace(objModelName);
 
     private const string ComfyImportRoute = "/api/v1/admin/comfy/import";
     // FN-046 run-debug bundle (exact submitted /prompt JSON + per-node status + missing-dep
@@ -335,25 +338,119 @@
         }
 
         await AuthSession.EnsureLoadedAsync();
+        await LoadStoredWorkflowAsync();
         StateHasChanged();
     }
 
-    /// <summary>Reads the first dropped/selected file as text and parses it as a workflow.</summary>
-    /// <param name="aFiles">The files reported by the FileUpload control.</param>
-    private async Task OnFilesChangedAsync(IReadOnlyList<FileUploadItem> aFiles)
+    /// <summary>
+    /// Reopens the admin's newest imported workflow (FN-049 <c>GET /workflows</c> + its versions): the
+    /// newest version's graph fills the paste box and is parsed, its stored param mapping fills the
+    /// mapping table, and the dry debug bundle (no ComfyUI needed) fills the run/debug panel. With no
+    /// stored workflow the page stays on the paste sample.
+    /// </summary>
+    private async Task LoadStoredWorkflowAsync()
     {
-        objFiles = aFiles;
-        var vFirst = aFiles.FirstOrDefault();
-        if (vFirst?.File is null)
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vWorkflows = await vClient.GetFromJsonAsync<List<ComfyWorkflow>>($"{ApiRoutes.Comfy}/workflows");
+            var vWorkflow = vWorkflows?.OrderByDescending(aW => aW.UpdatedUtc).FirstOrDefault();
+            if (vWorkflow is null)
+            {
+                return;
+            }
+
+            var vVersions = await vClient.GetFromJsonAsync<List<ComfyWorkflowVersion>>(
+                $"{ApiRoutes.Comfy}/workflows/{vWorkflow.WorkflowId}/versions");
+            var vOrdered = (vVersions ?? new List<ComfyWorkflowVersion>()).OrderByDescending(aV => aV.VersionNumber).ToList();
+            if (vOrdered.Count == 0)
+            {
+                return;
+            }
+
+            objVersions = vOrdered
+                .Select((aV, aI) => (aI == 0 ? $"v{aV.VersionNumber} (current)" : $"v{aV.VersionNumber}", aV))
+                .ToList();
+            objVersionOptions = objVersions.Select(aV => aV.Label).ToArray();
+            objVersion = objVersionOptions[0];
+            objWorkflowName = vWorkflow.Name;
+
+            var vCurrent = vOrdered[0];
+            objWorkflowJson = vCurrent.GraphJson;
+            ParseWorkflow();
+            if (!objParsed)
+            {
+                return;
+            }
+
+            ApplyStoredMapping(vCurrent.MappedParamsJson);
+            await RunAsync(aAllowFallback: false);
+        }
+        catch
+        {
+            // Workflow store unreachable — stay on the paste sample.
+        }
+    }
+
+    /// <summary>
+    /// Replaces the detected inputs with the version's stored registry params. A stored param names its
+    /// source input by <see cref="ModelParamSpec.Label"/> (the input name, by default), matched to the first
+    /// unused parsed input of that name in graph order.
+    /// </summary>
+    private void ApplyStoredMapping(string aMappedParamsJson)
+    {
+        List<ModelParamSpec>? vSpecs;
+        try
+        {
+            vSpecs = JsonSerializer.Deserialize<List<ModelParamSpec>>(aMappedParamsJson, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        }
+        catch (JsonException)
         {
             return;
         }
 
+        if (vSpecs is null || vSpecs.Count == 0)
+        {
+            return;
+        }
+
+        var vDetected = objMapping;
+        var vUsed = new HashSet<MappingRow>();
+        var vRows = new List<MappingRow>();
+        foreach (var vSpec in vSpecs)
+        {
+            var vSource = vDetected.FirstOrDefault(aRow => !vUsed.Contains(aRow)
+                && string.Equals(aRow.ParamKey, vSpec.Label ?? vSpec.Key, StringComparison.Ordinal));
+            if (vSource is not null)
+            {
+                vUsed.Add(vSource);
+            }
+
+            vRows.Add(new MappingRow
+            {
+                NodeInput = vSource?.NodeInput ?? (vSpec.Label ?? vSpec.Key),
+                ClassType = vSource?.ClassType ?? string.Empty,
+                ParamKey = vSpec.Key,
+                Type = vSpec.Type,
+                Required = vSpec.Required,
+                Default = string.IsNullOrEmpty(vSpec.DefaultValue) ? null : vSpec.DefaultValue
+            });
+        }
+
+        objMapping = vRows;
+        objFromStore = true;
+    }
+
+    /// <summary>Reads the dropped/selected workflow file as text and parses it as a workflow.</summary>
+    /// <param name="aArgs">The file chosen in (or dropped on) the drop zone.</param>
+    private async Task OnFileChosenAsync(InputFileChangeEventArgs aArgs)
+    {
         try
         {
-            await using var vStream = vFirst.File.OpenReadStream(8 * 1024 * 1024);
+            await using var vStream = aArgs.File.OpenReadStream(8 * 1024 * 1024);
             using var vReader = new StreamReader(vStream);
             objWorkflowJson = await vReader.ReadToEndAsync();
+            objWorkflowName = aArgs.File.Name;
         }
         catch (Exception aEx)
         {
@@ -373,6 +470,7 @@
     private void ParseWorkflow()
     {
         objParsed = false;
+        objFromStore = false;
         objHasRun = false;
         objKnownGood = false;
         objMissingDep = null;
@@ -463,7 +561,10 @@
     /// ComfyUI (reported via <see cref="ComfyDebugData.Degraded"/>). When the endpoint is unreachable it
     /// falls back to a representative per-node progression so the debug surface is always demonstrable.
     /// </summary>
-    private async Task RunAsync()
+    private async Task RunAsync() => await RunAsync(aAllowFallback: true);
+
+    /// <param name="aAllowFallback">Whether an unreachable endpoint falls back to the local progression (never on page load).</param>
+    private async Task RunAsync(bool aAllowFallback)
     {
         objRunning = true;
         objHasRun = true;
@@ -493,7 +594,15 @@
             // Debug endpoint unreachable — fall back to the representative progression below.
         }
 
-        ApplyLocalProgression();
+        if (aAllowFallback)
+        {
+            ApplyLocalProgression();
+        }
+        else
+        {
+            objHasRun = false;
+        }
+
         objRunning = false;
     }
 
@@ -502,12 +611,17 @@
     {
         objComfyConfigured = !aDebug.Degraded;
 
+        var vMissingClasses = aDebug.Dependencies.MissingCustomNodes.Select(aDep => aDep.Name).ToHashSet(StringComparer.Ordinal);
         var vStatuses = new List<NodeStatus>();
         foreach (var vNode in aDebug.NodeStatuses)
         {
-            var vState = MapDebugState(vNode.Status);
             var vName = string.IsNullOrWhiteSpace(vNode.ClassType) ? vNode.NodeId : vNode.ClassType;
-            vStatuses.Add(new NodeStatus(vName, vState, vNode.Error ?? vNode.Status));
+            var vIsMissing = vMissingClasses.Contains(vNode.ClassType ?? string.Empty);
+            var vState = vIsMissing ? "err" : MapDebugState(vNode.Status);
+            var vDetail = vIsMissing
+                ? "missing node"
+                : vNode.Error ?? (string.Equals(vNode.Status, "pending", StringComparison.OrdinalIgnoreCase) ? "queued" : vNode.Status);
+            vStatuses.Add(new NodeStatus(vName, vState, vDetail));
 
             var vParsed = objNodes.FirstOrDefault(aRow => aRow.Id == vNode.NodeId);
             if (vParsed is not null)
@@ -526,7 +640,9 @@
         {
             var vOk = objStatuses.Count(aStat => aStat.State == "ok");
             objProgress = objNodes.Count == 0 ? 0 : Math.Round(100.0 * vOk / objNodes.Count);
-            objRunCaption = aDebug.Message ?? $"Stopped at {vMissing.Name} — {vMissing.InstallHint}";
+            objRunCaption = aDebug.Degraded
+                ? $"Dry run: {objNodes.Count} nodes queued · {vMissing.Name} is not installed."
+                : aDebug.Message ?? $"Stopped at {vMissing.Name} — {vMissing.InstallHint}";
         }
         else
         {
@@ -563,7 +679,7 @@
         objProgress = vMissing is null ? 100 : Math.Round(100.0 * vDone / vTotal);
         if (vMissing is not null)
         {
-            objMissingDep = MissingPackFor(vMissing.ClassType);
+            objMissingDep = vMissing.ClassType;
             objRunCaption = $"Stopped at {vMissing.ClassType} — missing custom node.";
             objKnownGood = false;
         }
@@ -626,30 +742,49 @@
     /// <summary>Persists the known-good graph as a registry model (best-effort POST) and confirms via toast.</summary>
     private async Task SaveAsModelAsync()
     {
-        if (!objKnownGood || string.IsNullOrWhiteSpace(objModelName))
+        if (!CanSave)
         {
             return;
         }
 
         var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+        // FN-048: the body the save-as-model route reads (ComfySaveAsModelRequest). Found 15 Nov 2026: the
+        // page posted its own field names and showed "saved" whatever came back.
+        var vModelId = System.Text.RegularExpressions.Regex.Replace(objModelName.Trim().ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
+        var vRequest = new ComfySaveAsModelRequest
+        {
+            ModelId = vModelId,
+            DisplayName = objModelName.Trim(),
+            WorkflowName = objModelName.Trim(),
+            WorkflowJson = objWorkflowJson,
+            Mappings = objMapping.Select(aRow => new ComfyParamMapping
+            {
+                ParamKey = aRow.NodeInput,
+                Key = aRow.ParamKey,
+                Type = aRow.Type,
+                Required = aRow.Required,
+                DefaultValue = aRow.Default
+            }).ToList()
+        };
+
         try
         {
-            await vClient.PostAsJsonAsync(ComfySaveRoute, new
+            using var vResponse = await vClient.PostAsJsonAsync(ComfySaveRoute, vRequest);
+            if (!vResponse.IsSuccessStatusCode)
             {
-                Name = objModelName,
-                Version = objVersion,
-                Pinned = objPinned,
-                Workflow = objWorkflowJson,
-                Mapping = objMapping.Select(aRow => new { aRow.NodeInput, aRow.ParamKey, aRow.Type, aRow.Required, aRow.Default })
-            });
+                var vBody = await vResponse.Content.ReadAsStringAsync();
+                ToastService.Error(string.IsNullOrWhiteSpace(vBody) ? $"The model was not saved (HTTP {(int)vResponse.StatusCode})." : vBody, "Not saved");
+                return;
+            }
         }
-        catch
+        catch (HttpRequestException vException)
         {
-            // Endpoint not yet built — the toast still confirms the intent for the visual round-trip.
+            ToastService.Error(vException.Message, "Not saved");
+            return;
         }
 
         ToastService.Success(
-            $"Saved \"{objModelName}\" {objVersion}{(objPinned ? " · pinned known-good" : "")}.",
+            $"Saved \"{objModelName}\" as {vModelId}{(objPinned ? " · pin it as known-good from its version list" : "")}.",
             "Registry model saved");
     }
 
@@ -685,8 +820,8 @@
 
     private static string MissingPackFor(string aClassType) => aClassType switch
     {
-        "FaceDetailer" or "UltralyticsDetectorProvider" => "ComfyUI-Impact-Pack",
-        _ => $"custom node ({aClassType})"
+        "FaceDetailer" or "UltralyticsDetectorProvider" or "SAMLoader" => "ComfyUI-Impact-Pack",
+        _ => aClassType
     };
 
     private static string NodeToneClass(string aState) => aState switch

@@ -27,7 +27,7 @@ namespace TrStudio.Engine.Domain.PromptChat;
 /// </summary>
 /// <remarks>
 /// <para>Vision (BRD-90): an attached image on a non-vision row is rejected with a clear message before
-/// any LLM call. TechieRag 1.0.5 has no multimodal/image seam (see the TechieRag feedback file,
+/// any LLM call. TechieRag 1.0.5 had no multimodal/image seam (1.1.5 adds ChatMessage.UserWithImages; this path still posts directly) (see the TechieRag feedback file,
 /// <c>TR-RAG-001</c>), so a vision-capable OpenAI-compatible endpoint is driven best-effort over a plain
 /// <see cref="HttpClient"/> (an <c>image_url</c> data-URI); any other family degrades cleanly.</para>
 /// <para>Graceful degrade mirrors <see cref="TextGenerationService"/>: when the row has no
@@ -125,7 +125,7 @@ public class PromptChatService : IPromptChatService
 
         try
         {
-            // 5. Vision transmission (best-effort — TechieRag 1.0.5 has no image seam, TR-RAG-001).
+            // 5. Vision transmission (best-effort — TechieRag 1.0.5 had no image seam; kept on 1.1.5, TR-RAG-001).
             if (vHasImage)
             {
                 var vVision = await CompleteVisionAsync(aRequest, vModel, vEndpoint!, vKey!, vModelName!, aUserId, aCancellationToken).ConfigureAwait(false);
@@ -219,7 +219,7 @@ public class PromptChatService : IPromptChatService
     /// <summary>
     /// Best-effort multimodal completion for a vision-capable OpenAI-compatible endpoint: POSTs an
     /// <c>image_url</c> data-URI chat-completion over a plain HttpClient. Returns null when the picked
-    /// family exposes no reachable multimodal endpoint (TechieRag 1.0.5 has no image seam — TR-RAG-001),
+    /// family exposes no reachable multimodal endpoint (TechieRag 1.0.5 had no image seam; kept on 1.1.5 — TR-RAG-001),
     /// letting the caller degrade cleanly. Transport failures throw and are caught by the caller.
     /// </summary>
     private async Task<PromptChatCompletionResult?> CompleteVisionAsync(

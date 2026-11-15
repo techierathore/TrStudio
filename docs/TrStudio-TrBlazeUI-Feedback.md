@@ -4,13 +4,13 @@
 |---|---|
 | App | TrStudio |
 | Upstream | TrBlazeUI |
-| Updated | 2026-11-14 |
+| Updated | 2026-11-15 |
 
 ## Summary
 
-14 entries: 1 blocking now (TR-014), 3 open, 0 fixed upstream and not yet re-checked, 11 closed (TR-001 to TR-011).
+14 entries: 0 blocking now, 0 open, 14 closed (TR-001 to TR-014).
 
-A `Select` inside a `Sheet` shows no options (TR-014), which blocks adding a model row on Registry & providers. The library team fixed TR-001 to TR-011 in TrBlazeUI 1.0.9 on 2026-07-12; TR-001 to TR-010 were closed on that evidence. TR-011 (the Mac Catalyst desktop head could not build) was re-checked and closed on 2026-11-14. TR-012 (a `Select` disposal error in the logs) and TR-013 (icon names in the reference that the package lacks) are open and minor.
+Nothing is blocked. On 15 Nov 2026 TrStudio moved from 1.0.9 to TrBlazeUI 2.2.5 (nuget.org, the only source this Mac's settings list), and the three open entries were checked again on it: a list inside the Add model panel now opens and can be picked (TR-014), the old icon names are accepted (TR-013), and a page with a list closes without a disposal error (TR-012). All three are closed with the proof under each entry.
 
 ## Entries
 
@@ -227,6 +227,8 @@ Fixed upstream (2026-07-12, TrBlazeUI 1.0.9), not yet re-checked in TrStudio.
 
 ### TR-012 — `SelectContent.DisposeAsync` does JS interop without catching `JSDisconnectedException`
 
+Closed 2026-11-15: fixed by TrBlazeUI 2.2.5 (the 2.1.1 and "after 2.2.4" dispose fixes in its version table). Proof: on the test host, three pages holding a `Select` (Image studio, Video studio, Registry & providers, one with its list open) were dropped mid-session and the server's three-minute clean-up passed; the host log (`tests/.artifacts/verify/app-5099.log`) has no `JSDisconnectedException`, no "Exceptions were encountered while disposing components" and no unhandled render error.
+
 - **Severity:** minor (log noise + AggregateException on circuit teardown; no user-visible break on its own)
 - **Blocks:** no — the renderer logs the error and continues, and the work carried on
 - **Repro:** any page containing a `Select` on a Blazor Server circuit that disconnects/navigates away (e.g. a layout redirect); observed at TrBlazeUI 1.0.9 during TrStudio's 2026-07-12 fix-issues run.
@@ -237,6 +239,8 @@ Fixed upstream (2026-07-12, TrBlazeUI 1.0.9), not yet re-checked in TrStudio.
 - **Suggested fix:** wrap the JS `DisposeAsync` calls in `try { … } catch (JSDisconnectedException) { }` in `SelectContent` (and audit the other JS-interop-owning primitives for the same pattern).
 
 ### TR-013 — The reference shows icon names the Lucide package does not contain (`alert-circle`)
+
+Closed 2026-11-15: fixed by TrBlazeUI.Icons.Lucide 2.2.5, which accepts all 212 pre-rename Lucide names as aliases (its README, "Old and alternate names"). Proof: `LucideIconData.IconExists` returns true for `alert-circle`, `alert-triangle` and `check-circle` on 2.2.5 (a small console program referencing only that package).
 
 - **Severity:** minor
 - **Blocks:** no — TrStudio now uses the package's names (`circle-alert`, `triangle-alert`, `circle-check`) and the work carried on
@@ -249,8 +253,10 @@ Fixed upstream (2026-07-12, TrBlazeUI 1.0.9), not yet re-checked in TrStudio.
 
 ### TR-014 — A `Select` inside a `Sheet` opens with no options
 
+Closed 2026-11-15: fixed by TrBlazeUI 2.2.5. Proof: on the test host, opening Add model on Registry & providers and pressing the Provider list shows all eight options over the panel (`tests/.artifacts/verify/tr014-select-in-sheet-2.2.5.png`), and the ten phase 2 Venice browser checks that start in that panel pass (`tests/verify/p2-venice.spec.ts`, 10 passed). No work-round was needed in TrStudio.
+
 - **Severity:** major
-- **Blocks:** yes — adding or editing a model row on Registry & providers (the Provider, Task and Tier lists sit in the Add model sheet), so the phase 2 Venice rows that need a Venice row cannot be checked
+- **Blocks:** no (closed; it blocked until 2026-11-15) — adding or editing a model row on Registry & providers (the Provider, Task and Tier lists sit in the Add model sheet), so the phase 2 Venice rows that need a Venice row cannot be checked
 - **Repro:** TrBlazeUI 1.0.9, Blazor Server: a page with `<Sheet><SheetContent>…<Select TValue="string"><SelectTrigger/><SelectContent><SelectItem …/></SelectContent></Select>…</SheetContent></Sheet>` and one `<PortalHost />` in the layout; open the sheet, click the trigger
 - **Expected:** the list of items shows over the sheet and an item can be picked
 - **Actual:** the trigger reports `aria-expanded="true"` but no `listbox` and no `option` element is rendered anywhere in the page; no error is logged. `Select`s on ordinary pages work

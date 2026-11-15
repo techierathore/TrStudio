@@ -27,7 +27,7 @@ async function standIn(request: APIRequestContext) {
 
 async function signIn(page: Page, rememberMe: boolean) {
   await page.goto('/login');
-  await expect(page.getByTestId('login-card')).toBeVisible({ timeout: 30000 });
+  await expect(page.getByTestId('card-1')).toBeVisible({ timeout: 30000 });
   await settle(page);
   await typeInto(page, '#email', 'owner@studio.example');
   await typeInto(page, '#pwd', 'test-only-password');
@@ -50,7 +50,7 @@ async function openAgain(browser: Browser) {
 }
 
 async function stillAsksForSignIn(page: Page) {
-  await expect(page.getByTestId('login-card')).toBeVisible({ timeout: 30000 });
+  await expect(page.getByTestId('card-1')).toBeVisible({ timeout: 30000 });
   await settle(page);
   await page.waitForTimeout(1500);
   expect(new URL(page.url()).pathname).toBe('/login');

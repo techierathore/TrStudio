@@ -1,20 +1,24 @@
 @page "/voice"
 @using TrBlazeUI.Components.FileUpload
+@using TrBlazeUI.Components.NativeSelect
+@using System.Text.Json
+@implements IDisposable
 @inject IHttpClientFactory HttpClientFactory
 @inject ToastService ToastService
 @inject IAuthSession AuthSession
 
 @*
-    Voice Studio (REQ-UI-030). Narration composer over the Phase-4 voice endpoints (synthesize /
-    preset-voice list / consent-gated clone). Language (EN/HI/Hinglish) + a single preset-voice
-    Combobox hide provider routing behind one control; the emotion Select and speed Slider disable
-    themselves when the selected voice doesn't support them; the waveform player renders a placeholder
-    that becomes "playable" after a Generate run (or a clean "voice model not installed" Alert when the
-    selected voice has no local model). Cloning opens a Dialog whose FileUpload takes a sample; a
-    real-person clone must clear the consent AlertDialog gate (SAFE-02/03) before it can proceed, while
-    a synthetic/character voice skips the gate. The preset list is live-only from
-    /api/v1/voice/preset-voices — no representative seed; an empty catalog renders the honest
-    "no voices installed" state and an unreachable API raises a warning Alert.
+    Voice Studio (REQ-UI-030). Narration composer over the voice endpoints (synthesize / preset-voice
+    list / clone list / consent-gated clone). Language (EN/HI/Hinglish) + one voice picker hide provider
+    routing behind a single control; the picker lists every preset voice (play a short sample of any
+    voice) and the creator's own clones, which stay gated until their model is ready. The emotion select
+    and speed slider disable themselves when the selected voice doesn't support them. The player reopens
+    the creator's newest narration (its voice, language, emotion, speed and text go back on the
+    controls) and plays it over the clip's real length; Export WAV hands over the clip's own bytes.
+    Cloning is inline: a real-person clone stays blocked until the creator confirms recorded consent
+    from the voice owner (SAFE-02/03), while a synthetic/character voice skips the gate. Everything is
+    live from the API — no representative seed; an empty catalog renders the honest "no voices
+    installed" state and an unreachable API raises a warning Alert.
 *@
 
 <PageTitle>TrStudio — Voice Studio</PageTitle>
@@ -37,22 +41,17 @@
 
     @* ---- LEFT: script + voice picker + controls ---- *@
     <div class="studio-col">
-        <Card>
+        <Card Class="voice-card" data-testid="card-script-text">
             <h3 class="card-h3">Script text</h3>
-            <div class="voice-row" style="margin-bottom:12px">
+            <div class="voice-row" style="margin-bottom:10px">
                 <div>
                     <label class="param-label">Language</label>
-                    <div data-testid="voice-language">
-                        <Select @bind-Value="objLanguage" TValue="string" Class="w-full">
-                            <SelectTrigger><SelectValue Placeholder="Language" /></SelectTrigger>
-                            <SelectContent>
-                                @foreach (var vLang in objLanguages)
-                                {
-                                    <SelectItem Value="@vLang.Key" Text="@vLang.Value" TValue="string">@vLang.Value</SelectItem>
-                                }
-                            </SelectContent>
-                        </Select>
-                    </div>
+                    <NativeSelect TValue="string" @bind-Value="objLanguage" Class="w-full" aria-label="Language" data-testid="field-1">
+                        @foreach (var vLang in objLanguages)
+                        {
+                            <option value="@vLang.Key">@vLang.Value</option>
+                        }
+                    </NativeSelect>
                 </div>
                 <div>
                     <label class="param-label">
@@ -62,26 +61,21 @@
                             <span class="muted-sm" style="font-weight:400"> (unsupported)</span>
                         }
                     </label>
-                    <div data-testid="voice-emotion">
-                        <Select @bind-Value="objEmotion" TValue="string" Disabled="@(!EmotionSupported)" Class="w-full">
-                            <SelectTrigger><SelectValue Placeholder="Emotion" /></SelectTrigger>
-                            <SelectContent>
-                                @foreach (var vEmotion in objEmotions)
-                                {
-                                    <SelectItem Value="@vEmotion" Text="@vEmotion" TValue="string">@vEmotion</SelectItem>
-                                }
-                            </SelectContent>
-                        </Select>
-                    </div>
+                    <NativeSelect TValue="string" @bind-Value="objEmotion" Disabled="@(!EmotionSupported)" Class="w-full" aria-label="Emotion / style" data-testid="field-2">
+                        @foreach (var vEmotion in EmotionOptions)
+                        {
+                            <option value="@vEmotion">@vEmotion</option>
+                        }
+                    </NativeSelect>
                 </div>
             </div>
 
             <label class="param-label">Text to speak</label>
-            <Textarea @bind-Value="objScript" Placeholder="Type the narration to synthesize…" MaxLength="5000" data-testid="voice-script" />
+            <Textarea @bind-Value="objScript" Placeholder="Type the narration to synthesize…" MaxLength="5000" Rows="5" data-testid="field-3" />
 
             <div class="flex-between" style="margin-top:8px">
                 <span class="muted-sm">@objScript.Length / 5000 characters</span>
-                <Button OnClick="GenerateAsync" Disabled="@objGenerating" data-testid="voice-generate">
+                <Button OnClick="GenerateAsync" Disabled="@(objGenerating || objPreviewing)" data-testid="btn-generate-voice">
                     @if (objGenerating)
                     {
                         <Spinner Size="SpinnerSize.Small" Class="mr-2" />
@@ -100,7 +94,7 @@
             }
         </Card>
 
-        <Card>
+        <Card Class="voice-card" data-testid="card-voice-picker">
             <h3 class="card-h3">Voice picker</h3>
             @if (objVoicesLoaded && objVoices.Count == 0)
             {
@@ -112,41 +106,67 @@
             }
             else
             {
-            <label class="param-label">Preset voice</label>
-            <div data-testid="voice-combobox">
-                <Combobox TItem="PresetVoice"
-                          Items="objVoices"
-                          Value="@objSelectedVoiceId"
-                          ValueChanged="OnVoiceChangedAsync"
-                          ValueSelector="@(aVoice => aVoice.Id)"
-                          DisplaySelector="@(aVoice => $"{aVoice.Name} · {aVoice.Engine} · {aVoice.Style}")"
-                          Placeholder="Select a voice…"
-                          SearchPlaceholder="Search voices…"
-                          EmptyMessage="No voices found."
-                          MatchTriggerWidth="true" />
-            </div>
-            @if (SelectedVoice is not null)
-            {
-                <div class="voice-picked" data-testid="voice-selected">
-                    <span class="voice-av @SelectedVoice.AvatarClass">@SelectedVoice.Initial</span>
-                    <div style="flex:1;min-width:0">
-                        <strong>@SelectedVoice.Name</strong>
-                        <div class="muted-sm">@SelectedVoice.Engine · @SelectedVoice.Style</div>
-                    </div>
-                    @if (SelectedVoice.ModelInstalled)
+                <label class="param-label">Selected voice</label>
+                <div class="voice-combo" data-testid="voice-combobox">
+                    <Combobox TItem="VoiceRow"
+                              Items="objVoices"
+                              Value="@objSelectedVoiceId"
+                              ValueChanged="OnVoiceChangedAsync"
+                              ValueSelector="@(aVoice => aVoice.Id)"
+                              DisplaySelector="@(aVoice => $"{aVoice.Name} · {aVoice.Engine} · {aVoice.Tone}")"
+                              Placeholder="Select a voice…"
+                              SearchPlaceholder="Search voices…"
+                              EmptyMessage="No voices found."
+                              MatchTriggerWidth="true" />
+                </div>
+                <div class="voicelist" data-testid="voice-list">
+                    @{ var vSampleNo = 0; }
+                    @for (var vIndex = 0; vIndex < objVoices.Count; vIndex++)
                     {
-                        <Badge Variant="BadgeVariant.Outline">ready</Badge>
+                        var vVoice = objVoices[vIndex];
+                        var vSelected = vVoice.Id == objSelectedVoiceId;
+                        <div class="voiceitem @(vSelected ? "sel" : "")" @key="vVoice.Id" role="button" tabindex="0"
+                             aria-pressed="@(vSelected ? "true" : "false")" @onclick="() => OnVoiceChangedAsync(vVoice.Id)">
+                            <span class="voice-av @AvatarClassAt(vIndex)">@vVoice.Initial</span>
+                            <div style="flex:1;min-width:0">
+                                <strong>@vVoice.Name</strong>
+                                <div class="muted-sm">@vVoice.Engine · @vVoice.Gender@(string.IsNullOrWhiteSpace(vVoice.Tone) ? "" : $" · {vVoice.Tone}")</div>
+                            </div>
+                            @if (vSelected)
+                            {
+                                <Badge Class="badge-brand" data-testid="badge-selected">selected</Badge>
+                            }
+                            else
+                            {
+                                vSampleNo++;
+                                <span @onclick:stopPropagation="true">
+                                    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" AriaLabel="Play sample"
+                                            Disabled="@(objPreviewing || objGenerating)" OnClick="() => PreviewAsync(vVoice)"
+                                            data-testid="@(vSampleNo == 1 ? "icon-btn-play-sample" : $"icon-btn-play-sample-{vSampleNo}")">
+                                        <LucideIcon Name="play" Size="13" />
+                                    </Button>
+                                </span>
+                            }
+                        </div>
                     }
-                    else
+                    @for (var vIndex = 0; vIndex < objClones.Count; vIndex++)
                     {
-                        <Badge Variant="BadgeVariant.Secondary">no model</Badge>
+                        var vClone = objClones[vIndex];
+                        <div class="voiceitem is-gated" @key="vClone.CloneId">
+                            <span class="voice-av voice-av-x">+</span>
+                            <div style="flex:1;min-width:0">
+                                <strong>@vClone.VoiceName</strong>
+                                <div class="muted-sm">Custom (@EngineName(vClone.RoutedModel)) · @CloneStatusText(vClone.Status)</div>
+                            </div>
+                            <Badge Class="badge-warn" title="This clone can't be used until its voice model is ready."
+                                   data-testid="@(vIndex == 0 ? "badge-gated" : $"badge-gated-{vIndex + 1}")">gated</Badge>
+                        </div>
                     }
                 </div>
             }
-            }
         </Card>
 
-        <Card>
+        <Card Class="voice-card" data-testid="card-controls">
             <h3 class="card-h3">Controls</h3>
             <div class="param-field">
                 <div class="param-head">
@@ -171,130 +191,79 @@
         </Card>
     </div>
 
-    @* ---- RIGHT: player + clone ---- *@
+    @* ---- RIGHT: player + preview + clone ---- *@
     <div class="studio-col">
-        <Card>
-            <h3 class="card-h3">Player@(SelectedVoice is null ? "" : $" · {SelectedVoice.Name}")</h3>
-
-            @if (SelectedVoice is { ModelInstalled: false })
-            {
-                <div data-testid="voice-model-missing">
-                    <Alert Variant="AlertVariant.Warning" AccentBorder="true">
-                        <AlertTitle>Voice model not installed</AlertTitle>
-                        <AlertDescription>
-                            The model for “@SelectedVoice.Name” isn't installed on this host yet. Install it from the
-                            model library, or pick another voice to generate narration.
-                        </AlertDescription>
-                    </Alert>
-                </div>
-            }
-            else
-            {
-                <div class="voice-wave @(objHasAudio ? "" : "is-idle")" data-testid="voice-waveform">
-                    @for (var vBar = 0; vBar < objWaveHeights.Length; vBar++)
-                    {
-                        var vPlayed = objHasAudio && vBar <= objPlayHead;
-                        <span class="@(vPlayed ? "is-played" : "")" style="height:@(objWaveHeights[vBar])%"></span>
-                    }
-                </div>
-                <Progress Value="@(objHasAudio ? objPlayPercent : 0)" Class="mb-3" />
-                <div class="flex-between">
-                    <div class="flex-row" style="gap:10px;align-items:center">
-                        <Button OnClick="TogglePlay" Disabled="@(!objHasAudio)" data-testid="voice-play">
-                            <LucideIcon Name="@(objPlaying ? "pause" : "play")" Size="14" />
-                            <span>@(objPlaying ? "Pause" : "Play")</span>
-                        </Button>
-                        <span class="muted-sm">@(objHasAudio ? "Clip ready" : "No clip yet")</span>
-                    </div>
-                    <Button Variant="ButtonVariant.Outline" OnClick="ExportAsync" Disabled="@(!objHasAudio)" data-testid="voice-export">
-                        <LucideIcon Name="download" Size="14" />
-                        <span>Export WAV</span>
+        <Card Class="voice-card" data-testid="card-player-aanya-hindi">
+            <h3 class="card-h3">Player@(objClip is null ? "" : $" · {objClip.VoiceName}")</h3>
+            <div class="voice-wave @(objClip is null ? "is-idle" : "")" data-testid="voice-waveform">
+                @for (var vBar = 0; vBar < objWaveHeights.Length; vBar++)
+                {
+                    var vPlayed = objClip is not null && vBar < PlayedBars;
+                    <span class="@(vPlayed ? "is-played" : "")" style="height:@(objWaveHeights[vBar])%"></span>
+                }
+            </div>
+            <Progress Value="@PlayPercent" Class="voice-prog mb-3" data-testid="progress" />
+            <div class="flex-between" style="gap:10px;flex-wrap:wrap">
+                <div class="flex-row" style="gap:10px;align-items:center">
+                    <Button OnClick="TogglePlay" Disabled="@(objClip is null)" data-testid="btn-pause">
+                        <LucideIcon Name="@(objPlaying ? "pause" : "play")" Size="13" />
+                        <span>@(objPlaying ? "Pause" : "Play")</span>
                     </Button>
+                    <span class="muted-sm">@(objClip is null ? "No clip yet" : $"{Clock(objPosition)} / {Clock(objClip.DurationSeconds)}")</span>
                 </div>
-            }
+                <Button Variant="ButtonVariant.Outline" Href="@objClip?.DataUrl" Disabled="@(objClip?.DataUrl is null)"
+                        download="@(objClip is null ? null : $"narration-{objClip.AssetId:N}.wav")" data-testid="btn-export-wav">
+                    <LucideIcon Name="download" Size="14" />
+                    <span>Export WAV</span>
+                </Button>
+            </div>
         </Card>
 
-        <Card>
+        @if (objPreviewing && objPreviewVoice is not null)
+        {
+            <Card Class="voice-card" data-testid="card-generating-preview">
+                <h3 class="card-h3">Generating preview</h3>
+                <div class="muted-sm" style="margin-bottom:6px">Synthesizing “@objPreviewVoice.Name” sample…</div>
+                <Progress Value="@objPreviewProgress" Class="voice-prog" data-testid="progress-2" />
+            </Card>
+        }
+
+        <Card Class="voice-card" data-testid="card-clone-a-voice">
             <h3 class="card-h3">Clone a voice</h3>
-            <p class="muted-sm" style="margin:0 0 12px">
-                Build a custom voice from a 30-second sample. Real-person voices require recorded consent
-                before they can be used.
-            </p>
-            <Dialog @bind-Open="objCloneOpen">
-                <DialogTrigger AsChild>
-                    <Button Variant="ButtonVariant.Outline" data-testid="voice-clone-open">
-                        <LucideIcon Name="user-plus" Size="14" />
-                        <span>Clone a voice</span>
-                    </Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Clone a voice</DialogTitle>
-                        <DialogDescription>Upload a clean voice sample, then confirm the consent basis for this voice.</DialogDescription>
-                    </DialogHeader>
+            <Alert Variant="AlertVariant.Warning" AccentBorder="true" Class="mb-3" data-testid="alert-warn">
+                <AlertDescription>
+                    <strong>Consent required.</strong> A real person's voice can be cloned only with recorded consent
+                    from the voice owner (SAFE-02 / SAFE-03). Upload a voice sample, then confirm the consent below.
+                </AlertDescription>
+            </Alert>
 
-                    <div style="padding:8px 0" data-testid="voice-clone-body">
-                        <div style="margin-bottom:12px">
-                            <Alert Variant="AlertVariant.Warning" AccentBorder="true">
-                                <AlertTitle>Consent required for real people</AlertTitle>
-                                <AlertDescription>
-                                    A clone of a real person's voice needs recorded consent from the voice owner
-                                    (SAFE-02 / SAFE-03). Synthetic character voices skip this gate.
-                                </AlertDescription>
-                            </Alert>
-                        </div>
+            <label class="param-label">Voice sample (30s+)</label>
+            <div data-testid="voice-clone-upload">
+                <FileUpload Accept="audio/*" FilesChanged="OnSampleSelected" />
+            </div>
+            @if (!string.IsNullOrEmpty(objSampleName))
+            {
+                <p class="muted-sm" style="margin-top:6px">Attached: @objSampleName</p>
+            }
 
-                        <label class="param-label">Voice sample (30s+)</label>
-                        <div data-testid="voice-clone-upload">
-                            <FileUpload Accept="audio/*" FilesChanged="OnSampleSelected" />
-                        </div>
-                        @if (!string.IsNullOrEmpty(objSampleName))
-                        {
-                            <p class="muted-sm" style="margin-top:6px">Attached: @objSampleName</p>
-                        }
+            <label class="voice-consent-check">
+                <Checkbox Checked="objCloneSynthetic" CheckedChanged="OnSyntheticChanged" Id="clone-synthetic" data-testid="field-4" />
+                <span>This is a synthetic / character voice (no real person)</span>
+            </label>
+            <label class="voice-consent-check @(CanConfirmConsent ? "" : "is-disabled")" style="margin-bottom:12px">
+                <Checkbox @bind-Checked="objConsentConfirmed" Disabled="@(!CanConfirmConsent)" Id="clone-consent" data-testid="field-this-is-a-synthetic-char" />
+                <span>I have attached recorded consent from the voice owner</span>
+            </label>
 
-                        <label class="voice-consent-check" data-testid="voice-clone-synthetic">
-                            <Checkbox @bind-Checked="objCloneSynthetic" Id="clone-synthetic" />
-                            <span>This is a synthetic / character voice (no real person)</span>
-                        </label>
-                    </div>
-
-                    <DialogFooter>
-                        <DialogClose AsChild>
-                            <Button Variant="ButtonVariant.Outline">Cancel</Button>
-                        </DialogClose>
-                        <Button OnClick="OnCreateCloneClickedAsync" data-testid="voice-clone-create">
-                            <LucideIcon Name="wand-sparkles" Size="14" />
-                            <span>Create clone</span>
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <Button Class="w-full" OnClick="CreateCloneAsync" Disabled="@(!CanCreateClone || objCloning)" data-testid="btn-create-clone-blocked-until-c">
+                @CreateCloneLabel
+            </Button>
         </Card>
     </div>
 </div>
 
-@* ---- Consent gate for real-person clones (SAFE-02/03) — controlled, opens above the clone Dialog ---- *@
-<AlertDialog @bind-Open="objConsentOpen">
-    <AlertDialogContent>
-        <AlertDialogHeader>
-            <AlertDialogTitle>Confirm recorded consent</AlertDialogTitle>
-            <AlertDialogDescription>
-                Cloning a real person's voice is blocked until recorded consent from the voice owner is on file.
-                Confirm that you have attached and verified recorded consent before this voice is created.
-            </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction AsChild>
-                <Button OnClick="ConfirmConsentAsync" data-testid="voice-consent-confirm">I confirm recorded consent</Button>
-            </AlertDialogAction>
-        </AlertDialogFooter>
-    </AlertDialogContent>
-</AlertDialog>
-
 @code {
-    /// <summary>The voice-vertical route prefix (Phase-4 endpoints: synthesize / presets / clone).</summary>
+    /// <summary>The voice-vertical route prefix (synthesize / presets / clones / consent).</summary>
     private const string VoiceApiRoute = "/api/v1/voice";
 
     private readonly Dictionary<string, string> objLanguages = new()
@@ -304,15 +273,26 @@
         ["hinglish"] = "Hinglish",
     };
 
-    private readonly string[] objEmotions = { "Neutral", "Warm narration", "Excited", "Calm" };
+    /// <summary>The emotion choices offered when the selected voice names none of its own.</summary>
+    private static readonly string[] DefaultEmotions = { "Neutral", "Warm narration", "Excited", "Calm" };
 
-    /// <summary>Deterministic bar heights (percent) for the placeholder waveform.</summary>
+    /// <summary>Deterministic bar heights (percent) for the waveform strip.</summary>
     private readonly int[] objWaveHeights =
     {
         30, 60, 90, 45, 75, 100, 55, 35, 80, 50, 65, 95, 40, 70, 30, 85, 50, 60, 42, 78,
     };
 
-    private List<PresetVoice> objVoices = new();
+    /// <summary>The lines a voice sample speaks (Hindi/Hinglish voices, then English ones).</summary>
+    private static readonly string[] SampleLines =
+    {
+        "नमस्ते! यह मेरी आवाज़ का एक छोटा सा नमूना है।",
+        "Hello! This is a short sample of my voice.",
+    };
+
+    private static readonly string[] AvatarClasses = { "voice-av-a", "voice-av-b", "voice-av-c" };
+
+    private List<VoiceRow> objVoices = new();
+    private List<VoiceCloneListItemResponse> objClones = new();
     private bool objVoicesLoaded;
     private bool objApiDown;
     private string? objSelectedVoiceId;
@@ -325,32 +305,59 @@
 
     private bool objGenerating;
     private int objProgress;
-    private bool objHasAudio;
-    private bool objPlaying;
-    private int objPlayHead = 7;
-    private int objPlayPercent = 42;
 
-    private bool objCloneOpen;
-    private bool objConsentOpen;
+    private bool objPreviewing;
+    private VoiceRow? objPreviewVoice;
+    private int objPreviewProgress;
+
+    private Clip? objClip;
+    private bool objPlaying;
+    private double objPosition;
+    private CancellationTokenSource? objPlayback;
+
     private bool objCloneSynthetic;
+    private bool objConsentConfirmed;
+    private bool objCloning;
     private string? objSampleName;
 
-    /// <summary>The currently selected preset voice, or null before selection.</summary>
-    private PresetVoice? SelectedVoice =>
+    /// <summary>The currently selected voice, or null before selection.</summary>
+    private VoiceRow? SelectedVoice =>
         objVoices.FirstOrDefault(aVoice => aVoice.Id == objSelectedVoiceId);
 
-    /// <summary>Whether the emotion Select is enabled for the selected voice.</summary>
+    /// <summary>Whether the emotion select is enabled for the selected voice.</summary>
     private bool EmotionSupported => SelectedVoice?.SupportsEmotion ?? true;
 
-    /// <summary>Whether the speed Slider is enabled for the selected voice.</summary>
+    /// <summary>Whether the speed slider is enabled for the selected voice.</summary>
     private bool SpeedSupported => SelectedVoice?.SupportsSpeed ?? true;
 
+    /// <summary>The emotions the selected voice offers, or the default set when it names none.</summary>
+    private IReadOnlyList<string> EmotionOptions =>
+        SelectedVoice is { Emotions.Length: > 0 } vVoice ? vVoice.Emotions : DefaultEmotions;
+
+    /// <summary>How far through the clip the player is, in percent.</summary>
+    private double PlayPercent =>
+        objClip is null || objClip.DurationSeconds <= 0 ? 0 : Math.Clamp(objPosition / objClip.DurationSeconds * 100d, 0d, 100d);
+
+    /// <summary>How many waveform bars are already played.</summary>
+    private int PlayedBars => (int)Math.Round(PlayPercent / 100d * objWaveHeights.Length);
+
+    /// <summary>The consent box can be ticked once a sample is attached for a real person's voice.</summary>
+    private bool CanConfirmConsent => !string.IsNullOrEmpty(objSampleName) && !objCloneSynthetic;
+
+    /// <summary>A clone can be created with a sample and either a synthetic voice or confirmed consent.</summary>
+    private bool CanCreateClone => !string.IsNullOrEmpty(objSampleName) && (objCloneSynthetic || objConsentConfirmed);
+
+    /// <summary>The create button says what still blocks the clone.</summary>
+    private string CreateCloneLabel =>
+        !objCloneSynthetic && !objConsentConfirmed ? "Create clone (blocked until consent)"
+        : string.IsNullOrEmpty(objSampleName) ? "Create clone (add a sample first)"
+        : objCloning ? "Creating clone…"
+        : "Create clone";
+
     /// <summary>
-    /// Loads the preset list from the voice API AFTER the first interactive render — once JS interop
-    /// is available and <see cref="IAuthSession"/> can hydrate the bearer token. Loading here (not in
-    /// <c>OnInitializedAsync</c>, which runs during prerender before the token exists) avoids a wasted
-    /// anonymous 401. Nothing is seeded: an empty catalog renders the honest "no voices installed"
-    /// state, and a failed fetch raises the API-down Alert.
+    /// Loads the voices, the creator's clones and their newest narration AFTER the first interactive
+    /// render — once <see cref="IAuthSession"/> can hydrate the bearer token. Nothing is seeded: an
+    /// empty catalog renders the honest "no voices installed" state, and a failed fetch raises the Alert.
     /// </summary>
     /// <param name="aFirstRender">Whether this is the component's first render.</param>
     protected override async Task OnAfterRenderAsync(bool aFirstRender)
@@ -361,26 +368,30 @@
         }
 
         var vHasSession = await AuthSession.EnsureLoadedAsync();
-        await TryLoadVoicesAsync(vHasSession);
+        if (vHasSession)
+        {
+            await TryLoadVoicesAsync();
+            await TryLoadClonesAsync();
+            if (!objApiDown)
+            {
+                await TryReopenLastClipAsync();
+            }
+        }
+
         objVoicesLoaded = true;
         StateHasChanged();
     }
 
     /// <summary>Loads the live preset-voice catalog; failures raise the Alert, never a seed list.</summary>
-    /// <param name="aHasSession">Whether a signed-in session is present.</param>
-    private async Task TryLoadVoicesAsync(bool aHasSession)
+    private async Task TryLoadVoicesAsync()
     {
-        if (!aHasSession)
-        {
-            return;
-        }
-
         try
         {
             var vClient = HttpClientFactory.CreateClient("TrStudioApi");
             var vVoices = await vClient.GetFromJsonAsync<List<PresetVoiceResponse>>($"{VoiceApiRoute}/preset-voices");
             objVoices = (vVoices ?? new List<PresetVoiceResponse>()).Select(MapPresetVoice).ToList();
             objSelectedVoiceId = objVoices.FirstOrDefault()?.Id;
+            AlignEmotion();
         }
         catch
         {
@@ -389,39 +400,191 @@
         }
     }
 
+    /// <summary>Loads the creator's registered voice clones; an unreadable list simply shows none.</summary>
+    private async Task TryLoadClonesAsync()
+    {
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            objClones = await vClient.GetFromJsonAsync<List<VoiceCloneListItemResponse>>($"{VoiceApiRoute}/clones")
+                        ?? new List<VoiceCloneListItemResponse>();
+        }
+        catch
+        {
+            objClones = new List<VoiceCloneListItemResponse>();
+        }
+    }
+
     /// <summary>
-    /// Maps an API preset-voice response (<see cref="PresetVoiceResponse"/>) onto the studio's picker
-    /// record. The API reports no per-host install state, so a catalog voice is treated as usable; the
-    /// routed model is shown as the engine and gender/language become the short style descriptor.
+    /// Reopens the creator's newest narration (voice samples played from the picker are skipped): its voice, language, emotion, speed and text go back on
+    /// the controls and the clip loads into the player. Nothing changes when there is none or it can't be read.
+    /// </summary>
+    private async Task TryReopenLastClipAsync()
+    {
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vPage = await vClient.GetFromJsonAsync<PagedResult<AssetResponse>>($"{ApiRoutes.Assets}?aKind=audio&aPageSize=24");
+            JsonDocument? vDocument = null;
+            AssetResponse? vNewest = null;
+            foreach (var vAsset in vPage?.Items ?? Array.Empty<AssetResponse>())
+            {
+                var vParsed = JsonDocument.Parse(string.IsNullOrWhiteSpace(vAsset.ParamsJson) ? "{}" : vAsset.ParamsJson);
+                var vIsSample = vParsed.RootElement.ValueKind == JsonValueKind.Object
+                                && vParsed.RootElement.TryGetProperty("Text", out var vText)
+                                && vText.ValueKind == JsonValueKind.String
+                                && SampleLines.Contains(vText.GetString());
+                if (!vIsSample)
+                {
+                    vDocument = vParsed;
+                    vNewest = vAsset;
+                    break;
+                }
+
+                vParsed.Dispose();
+            }
+
+            if (vNewest is null || vDocument is null)
+            {
+                return;
+            }
+
+            using var vOwned = vDocument;
+            var vRoot = vDocument.RootElement;
+            string? Text(string aName) =>
+                vRoot.ValueKind == JsonValueKind.Object && vRoot.TryGetProperty(aName, out var vValue) && vValue.ValueKind == JsonValueKind.String
+                    ? vValue.GetString() : null;
+            double? Number(string aName) =>
+                vRoot.ValueKind == JsonValueKind.Object && vRoot.TryGetProperty(aName, out var vValue) && vValue.ValueKind == JsonValueKind.Number
+                    ? vValue.GetDouble() : null;
+
+            var vVoice = objVoices.FirstOrDefault(aVoice => aVoice.Id == Text("VoiceId"));
+            if (vVoice is not null)
+            {
+                objSelectedVoiceId = vVoice.Id;
+            }
+
+            if (Text("Language") is { } vLanguage && objLanguages.ContainsKey(vLanguage))
+            {
+                objLanguage = vLanguage;
+            }
+
+            AlignEmotion();
+            if (Text("Emotion") is { } vEmotion && EmotionOptions.Contains(vEmotion))
+            {
+                objEmotion = vEmotion;
+            }
+
+            if (Number("Speed") is { } vSpeed)
+            {
+                objSpeed = vSpeed;
+            }
+
+            objScript = Text("Text") ?? objScript;
+            await LoadClipAsync(vClient, vNewest.AssetId, vVoice?.Name ?? Text("VoiceId") ?? "narration", Number("DurationSeconds") ?? 0);
+        }
+        catch
+        {
+            // The last narration could not be read — the studio opens fresh.
+        }
+    }
+
+    /// <summary>
+    /// Loads a clip's bytes (<c>GET /api/v1/assets/{id}/content</c>, owner-filtered) into the player as a
+    /// data URL, so Export WAV hands over the clip itself. The player starts at the beginning, paused.
+    /// </summary>
+    private async Task LoadClipAsync(HttpClient aClient, Guid aAssetId, string aVoiceName, double aDurationSeconds)
+    {
+        StopPlayback();
+        string? vDataUrl = null;
+        try
+        {
+            using var vResponse = await aClient.GetAsync($"{ApiRoutes.Assets}/{aAssetId}/content");
+            if (vResponse.IsSuccessStatusCode)
+            {
+                var vType = vResponse.Content.Headers.ContentType?.MediaType ?? "audio/wav";
+                var vBytes = await vResponse.Content.ReadAsByteArrayAsync();
+                vDataUrl = $"data:{vType};base64,{Convert.ToBase64String(vBytes)}";
+            }
+        }
+        catch (HttpRequestException)
+        {
+            // The clip's bytes can't be read — the player still shows it, Export stays off.
+        }
+
+        objClip = new Clip(aAssetId, aVoiceName, aDurationSeconds, vDataUrl);
+        objPosition = 0;
+    }
+
+    /// <summary>
+    /// Maps an API preset-voice response onto the picker row. The routed model is shown as the engine;
+    /// gender and tone become the short descriptor.
     /// </summary>
     /// <param name="aVoice">The API preset-voice response to map.</param>
-    private static PresetVoice MapPresetVoice(PresetVoiceResponse aVoice) => new(
+    private static VoiceRow MapPresetVoice(PresetVoiceResponse aVoice) => new(
         aVoice.VoiceId,
         aVoice.DisplayName,
-        aVoice.RoutedModel,
-        string.IsNullOrWhiteSpace(aVoice.Gender) ? aVoice.Language : $"{aVoice.Gender} · {aVoice.Language}",
+        EngineName(aVoice.RoutedModel),
+        string.IsNullOrWhiteSpace(aVoice.Gender) ? aVoice.Language : aVoice.Gender,
+        aVoice.Tone,
         string.IsNullOrWhiteSpace(aVoice.DisplayName) ? "?" : aVoice.DisplayName[..1].ToUpperInvariant(),
-        "voice-av-a",
         aVoice.SupportsEmotion,
         aVoice.SupportsSpeed,
-        true);
+        aVoice.Emotions ?? Array.Empty<string>(),
+        aVoice.Language);
+
+    /// <summary>The display name of a routed voice model id.</summary>
+    /// <param name="aModel">The routed model id.</param>
+    private static string EngineName(string? aModel) => (aModel ?? string.Empty).ToLowerInvariant() switch
+    {
+        "indic-f5" => "IndicF5",
+        "xtts-v2" => "XTTS v2",
+        "xtts-hindi" => "XTTS Hindi",
+        "omni-voice" => "OmniVoice",
+        "" => "voice model",
+        _ => aModel!,
+    };
+
+    /// <summary>Plain words for a clone's registration status.</summary>
+    /// <param name="aStatus">The status the API reports.</param>
+    private static string CloneStatusText(string? aStatus) => aStatus switch
+    {
+        "ConsentVerifiedModelPending" => "model pending",
+        "BlockedNoConsent" => "pending consent",
+        null or "" => "pending",
+        _ => aStatus,
+    };
+
+    /// <summary>The avatar gradient for the picker row at a position.</summary>
+    private static string AvatarClassAt(int aIndex) => AvatarClasses[aIndex % AvatarClasses.Length];
+
+    /// <summary>A clip length as m:ss.</summary>
+    private static string Clock(double aSeconds)
+    {
+        var vSeconds = (int)Math.Floor(Math.Max(0, aSeconds));
+        return $"{vSeconds / 60}:{vSeconds % 60:00}";
+    }
+
+    /// <summary>Keeps the chosen emotion one the selected voice offers.</summary>
+    private void AlignEmotion()
+    {
+        if (!EmotionOptions.Contains(objEmotion))
+        {
+            objEmotion = EmotionOptions[0];
+        }
+    }
 
     /// <summary>Switches the active voice, re-evaluating the emotion/speed capability gates.</summary>
     /// <param name="aVoiceId">The newly selected voice id.</param>
     private Task OnVoiceChangedAsync(string? aVoiceId)
     {
         objSelectedVoiceId = aVoiceId;
-        if (!EmotionSupported)
-        {
-            objEmotion = objEmotions[0];
-        }
-
+        AlignEmotion();
         return Task.CompletedTask;
     }
 
     /// <summary>
-    /// Runs a synthesis pass: shows Progress, calls the synthesize endpoint best-effort, then marks the
-    /// clip playable. A voice whose model isn't installed is refused up front with a clean message.
+    /// Runs a synthesis pass with the selected voice and the script, then loads the clip into the player.
     /// </summary>
     private async Task GenerateAsync()
     {
@@ -432,12 +595,6 @@
             return;
         }
 
-        if (!vVoice.ModelInstalled)
-        {
-            ToastService.Error($"The model for “{vVoice.Name}” isn't installed on this host.", "Model missing");
-            return;
-        }
-
         if (string.IsNullOrWhiteSpace(objScript))
         {
             ToastService.Error("Enter some text to speak.", "Empty script");
@@ -445,61 +602,94 @@
         }
 
         objGenerating = true;
-        objHasAudio = false;
         objProgress = 0;
         StateHasChanged();
 
-        for (var vStep = 1; vStep <= 5; vStep++)
+        var vResult = await SynthesizeWithProgressAsync(vVoice, objScript, aPercent => objProgress = aPercent);
+        objGenerating = false;
+        await ReportAndLoadAsync(vResult, vVoice, "Narration ready");
+    }
+
+    /// <summary>
+    /// Plays a short sample of a voice: synthesizes a sample line in the voice's language, showing the
+    /// "Generating preview" card while it runs, then loads the sample into the player.
+    /// </summary>
+    /// <param name="aVoice">The voice to sample.</param>
+    private async Task PreviewAsync(VoiceRow aVoice)
+    {
+        objPreviewing = true;
+        objPreviewVoice = aVoice;
+        objPreviewProgress = 0;
+        StateHasChanged();
+
+        var vLine = aVoice.Language is "hi" or "hinglish" ? SampleLines[0] : SampleLines[1];
+        var vResult = await SynthesizeWithProgressAsync(aVoice, vLine, aPercent => objPreviewProgress = aPercent);
+
+        objPreviewing = false;
+        objPreviewVoice = null;
+        await ReportAndLoadAsync(vResult, aVoice, "Sample ready");
+        if (objClip is not null && vResult?.AssetId is not null)
         {
-            objProgress = vStep * 20;
+            StartPlayback();
+        }
+    }
+
+    /// <summary>Shows progress while the synthesize call runs; returns the API result, or null on failure.</summary>
+    private async Task<VoiceSynthesizeResponse?> SynthesizeWithProgressAsync(VoiceRow aVoice, string aText, Action<int> aSetProgress)
+    {
+        var vCall = TrySynthesizeAsync(aVoice, aText);
+        for (var vStep = 1; vStep <= 4 && !vCall.IsCompleted; vStep++)
+        {
+            aSetProgress(vStep * 20);
             StateHasChanged();
-            await Task.Delay(140);
+            await Task.WhenAny(vCall, Task.Delay(140));
         }
 
-        var vResult = await TrySynthesizeAsync(vVoice);
+        var vResult = await vCall;
+        aSetProgress(100);
+        return vResult;
+    }
 
-        objProgress = 100;
-        objGenerating = false;
-
-        if (vResult is null)
+    /// <summary>Reports a synthesis result honestly and, when it produced audio, loads it into the player.</summary>
+    private async Task ReportAndLoadAsync(VoiceSynthesizeResponse? aResult, VoiceRow aVoice, string aTitle)
+    {
+        if (aResult is null)
         {
             ToastService.Error("Couldn't reach the API — nothing was synthesized.", "Voice");
             return;
         }
 
-        if (vResult.AssetId is null)
+        if (aResult.AssetId is not { } vAssetId)
         {
             // The API answered but produced no audio (e.g. model-not-installed) — report its reason.
-            ToastService.Error(vResult.Message ?? "No voice model produced audio for this request.", "Voice");
+            ToastService.Error(aResult.Message ?? "No voice model produced audio for this request.", "Voice");
             return;
         }
 
-        objHasAudio = true;
-        objPlaying = true;
-        if (vResult.Degraded)
+        await LoadClipAsync(HttpClientFactory.CreateClient("TrStudioApi"), vAssetId, aVoice.Name, aResult.DurationSeconds);
+        if (aResult.Degraded)
         {
-            ToastService.Show(vResult.Message ?? "Synthesis ran in degraded mode.", "Voice");
+            ToastService.Show(aResult.Message ?? "Synthesis ran in degraded mode.", "Voice");
         }
         else
         {
-            ToastService.Success($"Narration ready — {vVoice.Name}.", "Generated");
+            ToastService.Success($"{aTitle} — {aVoice.Name}.", "Generated");
         }
     }
 
     /// <summary>Synthesize round-trip; returns the API result, or null when the call failed.</summary>
-    /// <param name="aVoice">The voice to synthesize with.</param>
-    private async Task<VoiceSynthesizeResponse?> TrySynthesizeAsync(PresetVoice aVoice)
+    private async Task<VoiceSynthesizeResponse?> TrySynthesizeAsync(VoiceRow aVoice, string aText)
     {
         try
         {
             var vClient = HttpClientFactory.CreateClient("TrStudioApi");
             var vRequest = new VoiceSynthesizeRequest
             {
-                Text = objScript,
+                Text = aText,
                 VoiceId = aVoice.Id,
                 Language = objLanguage,
-                Emotion = EmotionSupported ? objEmotion : null,
-                Speed = SpeedSupported ? objSpeed : 1.0d,
+                Emotion = aVoice.SupportsEmotion ? objEmotion : null,
+                Speed = aVoice.SupportsSpeed ? objSpeed : 1.0d,
             };
 
             var vResponse = await vClient.PostAsJsonAsync($"{VoiceApiRoute}/synthesize", vRequest);
@@ -517,107 +707,187 @@
         }
     }
 
-    /// <summary>Toggles the placeholder player between play and pause.</summary>
-    private void TogglePlay() => objPlaying = !objPlaying;
+    /// <summary>Plays or pauses the clip; playing from the end starts it over.</summary>
+    private void TogglePlay()
+    {
+        if (objPlaying)
+        {
+            StopPlayback();
+            return;
+        }
 
-    /// <summary>Records the chosen clone sample file name (upload itself is handled by the endpoint).</summary>
+        StartPlayback();
+    }
+
+    /// <summary>Moves the playhead over the clip's real length until it ends or is paused.</summary>
+    private void StartPlayback()
+    {
+        if (objClip is null)
+        {
+            return;
+        }
+
+        StopPlayback();
+        if (objPosition >= objClip.DurationSeconds)
+        {
+            objPosition = 0;
+        }
+
+        objPlaying = true;
+        objPlayback = new CancellationTokenSource();
+        _ = RunPlaybackAsync(objPlayback.Token);
+    }
+
+    private async Task RunPlaybackAsync(CancellationToken aToken)
+    {
+        const double cTick = 0.25d;
+        using var vTimer = new PeriodicTimer(TimeSpan.FromSeconds(cTick));
+        try
+        {
+            while (await vTimer.WaitForNextTickAsync(aToken))
+            {
+                if (objClip is null)
+                {
+                    break;
+                }
+
+                objPosition = Math.Min(objClip.DurationSeconds, objPosition + cTick);
+                if (objPosition >= objClip.DurationSeconds)
+                {
+                    objPlaying = false;
+                    await InvokeAsync(StateHasChanged);
+                    break;
+                }
+
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Paused or left the page.
+        }
+    }
+
+    private void StopPlayback()
+    {
+        objPlaying = false;
+        objPlayback?.Cancel();
+        objPlayback?.Dispose();
+        objPlayback = null;
+    }
+
+    /// <summary>Records the chosen clone sample file name.</summary>
     /// <param name="aFiles">The files chosen in the FileUpload control.</param>
     private void OnSampleSelected(IReadOnlyList<FileUploadItem> aFiles)
     {
         objSampleName = aFiles.Count > 0 ? aFiles[0].Name : null;
+        if (!CanConfirmConsent)
+        {
+            objConsentConfirmed = false;
+        }
+    }
+
+    /// <summary>A synthetic voice needs no consent; un-ticking it asks for consent again.</summary>
+    private void OnSyntheticChanged(bool aSynthetic)
+    {
+        objCloneSynthetic = aSynthetic;
+        objConsentConfirmed = false;
     }
 
     /// <summary>
-    /// Create-clone entry point. A synthetic/character voice proceeds immediately; a real-person voice
-    /// is blocked here and routed through the consent AlertDialog gate first.
+    /// Creates the clone. A real person's voice first records the owner's consent evidence
+    /// (<c>POST /voice/consent</c>), then requests the clone; the API keeps the SAFE-03 gate either way,
+    /// and its answer — success or block — is reported as it is.
     /// </summary>
-    private async Task OnCreateCloneClickedAsync()
-    {
-        if (string.IsNullOrEmpty(objSampleName))
-        {
-            ToastService.Error("Attach a voice sample first.", "No sample");
-            return;
-        }
-
-        if (objCloneSynthetic)
-        {
-            await CreateCloneAsync();
-            return;
-        }
-
-        // Real person — gate on recorded consent before anything is created (SAFE-02/03).
-        objConsentOpen = true;
-    }
-
-    /// <summary>Consent confirmed for a real-person clone — closes the gate and proceeds.</summary>
-    private async Task ConfirmConsentAsync()
-    {
-        objConsentOpen = false;
-        await CreateCloneAsync();
-    }
-
-    /// <summary>Submits the clone and reports the real outcome — no optimistic success on failure.</summary>
     private async Task CreateCloneAsync()
     {
+        if (!CanCreateClone || objSampleName is null)
+        {
+            return;
+        }
+
+        objCloning = true;
+        var vName = Path.GetFileNameWithoutExtension(objSampleName);
+        var vSubject = System.Text.RegularExpressions.Regex.Replace(vName.ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
         try
         {
             var vClient = HttpClientFactory.CreateClient("TrStudioApi");
-            var vRequest = new
+            if (!objCloneSynthetic)
             {
-                sampleName = objSampleName,
-                isSynthetic = objCloneSynthetic,
-                consentConfirmed = !objCloneSynthetic,
-            };
+                var vConsent = await vClient.PostAsJsonAsync($"{VoiceApiRoute}/consent", new VoiceConsentRequest
+                {
+                    SubjectReference = vSubject,
+                    EvidenceType = "recorded-consent",
+                    EvidenceDetail = $"Creator confirmed recorded consent from the voice owner, attached with sample {objSampleName}.",
+                    ConsentGranted = true,
+                });
+                if (!vConsent.IsSuccessStatusCode)
+                {
+                    ToastService.Error("The consent record wasn't accepted — the clone wasn't queued.", "Clone");
+                    return;
+                }
+            }
 
-            var vResponse = await vClient.PostAsJsonAsync($"{VoiceApiRoute}/clone", vRequest);
-            if (vResponse.IsSuccessStatusCode)
+            var vResponse = await vClient.PostAsJsonAsync($"{VoiceApiRoute}/clone", new VoiceCloneRequest
             {
-                objCloneOpen = false;
+                VoiceName = vName,
+                Language = objLanguage,
+                IsRealPerson = !objCloneSynthetic,
+                SubjectReference = objCloneSynthetic ? null : vSubject,
+                SampleReference = objSampleName,
+            });
+            var vBody = await vResponse.Content.ReadFromJsonAsync<VoiceCloneResponse>();
+            if (vResponse.IsSuccessStatusCode && vBody is { Blocked: false })
+            {
+                ToastService.Success(vBody.Message, "Clone");
                 objSampleName = null;
-                ToastService.Success(
-                    objCloneSynthetic
-                        ? "Synthetic voice clone queued."
-                        : "Consent recorded — real-person voice clone queued.",
-                    "Clone");
+                objConsentConfirmed = false;
+                await TryLoadClonesAsync();
                 return;
             }
+
+            ToastService.Error(vBody?.Message ?? "The clone wasn't queued.", "Clone");
         }
         catch
         {
-            // Fall through to the honest failure toast.
+            ToastService.Error("Couldn't reach the API — the clone wasn't queued.", "Clone");
         }
-
-        ToastService.Error("Couldn't reach the API — the clone wasn't queued.", "Clone");
+        finally
+        {
+            objCloning = false;
+        }
     }
 
-    /// <summary>Fires the export action for the current clip.</summary>
-    private Task ExportAsync()
-    {
-        ToastService.Success("Exported narration as WAV.", "Export");
-        return Task.CompletedTask;
-    }
+    /// <summary>Stops the playhead when the page goes away.</summary>
+    public void Dispose() => StopPlayback();
 
-    /// <summary>
-    /// A selectable preset voice. Routing (engine/provider) is a display detail hidden behind the single
-    /// Combobox; the capability flags drive the emotion/speed control gates and the player's model state.
-    /// </summary>
+    /// <summary>A selectable voice in the picker; routing (engine) is shown, not chosen.</summary>
     /// <param name="Id">Stable voice id.</param>
     /// <param name="Name">Display name.</param>
-    /// <param name="Engine">Underlying TTS engine (shown, not selectable).</param>
-    /// <param name="Style">Short style descriptor.</param>
+    /// <param name="Engine">Display name of the model the voice routes to.</param>
+    /// <param name="Gender">Gender label (or language when none).</param>
+    /// <param name="Tone">Short delivery descriptor; may be empty.</param>
     /// <param name="Initial">Avatar initial.</param>
-    /// <param name="AvatarClass">Avatar gradient CSS class.</param>
     /// <param name="SupportsEmotion">Whether the voice supports emotion/style control.</param>
     /// <param name="SupportsSpeed">Whether the voice supports speed control.</param>
-    /// <param name="ModelInstalled">Whether the voice model is installed on this host.</param>
-    private sealed record PresetVoice(
+    /// <param name="Emotions">The emotions the voice offers.</param>
+    /// <param name="Language">The voice's language: en, hi or hinglish.</param>
+    private sealed record VoiceRow(
         string Id,
         string Name,
         string Engine,
-        string Style,
+        string Gender,
+        string Tone,
         string Initial,
-        string AvatarClass,
         bool SupportsEmotion,
         bool SupportsSpeed,
-        bool ModelInstalled);
+        string[] Emotions,
+        string Language);
+
+    /// <summary>The clip in the player.</summary>
+    /// <param name="AssetId">The audio asset id.</param>
+    /// <param name="VoiceName">The voice it was made with.</param>
+    /// <param name="DurationSeconds">The clip's length.</param>
+    /// <param name="DataUrl">The clip's bytes as a data URL, or null when they couldn't be read.</param>
+    private sealed record Clip(Guid AssetId, string VoiceName, double DurationSeconds, string? DataUrl);
 }

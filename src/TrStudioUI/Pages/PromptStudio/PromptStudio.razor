@@ -1,5 +1,8 @@
 @page "/prompt-studio"
-@using TrBlazeUI.Components.FileUpload
+@using System.Globalization
+@using System.Text.RegularExpressions
+@using Microsoft.AspNetCore.Components.Sections
+@using TrBlazeUI.Components.NativeSelect
 @inject IHttpClientFactory HttpClientFactory
 @inject ToastService ToastService
 @inject NavigationManager Navigation
@@ -10,15 +13,26 @@
     Prompt Studio (REQ-UI-081 / REQ-UI-082). Chat with a text LLM to craft the precise prompts the
     image / avatar / video models need. A two-column split: a per-user session rail (New chat, resume,
     rename, delete — owner-scoped) and a chat card whose head carries the registry-driven LLM picker
-    (/api/v1/models/text-chat) + a vision badge that gates image attach on the picked row's
-    VisionCapable flag. Assistant turns render the crafted prompt in a copyable monospace block with
-    Copy / Save-to-Library (POST /presets, Type="prompt") / Send-to-Studio (routes with ?prompt=…).
+    (/api/v1/models/text-chat), a vision badge that gates image attach on the picked row's
+    VisionCapable flag, and the chat's running token count. Assistant turns render their prose with
+    the crafted prompt (a fenced block in the reply, or the whole reply) in a copyable monospace block
+    with Copy / Save-to-Library (POST /presets, Type="prompt") / Send to Image Studio (routes with
+    ?prompt=…; the menu beside it sends to Avatar or Video Studio instead). The topbar shows this
+    month's text-LLM tokens (/api/v1/rag/usage). The most recent chat reopens on load.
     Data + sessions ride /api/v1/prompt-chat (owner-scoped); the API-down path degrades to a clean
     Alert with no dead UI. Loads AFTER first render (bearer token hydrated), never during prerender.
     The 2-col split collapses to 1 col ≤860px, matching the approved mockup.
 *@
 
 <PageTitle>TrStudio — Prompt Studio</PageTitle>
+
+@* This month's text-LLM tokens, shown in the shell topbar beside the status pill. *@
+@if (objUsage is not null)
+{
+    <SectionContent SectionName="topbar-context">
+        <Badge Class="badge-brand" data-testid="@($"badge-{Slug(UsageLabel)}")">@UsageLabel</Badge>
+    </SectionContent>
+}
 
 <div class="prompt-studio">
 <h1 class="page-title">Prompt Studio</h1>
@@ -27,7 +41,7 @@
 <div class="ps-split" data-testid="prompt-studio">
     @* ---- LEFT: session rail (UI-082) ---- *@
     <div class="ps-rail" data-testid="session-rail">
-        <Button OnClick="StartNewChat" data-testid="new-chat-btn">
+        <Button OnClick="StartNewChat" data-testid="btn-new-chat">
             <LucideIcon Name="plus" Size="14" />
             New chat
         </Button>
@@ -41,18 +55,20 @@
         }
         else
         {
-            @foreach (var vSession in objSessions)
+            @for (var vIndex = 0; vIndex < objSessions.Count; vIndex++)
             {
+                var vSession = objSessions[vIndex];
+                var vDeleteId = vIndex == 0 ? "btn-action" : $"btn-action-{vIndex + 1}";
                 <div class="ps-sess @(vSession.SessionId == objActiveSessionId ? "active" : string.Empty)"
                      @key="vSession.SessionId" @onclick="@(() => ResumeSessionAsync(vSession.SessionId))">
                     <div class="ps-sess-t" title="@vSession.Title">@vSession.Title</div>
                     <div class="ps-sess-m">
-                        <span>@ModelLabel(vSession.ModelId) · @vSession.UpdatedUtc.ToLocalTime().ToString("MMM d")</span>
+                        <span>@ShortLabel(vSession.ModelId) · @DayLabel(vSession.UpdatedUtc)</span>
                         <button class="ps-icon-inline" title="Rename session"
                                 @onclick="@(() => OpenRename(vSession))" @onclick:stopPropagation="true">
                             <LucideIcon Name="pencil" Size="13" />
                         </button>
-                        <button class="ps-del" title="Delete session"
+                        <button class="ps-del" title="Delete session" data-testid="@vDeleteId"
                                 @onclick="@(() => DeleteSessionAsync(vSession.SessionId))" @onclick:stopPropagation="true">
                             <LucideIcon Name="trash-2" Size="13" />
                         </button>
@@ -63,30 +79,32 @@
     </div>
 
     @* ---- RIGHT: chat card (UI-081) ---- *@
-    <Card Class="ps-chat">
+    <Card Class="ps-chat" data-testid="card-1">
         <div class="ps-chathead">
             <span class="muted-sm">Model</span>
-            <div data-testid="llm-select" style="min-width:220px">
-                <Select Value="@objModelId" ValueChanged="OnModelChangedAsync" TValue="string">
-                    <SelectTrigger><SelectValue Placeholder="Select a model" /></SelectTrigger>
-                    <SelectContent>
-                        @foreach (var vModel in objModels)
-                        {
-                            <SelectItem Value="@vModel.Id" Text="@vModel.DisplayName" TValue="string">@vModel.DisplayName</SelectItem>
-                        }
-                    </SelectContent>
-                </Select>
+            <div class="ps-llm">
+                <NativeSelect TValue="string" Value="@objModelId" ValueChanged="OnModelChangedAsync" Class="w-full" aria-label="Model"
+                              Placeholder="@(objModels.Count == 0 ? "Select a model" : null)" data-testid="field-llmsel">
+                    @foreach (var vModel in objModels)
+                    {
+                        <option value="@vModel.Id">@vModel.DisplayName</option>
+                    }
+                </NativeSelect>
             </div>
-            <span data-testid="vision-badge">
-                @if (VisionOn)
-                {
-                    <Badge Variant="BadgeVariant.Outline" Class="badge-ok">vision — image attach on</Badge>
-                }
-                else
-                {
-                    <Badge Variant="BadgeVariant.Outline" Class="badge-warn">text-only — image attach off</Badge>
-                }
-            </span>
+            @if (VisionOn)
+            {
+                <Badge Variant="BadgeVariant.Outline" Class="badge-ok" data-testid="badge-status"><span class="dot ok ps-dot"></span>vision — image attach on</Badge>
+            }
+            else
+            {
+                <Badge Variant="BadgeVariant.Outline" Class="badge-warn" data-testid="badge-status">text-only — image attach off</Badge>
+            }
+            <span class="ps-spacer"></span>
+            @if (ActiveSession is not null)
+            {
+                var vTokensLabel = $"session: {ActiveSession.Tokens.ToString("N0", CultureInfo.InvariantCulture)} tokens";
+                <Badge Variant="BadgeVariant.Outline" data-testid="@($"badge-{Slug(vTokensLabel)}")">@vTokensLabel</Badge>
+            }
         </div>
 
         <div class="ps-thread" data-testid="chat-thread">
@@ -113,41 +131,55 @@
                 </div>
             }
 
+            @{ var vReplyNo = 0; }
             @foreach (var vMessage in objMessages)
             {
                 @if (vMessage.Role == "assistant")
                 {
+                    vReplyNo++;
+                    var vSuffix = vReplyNo == 1 ? string.Empty : $"-{vReplyNo}";
+                    var vPrompt = PrimaryPrompt(vMessage.Content);
                     <div class="ps-msg assistant" @key="vMessage.MessageId">
-                        <div class="ps-who">@ModelLabel(objActiveModelId)</div>
-                        <div class="ps-promptblock" data-testid="prompt-block">@vMessage.Content</div>
+                        <div class="ps-who">@ShortLabel(objActiveModelId)</div>
+                        @foreach (var vPart in SplitReply(vMessage.Content))
+                        {
+                            @if (vPart.IsPrompt)
+                            {
+                                <div class="ps-promptblock" data-testid="prompt-block">@vPart.Text</div>
+                            }
+                            else
+                            {
+                                <div class="ps-msg-body">@vPart.Text</div>
+                            }
+                        }
                         <div class="ps-acts">
                             <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
-                                    OnClick="@(() => CopyPromptAsync(vMessage.Content))" data-testid="copy-btn">
+                                    OnClick="@(() => CopyPromptAsync(vPrompt))" data-testid="@($"btn-copy{vSuffix}")">
                                 <LucideIcon Name="copy" Size="13" />
                                 Copy
                             </Button>
                             <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
-                                    OnClick="@(() => OpenSaveToLibrary(vMessage.Content))" data-testid="save-btn">
+                                    OnClick="@(() => OpenSaveToLibrary(vPrompt))" data-testid="@($"btn-save-to-library{vSuffix}")">
                                 <LucideIcon Name="book-open" Size="13" />
                                 Save to Library
                             </Button>
+                            <Button Size="ButtonSize.Small" OnClick="@(() => SendToStudio("/image", vPrompt))"
+                                    data-testid="@($"btn-send-to-image-studio{vSuffix}")">
+                                <LucideIcon Name="image" Size="13" />
+                                Send to Image Studio
+                            </Button>
                             <DropdownMenu>
                                 <DropdownMenuTrigger>
-                                    <Button Size="ButtonSize.Small" data-testid="send-studio-btn">
-                                        <LucideIcon Name="image" Size="13" />
-                                        Send to Studio
+                                    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small" title="Send to another studio" aria-label="Send to another studio">
+                                        <LucideIcon Name="chevron-down" Size="13" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
-                                    <DropdownMenuItem OnClick="@(() => SendToStudio("/image", vMessage.Content))">
-                                        <LucideIcon Name="image" Size="16" />
-                                        <span class="ml-2">Image Studio</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem OnClick="@(() => SendToStudio("/avatar", vMessage.Content))">
+                                    <DropdownMenuItem OnClick="@(() => SendToStudio("/avatar", vPrompt))">
                                         <LucideIcon Name="user" Size="16" />
                                         <span class="ml-2">Avatar Studio</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem OnClick="@(() => SendToStudio("/video", vMessage.Content))">
+                                    <DropdownMenuItem OnClick="@(() => SendToStudio("/video", vPrompt))">
                                         <LucideIcon Name="video" Size="16" />
                                         <span class="ml-2">Video Studio</span>
                                     </DropdownMenuItem>
@@ -163,7 +195,7 @@
                         @if (vMessage.HasImage)
                         {
                             <div class="ps-attachthumb">
-                                <LucideIcon Name="image" Size="14" />
+                                <span class="ps-ph"><LucideIcon Name="image" Size="16" /></span>
                                 <span>image attached</span>
                             </div>
                         }
@@ -175,20 +207,29 @@
             @if (objSending)
             {
                 <div class="ps-msg assistant" data-testid="typing">
-                    <div class="ps-who">@ModelLabel(objActiveModelId)</div>
+                    <div class="ps-who">@ShortLabel(objActiveModelId ?? objModelId)</div>
                     <span class="ps-typing"><i></i><i></i><i></i></span>
                 </div>
             }
         </div>
 
         <div class="ps-composer">
-            <div data-testid="attach-btn">
-                <FileUpload Accept="image/*" Multiple="false" ShowPreview="false"
-                            Disabled="@(!VisionOn)" Files="@objAttachFiles" FilesChanged="OnImageSelectedAsync" />
-            </div>
-            <Textarea @bind-Value="objComposerText" Class="ps-composer-text" data-testid="composer-text"
+            @if (VisionOn)
+            {
+                <label class="ps-iconbtn ps-attach @(objImageName is null ? string.Empty : "on")" title="Attach image" data-testid="icon-btn-attach-image">
+                    <LucideIcon Name="paperclip" Size="16" />
+                    <InputFile @key="objAttachKey" accept="image/*" class="ps-file" OnChange="OnImageSelectedAsync" />
+                </label>
+            }
+            else
+            {
+                <button class="ps-iconbtn" type="button" disabled title="This model can't see images" data-testid="icon-btn-attach-image">
+                    <LucideIcon Name="paperclip" Size="16" />
+                </button>
+            }
+            <Textarea @bind-Value="objComposerText" Class="ps-composer-text" data-testid="field-describe-what-you-want-t"
                       Placeholder="Describe what you want to generate or change — the model will craft the ideal prompt…" />
-            <Button OnClick="SendMessageAsync" Disabled="@objSending" data-testid="send-btn">
+            <Button OnClick="SendMessageAsync" Disabled="@objSending" data-testid="btn-send">
                 @if (objSending)
                 {
                     <Spinner Size="SpinnerSize.Small" Class="mr-2" />
@@ -365,6 +406,10 @@
         flex-wrap: wrap;
     }
 
+    .prompt-studio .ps-llm { min-width: 220px; }
+    .prompt-studio .ps-spacer { flex: 1; }
+    .prompt-studio .ps-dot { margin-right: 6px; }
+
     .prompt-studio .ps-thread {
         flex: 1;
         padding: 18px 16px;
@@ -425,12 +470,48 @@
         font-size: 12px;
     }
 
+    .prompt-studio .ps-ph {
+        width: 34px;
+        height: 34px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, .18);
+        flex: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .prompt-studio .ps-iconbtn {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--card);
+        color: var(--foreground);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex: none;
+    }
+
+    .prompt-studio .ps-iconbtn:hover { background: var(--muted); }
+    .prompt-studio .ps-iconbtn:disabled { opacity: .45; cursor: not-allowed; }
+    .prompt-studio .ps-attach { position: relative; overflow: hidden; }
+    .prompt-studio .ps-attach.on { color: var(--brand-ink); border-color: var(--brand-bd); background: var(--brand-soft); }
+    .prompt-studio .ps-attach .ps-file {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+
     .prompt-studio .ps-promptblock {
         background: var(--card);
         border: 1px solid var(--brand-bd);
         border-radius: 9px;
         padding: 10px 12px;
-        margin: 2px 0 7px;
+        margin: 9px 0 7px;
         font-size: 12.8px;
         line-height: 1.6;
         font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -504,6 +585,7 @@
             padding-bottom: 4px;
         }
         .prompt-studio .ps-sess { min-width: 190px; flex: none; }
+        .prompt-studio .ps-rail > button { flex: none; white-space: nowrap; }
         .prompt-studio .ps-sess-skel { min-width: 190px; flex: none; }
         .prompt-studio .ps-msg { max-width: 92%; }
     }
@@ -527,7 +609,8 @@
 
     private string objComposerText = string.Empty;
 
-    private IReadOnlyList<FileUploadItem> objAttachFiles = new List<FileUploadItem>();
+    /// <summary>Changes on every cleared attachment so the hidden file input starts empty again.</summary>
+    private int objAttachKey;
     private string? objImageBase64;
     private string? objImageMediaType;
     private string? objImageName;
@@ -539,6 +622,15 @@
     private bool objRenameSheetOpen;
     private Guid? objRenameId;
     private string objRenameTitle = string.Empty;
+
+    /// <summary>This month's text-LLM token usage, or null until loaded (the topbar badge waits for it).</summary>
+    private LlmUsageResponse? objUsage;
+
+    /// <summary>The topbar label, e.g. "1,840 tokens this month".</summary>
+    private string UsageLabel => $"{(objUsage?.TotalTokens ?? 0).ToString("N0", CultureInfo.InvariantCulture)} tokens this month";
+
+    /// <summary>The open chat's rail entry (carries its running token count), or null for a new chat.</summary>
+    private PromptChatSessionResponse? ActiveSession => objSessions.FirstOrDefault(aSession => aSession.SessionId == objActiveSessionId);
 
     /// <summary>The picked text-chat model, or null before the picker loads.</summary>
     private RegistryModel? SelectedModel => objModels.FirstOrDefault(aModel => aModel.Id == objModelId);
@@ -562,6 +654,12 @@
 
         var vHasSession = await AuthSession.EnsureLoadedAsync();
         await TryLoadAsync(vHasSession);
+        // Reopen the most recent chat, the way the other studios reopen their last run.
+        if (objSessions.Count > 0)
+        {
+            await ResumeSessionAsync(objSessions[0].SessionId);
+        }
+
         objLoading = false;
         StateHasChanged();
     }
@@ -592,10 +690,26 @@
                 objSessions.Clear();
                 objSessions.AddRange(vSessions.OrderByDescending(aSession => aSession.UpdatedUtc));
             }
+
+            await LoadUsageAsync(vClient);
         }
         catch
         {
             // Endpoint forming / unreachable — the picker + rail stay empty rather than flashing samples.
+        }
+    }
+
+    /// <summary>Reads this month's text-LLM token usage for the topbar badge; leaves it hidden when unreachable.</summary>
+    /// <param name="aClient">The API client.</param>
+    private async Task LoadUsageAsync(HttpClient aClient)
+    {
+        try
+        {
+            objUsage = await aClient.GetFromJsonAsync<LlmUsageResponse>($"{ApiRoutes.Rag}/usage");
+        }
+        catch
+        {
+            // Usage endpoint unreachable — the badge stays hidden rather than showing a made-up count.
         }
     }
 
@@ -736,6 +850,14 @@
                 objMessages.Add(vResult.AssistantMessage);
             }
 
+            var vActive = ActiveSession;
+            if (vActive is not null)
+            {
+                vActive.Tokens = vResult.SessionTokens;
+            }
+
+            await LoadUsageAsync(vClient);
+
             if (vResult.Degraded)
             {
                 ToastService.Show("The chat model isn't fully configured — showing a best-effort reply.", "Degraded");
@@ -812,20 +934,19 @@
     }
 
     /// <summary>Converts the chosen image to base64 for the vision request (honoured only by vision rows).</summary>
-    /// <param name="aFiles">The files chosen in the FileUpload control.</param>
-    private async Task OnImageSelectedAsync(IReadOnlyList<FileUploadItem> aFiles)
+    /// <param name="aArgs">The file chosen with the attach button.</param>
+    private async Task OnImageSelectedAsync(InputFileChangeEventArgs aArgs)
     {
-        objAttachFiles = aFiles;
-        if (aFiles.Count == 0)
+        if (aArgs.FileCount == 0)
         {
             ClearAttachment();
             return;
         }
 
-        var vItem = aFiles[0];
+        var vItem = aArgs.File;
         try
         {
-            await using var vStream = vItem.File.OpenReadStream(20L * 1024 * 1024);
+            await using var vStream = vItem.OpenReadStream(20L * 1024 * 1024);
             using var vMemory = new MemoryStream();
             await vStream.CopyToAsync(vMemory);
             objImageBase64 = Convert.ToBase64String(vMemory.ToArray());
@@ -845,7 +966,7 @@
         objImageBase64 = null;
         objImageMediaType = null;
         objImageName = null;
-        objAttachFiles = new List<FileUploadItem>();
+        objAttachKey++;
     }
 
     /// <summary>Copies the crafted prompt to the clipboard.</summary>
@@ -998,6 +1119,76 @@
 
         return objModels.FirstOrDefault(aModel => aModel.Id == aModelId)?.DisplayName ?? aModelId;
     }
+
+    /// <summary>A model's short name for the rail and the reply label: its display name without the
+    /// "(vision)" / "(text-only)" note, e.g. "GPT-4o".</summary>
+    /// <param name="aModelId">The registry model id.</param>
+    private string ShortLabel(string? aModelId) =>
+        Regex.Replace(ModelLabel(aModelId), @"\s*\([^)]*\)\s*$", string.Empty);
+
+    /// <summary>When a chat was last used: "today", "yesterday" or the date ("Jul 4").</summary>
+    /// <param name="aUtc">The UTC time.</param>
+    private static string DayLabel(DateTime aUtc)
+    {
+        var vDay = aUtc.ToLocalTime().Date;
+        var vToday = DateTime.Now.Date;
+        if (vDay == vToday)
+        {
+            return "today";
+        }
+
+        return vDay == vToday.AddDays(-1) ? "yesterday" : vDay.ToString("MMM d", CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>A lowercase, dash-separated name for a control id (e.g. "session: 612 tokens" → "session-612-tokens").</summary>
+    /// <param name="aText">The display text.</param>
+    private static string Slug(string aText) =>
+        Regex.Replace(aText.ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
+
+    /// <summary>One part of an assistant reply: prose, or a crafted prompt drawn in the copyable block.</summary>
+    /// <param name="IsPrompt">Whether the part is a crafted prompt.</param>
+    /// <param name="Text">The part's text.</param>
+    private sealed record ReplyPart(bool IsPrompt, string Text);
+
+    /// <summary>
+    /// Splits a reply into prose and prompts: each fenced (```) block is a prompt; a reply with no
+    /// fenced block is one prompt as a whole.
+    /// </summary>
+    /// <param name="aContent">The assistant reply.</param>
+    private static List<ReplyPart> SplitReply(string aContent)
+    {
+        var vMatches = Regex.Matches(aContent ?? string.Empty, @"```[^\n`]*\n?(.*?)```", RegexOptions.Singleline);
+        if (vMatches.Count == 0)
+        {
+            return new List<ReplyPart> { new(true, aContent ?? string.Empty) };
+        }
+
+        var vParts = new List<ReplyPart>();
+        var vAt = 0;
+        foreach (Match vMatch in vMatches)
+        {
+            AddProse(vParts, aContent![vAt..vMatch.Index]);
+            vParts.Add(new ReplyPart(true, vMatch.Groups[1].Value.Trim()));
+            vAt = vMatch.Index + vMatch.Length;
+        }
+
+        AddProse(vParts, aContent![vAt..]);
+        return vParts;
+    }
+
+    /// <summary>Adds a prose part when it has any text.</summary>
+    private static void AddProse(List<ReplyPart> aParts, string aText)
+    {
+        if (!string.IsNullOrWhiteSpace(aText))
+        {
+            aParts.Add(new ReplyPart(false, aText.Trim()));
+        }
+    }
+
+    /// <summary>The prompt Copy / Save / Send act on: the reply's first crafted prompt.</summary>
+    /// <param name="aContent">The assistant reply.</param>
+    private static string PrimaryPrompt(string aContent) =>
+        SplitReply(aContent).First(aPart => aPart.IsPrompt).Text;
 
     /// <summary>Truncates a string to a maximum length, appending an ellipsis when clipped.</summary>
     /// <param name="aText">The text to truncate.</param>

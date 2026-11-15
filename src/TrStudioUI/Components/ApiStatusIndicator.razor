@@ -12,7 +12,7 @@
 *@
 
 <span class="api-status api-status-@StateClass" role="status" aria-live="polite"
-      aria-label="@Tooltip" title="@Tooltip" data-testid="api-status">
+      aria-label="@Tooltip" title="@Tooltip" data-testid="badge-status">
     <span class="api-status-dot" aria-hidden="true"></span>
     <span class="api-status-text">@Text</span>
 </span>
@@ -43,6 +43,11 @@
         flex: none;
     }
 
+    .api-status.api-status-ok {
+        color: var(--alert-success-foreground);
+        background: var(--alert-success-bg);
+        border-color: color-mix(in oklab, var(--alert-success) 35%, transparent);
+    }
     .api-status.api-status-ok .api-status-dot { background: #22c55e; }
     .api-status.api-status-fail .api-status-dot { background: #ef4444; }
     .api-status.api-status-fail { color: #ef4444; border-color: rgba(239, 68, 68, .55); }

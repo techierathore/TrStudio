@@ -130,6 +130,7 @@ tr.sel td{background:var(--sel)}
 .emptystate{margin-top:18px;text-align:center;padding:34px 16px}
 .emptyicon{width:46px;height:46px;border-radius:12px;background:var(--brand-soft);color:var(--brand-ink);display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
 </style>
+<style data-note="tf-phone-layout: owner decision 13, the app shows the sidebar as a slide-out menu on a phone">@media (max-width:600px){.app{grid-template-columns:1fr}.side[data-testid="sidebar"]{display:none}}</style>
 </head>
 <body>
 <div class="app">
@@ -177,7 +178,7 @@ tr.sel td{background:var(--sel)}
     <span class="spacer"></span>
     <div class="seg"><button class="active" onclick="/* selects this option: page script */" data-testid="btn-grid">Grid</button><button onclick="/* selects this option: page script */" data-testid="btn-list">List</button></div>
   </div>
-  <div class="chips">
+  <div class="chips" data-tf-state="filtered">
     <span class="badge brand" data-testid="badge-type-videos">Type: Videos <b>✕</b></span>
     <span class="badge brand" data-testid="badge-model-hunyuan-avatar">Model: Hunyuan-Avatar <b>✕</b></span>
     <span class="badge brand" data-testid="badge-last-30-days">Last 30 days <b>✕</b></span>
@@ -185,7 +186,7 @@ tr.sel td{background:var(--sel)}
   </div>
 
   <!-- Bulk selection / export toolbar -->
-  <div class="exportbar">
+  <div class="exportbar" data-tf-state="selected">
     <span class="badge primary" data-testid="badge-3-selected">3 selected</span>
     <span class="muted">of 24 assets</span>
     <span class="spacer"></span>
@@ -205,10 +206,10 @@ tr.sel td{background:var(--sel)}
       </div>
     </div>
     <div class="card asset" data-testid="card-2">
-      <div class="thumb pa"><span class="selbox on">✓</span><span class="typechip">IMAGE 1:1</span>Kavya · portrait</div>
+      <div data-tf-sample class="thumb pa"><span class="selbox on">✓</span><span class="typechip">IMAGE 1:1</span>Kavya · portrait</div>
       <div class="meta">
         <div class="t">Kavya portrait — warm light</div>
-        <span class="badge ok" data-testid="badge-sdxl-local-gpu">SDXL · local GPU</span>
+        <span class="badge ok" data-tf-sample data-testid="badge-sdxl-local-gpu">SDXL · local GPU</span>
         <div class="acts"><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reuse-as-input-2">Reuse as input</button><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-3">Reproduce</button></div>
       </div>
     </div>
@@ -224,12 +225,12 @@ tr.sel td{background:var(--sel)}
       <div class="thumb pb"><span class="selbox"></span><span class="typechip">IMAGE 4:5</span>Festival poster</div>
       <div class="meta">
         <div class="t">Diwali poster v3 — rangoli motif</div>
-        <span class="badge" data-testid="badge-flux-1-seed-9012">FLUX.1 · seed 9012</span>
+        <span class="badge" data-tf-sample data-testid="badge-flux-1-seed-9012">FLUX.1 · seed 9012</span>
         <div class="acts"><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reuse-as-input-4">Reuse as input</button><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-5">Reproduce</button></div>
       </div>
     </div>
     <div class="card asset" data-testid="card-5">
-      <div class="thumb pv"><span class="selbox"></span><span class="typechip">AUDIO</span><span class="wave"><i style="height:10px"></i><i style="height:22px"></i><i style="height:32px"></i><i style="height:16px"></i><i style="height:28px"></i><i style="height:12px"></i><i style="height:24px"></i><i style="height:8px"></i></span><span class="durchip">0:21</span></div>
+      <div data-tf-sample class="thumb pv"><span class="selbox"></span><span class="typechip">AUDIO</span><span class="wave"><i style="height:10px"></i><i style="height:22px"></i><i style="height:32px"></i><i style="height:16px"></i><i style="height:28px"></i><i style="height:12px"></i><i style="height:24px"></i><i style="height:8px"></i></span><span class="durchip">0:21</span></div>
       <div class="meta">
         <div class="t">Ravi (Hindi) voice-over take 2</div>
         <span class="badge" data-testid="badge-indicf5-hindi">IndicF5 · Hindi</span>
@@ -248,7 +249,7 @@ tr.sel td{background:var(--sel)}
       <div class="thumb pc"><span class="selbox"></span><span class="typechip">IMAGE 1:1</span>Arjun · headshot</div>
       <div class="meta">
         <div class="t">Arjun headshot — studio grey</div>
-        <span class="badge ok" data-testid="badge-sdxl-local-gpu-2">SDXL · local GPU</span>
+        <span class="badge ok" data-tf-sample data-testid="badge-sdxl-local-gpu-2">SDXL · local GPU</span>
         <div class="acts"><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reuse-as-input-7">Reuse as input</button><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-8">Reproduce</button></div>
       </div>
     </div>
@@ -256,23 +257,23 @@ tr.sel td{background:var(--sel)}
       <div class="thumb pb"><span class="selbox"></span><span class="typechip">IMAGE 3:2</span>Mithai spread</div>
       <div class="meta">
         <div class="t">Sweet-box hero shot — Diwali</div>
-        <span class="badge" data-testid="badge-flux-1-seed-5570">FLUX.1 · seed 5570</span>
+        <span class="badge" data-tf-sample data-testid="badge-flux-1-seed-5570">FLUX.1 · seed 5570</span>
         <div class="acts"><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reuse-as-input-8">Reuse as input</button><button class="btn ghost" data-act onclick="/* shows Working then Done: page script */" data-testid="btn-reproduce-9">Reproduce</button></div>
       </div>
     </div>
     <!-- loading skeleton tiles -->
-    <div class="card asset" data-testid="card-9">
+    <div class="card asset" data-tf-state="loading" data-testid="card-9">
       <div class="thumb"><span class="muted">loading…</span></div>
       <div class="meta"><div class="skel" style="width:80%;margin-bottom:8px"></div><div class="skel" style="width:55%"></div></div>
     </div>
-    <div class="card asset" data-testid="card-10">
+    <div class="card asset" data-tf-state="loading" data-testid="card-10">
       <div class="thumb"><span class="muted">loading…</span></div>
       <div class="meta"><div class="skel" style="width:70%;margin-bottom:8px"></div><div class="skel" style="width:45%"></div></div>
     </div>
   </div>
 
   <!-- Empty state (filters too narrow) -->
-  <div class="card emptystate" data-testid="card-no-assets-match-these-filters">
+  <div class="card emptystate" data-tf-state="empty" data-testid="card-no-assets-match-these-filters">
     <div class="emptyicon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
     <h3 style="margin:0 0 4px">No assets match these filters</h3>
     <div class="muted" style="margin-bottom:14px">Try clearing a filter, or generate something new in a studio.</div>

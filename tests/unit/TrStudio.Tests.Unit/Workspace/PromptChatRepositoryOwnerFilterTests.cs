@@ -207,12 +207,13 @@ public class PromptChatRepositoryOwnerFilterTests
                 objMessages.Where(aMessage => aMessage.SessionId == aSessionId && aMessage.UserId == aUserId)
                     .OrderBy(aMessage => aMessage.CreatedUtc).ToList());
 
-        public Task TouchSessionAsync(Guid aSessionId, string aUserId, CancellationToken aCancellationToken = default)
+        public Task TouchSessionAsync(Guid aSessionId, string aUserId, int aTokens = 0, CancellationToken aCancellationToken = default)
         {
             var vSession = objSessions.SingleOrDefault(aSession => aSession.SessionId == aSessionId && aSession.UserId == aUserId);
             if (vSession is not null)
             {
                 vSession.UpdatedUtc = DateTime.UtcNow;
+                vSession.Tokens += Math.Max(0, aTokens);
             }
 
             return Task.CompletedTask;

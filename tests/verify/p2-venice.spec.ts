@@ -23,7 +23,7 @@ const ImageList = {
 const VideoList = {
   data: [
     {
-      id: 'fake-r2v', type: 'video',
+      id: 'fake-reference-to-video', type: 'video',
       model_spec: { name: 'Fake R2V', constraints: { model_type: 'image-to-video', durations: ['5s', '10s'], resolutions: ['480p'], aspect_ratios: ['16:9'] } },
     },
     {
@@ -126,7 +126,7 @@ async function pickOption(aPage: Page, aTrigger: string, aOption: string | RegEx
 
 // Adds a Venice registry row through the Add model sheet, filled from the stand-in Venice's model list.
 async function addVeniceRow(aPage: Page, aProviderModelId: string, aSave: boolean) {
-  await aPage.getByTestId('add-model').click();
+  await aPage.getByTestId('btn-add-model').click();
   await aPage.waitForTimeout(1000);
   // Seen 2026-11-14: opening the Add / Edit model sheet ends the page (Select at AdminRegistry.razor:262
   // carries data-testid, which TrBlazeUI's Select has no parameter for).
@@ -174,32 +174,34 @@ test('REQ-UI-083 Test connection shows Venice own error text, then Connected', a
 test('REQ-UI-097 Fill from Venice fills task, abilities, durations and sizes unsaved', async ({ page, request }) => {
   await openOwnerSession(page, request);
   await saveVenice(page, GoodKey);
-  await addVeniceRow(page, 'fake-r2v', false);
+  // Rows saved by earlier checks on the same test host stay in its database; count them first.
+  const vSavedBefore = await page.getByTestId('table-1').getByRole('row').filter({ hasText: 'Fake R2V' }).count();
+  await addVeniceRow(page, 'fake-reference-to-video', false);
   await expect(page.locator('#takes-reference-picture')).toBeChecked();
   await expect(page.locator('#keeps-fixed-character')).toBeChecked();
   await expect(page.getByTestId('param-values').filter({ hasText: 'duration' })).toContainText('5s, 10s');
   await expect(page.getByTestId('param-values').filter({ hasText: 'resolution' })).toContainText('480p');
   await expect(page.getByTestId('param-values').filter({ hasText: 'aspectRatio' })).toContainText('16:9');
-  // Unsaved: the table has no such row yet.
-  await expect(page.getByTestId('registry-table')).not.toContainText('Fake R2V');
+  // Unsaved: the table has no more such rows than before the fill.
+  await expect(page.getByTestId('table-1').getByRole('row').filter({ hasText: 'Fake R2V' })).toHaveCount(vSavedBefore);
 });
 
 test('REQ-UI-084 a saved Venice model row lists with a Venice badge', async ({ page, request }) => {
   await openOwnerSession(page, request);
   await saveVenice(page, GoodKey);
-  await addVeniceRow(page, 'fake-r2v', true);
-  const vRow = page.getByTestId('registry-table').getByRole('row').filter({ hasText: 'Fake R2V' });
+  await addVeniceRow(page, 'fake-reference-to-video', true);
+  const vRow = page.getByTestId('table-1').getByRole('row').filter({ hasText: 'Fake R2V' });
   await expect(vRow).toHaveCount(1, { timeout: 15000 });
-  await expect(vRow.getByTestId('badge-venice')).toBeVisible();
+  await expect(vRow.locator('[data-testid^="badge-venice"]')).toBeVisible();
 });
 
 test('REQ-FN-077 reference picture and fixed character ticks remain after reload', async ({ page, request }) => {
   await openOwnerSession(page, request);
   await saveVenice(page, GoodKey);
-  await addVeniceRow(page, 'fake-r2v', true);
+  await addVeniceRow(page, 'fake-reference-to-video', true);
   await page.reload();
   await openRegistry(page);
-  const vRow = page.getByTestId('registry-table').getByRole('row').filter({ hasText: 'Fake R2V' });
+  const vRow = page.getByTestId('table-1').getByRole('row').filter({ hasText: 'Fake R2V' });
   await vRow.getByRole('button', { name: 'Edit model' }).click();
   await noCircuitCrash(page);
   await expect(page.locator('#takes-reference-picture')).toBeChecked({ timeout: 15000 });
@@ -213,8 +215,8 @@ test('REQ-UI-085 Image studio lists an enabled Venice picture row badged Cloud �
   await page.goto('/image');
   await expect(page.getByTestId('image-studio')).toBeVisible({ timeout: 30000 });
   await settle(page);
-  await page.getByTestId('model-select').locator('button, [role=combobox]').first().click();
-  await expect(page.getByRole('option', { name: 'Fake Pic — Cloud · Venice' })).toBeVisible({ timeout: 15000 });
+  // The model list is a native select (as the mockup draws it): its options are listed, not shown.
+  await expect(page.getByTestId('field-1').locator('option', { hasText: 'Fake Pic — Cloud · Venice' })).toHaveCount(1, { timeout: 15000 });
 });
 
 test('REQ-UI-096 picking a Venice model shows the sent-to-Venice notice', async ({ page, request }) => {
@@ -224,7 +226,8 @@ test('REQ-UI-096 picking a Venice model shows the sent-to-Venice notice', async 
   await page.goto('/image');
   await expect(page.getByTestId('image-studio')).toBeVisible({ timeout: 30000 });
   await settle(page);
-  await pickOption(page, '[data-testid=model-select]', 'Fake Pic — Cloud · Venice');
+  await expect(page.getByTestId('field-1').locator('option', { hasText: 'Fake Pic — Cloud · Venice' })).toHaveCount(1, { timeout: 15000 });
+  await page.getByTestId('field-1').selectOption({ label: 'Fake Pic — Cloud · Venice' });
   await expect(page.getByTestId('alert-sent-to-venice')).toContainText('Your prompt and pictures are sent to Venice.');
   await expect(page.getByTestId('badge-cloud-venice')).toBeVisible();
 });
@@ -236,11 +239,12 @@ test('REQ-UI-086 generating with a Venice model shows Venice picture in a result
   await page.goto('/image');
   await expect(page.getByTestId('image-studio')).toBeVisible({ timeout: 30000 });
   await settle(page);
-  await pickOption(page, '[data-testid=model-select]', 'Fake Pic — Cloud · Venice');
-  const vPrompt = page.getByTestId('params-panel').locator('textarea, input[type=text]').first();
+  await expect(page.getByTestId('field-1').locator('option', { hasText: 'Fake Pic — Cloud · Venice' })).toHaveCount(1, { timeout: 15000 });
+  await page.getByTestId('field-1').selectOption({ label: 'Fake Pic — Cloud · Venice' });
+  const vPrompt = page.getByTestId('field-prompt');
   await vPrompt.fill('a small red apple');
   await vPrompt.press('Tab');
-  await page.getByTestId('generate-btn').click();
+  await page.getByTestId('btn-generate').click();
   const vTile = page.getByTestId('result-tile').filter({ has: page.getByTestId('badge-result-venice') });
   await expect(vTile.first()).toBeVisible({ timeout: 60000 });
   await expect(vTile.first().getByTestId('result-picture')).toBeVisible();
@@ -253,22 +257,24 @@ test('REQ-UI-089 Text to video lists Venice text-to-video rows badged', async ({
   await page.goto('/video');
   await expect(page.getByTestId('video-studio')).toBeVisible({ timeout: 30000 });
   await settle(page);
-  await page.getByTestId('field-video-model').locator('button, [role=combobox]').first().click();
-  await expect(page.getByRole('option', { name: 'Fake T2V — Cloud · Venice' })).toBeVisible({ timeout: 15000 });
-  await expect(page.getByRole('option', { name: /Fake R2V/ })).toHaveCount(0);
+  await page.getByTestId('btn-text-video').click();
+  const vModels = page.getByTestId('field-video-model');
+  await expect(vModels.locator('option', { hasText: 'Fake T2V — Cloud · Venice' })).toHaveCount(1, { timeout: 15000 });
+  await expect(vModels.locator('option', { hasText: /Fake R2V/ })).toHaveCount(0);
 });
 
 test('REQ-UI-091 Image to video lists only image-to-video rows', async ({ page, request }) => {
   await openOwnerSession(page, request);
   await saveVenice(page, GoodKey);
-  await addVeniceRow(page, 'fake-r2v', true);
+  await addVeniceRow(page, 'fake-reference-to-video', true);
   await openRegistry(page);
   await addVeniceRow(page, 'fake-t2v', true);
   await page.goto('/video');
   await expect(page.getByTestId('video-studio')).toBeVisible({ timeout: 30000 });
   await settle(page);
-  await page.getByTestId('mode-tabs').getByText('Image to video').click();
-  await page.getByTestId('field-video-model').locator('button, [role=combobox]').first().click();
-  await expect(page.getByRole('option', { name: 'Fake R2V — Cloud · Venice' })).toBeVisible({ timeout: 15000 });
-  await expect(page.getByRole('option', { name: /Fake T2V/ })).toHaveCount(0);
+  await page.getByTestId('btn-text-video').click();
+  await page.getByTestId('btn-image-video').click();
+  const vModels = page.getByTestId('field-video-model');
+  await expect(vModels.locator('option', { hasText: 'Fake R2V — Cloud · Venice' })).toHaveCount(1, { timeout: 15000 });
+  await expect(vModels.locator('option', { hasText: /Fake T2V/ })).toHaveCount(0);
 });

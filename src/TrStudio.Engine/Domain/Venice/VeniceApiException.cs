@@ -94,6 +94,13 @@ public class VeniceApiException : Exception
 
                     vText ??= ReadString(vRoot, "message");
                     vType ??= ReadString(vRoot, "code");
+
+                    // A 400 names the fields Venice refused under "details"; keep them, word for word.
+                    if (vText is not null && vRoot.TryGetProperty("details", out var vDetails)
+                        && vDetails.ValueKind is JsonValueKind.Object or JsonValueKind.Array)
+                    {
+                        vText = $"{vText}: {vDetails.GetRawText()}";
+                    }
                     vSuggested = ReadString(vRoot, "suggested_prompt");
                 }
             }
@@ -137,10 +144,23 @@ public class VeniceApiException : Exception
             if (aHeaders.TryGetValues(vName, out var vValues)
                 && double.TryParse(vValues.FirstOrDefault(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var vSeconds))
             {
-                // Venice states either seconds to wait or a Unix reset time; treat a large value as the latter.
-                return vSeconds > 1_000_000_000
-                    ? DateTimeOffset.FromUnixTimeSeconds((long)vSeconds) - DateTimeOffset.UtcNow
-                    : TimeSpan.FromSeconds(vSeconds);
+                // Venice states seconds to wait, a Unix reset time in seconds, or (seen live on
+                // 15 Nov 2026) a Unix reset time in milliseconds. A wait never goes below zero.
+                TimeSpan vWait;
+                if (vSeconds > 100_000_000_000)
+                {
+                    vWait = DateTimeOffset.FromUnixTimeMilliseconds((long)vSeconds) - DateTimeOffset.UtcNow;
+                }
+                else if (vSeconds > 1_000_000_000)
+                {
+                    vWait = DateTimeOffset.FromUnixTimeSeconds((long)vSeconds) - DateTimeOffset.UtcNow;
+                }
+                else
+                {
+                    vWait = TimeSpan.FromSeconds(vSeconds);
+                }
+
+                return vWait < TimeSpan.Zero ? TimeSpan.Zero : vWait;
             }
         }
 

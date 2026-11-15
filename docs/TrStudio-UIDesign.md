@@ -22,7 +22,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 ## Screens
 
-### Screen: Register
+### Screen: Register (/register)
 
 **Mockup:** [docs/mockups/register.html](./mockups/register.html) · **Role(s):** new user · **BRD:** BRD-83 · **REQ:** REQ-UI-002
 
@@ -52,7 +52,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 **Notes / interactions:** registration is a child-app call to the AppManager API; no local password store. The chosen **account type decides the role** and therefore the BRD-84 landing after sign-up — the mockup demonstrates it: Create account as Creator → `/avatar`, as Admin → the setup landing. **Empty/loading/error:** disabled until valid; `Alert` on AppManager error (e.g. email exists).
 
-### Screen: Login
+### Screen: Login (/login)
 
 **Mockup:** [docs/mockups/login.html](./mockups/login.html) · **Role(s):** all · **BRD:** BRD-57 · **REQ:** REQ-UI-001
 
@@ -81,7 +81,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 **Notes / interactions:** no local password store; the generic superadmin `admin@appmanager.local` signs in here too. **Login has no role selector** — the role comes from the AppManager account; on success the user is routed to their **role-based default landing page (BRD-84)** (Owner/Creator → `/avatar`, Operator/Admin → `/admin/ops`, or into the first-run setup gate BRD-85). The mockup's Sign-in demonstrates the owner path (redirects to `/avatar`); the role-specific landings are demonstrated on the Register screen's account-type selector. "Forgot password?" links to the Forgot-password screen. **Empty/loading/error:** disabled button until both fields valid; `Alert` on auth failure.
 
-### Screen: Forgot password
+### Screen: Forgot password (/forgot-password)
 
 **Mockup:** [docs/mockups/forgot-password.html](./mockups/forgot-password.html) · **Role(s):** all · **BRD:** BRD-57 · **REQ:** REQ-UI-003
 
@@ -105,7 +105,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 **Notes / interactions:** the reset itself is an AppManager flow (child-app API); this screen only requests it and confirms. **Empty/loading/error:** disabled until a valid email; confirmation `Alert` after submit.
 
-### Screen: Setup required (first-run gate)
+### Screen: Setup required (first-run gate) (/setup-required)
 
 **Mockup:** [docs/mockups/setup-required.html](./mockups/setup-required.html) · **Role(s):** Creator (pre-setup) · **BRD:** BRD-85 · **REQ:** REQ-UI-004
 
@@ -129,7 +129,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 **Notes / interactions:** shown to Creators whenever the BRD-85 gate fails (no enabled source or no ready registry model); admins are never sent here — they are routed into guided setup instead. **Empty/loading/error:** this screen IS the empty state; "Check again" re-evaluates and forwards to `/avatar` once setup completes.
 
-### Screen: Avatar studio
+### Screen: Avatar studio (/avatar)
 
 **Mockup:** [docs/mockups/avatar-studio.html](./mockups/avatar-studio.html) · **Role(s):** Creator/Owner · **BRD:** BRD-27..33, BRD-30, BRD-53, BRD-55, BRD-63 · **REQ:** REQ-UI-010
 
@@ -162,7 +162,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 **Notes / interactions:** the tier selector swaps the provider underneath (Fast=Mac, High=RunPod, Premium=HeyGen); cost estimate shown before render; provenance stamped on export. **Empty/loading/error:** character empty-state; render `Progress` with live eta; `Alert` on safety block.
 
-### Screen: Character library
+### Screen: Character library (/avatar/characters)
 
 **Mockup:** [docs/mockups/character-library.html](./mockups/character-library.html) · **Role(s):** Creator · **BRD:** BRD-27, BRD-55 · **REQ:** REQ-UI-011
 
@@ -190,7 +190,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 **Notes / interactions:** identity lock = reference set + seed/embedding (+ optional LoRA); realism flag scopes model + safety class. **Empty/loading/error:** empty-state CTA; skeleton cards while loading.
 
-### Screen: Image studio
+### Screen: Image studio (/image)
 
 **Mockup:** [docs/mockups/image-studio.html](./mockups/image-studio.html) · **Role(s):** Creator · **BRD:** BRD-16..21 · **REQ:** REQ-UI-020
 
@@ -227,7 +227,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 **Phase 2 (Venice, BRD-93 to BRD-117):** Venice rows in the model list, offered only where their row allows; cloud notice; Venice's reason on failure.
 
-### Screen: Voice studio
+### Screen: Voice studio (/voice)
 
 **Mockup:** [docs/mockups/voice-studio.html](./mockups/voice-studio.html) · **Role(s):** Creator · **BRD:** BRD-22..26, BRD-62 · **REQ:** REQ-UI-030
 
@@ -257,7 +257,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 **Notes / interactions:** synthetic/preset voices need no gate; real-person clone requires recorded consent (BRD-62). **Empty/loading/error:** `Alert` if consent missing; spinner while synthesizing.
 
-### Screen: Video studio
+### Screen: Video studio (/video)
 
 **Mockup:** [docs/mockups/video-studio.html](./mockups/video-studio.html) · **Role(s):** Creator · **BRD:** BRD-42..46, BRD-30 · **REQ:** REQ-UI-040
 
@@ -295,7 +295,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 **Phase 2 (Venice, BRD-93 to BRD-117):** registry-driven model list filtered by mode and character; limits follow the picked row.
 
-### Screen: Prompt studio
+### Screen: Prompt studio (/prompt-studio)
 
 **Mockup:** [docs/mockups/prompt-studio.html](./mockups/prompt-studio.html) · **Role(s):** Creator · **BRD:** BRD-88, BRD-89, BRD-90, BRD-91, BRD-92 · **REQ:** REQ-UI-081, REQ-UI-082
 
@@ -325,7 +325,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 **Notes / interactions:** the picker lists ONLY registry rows with `task: "text-chat"` (managed on Admin — Registry, REQ-FN-074); switching to a non-vision model disables the attach control with a hint rather than failing on send; sessions are owner-scoped server-side (BRD-81); "Send to Studio" pre-fills the studio prompt (BRD-92). **Empty/loading/error:** new-session empty thread shows a "what to ask" hint; assistant typing indicator while awaiting the LLM; "LLM not configured / unreachable" renders as a clean `Alert` in-thread (mirrors REQ-RAG-001 degradation).
 
-### Screen: Gallery
+### Screen: Gallery (/gallery)
 
 **Mockup:** [docs/mockups/gallery.html](./mockups/gallery.html) · **Role(s):** Creator · **BRD:** BRD-47, BRD-48, BRD-49, BRD-51, BRD-81 · **REQ:** REQ-UI-050
 
@@ -356,7 +356,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 **Phase 2 (Venice, BRD-93 to BRD-117):** provider and Venice price in the detail sheet.
 
-### Screen: Projects
+### Screen: Projects (/projects)
 
 **Mockup:** [docs/mockups/projects.html](./mockups/projects.html) · **Role(s):** Creator · **BRD:** BRD-48, BRD-81 · **REQ:** REQ-UI-051
 
@@ -385,7 +385,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 **Phase 2 (Venice, BRD-93 to BRD-117):** provider, Venice price and Venice's failure reason in Run parameters.
 
-### Screen: Comparison
+### Screen: Comparison (/compare)
 
 **Mockup:** [docs/mockups/compare.html](./mockups/compare.html) · **Role(s):** Creator · **BRD:** BRD-49 · **REQ:** REQ-UI-052
 
@@ -412,7 +412,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 **Notes / interactions:** comparison is across models/seeds/providers of the *same* creative intent (BRD-49) — same-seed different-model is the headline case; per-user scoped (BRD-81). **Empty/loading/error:** empty state ("select two assets in the Gallery") with a Go-to-Gallery CTA; per-pane skeleton while assets load.
 
-### Screen: Library
+### Screen: Library (/library)
 
 **Mockup:** [docs/mockups/library.html](./mockups/library.html) · **Role(s):** Creator · **BRD:** BRD-50, BRD-81 · **REQ:** REQ-UI-053
 
@@ -441,7 +441,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 **Notes / interactions:** "Use in Studio" routes to the studio whose composer the preset targets and pre-fills it (BRD-50); presets are per-user (BRD-81); voice presets reference Voice-studio voices — real-person cloned voices keep their consent linkage (BRD-62). **Empty/loading/error:** empty-state CTA pointing at the studio composers; skeleton cards while loading.
 
-### Screen: Account & spend
+### Screen: Account & spend (/account)
 
 **Mockup:** [docs/mockups/account.html](./mockups/account.html) · **Role(s):** Creator · **BRD:** BRD-52, BRD-58, BRD-59, BRD-75 · **REQ:** REQ-UI-060
 
@@ -464,7 +464,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 **Notes / interactions:** license/billing read-only from AppManager; spend tracks RunPod + closed APIs against the cap. **Empty/loading/error:** skeleton KPIs; empty usage message.
 
-### Screen: Admin — Hardware & setup
+### Screen: Admin — Hardware & setup (/admin/setup/hardware)
 
 **Mockup:** [docs/mockups/admin-hardware.html](./mockups/admin-hardware.html) · **Role(s):** Operator/Admin · **BRD:** BRD-8, BRD-9, BRD-10 · **REQ:** REQ-UI-070
 
@@ -487,7 +487,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 **Notes / interactions:** isolated env never collides with system Python; big models → network volume. **Empty/loading/error:** skeletons while detecting; `Alert` on install failure.
 
-### Screen: Admin — Model Sources
+### Screen: Admin — Model Sources (/admin/sources)
 
 **Mockup:** [docs/mockups/admin-sources.html](./mockups/admin-sources.html) · **Role(s):** Operator/Admin · **BRD:** BRD-82 · **REQ:** REQ-UI-074
 
@@ -514,7 +514,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 **Notes / interactions:** distinct from Provider config (which holds HeyGen/aggregator *generation* keys). Tokens stored encrypted; never logged. **Empty/loading/error:** empty-state CTA; `Alert` on unreachable source.
 
-### Screen: Admin — Model Library
+### Screen: Admin — Model Library (/admin/models)
 
 **Mockup:** [docs/mockups/admin-models.html](./mockups/admin-models.html) · **Role(s):** Operator/Admin · **BRD:** BRD-11, BRD-82 · **REQ:** REQ-UI-076
 
@@ -542,7 +542,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 **Notes / interactions:** browses/installs only from sources enabled on the **Model Sources** screen (BRD-82); downloads are resumable with size/VRAM/licence shown before install (BRD-11); big models default to the RunPod network volume. **Empty/loading/error:** no-sources empty state; per-row install progress; disk-exceeded alert.
 
-### Screen: Admin — Model & Provider Registry
+### Screen: Admin — Model & Provider Registry (/admin/registry)
 
 **Mockup:** [docs/mockups/admin-registry.html](./mockups/admin-registry.html) · **Role(s):** Operator/Admin · **BRD:** BRD-6, BRD-7, BRD-77 · **REQ:** REQ-UI-071
 
@@ -581,7 +581,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 **Phase 2:** Venice card; one row per Venice model and task; Fill from Venice.
 
-### Screen: Admin — ComfyUI import & debug
+### Screen: Admin — ComfyUI import & debug (/admin/comfy/import)
 
 **Mockup:** [docs/mockups/admin-comfy.html](./mockups/admin-comfy.html) · **Role(s):** Operator/Admin · **BRD:** BRD-34..41 · **REQ:** REQ-UI-072
 
@@ -609,7 +609,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 **Notes / interactions:** saved workflow becomes a registry model (graph hidden from end users); smoke-test before live. **Empty/loading/error:** `Alert` on parse/run errors; live WebSocket previews.
 
-### Screen: Admin — RunPod & ops
+### Screen: Admin — RunPod & ops (/admin/ops)
 
 **Mockup:** [docs/mockups/admin-ops.html](./mockups/admin-ops.html) · **Role(s):** Operator/Admin · **BRD:** BRD-12, BRD-13, BRD-14, BRD-15, BRD-75 · **REQ:** REQ-UI-073
 
@@ -634,7 +634,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 **Notes / interactions:** monthly cap spans RunPod **and** closed APIs (incl. HeyGen); per-job estimate enforced before run. **Empty/loading/error:** empty log message; skeleton KPIs.
 
-### Screen: Admin — Content policy (NSFW)
+### Screen: Admin — Content policy (NSFW) (/admin/policy)
 
 **Mockup:** [docs/mockups/admin-policy.html](./mockups/admin-policy.html) · **Role(s):** Owner (personal mode only) · **BRD:** BRD-79, BRD-80 · **REQ:** REQ-UI-075
 

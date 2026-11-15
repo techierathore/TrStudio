@@ -2,202 +2,292 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject ToastService ToastService
 @inject IAuthSession AuthSession
+@using TrBlazeUI.Components.Table
 
 @*
-    Admin Model sources (REQ-UI-074). The list of configured open-model sources (name, type, base
-    URL, status Badge, enabled Switch) with a header search and an add/edit Sheet carrying name, type,
-    base URL, write-only API token Password and an enabled Switch. A Test-connection action reports
-    reachability (ok Badge / fail Alert), and an info Alert separates open-file Sources from closed
-    generation Providers. Consumes /admin/sources with a representative fallback while unauthenticated.
+    Admin Model sources (REQ-UI-074, docs/mockups/admin-sources.html). The configured open-model
+    sources (name, type, base URL, status Badge, enabled Switch) in one card with a search box and
+    "＋ Add source"; a row click or "＋ Add source" opens the add / edit panel beside the list (name,
+    type, base URL, write-only API token, enabled Switch, Test connection / Save / Cancel). An info
+    Alert separates open-file Sources from closed generation Providers. Draws only the sources the
+    engine returns from /admin/sources; with none it says so.
 *@
 
 <PageTitle>TrStudio — Model Sources</PageTitle>
 
-<div class="stack sources-page" style="max-width:1000px">
-    <div class="flex-between">
-        <div>
-            <h1 class="page-title">Model Sources</h1>
-            <p class="page-sub" style="margin-bottom:0">Where open model files are discovered and pulled from.</p>
-        </div>
-        <div class="flex-row">
-            <Input @bind-Value="objSearch" Placeholder="Search sources…" Class="max-w-[220px]" />
-            <Button OnClick="OpenAddSheet" data-testid="add-source">
-                <LucideIcon Name="plus" Size="14" />
-                Add source
-            </Button>
-        </div>
+<div class="stack sources-page" style="max-width:1100px">
+    <div>
+        <h1 class="page-title">Model Sources</h1>
+        <p class="page-sub" style="margin-bottom:0">Where open model files are discovered and pulled from.</p>
     </div>
 
-    @if (!objLoading && FilteredSources.Count == 0)
-    {
-        <Card data-testid="sources-empty">
-            <CardContent Class="pt-6">
-                <div style="text-align:center;padding:24px 16px">
-                    <div style="display:flex;justify-content:center;margin-bottom:10px;color:var(--muted-foreground)">
-                        <LucideIcon Name="link" Size="40" />
-                    </div>
-                    <h3 class="card-h3" style="margin:0 0 4px">No model sources yet</h3>
-                    <p class="kpi-lbl" style="max-width:420px;margin:0 auto 14px">
-                        Add a Hugging Face, Civitai or custom source to browse and install open model files
-                        from the Model Library.
-                    </p>
-                    <Button OnClick="OpenAddSheet">
-                        <LucideIcon Name="plus" Size="14" />
-                        Add source
-                    </Button>
+    <div class="@(objSheetOpen ? "src-layout with-panel" : "src-layout")">
+        <div class="stack">
+            <Card Class="p-0 overflow-hidden" data-testid="card-model-sources">
+                <div class="src-head">
+                    <h3 class="card-h3" style="margin:0">Model sources</h3>
+                    <span class="grow"></span>
+                    <Input @bind-Value="objSearch" @bind-Value:after="StateHasChanged" Placeholder="Search sources…" aria-label="Search sources"
+                           Class="src-search" data-testid="field-search-sources" />
+                    <Button OnClick="OpenAddSheet" data-testid="btn-add-source">＋ Add source</Button>
                 </div>
-            </CardContent>
-        </Card>
-    }
-    else
-    {
-        <Card Class="p-0" data-testid="sources-table">
-            <div class="table-scroll">
-                <DataTable TData="SourceRow" Data="@FilteredSources" IsLoading="@objLoading" ShowToolbar="false" InitialPageSize="10">
-                    <Columns>
-                        <DataTableColumn TData="SourceRow" TValue="string" Property="@(r => r.Name)" Header="Name" Sortable>
-                            <CellTemplate Context="objRow">
-                                <div class="flex-row">
-                                    <div class="src-icon" style="@objRow.IconStyle">@objRow.IconLabel</div>
-                                    <div>
-                                        <div><b>@objRow.Name</b></div>
-                                        <div class="kpi-lbl" style="font-size:11px">@objRow.TokenHint</div>
-                                    </div>
-                                </div>
-                            </CellTemplate>
-                        </DataTableColumn>
-                        <DataTableColumn TData="SourceRow" TValue="string" Property="@(r => r.TypeLabel)" Header="Type" Sortable />
-                        <DataTableColumn TData="SourceRow" TValue="string" Property="@(r => r.BaseUrl)" Header="Base URL" />
-                        <DataTableColumn TData="SourceRow" TValue="string" Property="@(r => r.Status)" Header="Status" Sortable>
-                            <CellTemplate Context="objRow">
-                                <Badge Variant="BadgeVariant.Outline" Class="@objRow.StatusTone">
-                                    <span class="dot @objRow.StatusDot"></span> @objRow.StatusLabel
-                                </Badge>
-                            </CellTemplate>
-                        </DataTableColumn>
-                        <DataTableColumn TData="SourceRow" TValue="bool" Property="@(r => r.Enabled)" Header="Enabled">
-                            <CellTemplate Context="objRow">
-                                <div class="flex-row">
-                                    <Switch Checked="objRow.Enabled" CheckedChanged="@(aValue => ToggleEnabledAsync(objRow, aValue))"
-                                            AriaLabel="@($"Enable {objRow.Name}")" />
-                                    <Button Size="ButtonSize.IconSmall" Variant="ButtonVariant.Ghost"
-                                            AriaLabel="Edit source" OnClick="@(() => OpenEditSheet(objRow))">
-                                        <LucideIcon Name="pencil" Size="14" />
-                                    </Button>
-                                </div>
-                            </CellTemplate>
-                        </DataTableColumn>
-                    </Columns>
-                </DataTable>
-            </div>
-        </Card>
-    }
 
-    <Alert Variant="AlertVariant.Default">
-        <LucideIcon Name="info" Size="16" />
-        <AlertDescription>
-            Sources supply <b>open model files</b> for the <a href="/admin/models">Model Library</a>.
-            Closed-API generation keys (HeyGen, fal.ai) live under
-            <a href="/admin/registry">Registry &amp; Providers</a>.
-        </AlertDescription>
-    </Alert>
-</div>
-
-<Sheet @bind-Open="objSheetOpen">
-    <SheetContent Class="w-[400px] sm:w-[460px]">
-        <SheetHeader>
-            <SheetTitle>@(objIsNew ? "Add source" : "Edit source")</SheetTitle>
-            <SheetDescription>Where open model files are discovered and pulled from.</SheetDescription>
-        </SheetHeader>
-
-        <div class="flex-col" style="padding:16px 0">
-            <Field>
-                <FieldLabel>Name</FieldLabel>
-                <FieldContent>
-                    <Input @bind-Value="objEditName" Placeholder="e.g. Hugging Face" />
-                </FieldContent>
-            </Field>
-
-            <Field>
-                <FieldLabel>Type</FieldLabel>
-                <FieldContent>
-                    <Select @bind-Value="objEditKind" TValue="string" Class="w-full">
-                        <SelectTrigger><SelectValue Placeholder="Select type" /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem Value="@("HuggingFace")" Text="Hugging Face" TValue="string">Hugging Face</SelectItem>
-                            <SelectItem Value="@("Civitai")" Text="Civitai" TValue="string">Civitai</SelectItem>
-                            <SelectItem Value="@("CustomUrl")" Text="Custom URL" TValue="string">Custom URL</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </FieldContent>
-            </Field>
-
-            <Field>
-                <FieldLabel>Base URL</FieldLabel>
-                <FieldContent>
-                    <Input @bind-Value="objEditBaseUrl" Placeholder="https://" />
-                </FieldContent>
-            </Field>
-
-            <Field>
-                <FieldLabel>API token</FieldLabel>
-                <FieldContent>
-                    <Input Type="InputType.Password" @bind-Value="objEditToken" Placeholder="••••••••••••" />
-                    <FieldDescription>Encrypted at rest · write-only — a stored token is never shown after save.</FieldDescription>
-                </FieldContent>
-            </Field>
-
-            <div class="flex-row" style="align-items:flex-start">
-                <div class="flex-col grow" style="gap:2px">
-                    <span style="font-weight:600;font-size:13px">Enabled</span>
-                    <span class="kpi-lbl">Use this source for discovery &amp; pulls</span>
-                </div>
-                <Switch @bind-Checked="objEditEnabled" AriaLabel="Enabled" />
-            </div>
-
-            @if (objTestResult is not null)
-            {
-                @if (objTestOk)
+                @if (objLoading)
                 {
-                    <div data-testid="test-ok">
-                        <Badge Variant="BadgeVariant.Outline" Class="badge-ok"><span class="dot ok"></span> @objTestResult</Badge>
+                    <div class="src-empty kpi-lbl">Loading sources…</div>
+                }
+                else if (FilteredSources.Count == 0)
+                {
+                    <div class="src-empty">
+                        <h3 class="card-h3" style="margin:0 0 4px">@(objRows.Count == 0 ? "No model sources yet" : "No sources match this search")</h3>
+                        <p class="kpi-lbl" style="max-width:420px;margin:0 auto">
+                            Add a Hugging Face, Civitai or custom source to browse and install open model files
+                            from the Model Library.
+                        </p>
                     </div>
                 }
                 else
                 {
-                    <div data-testid="test-fail">
-                        <Alert Variant="AlertVariant.Danger" AccentBorder="true">
-                            <LucideIcon Name="circle-alert" Size="16" />
-                            <AlertTitle>Connection failed</AlertTitle>
-                            <AlertDescription>@objTestResult</AlertDescription>
-                        </Alert>
-                    </div>
+                    <Table data-testid="table-1">
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Name</TableHead>
+                                <TableHead Class="src-wide">Type</TableHead>
+                                <TableHead Class="src-wide">Base URL</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead Class="text-right">Enabled</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            @for (var vIndex = 0; vIndex < FilteredSources.Count; vIndex++)
+                            {
+                                var vRow = FilteredSources[vIndex];
+                                var vSuffix = vIndex == 0 ? string.Empty : $"-{vIndex + 1}";
+                                <TableRow Selected="@(objSheetOpen && vRow.SourceId == objEditId)" Class="src-row"
+                                          @onclick="@(() => OpenEditSheet(vRow))" title="@($"Edit {vRow.Name}")">
+                                    <TableCell>
+                                        <div class="flex-row" style="gap:10px">
+                                            <div class="src-icon" style="@vRow.IconStyle">@vRow.IconLabel</div>
+                                            <div>
+                                                <div><b>@vRow.Name</b></div>
+                                                <div class="kpi-lbl" style="font-size:11px">@vRow.TokenHint</div>
+                                                <div class="kpi-lbl src-narrow" style="font-size:11px">@vRow.TypeLabel · @vRow.BaseUrl</div>
+                                            </div>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell Class="src-wide">@vRow.TypeLabel</TableCell>
+                                    <TableCell Class="kpi-lbl src-wide">@vRow.BaseUrl</TableCell>
+                                    <TableCell>
+                                        <Badge Variant="BadgeVariant.Outline" Class="@vRow.StatusTone" data-testid="@($"badge-status{vSuffix}")">
+                                            <span class="dot @vRow.StatusDot"></span> @vRow.StatusLabel
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell Class="text-right">
+                                        <div class="flex-row" style="justify-content:flex-end" @onclick:stopPropagation="true">
+                                            <Switch Checked="vRow.Enabled" CheckedChanged="@(aValue => ToggleEnabledAsync(vRow, aValue))"
+                                                    AriaLabel="@($"Enable {vRow.Name}")" data-testid="@($"switch{vSuffix}")" />
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            }
+                        </TableBody>
+                    </Table>
                 }
-            }
+            </Card>
+
+            <Alert Variant="AlertVariant.Info" AccentBorder="true" data-testid="alert-info">
+                <AlertDescription>
+                    Sources supply <b>open model files</b> for the
+                    <a href="/admin/models" class="src-link" data-testid="link-model-library">Model Library</a>.
+                    Closed-API generation keys (HeyGen, fal.ai) live under
+                    <a href="/admin/registry" class="src-link" data-testid="link-registry-providers">Registry &amp; Providers</a>.
+                </AlertDescription>
+            </Alert>
         </div>
 
-        <SheetFooter>
-            <Button Variant="ButtonVariant.Outline" OnClick="TestConnectionAsync" data-testid="test-connection">Test connection</Button>
-            <Button OnClick="SaveSourceAsync" data-testid="save-source">Save</Button>
-        </SheetFooter>
-    </SheetContent>
-</Sheet>
+        @if (objSheetOpen)
+        {
+            <Card data-testid="card-add-edit-source">
+                <CardContent Class="pt-6">
+                    <div class="flex-row">
+                        <h3 class="card-h3" style="margin:0">Add / edit source</h3>
+                        <span class="grow"></span>
+                        <Badge Variant="BadgeVariant.Outline" Class="badge-brand" data-testid="badge-new">@(objIsNew ? "new" : "editing")</Badge>
+                    </div>
+
+                    <div class="flex-col" style="margin-top:12px;gap:10px">
+                        <Field>
+                            <FieldLabel>Name</FieldLabel>
+                            <FieldContent>
+                                <Input @bind-Value="objEditName" Placeholder="e.g. Hugging Face" data-testid="field-name" />
+                            </FieldContent>
+                        </Field>
+
+                        <Field>
+                            <FieldLabel>Type</FieldLabel>
+                            <FieldContent>
+                                <Select @bind-Value="objEditKind" TValue="string" Class="w-full">
+                                    <SelectTrigger data-testid="field-type"><SelectValue Placeholder="Select type" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem Value="@("HuggingFace")" Text="Hugging Face" TValue="string">Hugging Face</SelectItem>
+                                        <SelectItem Value="@("Civitai")" Text="Civitai" TValue="string">Civitai</SelectItem>
+                                        <SelectItem Value="@("CustomUrl")" Text="Custom URL" TValue="string">Custom URL</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </FieldContent>
+                        </Field>
+
+                        <Field>
+                            <FieldLabel>Base URL</FieldLabel>
+                            <FieldContent>
+                                <Input @bind-Value="objEditBaseUrl" Placeholder="https://" data-testid="field-base-url" />
+                            </FieldContent>
+                        </Field>
+
+                        <Field>
+                            <FieldLabel>API token</FieldLabel>
+                            <FieldContent>
+                                <Input Type="InputType.Password" @bind-Value="objEditToken" Placeholder="••••••••••••" data-testid="field-api-token" />
+                                <FieldDescription>Encrypted at rest · write-only.</FieldDescription>
+                            </FieldContent>
+                        </Field>
+
+                        <div class="flex-row" style="align-items:flex-start">
+                            <div class="flex-col grow" style="gap:2px">
+                                <span style="font-weight:600;font-size:13px">Enabled</span>
+                                <span class="kpi-lbl">Use this source for discovery &amp; pulls</span>
+                            </div>
+                            <Switch @bind-Checked="objEditEnabled" AriaLabel="Enabled" data-testid="switch-4" />
+                        </div>
+
+                        @if (objTestResult is not null)
+                        {
+                            @if (objTestOk)
+                            {
+                                <div data-testid="test-ok">
+                                    <Badge Variant="BadgeVariant.Outline" Class="badge-ok"><span class="dot ok"></span> @objTestResult</Badge>
+                                </div>
+                            }
+                            else
+                            {
+                                <div data-testid="test-fail">
+                                    <Alert Variant="AlertVariant.Danger" AccentBorder="true">
+                                        <LucideIcon Name="circle-alert" Size="16" />
+                                        <AlertTitle>Connection failed</AlertTitle>
+                                        <AlertDescription>@objTestResult</AlertDescription>
+                                    </Alert>
+                                </div>
+                            }
+                        }
+
+                        <div class="flex-row" style="margin-top:8px;flex-wrap:wrap">
+                            <Button Variant="ButtonVariant.Outline" OnClick="TestConnectionAsync" data-testid="btn-test-connection">Test connection</Button>
+                            <Button OnClick="SaveSourceAsync" data-testid="btn-save">Save</Button>
+                            <Button Variant="ButtonVariant.Ghost" OnClick="CloseSheet" data-testid="btn-cancel">Cancel</Button>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        }
+    </div>
+</div>
 
 @*
-    Mobile reflow (REQ-UI-074). The page shell (.stack) is a CSS grid, and grid cells default to
-    min-width:auto — so the wide Sources DataTable (Name/Type/Base URL/Status/Enabled) forced the whole
-    page past the viewport (~683px at 390px). Letting the direct cells shrink lets the table scroll
-    inside its own .table-scroll container (page never scrolls horizontally), and the header row wraps
-    so the search box + Add button drop below the title instead of pushing width. Desktop is unchanged.
+    Layout (REQ-UI-074, docs/mockups/admin-sources.html): the sources card and the info alert in one
+    column; "＋ Add source" or a row click opens the add / edit panel beside them (360px), which drops
+    below the list on narrow screens. Grid cells may shrink so the table scrolls inside its own
+    container and the page never scrolls sideways at phone width.
 *@
 <style>
-    .sources-page > * {
+    .sources-page > *, .src-layout > * {
         min-width: 0;
     }
 
+    .src-layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 14px;
+        align-items: start;
+    }
+
+    .src-layout.with-panel {
+        grid-template-columns: 1fr 360px;
+    }
+
+    .src-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        flex-wrap: wrap;
+    }
+
+    .src-head .src-search {
+        max-width: 220px;
+    }
+
+    .src-row {
+        cursor: pointer;
+    }
+
+    .src-layout th {
+        height: auto;
+        padding: 9px 10px;
+        color: var(--muted-foreground);
+        font-weight: 600;
+        font-size: 11.5px;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+        white-space: nowrap;
+    }
+
+    .src-layout td {
+        padding: 9px 10px;
+    }
+
+    .src-empty {
+        text-align: center;
+        padding: 24px 16px;
+    }
+
+    .src-link {
+        color: inherit;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    /* The status badge's green reads as green on the dark row too (the shared 16% tint fades to grey there). */
+    .dark .src-layout .badge-ok {
+        background: color-mix(in oklch, var(--alert-success) 26%, transparent);
+    }
+
+    @@media (max-width: 900px) {
+        .src-layout.with-panel {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .src-narrow {
+        display: none;
+        word-break: break-all;
+    }
+
+    /* Phone: Type and Base URL fold under the name so the status and the switch stay in view. */
+    @@media (max-width: 600px) {
+        .src-layout .src-wide {
+            display: none;
+        }
+
+        .src-layout .src-narrow {
+            display: block;
+        }
+    }
+
     @@media (max-width: 430px) {
-        .sources-page .flex-between {
-            flex-wrap: wrap;
+        .src-head .src-search {
+            max-width: none;
+            flex: 1 1 100%;
+            order: 3;
         }
     }
 </style>
@@ -265,9 +355,7 @@
             if (vResponse.IsSuccessStatusCode)
             {
                 var vSources = await vResponse.Content.ReadFromJsonAsync<List<ModelSource>>();
-                objRows = vSources is { Count: > 0 }
-                    ? vSources.Select(MapRow).ToList()
-                    : BuildRepresentativeRows();
+                objRows = (vSources ?? new List<ModelSource>()).Select(MapRow).ToList();
             }
         }
         catch
@@ -287,6 +375,12 @@
         objEditEnabled = true;
         objTestResult = null;
         objSheetOpen = true;
+    }
+
+    private void CloseSheet()
+    {
+        objSheetOpen = false;
+        objTestResult = null;
     }
 
     private void OpenEditSheet(SourceRow aRow)
@@ -487,17 +581,6 @@
         "Civitai" => ModelSourceKind.Civitai,
         "CustomUrl" => ModelSourceKind.CustomUrl,
         _ => ModelSourceKind.HuggingFace
-    };
-
-    /// <summary>
-    /// A representative sources sample shown only as an empty-state illustration when the
-    /// authenticated list call succeeds with zero rows — clearly example sources, never a 401 fallback.
-    /// </summary>
-    private static List<SourceRow> BuildRepresentativeRows() => new()
-    {
-        MapRow(new ModelSource { SourceId = Guid.NewGuid(), Name = "Hugging Face", Kind = ModelSourceKind.HuggingFace, BaseUrl = "https://huggingface.co", HasToken = true, IsEnabled = true, Status = "ok" }),
-        MapRow(new ModelSource { SourceId = Guid.NewGuid(), Name = "Civitai", Kind = ModelSourceKind.Civitai, BaseUrl = "https://civitai.com/api", HasToken = true, IsEnabled = true, Status = "ok" }),
-        MapRow(new ModelSource { SourceId = Guid.NewGuid(), Name = "Custom mirror", Kind = ModelSourceKind.CustomUrl, BaseUrl = "https://models.internal.lan", HasToken = false, IsEnabled = false, Status = "disabled" })
     };
 
     private sealed class SourceRow

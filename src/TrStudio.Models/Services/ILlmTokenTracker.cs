@@ -24,7 +24,7 @@ public interface ILlmTokenTracker
     Task RecordUsageAsync(string aUserId, string aModelId, int aInputTokens, int aOutputTokens, decimal aCostUsd, Guid? aJobId, CancellationToken aCancellationToken = default);
 
     /// <summary>
-    /// Returns the per-user session token-usage rollup.
+    /// Returns the per-user token-usage rollup for the current calendar month (UTC).
     /// </summary>
     /// <param name="aUserId">The AppManager user id.</param>
     /// <returns>The accrued token usage for the user (zeroed when none).</returns>

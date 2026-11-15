@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TrStudio — Developer Guide (Screen-by-Screen Code Map) · Index</title>
+<title>TrStudio — Developer Guide</title>
 <script>
 /* Resolve the theme BEFORE first paint (no flash). Saved choice wins; otherwise
    pick by time of day — light 07:00–19:00 local, softened dark at night. */
@@ -105,21 +105,56 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <button id="themeToggle" class="theme-toggle" title="Toggle light / dark">&#9790; Dark</button>
 <div class="layout no-toc">
   <main>
-    <h1>TrStudio — Developer Guide (Screen-by-Screen Code Map) · Index</h1>
-    <div class="subtitle">Rendered 2026-11-14 &middot; source <code>TrStudio-DevGuide.md</code></div>
+    <h1>TrStudio — Developer Guide</h1>
+    <div class="subtitle">Rendered 2026-11-15 &middot; source <code>TrStudio-DevGuide.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
       <ol>
-        <li><a href="#running-the-solution-start-here">Running the solution (start here)</a></li>
-        <li><a href="#roles-and-menu-map">Roles and menu map</a></li>
         <li><a href="#architecture-cheat-sheet">Architecture cheat-sheet</a></li>
-        <li><a href="#screen-inventory">Screen inventory</a></li>
-        <li><a href="#defects-surfaced-while-mapping-logged-to-docs-trstudio-checklist-md">Defects surfaced while mapping (logged to docs/TrStudio-Checklist.md)</a></li>
-        <li><a href="#how-to-fix-a-bug-with-this-guide">How to fix a bug with this guide</a></li>
+        <li><a href="#roles-and-menu-map">Roles and menu map</a></li>
+        <li><a href="#screen-by-screen-code-map">Screen-by-screen code map</a></li>
+        <li class="h3"><a href="#sign-in-login">Sign in (/login)</a></li>
+        <li class="h3"><a href="#create-account-register">Create account (/register)</a></li>
+        <li class="h3"><a href="#reset-password-forgot-password">Reset password (/forgot-password)</a></li>
+        <li class="h3"><a href="#setup-required-setup-required">Setup required (/setup-required)</a></li>
+        <li class="h3"><a href="#account-spend-account">Account &amp;amp; spend (/account)</a></li>
+        <li class="h3"><a href="#avatar-studio-avatar">Avatar studio (/avatar)</a></li>
+        <li class="h3"><a href="#character-library-avatar-characters">Character library (/avatar/characters)</a></li>
+        <li class="h3"><a href="#image-studio-image">Image studio (/image)</a></li>
+        <li class="h3"><a href="#voice-studio-voice">Voice studio (/voice)</a></li>
+        <li class="h3"><a href="#video-studio-video">Video studio (/video)</a></li>
+        <li class="h3"><a href="#prompt-studio-prompt-studio">Prompt studio (/prompt-studio)</a></li>
+        <li class="h3"><a href="#gallery-gallery">Gallery (/gallery)</a></li>
+        <li class="h3"><a href="#projects-projects">Projects (/projects)</a></li>
+        <li class="h3"><a href="#comparison-compare">Comparison (/compare)</a></li>
+        <li class="h3"><a href="#library-library">Library (/library)</a></li>
+        <li class="h3"><a href="#hardware-setup-admin-setup-hardware">Hardware &amp;amp; setup (/admin/setup/hardware)</a></li>
+        <li class="h3"><a href="#model-sources-admin-sources">Model sources (/admin/sources)</a></li>
+        <li class="h3"><a href="#model-library-admin-models">Model library (/admin/models)</a></li>
+        <li class="h3"><a href="#registry-providers-admin-registry">Registry &amp;amp; providers (/admin/registry)</a></li>
+        <li class="h3"><a href="#runpod-ops-admin-ops">RunPod &amp;amp; ops (/admin/ops)</a></li>
+        <li class="h3"><a href="#comfyui-import-debug-admin-comfy-import">ComfyUI import &amp;amp; debug (/admin/comfy/import)</a></li>
+        <li class="h3"><a href="#content-policy-admin-policy">Content policy (/admin/policy)</a></li>
+        <li><a href="#cross-cutting-flows">Cross-cutting flows</a></li>
+        <li class="h3"><a href="#sign-in">Sign-in</a></li>
+        <li class="h3"><a href="#configuration-logging-errors">Configuration, logging, errors</a></li>
+        <li class="h3"><a href="#how-to-fix-a-bug-with-this-guide">How to fix a bug with this guide</a></li>
+        <li><a href="#known-issues">Known issues</a></li>
       </ol>
     </div>
+<table>
+<thead><tr><th></th><th></th></tr></thead>
+<tbody>
+<tr><td>App</td><td>TrStudio</td></tr>
+<tr><td>Kind</td><td>app</td></tr>
+<tr><td>Size</td><td>Small</td></tr>
+<tr><td>Verified on</td><td>2026-11-15</td></tr>
+<tr><td>Date</td><td>2026-11-15</td></tr>
+</tbody>
+</table>
 <blockquote>
+<p>✅ <strong>Refreshed 2026-11-15 (<code>--update</code>).</strong> The 22 studio, workspace, admin and auth screens whose code changed on 15 Nov 2026 (controls now carry their mockups' <code>data-testid</code> names; pages reshaped; newest run reopened on load; test-only seed endpoints <code>POST /test/seed/&lt;mockup&gt;</code> in <code>tests/TrStudio.TestHost/Program.cs</code>) were re-read at file and line. Each entry below carries its current <strong>Call chain:</strong> line and where-to-break table. All 22 screens rendered OK at 1280 and 390 in light and dark on the test host (<code>tests/TrStudio.TestHost</code>, http://localhost:5099) on 15 Nov 2026 (evidence <code>tests/.artifacts/verify/screens.json</code>); the screenshots in <code>docs/screenshots/TrStudio/</code> were replaced with that run's 1280 light shots. The full per-control data-lineage tables stay in the role files (<a href="./TrStudio-DevGuide-Creator.html">Creator</a>, <a href="./TrStudio-DevGuide-Operator.html">Operator</a>); where their line numbers differ from the tables here, the tables here are current.</p>
 <p>✅ <strong>Runtime-verified 2026-07-05 (unified role-based app)</strong> — after the 2026-07-05 consolidation (BRD-86 / ADR-012: the two apps became ONE role-gated <code>TrStudio</code> app; <code>TrStudioAdmin</code> retired), the app was re-exercised as Creator, Operator, and Owner via the <code>/dev/session</code> seam on the single app (:5099) and, for the new <strong>MAUI desktop head</strong> (<code>TrStudio.Desktop</code>, now <code>src/TrStudio</code>), via a FlaUI native-window smoke on <strong>Windows</strong> (Mac Catalyst builds but is unverified — no Mac in this env). Live evidence: Creator → studios only + <code>/admin/*</code> → in-app AccessDenied + admin API 403; Operator → 7 management screens render, API 200; Owner → both surfaces + in-app switch. Screenshots in <code>docs/screenshots/TrStudio/</code>. The 9 FE↔API route/visual defects noted below were caught + fixed on 2026-07-04 and remain fixed through the consolidation.</p>
 <p>ℹ️ <strong>This is an <code>--update</code> realignment</strong>: the per-screen control/data-lineage bodies are unchanged by the consolidation (same endpoints/services/repos); what changed is the <strong>hosting</strong> (management screens moved <code>TrStudioAdmin/Components/Pages/</code> → <code>src/TrStudioUI/Pages/Admin/</code>), the <strong>role-gated shell</strong>, and <strong>landing</strong>.</p>
 <p>✅ <strong><code>*verify all</code> (2026-07-06) + <code>*fix-issues</code> (2026-07-07) — RESOLVED.</strong> The verify pass found 4 screens that didn't reflow at 390px (clipped controls, dead space): Character library, Prompt/script library, Account &amp; spend, Model sources. <code>*fix-issues</code> fixed all 4 with page-scoped <code>@media(≤430px)</code> single-column collapse + header wrapping + a <strong>systemic shell fix</strong> (the SidebarInset content column + <code>.table-scroll</code> now carry <code>min-width:0</code>, so wide content scrolls internally instead of inflating the layout). Re-smoked @390px: Character/Library <code>documentElement.scrollWidth==body==390</code>; Account/Sources controls all render &amp; fit (<code>documentElement.scrollWidth==390</code>, no page scrollbar) with their wide DataTable scrolling internally (a minor DataTable inner-width trait logged as TrBlazeUI <strong>TR-010</strong>). All 4 back to <code>Verified</code>. Screenshots <code>test-results/verify-ui/refix-*.png</code>.</p>
@@ -127,8 +162,33 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <blockquote>
 <p><strong>Purpose — the document a HUMAN developer uses to trace any screen, control, or number on the page down to the database, to find/fix a bug or verify AI-generated code.</strong> The BRD says <em>what</em> the app does, the Architecture <em>how the system is shaped</em>; this guide says exactly which files produce each screen — Razor page → control → client service → API endpoint → engine service → repository → SQL/table — per user role. It documents the <strong>as-built code</strong>; regenerate with <code>*devguide TrStudio</code> after code changes.</p>
 </blockquote>
-<p>This is a <strong>split</strong> guide (2 roles, 23 distinct screens → split per the devguide §3 threshold). Open the role file you need:</p>
-<h2 id="running-the-solution-start-here">Running the solution (start here)<a class="anchor-link" href="#running-the-solution-start-here">#</a></h2>
+<p>This is a <strong>split</strong> guide (2 roles, 23 distinct screens → split per the devguide §3 threshold). The call chains and where-to-break tables are below; the per-control lineage is in the role files.</p>
+<h2 id="architecture-cheat-sheet">Architecture cheat-sheet<a class="anchor-link" href="#architecture-cheat-sheet">#</a></h2>
+<div class="diagram">
+  <div class="dt">
+    <button data-zout title="Zoom out">&minus;</button>
+    <span class="zlabel">100%</span>
+    <button data-zin title="Zoom in">+</button>
+    <button data-fit title="Fit to width">Fit</button>
+    <button data-one title="Actual size">1:1</button>
+    <button data-fs title="Fullscreen">&#9166;</button>
+    <button data-pop title="Open in new tab">&#8599;</button>
+  </div>
+  <pre class="mermaid">flowchart LR
+  UI["src/TrStudioUI/Pages"] --&gt; H["HttpClient TrStudioApi + InProcessEngineHandler"] --&gt; R["src/TrStudio.InProcess/Routes"] --&gt; Svc["src/TrStudio.Engine/Domain"] --&gt; Data["Dapper repositories"] --&gt; DB[("SQLite / Postgres tables")]</pre>
+</div>
+<table>
+<thead><tr><th>Layer</th><th>Project / folder</th><th>What lives here</th></tr></thead>
+<tbody>
+<tr><td>UI (Blazor) — shared RCL (ALL screens)</td><td><code>src/TrStudioUI/</code> (RCL)</td><td><code>Pages/</code> (creator screens) + <code>Pages/Admin/</code> (the 7 management screens), <code>Navigation/AppShellNavigation.cs</code>, <code>Layout/AppSidebar.razor</code>, <code>MainLayout.razor</code>, <code>Layout/AccessDenied.razor</code>, <code>Auth/</code> contracts — hosted by the desktop app <code>src/TrStudio</code> (and, for headless checks, <code>tests/TrStudio.TestHost</code>)</td></tr>
+<tr><td>Hosts</td><td><code>src/TrStudio</code> (desktop, MAUI, Mac first) · <code>tests/TrStudio.TestHost</code> (headless checks only)</td><td>Named HttpClient <code>TrStudioApi</code> with <code>InProcessEngineHandler</code> (<code>src/TrStudio/MauiProgram.cs:67</code>, <code>tests/TrStudio.TestHost/Program.cs:69-70</code>)</td></tr>
+<tr><td>In-process routes</td><td><code>src/TrStudio.InProcess/Routes/</code></td><td><code>/api/v1/*</code> handlers dispatched by <code>InProcessEngineHandler.SendAsync</code> (<code>InProcessEngineHandler.cs:33</code>), mapped by <code>RouteMap.MapAll</code> (<code>RouteMap.cs:13</code>, called at <code>EngineHost.cs:159</code>); <code>src/TrStudioApi/Endpoints/</code> keeps the API-era copies</td></tr>
+<tr><td>App / domain services</td><td><code>src/TrStudio.Engine/Domain/&lt;Area&gt;/</code></td><td>Business logic per area</td></tr>
+<tr><td>Data access</td><td><code>src/TrStudio.Engine/Infrastructure/Data/</code> (+ per-area)</td><td><strong>Dapper repositories</strong>, parameterized SQL. <strong>No EF Core, no stored procs.</strong></td></tr>
+<tr><td>Database</td><td><code>src/TrStudioDb/Scripts/*.sql</code></td><td>DbUp migrations (e.g. <code>0621_PromptChatTokens.sql</code>)</td></tr>
+</tbody>
+</table>
+<h4 id="running-the-solution-start-here">Running the solution (start here)<a class="anchor-link" href="#running-the-solution-start-here">#</a></h4>
 <p><code>TrStudio.slnx</code> is a <strong>7-project</strong> solution in which <code>TrStudioAdmin</code> is <strong>RETIRED</strong> (merged into the unified <code>TrStudio</code> app on 2026-07-05, ADR-012; removed from the solution) and <code>TrStudio.Desktop</code> (a MAUI Blazor Hybrid desktop head, renamed <code>src/TrStudio</code> on 2026-11-14) is <strong>NEW</strong>. Running the <strong>web</strong> app means starting <strong><code>TrStudioApi</code> + <code>TrStudio</code> together</strong> (API first), with the two Docker dependency containers already up; for the <strong>desktop</strong> app, start <strong><code>TrStudioApi</code> + <code>TrStudio.Desktop</code></strong> instead. The remaining projects are libraries — do <strong>not</strong> set them to start. Full step-by-step (Visual Studio multiple-startup config + CLI) is in <strong><a href="../TrStudio-UsageGuide.html#which-projects-to-run-this-is-a-multi-project-solution">docs/TrStudio-UsageGuide.md → "Which projects to run" / "How to run"</a></strong>. Quick reference:</p>
 <table>
 <thead><tr><th>Project</th><th>Start?</th><th>URL / role</th></tr></thead>
@@ -143,9 +203,11 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <ul>
 <li><strong>Dependencies (Docker):</strong> <code>docker start WinPgVectorDb appmanager-api</code> → <code>docker ps</code> (both <strong>Up</strong>) <strong>before</strong> launching. Postgres (<code>:5432</code>) and AppManager (<code>:5101</code>) both run as containers; a down container is the usual cause of "can't connect"/"Docker" errors at startup.
 </li>
-<li><strong>Visual Studio:</strong> right-click solution → <em>Configure Startup Projects…</em> → <em>Multiple</em> → Start = <strong><code>TrStudioApi</code> + <code>TrStudio</code></strong> (API at the top), everything else = None → F5. Wait for the API console <code>Now listening on: http://localhost:5102</code>. (Phase 3, 2026-11-14: the desktop app <code>src/TrStudio</code> runs alone with the engine inside; see <a href="../TrStudio-P3-DevGuide.md">phase 3 developer guide</a>.)
+<li><strong>Visual Studio:</strong> right-click solution → <em>Configure Startup Projects…</em> → <em>Multiple</em> → Start = <strong><code>TrStudioApi</code> + <code>TrStudio</code></strong> (API at the top), everything else = None → F5. Wait for the API console <code>Now listening on: http://localhost:5102</code>. (Phase 3, 2026-11-14: the desktop app <code>src/TrStudio</code> runs alone with the engine inside; see <a href="../TrStudio-P3-DevGuide.html">phase 3 developer guide</a>.)
 </li>
 <li>Phase 3 (2026-11-14): the old <strong>web</strong> head was deleted and the desktop project took its name, <code>src/TrStudio</code> (MAUI Blazor Hybrid, Mac first). The headless checks use <code>tests/TrStudio.TestHost</code> on http://localhost:5099. The July paragraphs above describe the API-era shape.
+</li>
+<li>Test-only seed data (2026-11-15): <code>POST /test/seed/&lt;mockup&gt;</code> endpoints in <code>tests/TrStudio.TestHost/Program.cs</code> (from line 120), driven by <code>tests/verify/seed/&lt;mockup&gt;.sh</code>. Test host only; never in the desktop app.
 </li>
 </ul>
 <h2 id="roles-and-menu-map">Roles and menu map<a class="anchor-link" href="#roles-and-menu-map">#</a></h2>
@@ -166,33 +228,404 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <li><strong>Owner</strong> lands on <code>/avatar</code> (Creator surface) and switches to Management in-app via the sidebar footer (<code>AppSidebar.razor:85-89</code> → <code>AppShellNavigation.cs:63-66</code>, target <code>/admin/ops</code>). The dev-session seam resolves the authoritative role via <code>GET /api/v1/auth/me</code> (<code>DevSession.razor</code>).
 </li>
 </ul>
-<h2 id="architecture-cheat-sheet">Architecture cheat-sheet<a class="anchor-link" href="#architecture-cheat-sheet">#</a></h2>
+<p>(The landing-truth line numbers above date from 2026-07-05; the Sign in entry below carries the current <code>Login.razor</code> lines.)</p>
+<h2 id="screen-by-screen-code-map">Screen-by-screen code map<a class="anchor-link" href="#screen-by-screen-code-map">#</a></h2>
+<ul>
+<li><strong>Creator (16 screens):</strong> Login, Register, Forgot-password, Setup-required, Home, Avatar studio (flagship), Character library, Image studio, Voice studio, Video studio, <strong>Prompt studio</strong> (<code>/prompt-studio</code>), Gallery, Projects, Comparison, Library, Account — full lineage in the <a href="./TrStudio-DevGuide-Creator.html">Creator file</a>. Home was not changed on 15 Nov 2026 and keeps its Creator-file entry.
+</li>
+<li><strong>Operator / Management surface (7 screens, role-gated within the one app):</strong> Hardware &amp; Guided setup (dual route), Model sources, Model library, Registry &amp; providers, RunPod &amp; Ops, ComfyUI import &amp; debug (dual route), Content policy / NSFW — full lineage in the <a href="./TrStudio-DevGuide-Operator.html">Operator file</a>.
+</li>
+</ul>
+<h3 id="sign-in-login">Sign in (<code>/login</code>)<a class="anchor-link" href="#sign-in-login">#</a></h3>
+<p><img src="../screenshots/TrStudio/login.png" alt="Sign in" style="max-width:100%"></p>
+<p><strong>Runtime:</strong> renders — 1280 and 390, light and dark, test host, 2026-11-15 (<code>tests/.artifacts/verify/screens.json</code>).</p>
+<p><strong>Call chain:</strong> <code>Login.razor:HandleSignInAsync</code> → <code>IdentityEndpoints.LoginAsync</code> (<code>POST /api/v1/auth/login</code>) → <code>AppManagerClient.LoginAsync</code> (external AppManager <code>AuthSvc/login</code>) → <code>SetupGateService.EvaluateAsync</code> → <code>ModelSourceRepository.ListAsync</code> / <code>RegistryRepository.ListAsync</code> → <code>"ModelSource"</code>, <code>"RegistryModel"</code></p>
 <table>
-<thead><tr><th>Layer</th><th>Project / folder</th><th>What lives here</th></tr></thead>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
 <tbody>
-<tr><td>UI (Blazor) — shared RCL (ALL screens)</td><td><code>src/TrStudioUI/</code> (RCL)</td><td><code>Pages/</code> (creator screens) + <code>Pages/Admin/</code> (the 7 management screens, moved here 2026-07-05), <code>Navigation/AppShellNavigation.cs</code> (role-based surface selection), <code>Layout/AppSidebar.razor</code>, <code>MainLayout.razor</code>, <code>Layout/AccessDenied.razor</code>, <code>ThemeToggle.razor</code>, plus the <code>IAuthSession</code>/<code>AuthSessionState</code> contracts (<code>Auth/</code>) — hosted by the desktop app <code>src/TrStudio</code> (and, for headless checks, <code>tests/TrStudio.TestHost</code>)</td></tr>
-<tr><td>Hosts</td><td><code>src/TrStudio</code> (the desktop app, MAUI, Mac first) · <code>tests/TrStudio.TestHost</code> (headless checks only)</td><td>Desktop: <code>MauiAuthSession</code> + BlazorWebView over the same RCL, engine in process. The July web host (ProtectedSessionStorage auth) was deleted on 2026-11-14; the test host keeps a copy of its auth pieces</td></tr>
-<tr><td>HTTP API</td><td><code>src/TrStudioApi/Endpoints/</code> (+ <code>Hubs/</code> SignalR)</td><td>Minimal-API endpoint groups (<code>/api/v1/*</code>); the Razor pages call these via typed HttpClient services</td></tr>
-<tr><td>App / domain services</td><td><code>src/TrStudio.Engine/Domain/&lt;Area&gt;/</code></td><td>Business logic per area (Image, Avatar, Voice, Video, Characters, Jobs, Compare, Registry, Safety, Cost, RunPod, Comfy, Setup, …)</td></tr>
-<tr><td>Providers / workers</td><td><code>src/TrStudio.Engine/Providers/</code>, <code>Workers/</code></td><td><code>IGenerationProvider</code> implementations; Hangfire workers</td></tr>
-<tr><td>Data access</td><td><code>src/TrStudio.Engine/Infrastructure/Data/</code> (+ per-area)</td><td><strong>Dapper repositories</strong> — parameterized SQL literals (PascalCase identifiers quoted). <strong>No EF Core, no stored procs.</strong></td></tr>
-<tr><td>Database</td><td><code>src/TrStudioDb/Scripts/*.sql</code></td><td>DbUp migrations (tables + dev seeds); run automatically on API startup</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Auth/Login.razor:254</code></td><td><code>HandleSignInAsync</code></td><td><code>vRequest</code></td><td><code>Email</code>/<code>Password</code> typed in <code>field-email</code>/<code>field-pwd</code>, <code>RememberMe</code> from <code>remember-me</code></td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/IdentityEndpoints.cs:74</code></td><td><code>LoginAsync</code></td><td><code>vSession</code></td><td>AppManager session with <code>Token</code>, <code>UserId</code>, <code>Role</code> (401 <code>INVALID_CREDENTIALS</code> on bad password)</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Identity/AppManagerClient.cs:59</code></td><td><code>LoginAsync</code></td><td><code>vEnvelope</code></td><td>AppManager auth envelope; password sent RSA-encrypted (line 55)</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/IdentityEndpoints.cs:428</code></td><td><code>ApplySetupGateAsync</code></td><td><code>vGate</code></td><td><code>SetupComplete</code> and <code>RedirectPath</code> (role landing)</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/SetupGate/SetupGateService.cs:42</code></td><td><code>EvaluateAsync</code></td><td><code>vIsComplete</code></td><td>true only with an enabled source AND a ready registry model</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/ModelSources/ModelSourceRepository.cs:52</code></td><td><code>ListAsync</code></td><td><code>vRows</code></td><td>rows from <code>"ModelSource"</code></td></tr>
 </tbody>
 </table>
+<p><strong>Controls (data-testid):</strong> <code>card-1</code>, <code>sign-in</code>, <code>field-email</code>, <code>field-pwd</code>, <code>remember-me-row</code>, <code>remember-me</code>, <code>link-forgot-password</code>, <code>signin-btn</code>, <code>login-error</code>, <code>alert-missing-sign-in-settings</code>, <code>alert-sign-in-unreachable</code>, <code>alert-kept-sign-in-ended</code>, <code>setup-required-link</code>, <code>link-create-an-account</code>, <code>note-local-data</code></p>
+<p><strong>Calculations on this screen:</strong> <code>IsEmailValid</code> (has <code>@</code> with a <code>.</code> after it), <code>IsFormValid</code> (email valid and password not blank), <code>ResolveLanding</code> (picks the gate's <code>DefaultLandingPath</code>, else <code>/admin/ops</code> for Operator or <code>/avatar</code>). On first render, <code>OnAfterRenderAsync</code> posts <code>/api/v1/auth/resume</code> (<code>IdentityEndpoints.ResumeAsync</code>, line 181) to reopen a remembered sign-in.</p>
+<h3 id="create-account-register">Create account (<code>/register</code>)<a class="anchor-link" href="#create-account-register">#</a></h3>
+<p><img src="../screenshots/TrStudio/register.png" alt="Create account" style="max-width:100%"></p>
+<p><strong>Runtime:</strong> renders — 1280 and 390, light and dark, test host, 2026-11-15 (<code>tests/.artifacts/verify/screens.json</code>).</p>
+<p><strong>Call chain:</strong> <code>Register.razor:HandleCreateAsync</code> → <code>IdentityEndpoints.RegisterAsync</code> (<code>POST /api/v1/auth/register</code>) → <code>AppManagerClient.RegisterAsync</code> (external AppManager <code>AuthSvc/register</code>) → <code>SetupGateService.EvaluateAsync</code> → <code>RegistryRepository.ListAsync</code> → <code>"RegistryModel"</code> (and <code>"ModelSource"</code>)</p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Auth/Register.razor:179</code></td><td><code>HandleCreateAsync</code></td><td><code>vRequest</code></td><td><code>Name</code>, <code>Email</code>, <code>Password</code> from the fields; <code>AccountType</code> <code>"AdminOperator"</code> or <code>"Creator"</code></td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/IdentityEndpoints.cs:129</code></td><td><code>RegisterAsync</code></td><td><code>vSession</code></td><td>new AppManager session (Problem <code>EMAIL_EXISTS</code> for a duplicate email)</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Identity/AppManagerClient.cs:84</code></td><td><code>RegisterAsync</code></td><td><code>vEnvelope</code></td><td>AppManager auth envelope for the new user</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/SetupGate/SetupGateService.cs:42</code></td><td><code>EvaluateAsync</code></td><td><code>vIsComplete</code></td><td>false on a fresh install, so admins land on setup</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/RegistryRepository.cs:88</code></td><td><code>ListAsync</code></td><td><code>vRows</code></td><td>rows from <code>"RegistryModel"</code></td></tr>
+</tbody>
+</table>
+<p><strong>Controls (data-testid):</strong> <code>card-1</code>, <code>field-name</code>, <code>field-email</code>, <code>field-pwd</code>, <code>field-pwd2</code>, <code>account-type</code>, <code>btn-creator</code>, <code>type-creator</code>, <code>btn-admin-operator</code>, <code>type-admin</code>, <code>btn-create-account</code>, <code>create-btn</code>, <code>register-error</code>, <code>link-sign-in</code></p>
+<p><strong>Calculations on this screen:</strong> <code>IsPasswordValid</code> (12 or more characters, at least one digit and one symbol), <code>IsConfirmValid</code> (the two passwords match), <code>IsEmailValid</code>, <code>ResolveLanding</code> (the gate's path, else <code>/admin/setup/hardware</code> for admin or <code>/avatar</code>).</p>
+<h3 id="reset-password-forgot-password">Reset password (<code>/forgot-password</code>)<a class="anchor-link" href="#reset-password-forgot-password">#</a></h3>
+<p><img src="../screenshots/TrStudio/forgot-password.png" alt="Reset password" style="max-width:100%"></p>
+<p><strong>Runtime:</strong> renders — 1280 and 390, light and dark, test host, 2026-11-15 (<code>tests/.artifacts/verify/screens.json</code>).</p>
+<p><strong>Call chain:</strong> <code>ForgotPassword.razor:HandleSendAsync</code> → <code>IdentityEndpoints.ForgotPasswordAsync</code> (<code>POST /api/v1/auth/forgot-password</code>) → <code>AppManagerClient.RequestPasswordResetAsync</code> → external AppManager <code>AuthSvc/forgot-password</code> (no local table)</p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Auth/ForgotPassword.razor:98</code></td><td><code>HandleSendAsync</code></td><td><code>vRequest</code></td><td><code>Email</code> typed in <code>field-email</code></td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/IdentityEndpoints.cs:256</code></td><td><code>ForgotPasswordAsync</code></td><td><code>aRequest.Email</code></td><td>the same email; reply is the generic "If the account exists..." message</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Identity/AppManagerClient.cs:92</code></td><td><code>RequestPasswordResetAsync</code></td><td><code>vBody</code></td><td><code>{ email }</code> posted to AppManager</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Auth/ForgotPassword.razor:107</code></td><td><code>HandleSendAsync</code> (finally)</td><td><code>objSent</code></td><td><code>true</code> whatever the outcome (does not reveal whether the account exists)</td></tr>
+</tbody>
+</table>
+<p><strong>Controls (data-testid):</strong> <code>card-1</code>, <code>field-email</code>, <code>btn-send-reset-link</code>, <code>alert-ok</code>, <code>link-back-to-sign-in</code></p>
+<p><strong>Calculations on this screen:</strong> <code>IsEmailValid</code> (has <code>@</code> with a <code>.</code> after it); otherwise none.</p>
+<h3 id="setup-required-setup-required">Setup required (<code>/setup-required</code>)<a class="anchor-link" href="#setup-required-setup-required">#</a></h3>
+<p><img src="../screenshots/TrStudio/setup-required.png" alt="Setup required" style="max-width:100%"></p>
+<p><strong>Runtime:</strong> renders — 1280 and 390, light and dark, test host, 2026-11-15 (<code>tests/.artifacts/verify/screens.json</code>).</p>
+<p><strong>Call chain:</strong> <code>SetupRequired.razor:CheckAgainAsync</code> → <code>IdentityEndpoints.GetSetupGateAsync</code> (<code>GET /api/v1/setup-gate</code>) → <code>SetupGateService.EvaluateAsync</code> → <code>ModelSourceRepository.ListAsync</code> / <code>RegistryRepository.ListAsync</code> → <code>"ModelSource"</code>, <code>"RegistryModel"</code></p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Auth/SetupRequired.razor:109</code></td><td><code>OnInitializedAsync</code></td><td><code>objDataFolder</code> / <code>objStoreProblem</code></td><td>data folder from <code>GET /api/v1/local-store</code> (<code>DesktopSessionEndpoints.cs:63</code>), or the 503 <code>LOCAL_STORE_UNAVAILABLE</code> detail (<code>InProcessEngineHandler.cs:47</code>)</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Auth/SetupRequired.razor:144</code></td><td><code>CheckAgainAsync</code></td><td><code>vGate</code></td><td><code>SetupComplete</code>, <code>RedirectPath</code></td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/IdentityEndpoints.cs:313</code></td><td><code>GetSetupGateAsync</code></td><td><code>vGate</code></td><td>the gate for the caller's user id and role</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/SetupGate/SetupGateService.cs:42</code></td><td><code>EvaluateAsync</code></td><td><code>vIsComplete</code></td><td><code>vHasEnabledSource &amp;&amp; vHasReadyModel</code></td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/RegistryRepository.cs:88</code></td><td><code>ListAsync</code></td><td><code>vRows</code></td><td>rows from <code>"RegistryModel"</code>; any with <code>IsReady</code></td></tr>
+</tbody>
+</table>
+<p><strong>Controls (data-testid):</strong> <code>gate-card</code>, <code>card-trstudio-isn-t-set-up-yet</code>, <code>badge-status</code>, <code>btn-check-again</code>, <code>check-again</code>, <code>link-sign-in-as-admin</code>, <code>signin-admin</code>, <code>card-local-data</code>, <code>data-store-status</code>, <code>badge-store-ready</code>, <code>data-folder</code>, <code>data-store-problem</code></p>
+<p><strong>Calculations on this screen:</strong> <code>SetupGateService.EvaluateAsync</code> (setup is complete only with at least one enabled model source AND at least one ready registry model; <code>RoleLandingMap.GetLandingPath</code> picks the redirect).</p>
+<h3 id="account-spend-account"><a id="account--spend-account"></a>Account &amp; spend (<code>/account</code>)<a class="anchor-link" href="#account-spend-account">#</a></h3>
+<p><img src="../screenshots/TrStudio/account.png" alt="Account &amp; spend" style="max-width:100%"></p>
+<p><strong>Runtime:</strong> renders — 1280 and 390, light and dark, test host, 2026-11-15 (<code>tests/.artifacts/verify/screens.json</code>).</p>
+<p><strong>Call chain:</strong> <code>Account.razor:TryLoadAccountAsync</code> → <code>Phase9Endpoints.GetAccountAsync</code> (<code>GET /api/v1/account</code>) → <code>AccountService.GetSummaryAsync</code> → <code>SpendRepository.GetTotalsByChannelForUserSinceAsync</code> → <code>"SpendRecord"</code> (license from external AppManager <code>LicenseSvc/validate</code>)</p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Account/Account.razor:336</code></td><td><code>TryLoadAccountAsync</code></td><td><code>vSummary</code></td><td>the caller's month-to-date spend by channel plus license</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/Phase9Endpoints.cs:322</code></td><td><code>GetAccountAsync</code></td><td><code>vSummary</code></td><td>summary for the signed-in user id</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Account/AccountService.cs:52</code></td><td><code>GetSummaryAsync</code></td><td><code>vSpend.MonthToDateUsd</code></td><td>sum of all channel totals since the 1st of the month (UTC)</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Account/AccountService.cs:79</code></td><td><code>ReadLicenseAsync</code></td><td><code>vStatus</code></td><td>AppManager license status (shows <code>license-unavailable</code> if unreachable)</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/SpendRepository.cs:99</code></td><td><code>GetTotalsByChannelForUserSinceAsync</code></td><td><code>vRows</code></td><td><code>SUM("AmountUsd")</code> from <code>"SpendRecord"</code> grouped by <code>"Channel"</code> for this user</td></tr>
+</tbody>
+</table>
+<p><strong>Controls (data-testid):</strong> <code>card-profile</code>, <code>btn-manage-in-appmanager</code>, <code>card-license-tier</code>, <code>badge-pro</code>, <code>license-unavailable</code>, <code>btn-upgrade-to-studio-higher-cap</code>, <code>alert-warn</code>, <code>api-down-alert</code>, <code>card-total-vs-cap</code>, <code>progress</code>, <code>card-spend-split-runpod-vs-closed-api</code>, <code>card-runpod-gpu</code>, <code>progress-2</code>, <code>badge-status-2</code>, <code>card-closed-apis</code>, <code>progress-3</code>, <code>badge-status-3</code>, <code>badge-heygen-aggregators</code>, <code>card-recent-jobs</code>, <code>table-1</code> (plus one dynamic <code>data-testid="@($...)"</code> built in markup)</p>
+<p><strong>Calculations on this screen:</strong> <code>SpendView.FromResponse</code> (RunPod and ClosedApi totals, near-cap at 80% and over-cap), cap merge in <code>TryLoadAccountAsync</code> (lines 350-359: <code>RemainingUsd = cap - spent</code>), <code>Pct</code>/<code>PctValue</code> (whole-number % against the cap, clamped to 0-100), <code>SplitPct</code> (each channel's share of RunPod + ClosedApi), <code>CycleLabel</code> (the current calendar month), <code>UsageRow.FromLog</code> (job kind, duration and cost, <code>ActualCost</code> else <code>CostEstimate</code>).</p>
+<h3 id="avatar-studio-avatar">Avatar studio (<code>/avatar</code>)<a class="anchor-link" href="#avatar-studio-avatar">#</a></h3>
+<p><img src="../screenshots/TrStudio/avatar.png" alt="Avatar studio" style="max-width:100%"></p>
+<p><strong>Runtime:</strong> renders — 1280 and 390, light and dark, test host, 2026-11-15 (<code>tests/.artifacts/verify/screens.json</code>).</p>
+<p><strong>Call chain:</strong> <code>AvatarStudio.razor:TrySubmitRenderAsync</code> → <code>SpineEndpoints.SubmitJobAsync</code> (<code>POST /api/v1/jobs</code>) → <code>JobOrchestrator.SubmitAsync</code> → <code>JobRepository.InsertAsync</code> → <code>"GenerationJob"</code></p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Avatar/AvatarStudio.razor:676</code></td><td><code>TrySubmitRenderAsync</code></td><td><code>vRequest</code></td><td><code>ModelId</code> <code>heygen-avatar</code> or <code>musetalk-local</code>, <code>Task</code> LipSync, <code>ParamsJson</code> with characterId, voiceId, language, script</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/SpineEndpoints.cs:67</code></td><td><code>SubmitJobAsync</code></td><td><code>vUserId</code></td><td>the signed-in creator's id (null gives 401)</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Jobs/JobOrchestrator.cs:182</code></td><td><code>SubmitAsync</code></td><td><code>vJob.CostEstimate</code></td><td>the estimate checked against the spend cap before the insert</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/JobRepository.cs:36</code></td><td><code>InsertAsync</code></td><td><code>vSql</code></td><td>one <code>"GenerationJob"</code> row, then Queued at <code>JobOrchestrator.cs:184</code></td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Avatar/AvatarStudio.razor:428</code></td><td><code>OnAfterRenderAsync</code></td><td><code>vHasSession</code></td><td>loads characters, voices, projects and spend; {unresolved — this page does not reopen the newest run on load}</td></tr>
+</tbody>
+</table>
+<p><strong>Controls (data-testid):</strong> <code>btn-render</code>, <code>field-preset-voice</code>, <code>field-aspect-ratio</code>, <code>field-2</code>, <code>switch</code>, <code>script-assist</code>, <code>link-generate-voice</code>, <code>link-change-character</code>, <code>link-create-a-character</code>, <code>new-character-cta</code>, <code>btn-export-mp4</code>, <code>btn-en</code>/<code>btn-hi</code> (language), <code>btn-&lt;tier key&gt;</code> (render tier), <code>card-character</code>, <code>card-script</code>, <code>card-voice</code>, <code>card-render-tier</code>, <code>card-cost-estimate</code>, <code>card-preview</code>, <code>card-captions-export</code>, <code>progress</code>, <code>safety-alert</code>, <code>api-down-alert</code></p>
+<p><strong>Calculations on this screen:</strong> <code>WordCount</code> (line 383, words in the script); <code>EstimatedSeconds</code> (line 387, words ÷ 2.7, rounded up); <code>EstimatedTotal</code> (line 390, tier cost + $0.04 voice); <code>Headroom</code> (line 393, cap limit − used); <code>OverCap</code>/<code>NearCap</code> (lines 396/399, total over headroom, or less than $10 left).</p>
+<h3 id="character-library-avatar-characters"><a id="character-library-avatarcharacters"></a>Character library (<code>/avatar/characters</code>)<a class="anchor-link" href="#character-library-avatar-characters">#</a></h3>
+<p><img src="../screenshots/TrStudio/avatar-characters.png" alt="Character library" style="max-width:100%"></p>
+<p><strong>Runtime:</strong> renders — 1280 and 390, light and dark, test host, 2026-11-15 (<code>tests/.artifacts/verify/screens.json</code>).</p>
+<p><strong>Call chain:</strong> <code>CharacterLibrary.razor:SaveCharacterAsync</code> → <code>CharacterEndpoints.CreateCharacterAsync</code> (<code>POST /api/v1/characters</code>) → <code>CharacterService.CreateAsync</code> → <code>CharacterRepository.InsertAsync</code> → <code>"Character"</code></p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Avatar/CharacterLibrary.razor:437</code></td><td><code>SaveCharacterAsync</code></td><td><code>vSeed</code></td><td>the seed typed in <code>field-seed-lock</code>, else a random 10000–99999</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/CharacterEndpoints.cs:56</code></td><td><code>CreateCharacterAsync</code></td><td><code>vResponse</code></td><td>the new character; 201 Created, 400 on a bad request</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Characters/CharacterService.cs:64</code></td><td><code>CreateAsync</code></td><td><code>vCharacter</code></td><td>name, description, realism (0 photoreal / 1 stylized), seed, loraRef</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/CharacterRepository.cs:62</code></td><td><code>InsertAsync</code></td><td><code>InsertSql</code> (line 32)</td><td>one <code>"Character"</code> row (<code>src/TrStudioDb/Scripts/1100_Characters.sql</code>)</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Avatar/CharacterLibrary.razor:328</code></td><td><code>TryLoadCharactersAsync</code></td><td><code>vCharacters</code></td><td>the creator's characters (<code>GET /api/v1/characters</code>); no run to reopen here</td></tr>
+</tbody>
+</table>
+<p><strong>Controls (data-testid):</strong> <code>btn-new-character</code>, <code>btn-create-a-character</code>, <code>btn-create-character</code>, <code>btn-cancel</code>, <code>field-image-gen-prompt</code>, <code>field-seed-lock</code>, <code>field-lora</code>, <code>field-search-characters</code>, <code>btn-action</code>, <code>btn-action-2</code>, <code>card-new-character</code>, <code>card-reference-embeddings</code>, <code>card-&lt;n&gt;</code> (character cards), <code>badge-&lt;n&gt;-characters</code>, <code>api-down-alert</code></p>
+<p><strong>Calculations on this screen:</strong> <code>FilteredCharacters</code> (line 290, name contains the search text); <code>CountLabel</code> (line 477, "N characters"); <code>DeriveName</code> (from the opening words of the prompt).</p>
+<h3 id="image-studio-image">Image studio (<code>/image</code>)<a class="anchor-link" href="#image-studio-image">#</a></h3>
+<p><img src="../screenshots/TrStudio/image.png" alt="Image studio" style="max-width:100%"></p>
+<p><strong>Runtime:</strong> renders — 1280 and 390, light and dark, test host, 2026-11-15 (<code>tests/.artifacts/verify/screens.json</code>).</p>
+<p><strong>Call chain:</strong> <code>ImageStudio.razor:TrySubmitJobAsync</code> → <code>SpineEndpoints.SubmitJobAsync</code> (<code>POST /api/v1/jobs</code>) → <code>JobOrchestrator.SubmitAsync</code> → <code>JobRepository.InsertAsync</code> → <code>"GenerationJob"</code>; results via <code>SpineEndpoints.GetJobResultAsync</code> → <code>AssetRepository.ListByJobAsync</code> → <code>"GeneratedAsset"</code></p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Image/ImageStudio.razor:702</code></td><td><code>TrySubmitJobAsync</code></td><td><code>vRequest</code></td><td>selected model, <code>ParamsJson</code> from <code>BuildParamsJson</code> (prompt from <code>field-prompt</code>), seed from <code>field-seed</code></td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/SpineEndpoints.cs:67</code></td><td><code>SubmitJobAsync</code></td><td><code>vResponse</code></td><td><code>JobSubmitResponse</code> with the new JobId</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Jobs/JobOrchestrator.cs:182</code></td><td><code>SubmitAsync</code></td><td><code>vJob</code></td><td>one queued job after the safety and spend-cap checks</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/JobRepository.cs:36</code></td><td><code>InsertAsync</code></td><td><code>vSql</code></td><td>one <code>"GenerationJob"</code> row</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/SpineEndpoints.cs:175</code></td><td><code>GetJobResultAsync</code></td><td><code>vResponses</code></td><td>assets with run details (ProviderKind, ActualCost) from <code>WorkspaceEndpoints.WithRunInfoAsync</code></td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Image/ImageStudio.razor:459</code></td><td><code>TryReopenLastRunAsync</code></td><td><code>vNewest</code></td><td>newest image asset; its model, <code>ParamsJson</code> (line 468) and the job's tiles come back</td></tr>
+</tbody>
+</table>
+<p><strong>Controls (data-testid):</strong> <code>field-prompt</code>, <code>field-seed</code>, <code>btn-generate</code>, <code>btn-upscaling-face-restore</code>, <code>btn-export</code>, <code>field-aspect-preset</code>, <code>field-upscale-model</code>, <code>controlnet-upload</code>, <code>btn-pose</code>/<code>btn-depth</code>/<code>btn-edges</code>, <code>btn-brush</code>/<code>btn-mask</code>/<code>btn-inpaint</code>/<code>btn-erase</code>, <code>btn-2k</code>/<code>btn-4k</code>, <code>canvas</code>, <code>results-strip</code>, <code>result-tile</code>, <code>result-picture</code>, <code>progress</code>, <code>alert-over-cap</code>, <code>alert-sent-to-venice</code>, <code>alert-venice-failed</code>, <code>badge-cloud-venice</code>, <code>model-filter-note</code>, <code>field-&lt;param&gt;</code>/<code>switch-&lt;n&gt;</code> (from the model's params schema)</p>
+<p><strong>Calculations on this screen:</strong> <code>BuildParamsJson</code> (line 764, the job's parameters); <code>ImageModelFilter.Filter</code> (<code>ImageModelFilter.cs:46</code>, which models the picker shows); <code>ImageModelFilter.ScaleOf</code> (line 77, 2K→2, 4K→4); <code>FormatNumber</code> (line 877).</p>
+<h3 id="voice-studio-voice">Voice studio (<code>/voice</code>)<a class="anchor-link" href="#voice-studio-voice">#</a></h3>
+<p><img src="../screenshots/TrStudio/voice.png" alt="Voice studio" style="max-width:100%"></p>
+<p><strong>Runtime:</strong> renders — 1280 and 390, light and dark, test host, 2026-11-15 (<code>tests/.artifacts/verify/screens.json</code>).</p>
+<p><strong>Call chain:</strong> <code>VoiceStudio.razor:TrySynthesizeAsync</code> → <code>VoiceEndpoints.SynthesizeAsync</code> (<code>POST /api/v1/voice/synthesize</code>) → <code>VoiceSynthesizer.SynthesizeAsync</code> → <code>AssetRepository.InsertAsync</code> → <code>"GeneratedAsset"</code></p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Voice/VoiceStudio.razor:695</code></td><td><code>TrySynthesizeAsync</code></td><td><code>vRequest</code></td><td>Text from the script box, VoiceId of the picked voice, language, emotion, speed</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/VoiceEndpoints.cs:97</code></td><td><code>SynthesizeAsync</code></td><td><code>vResponse</code></td><td>400 when Text or VoiceId is empty; else the synthesis result</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Voice/VoiceSynthesizer.cs:101</code></td><td><code>SynthesizeAsync</code></td><td><code>vDuration</code></td><td>estimated length; <code>Degraded</code> with "model-not-installed" when synthetic fallback is off</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/AssetRepository.cs:35</code></td><td><code>InsertAsync</code></td><td>SQL</td><td>one <code>"GeneratedAsset"</code> row (audio), called from <code>VoiceSynthesizer.cs:204</code></td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/VoiceEndpoints.cs:65</code></td><td><code>ListClonesAsync</code> (new)</td><td><code>vClones</code></td><td>the creator's clones, loaded by the page at <code>VoiceStudio.razor:409</code></td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Voice/VoiceStudio.razor:427</code></td><td><code>TryReopenLastClipAsync</code></td><td><code>vNewest</code></td><td>newest narration audio; voice, language, emotion, speed and text restored, clip loaded at line 484</td></tr>
+</tbody>
+</table>
+<p><strong>Controls (data-testid):</strong> <code>btn-generate-voice</code>, <code>voice-combobox</code>, <code>voice-list</code>, <code>field-1</code>..<code>field-4</code>, <code>field-this-is-a-synthetic-char</code>, <code>icon-btn-play-sample[-n]</code>, <code>badge-gated[-n]</code>, <code>badge-selected</code>, <code>btn-pause</code>, <code>btn-export-wav</code>, <code>voice-clone-upload</code>, <code>btn-create-clone-blocked-until-c</code>, <code>voice-waveform</code>, <code>voice-progress</code>, <code>progress</code>, <code>voice-catalog-empty</code>, <code>api-down-alert</code>, <code>alert-warn</code></p>
+<p><strong>Calculations on this screen:</strong> <code>SyntheticAudio.EstimateDurationSeconds</code> (<code>SyntheticAudio.cs:22</code>, characters ÷ 14 ÷ speed clamped 0.5–2.0); <code>PlayPercent</code> (line 338, position ÷ duration × 100); <code>Clock</code> (line 562, m:ss).</p>
+<h3 id="video-studio-video">Video studio (<code>/video</code>)<a class="anchor-link" href="#video-studio-video">#</a></h3>
+<p><img src="../screenshots/TrStudio/video.png" alt="Video studio" style="max-width:100%"></p>
+<p><strong>Runtime:</strong> renders — 1280 and 390, light and dark, test host, 2026-11-15 (<code>tests/.artifacts/verify/screens.json</code>).</p>
+<p><strong>Call chain:</strong> <code>VideoStudio.razor:TrySubmitJobAsync</code> → <code>SpineEndpoints.SubmitJobAsync</code> (<code>POST /api/v1/jobs</code>) → <code>JobOrchestrator.SubmitAsync</code> → <code>JobRepository.InsertAsync</code> → <code>"GenerationJob"</code></p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Video/VideoStudio.razor:782</code></td><td><code>TrySubmitJobAsync</code></td><td><code>vRequest</code></td><td>picked model (or tier default <code>svd-local</code>/<code>wan-video</code>/<code>heygen-video</code>), TextToVideo or ImageToVideo, <code>ParamsJson</code> with prompt from <code>t2v-prompt</code>, durationSeconds, aspectRatio</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/SpineEndpoints.cs:67</code></td><td><code>SubmitJobAsync</code></td><td><code>vResponse</code></td><td>JobId; 402 when over the spend cap</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Jobs/JobOrchestrator.cs:182</code></td><td><code>SubmitAsync</code></td><td><code>vJob.CostEstimate</code></td><td>Venice price or the registry estimate</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/JobRepository.cs:36</code></td><td><code>InsertAsync</code></td><td><code>vSql</code></td><td>one <code>"GenerationJob"</code> row</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Video/VideoStudio.razor:811</code></td><td><code>TrySubmitJobAsync</code> (poll)</td><td><code>objEta</code>, <code>objVenicePrice</code></td><td>Venice progress, ETA and ActualCost/CostEstimate</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Video/VideoStudio.razor:570</code></td><td><code>LoadTimelineAsync</code></td><td><code>vAssets</code></td><td>past video assets (not lip-sync) rebuilt as timeline clips; newest narration found at line 604</td></tr>
+</tbody>
+</table>
+<p><strong>Controls (data-testid):</strong> <code>generate-btn</code>, <code>t2v-prompt</code>, <code>mode-tabs</code>, <code>btn-text-video</code>, <code>btn-image-video</code>, <code>first-frame-upload</code>, <code>last-frame-upload</code>, <code>video-model-picker</code>, <code>field-video-model</code>, <code>field-character</code>, <code>duration-select</code>, <code>duration-slider</code>, <code>resolution-select</code>, <code>motion-slider</code>, <code>tier-group</code>, <code>switch</code>, <code>switch-2</code>, <code>btn-upscale-to-1080p</code>, <code>btn-export-mp4</code>, <code>timeline-toolbar</code>, <code>timeline-preview</code>, <code>timeline-empty</code>, <code>render-progress</code>, <code>venice-progress</code>, <code>alert-sent-to-venice</code>, <code>alert-venice-failed</code>, <code>badge-cloud-venice</code></p>
+<p><strong>Calculations on this screen:</strong> <code>DurationSeconds</code> (line 446, the model's stated duration via <code>VideoModelFilter.Seconds</code>, else the slider); timeline total (line 479, sum of clip seconds); <code>FormatCost</code> (line 951); <code>VideoModelFilter.Allowed</code>/<code>KeepOrFirst</code> (allowed values per model).</p>
+<h3 id="prompt-studio-prompt-studio">Prompt studio (<code>/prompt-studio</code>)<a class="anchor-link" href="#prompt-studio-prompt-studio">#</a></h3>
+<p><img src="../screenshots/TrStudio/prompt-studio.png" alt="Prompt studio" style="max-width:100%"></p>
+<p><strong>Runtime:</strong> renders — 1280 and 390, light and dark, test host, 2026-11-15 (<code>tests/.artifacts/verify/screens.json</code>).</p>
+<p><strong>Call chain:</strong> <code>PromptStudio.razor:SendMessageAsync</code> → <code>PromptChatEndpoints.PostMessageAsync</code> (<code>POST /api/v1/prompt-chat/sessions/{id}/messages</code>) → <code>PromptChatService.CompleteAsync</code> → <code>LlmTokenTracker.RecordUsageAsync</code> + <code>PromptChatRepository.TouchSessionAsync</code> → <code>"PromptChatSession"."Tokens"</code> (<code>src/TrStudioDb/Scripts/0621_PromptChatTokens.sql:6</code>)</p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/PromptStudio/PromptStudio.razor:825</code></td><td><code>SendMessageAsync</code></td><td><code>vPost</code></td><td>200 with user and assistant turns; <code>vActive.Tokens</code> set from <code>SessionTokens</code> (line 856)</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/PromptChatEndpoints.cs:236</code></td><td><code>PostMessageAsync</code></td><td><code>vResult</code></td><td>the completion, not <code>Rejected</code></td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/PromptChatEndpoints.cs:269</code></td><td><code>PostMessageAsync</code></td><td><code>vTurnTokens</code></td><td>input + output tokens for this turn, 0 or more</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/PromptChat/PromptChatService.cs:152</code></td><td><code>CompleteAsync</code></td><td><code>vInput</code>, <code>vOutput</code></td><td>the provider's usage figures (estimated at length/4 when the model is not set up, line 338)</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Rag/LlmTokenTracker.cs:41</code></td><td><code>RecordUsageAsync</code></td><td><code>vUsage.InputTokens</code></td><td>this month's total for the user (in memory; spend ledger is written only if cost &gt; 0)</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/PromptChatRepository.cs:157</code></td><td><code>TouchSessionAsync</code></td><td><code>aTokens</code></td><td><code>UPDATE "PromptChatSession" SET "Tokens" = "Tokens" + @aTokens</code> (SQL at line 61)</td></tr>
+</tbody>
+</table>
+<p><strong>Controls (data-testid):</strong> <code>prompt-studio</code>, <code>session-rail</code>, <code>btn-new-chat</code>, <code>btn-action</code> / <code>btn-action-N</code> (delete), <code>field-llmsel</code>, <code>badge-status</code>, <code>badge-{usage}</code>, <code>badge-{session tokens}</code>, <code>chat-thread</code>, <code>typing</code>, <code>prompt-block</code>, <code>card-1</code>, <code>btn-copy{n}</code>, <code>btn-save-to-library{n}</code>, <code>btn-send-to-image-studio{n}</code>, <code>field-describe-what-you-want-t</code>, <code>icon-btn-attach-image</code>, <code>btn-send</code>, <code>api-alert</code>, <code>rename-title</code>, <code>rename-confirm</code>, <code>save-name</code>, <code>save-preset-confirm</code>.</p>
+<p><strong>Calculations on this screen:</strong> <code>PromptChatEndpoints.PostMessageAsync</code> adds the turn's tokens (input + output) to the running total, so <code>SessionTokens</code> = stored total + this turn. <code>PromptChatService.EstimateUsage</code> (<code>:330</code>) estimates tokens as length/4 and cost as tokens/1000 × the synthetic rate. <code>UsageLabel</code> (<code>PromptStudio.razor:630</code>) formats this month's total from <code>GET /api/v1/rag/usage</code>. <code>SplitReply</code> (<code>:1158</code>) splits a reply into prompt blocks and prose.</p>
+<h3 id="gallery-gallery">Gallery (<code>/gallery</code>)<a class="anchor-link" href="#gallery-gallery">#</a></h3>
+<p><img src="../screenshots/TrStudio/gallery.png" alt="Gallery" style="max-width:100%"></p>
+<p><strong>Runtime:</strong> renders — 1280 and 390, light and dark, test host, 2026-11-15 (<code>tests/.artifacts/verify/screens.json</code>).</p>
+<p><strong>Call chain:</strong> <code>Gallery.razor:TryLoadAssetsAsync</code> → <code>WorkspaceEndpoints.ListAssetsAsync</code> (<code>GET /api/v1/assets?aPageSize=100</code>) → no service (the route calls repositories directly) → <code>AssetRepository.ListAsync</code> + <code>GenerationLogRepository.ListByJobsAsync</code> → <code>"GeneratedAsset"</code>, <code>"GenerationLog"</code></p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Gallery/Gallery.razor:355</code></td><td><code>TryLoadAssetsAsync</code></td><td><code>vPage</code></td><td>the signed-in user's assets, newest first</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/WorkspaceEndpoints.cs:80</code></td><td><code>ListAssetsAsync</code></td><td><code>vPage</code></td><td>assets filtered to the owner</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/WorkspaceEndpoints.cs:343</code></td><td><code>ToAssetResponse</code></td><td><code>ParamsJson</code>, <code>ProvenanceSigned</code></td><td>the stored params; true only for a signed C2PA manifest</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/WorkspaceEndpoints.cs:310</code></td><td><code>WithRunInfoAsync</code></td><td><code>vEntries</code></td><td>the latest log row for each job (provider, cost, failure)</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/AssetRepository.cs:99</code></td><td><code>ListAsync</code></td><td><code>vSql</code></td><td><code>SELECT … FROM "GeneratedAsset" WHERE "UserId" = @aUserId … ORDER BY "CreatedUtc" DESC</code></td></tr>
+</tbody>
+</table>
+<p><strong>Controls (data-testid):</strong> <code>field-search-prompts-seeds-tit</code>, <code>field-2</code>, <code>field-3</code>, <code>field-4</code> (NativeSelect filters), <code>btn-grid</code>, <code>btn-list</code> (segmented), <code>btn-clear-all</code>, <code>badge-{chip}</code>, <code>card-{n}</code>, <code>btn-reproduce</code>, <code>btn-reproduce-{n}</code>, <code>btn-export-selected</code>, <code>link-compare</code>, <code>card-asset-details</code>, <code>badge-provider-venice</code>, <code>venice-asset-details</code>, <code>venice-price</code>, <code>btn-go-to-image-studio</code>, <code>api-down-alert</code>.</p>
+<p><strong>Calculations on this screen:</strong> <code>Matches</code> (<code>Gallery.razor:372</code>) filters by type, model and project, and does a case-insensitive text search. <code>GalleryAsset.Aspect</code> (<code>:587</code>) reduces width:height by their GCD to get the aspect ratio. <code>FromResponse</code> (<code>:509</code>) picks the "where it ran" label from the provider kind. <code>BadgeTestIds</code> (<code>:406</code>) builds the badge test names.</p>
+<h3 id="projects-projects">Projects (<code>/projects</code>)<a class="anchor-link" href="#projects-projects">#</a></h3>
+<p><img src="../screenshots/TrStudio/projects.png" alt="Projects" style="max-width:100%"></p>
+<p><strong>Runtime:</strong> renders — 1280 and 390, light and dark, test host, 2026-11-15 (<code>tests/.artifacts/verify/screens.json</code>).</p>
+<p><strong>Call chain:</strong> <code>Projects.razor:TryLoadProjectsAsync</code> / <code>LoadHistoryAsync</code> → <code>WorkspaceEndpoints.ListProjectsAsync</code> (<code>GET /api/v1/projects</code>) and <code>GetProjectHistoryAsync</code> (<code>GET /api/v1/projects/{id}/history</code>) → no service (repositories called directly) → <code>ProjectRepository.ListAsync</code> / <code>AssetRepository.ListAsync</code> → <code>"Project"</code>, <code>"GeneratedAsset"</code></p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Projects/Projects.razor:363</code></td><td><code>TryLoadProjectsAsync</code></td><td><code>vProjects</code></td><td>the user's projects, not archived</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Projects/Projects.razor:422</code></td><td><code>LoadHistoryAsync</code></td><td><code>vPage</code></td><td>the selected project's runs and their <code>TotalCount</code></td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/WorkspaceEndpoints.cs:154</code></td><td><code>ListProjectsAsync</code></td><td><code>vProjects</code></td><td>owner-scoped project rows</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/WorkspaceEndpoints.cs:289</code></td><td><code>GetProjectHistoryAsync</code></td><td><code>vHistory</code></td><td>the project's assets (404 if the project belongs to someone else, line 280)</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/ProjectRepository.cs:81</code></td><td><code>ListAsync</code></td><td><code>ListSql</code></td><td><code>SELECT … FROM "Project" WHERE "UserId" = @aUserId</code></td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/AssetRepository.cs:99</code></td><td><code>ListAsync</code></td><td><code>vSql</code></td><td>adds <code>AND "ProjectId" = @aProjectId</code></td></tr>
+</tbody>
+</table>
+<p><strong>Controls (data-testid):</strong> <code>btn-new-project</code>, <code>btn-create-a-project</code>, <code>field-search-projects</code>, <code>card-5</code>, <code>card-6</code>, <code>card-9</code>, <code>badge-18-assets</code>, <code>btn-rename</code>, <code>btn-archive</code>, <code>btn-open-in-gallery</code>, <code>btn-{tab}</code> (segmented), <code>card-generation-history</code>, <code>table-1</code>, <code>badge-free-local-9-runs</code>, <code>btn-reproduce</code> / <code>btn-reproduce-{n}</code>, <code>card-run-parameters</code>, <code>badge-run-01jzk4</code>, <code>badge-c2pa-signed</code>, <code>badge-status</code>, <code>btn-copy-params-as-json</code>, <code>btn-reproduce-with-these-params</code>, <code>badge-provider-venice</code>, <code>venice-run-details</code>, <code>venice-price</code>, <code>venice-failure-reason</code>, <code>api-down-alert</code>.</p>
+<p><strong>Calculations on this screen:</strong> <code>FreeLocalRuns</code> (<code>Projects.razor:294</code>) counts runs where <code>IsFreeLocal</code> is true (local provider, cost null or 0; <code>:596</code>). <code>HistoryHint</code> gives "Showing n of m". <code>AssetCountLabel</code> (<code>:303</code>) uses <code>TotalCount</code> from <code>?aPageSize=1</code>. <code>VeniceRunDetailsFormat.PriceLabel</code> (<code>VeniceRunDetailsFormat.cs:24</code>) formats the price.</p>
+<h3 id="comparison-compare">Comparison (<code>/compare</code>)<a class="anchor-link" href="#comparison-compare">#</a></h3>
+<p><img src="../screenshots/TrStudio/compare.png" alt="Comparison" style="max-width:100%"></p>
+<p><strong>Runtime:</strong> renders — 1280 and 390, light and dark, test host, 2026-11-15 (<code>tests/.artifacts/verify/screens.json</code>).</p>
+<p><strong>Call chain:</strong> <code>Compare.razor:RefreshComparedParamsAsync</code> → <code>Phase9Endpoints.CompareAssetsAsync</code> (<code>GET /api/v1/compare?assetIds=</code>) → <code>AssetRepository.GetAsync</code> once per id (<code>"GeneratedAsset"</code>), then <code>AssetComparer.Compare</code> (no database access)</p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Compare/Compare.razor:311</code></td><td><code>TryLoadCompareAsync</code></td><td><code>vPage</code></td><td>the user's assets that can fill a slot (<code>GET /api/v1/assets</code>)</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Compare/Compare.razor:352</code></td><td><code>RefreshComparedParamsAsync</code></td><td><code>vResponse</code></td><td>one param dictionary per picked asset, keyed into <code>objParamsByAsset</code></td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/Phase9Endpoints.cs:105</code></td><td><code>CompareAssetsAsync</code></td><td><code>vAsset</code></td><td>each owned asset (ids you don't own are skipped; fewer than 2 gives 400)</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/Phase9Endpoints.cs:117</code></td><td><code>CompareAssetsAsync</code></td><td><code>AssetComparer.Compare(vInputs)</code></td><td>a <code>CompareResponse</code></td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Compare/AssetComparer.cs:20</code></td><td><code>Compare</code></td><td><code>aAssets</code></td><td>the parsed <code>ParamsJson</code> for each asset</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/AssetRepository.cs:64</code></td><td><code>GetAsync</code></td><td><code>vSql</code></td><td><code>SELECT … FROM "GeneratedAsset" WHERE "GeneratedAssetId" = @aAssetId AND "UserId" = @aUserId</code></td></tr>
+</tbody>
+</table>
+<p><strong>Controls (data-testid):</strong> <code>compare-slotbar</code>, <code>field-{n}</code>, <code>btn-add-third</code>, <code>btn-side-by-side</code>, <code>btn-overlay</code>, <code>switch</code>, <code>switch-2</code>, <code>compare-panes</code>, <code>card-{n}</code>, <code>btn-reproduce{n}</code>, <code>btn-export{n}</code>, <code>link-open-in-gallery{n}</code>, <code>compare-diff</code>, <code>card-parameters-{N}-differ</code>, <code>table-1</code>, <code>alert-info</code>, <code>card-nothing-to-compare-yet</code>, <code>link-gallery</code>, <code>link-go-to-gallery</code>, <code>api-down-alert</code>.</p>
+<p><strong>Calculations on this screen:</strong> <code>BuildDiff</code> (<code>Compare.razor:495</code>) combines the model, provider, resolution, cost and seed rows with every param key from either asset; <code>DiffRow.Of</code> (<code>:669</code>) sets <code>Differs</code>. <code>DiffCount</code> (<code>:232</code>) counts the rows that differ. <code>CompareAsset.AspectOf</code> (<code>:652</code>) uses the GCD for the aspect ratio. <code>Humanize</code> (<code>:520</code>) turns key names into labels.</p>
+<h3 id="library-library">Library (<code>/library</code>)<a class="anchor-link" href="#library-library">#</a></h3>
+<p><img src="../screenshots/TrStudio/library.png" alt="Library" style="max-width:100%"></p>
+<p><strong>Runtime:</strong> renders — 1280 and 390, light and dark, test host, 2026-11-15 (<code>tests/.artifacts/verify/screens.json</code>).</p>
+<p><strong>Call chain:</strong> <code>Library.razor:TryLoadPresetsAsync</code> → <code>Phase9Endpoints.ListPresetsAsync</code> (<code>GET /api/v1/presets</code>) → no service (repository called directly) → <code>PresetRepository.ListAsync</code> → <code>"Preset"</code></p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Library/Library.razor:326</code></td><td><code>TryLoadPresetsAsync</code></td><td><code>vPresets</code></td><td>the user's presets</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Library/Library.razor:413</code></td><td><code>SavePresetAsync</code></td><td><code>vResponse</code></td><td>POST (new) or PUT <code>/api/v1/presets/{id}</code> (edit), 2xx</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/Phase9Endpoints.cs:134</code></td><td><code>ListPresetsAsync</code></td><td><code>vPresets</code></td><td>owner-filtered presets, optional type filter</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/PresetRepository.cs:90</code></td><td><code>ListAsync</code></td><td><code>ListSql</code></td><td><code>SELECT … FROM "Preset" WHERE "UserId" = @aUserId …</code> (SQL at line 31)</td></tr>
+</tbody>
+</table>
+<p><strong>Controls (data-testid):</strong> <code>library-toolbar</code>, <code>field-search-prompts-scripts-p</code>, <code>btn-{tab}</code> (segmented: all/prompts/scripts/styles/voices), <code>btn-new-preset</code>, <code>preset-grid</code>, per-card names from <code>ControlNames</code>, <code>card-no-presets-yet</code>, <code>link-go-to-image-studio</code>, <code>preset-editor</code>, <code>save-preset-btn</code>, <code>api-down-alert</code>.</p>
+<p><strong>Calculations on this screen:</strong> <code>Matches</code> (<code>Library.razor:353</code>) filters by type tab and does a text search over name, snippet and tags. <code>ToApiType</code> / <code>FromApiType</code> (<code>:448</code>, <code>:457</code>) map style↔style-preset and voice↔voice-preset. <code>ControlNames</code> (<code>:472</code>) cuts test names at 30 characters and adds suffixes to repeats.</p>
+<h3 id="hardware-setup-admin-setup-hardware"><a id="hardware--setup-adminsetuphardware"></a>Hardware &amp; setup (<code>/admin/setup/hardware</code>)<a class="anchor-link" href="#hardware-setup-admin-setup-hardware">#</a></h3>
+<p><img src="../screenshots/TrStudio/operator-hardware.png" alt="Hardware &amp; setup" style="max-width:100%"></p>
+<p><strong>Runtime:</strong> renders — 1280 and 390, light and dark, test host, 2026-11-15 (<code>tests/.artifacts/verify/screens.json</code>).</p>
+<p><strong>Call chain:</strong> <code>AdminHardware.razor:TryLoadSetupAsync</code> → <code>SetupEndpoints.GetSetupStatusAsync</code> (<code>GET /api/v1/admin/setup</code>) → <code>SetupService.GetStatusAsync</code> → <code>SetupStateRepository.ListAsync</code> → <code>"SetupState"</code> (hardware cards: <code>GET /api/v1/admin/capabilities</code> → <code>CapabilityDetector.DetectAsync</code>, a host probe with no table)</p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Admin/AdminHardware.razor:337</code></td><td><code>TryLoadSetupAsync</code></td><td><code>vResponse</code> / <code>objSteps</code></td><td>200 with the live setup steps; the volume row stays last</td></tr>
+<tr><td><code>src/TrStudio.InProcess/InProcessEngineHandler.cs:78</code></td><td><code>SendAsync</code> (policy loop)</td><td><code>vResult.Succeeded</code></td><td>true for an admin (<code>AdminOnly</code>, set at <code>SetupEndpoints.cs:44</code>)</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/SetupEndpoints.cs:87</code></td><td><code>GetSetupStatusAsync</code></td><td><code>vStatus</code></td><td><code>SetupStatus</code> with <code>Steps</code> filled</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Setup/SetupService.cs:43</code></td><td><code>GetStatusAsync</code></td><td><code>vSteps</code></td><td>one row per setup step</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Setup/SetupStateRepository.cs:36</code></td><td><code>ListAsync</code></td><td><code>vRows</code></td><td>rows from <code>"SetupState"</code></td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Capability/CapabilityDetector.cs:158</code></td><td><code>ApplyReadinessVerdict</code></td><td><code>IsReadyForLocalInference</code></td><td>true only if CPU, RAM and free disk all meet the minimums</td></tr>
+</tbody>
+</table>
+<p><strong>Controls (data-testid):</strong> <code>btn-re-detect</code>, <code>card-guided-setup</code>, <code>badge-2-of-4-complete</code>, <code>badge-status</code>, <code>progress</code>, <code>progress-2</code>, <code>alert-warn</code>, <code>api-down-alert</code>, <code>capabilities-unavailable</code>, <code>link-configure-volume</code>, <code>link-model-library</code>, plus per-card/step ids built at runtime (<code>@vCardTestId</code>, <code>@vBadgeTestId</code>, <code>@vButtonId</code>).</p>
+<p><strong>Calculations on this screen:</strong> <code>ApplyReport</code> (<code>AdminHardware.razor:282</code>) works out disk-used % and the low-disk flag (free &lt; 25% of total); <code>objCompletedSteps</code> (<code>:196</code>) counts the steps marked done; <code>CapabilityDetector.ApplyReadinessVerdict</code> (<code>:146</code>) sets the local-inference verdict.</p>
+<h3 id="model-sources-admin-sources"><a id="model-sources-adminsources"></a>Model sources (<code>/admin/sources</code>)<a class="anchor-link" href="#model-sources-admin-sources">#</a></h3>
+<p><img src="../screenshots/TrStudio/operator-sources.png" alt="Model sources" style="max-width:100%"></p>
+<p><strong>Runtime:</strong> renders — 1280 and 390, light and dark, test host, 2026-11-15 (<code>tests/.artifacts/verify/screens.json</code>).</p>
+<p><strong>Call chain:</strong> <code>AdminSources.razor:LoadSourcesAsync</code> → <code>SetupEndpoints.ListSourcesAsync</code> (<code>GET /api/v1/admin/sources</code>) → <code>ModelSourceRepository.ListAsync</code> → <code>"ModelSource"</code> (save: <code>Phase3Endpoints.CreateSourceAsync</code> / <code>UpdateSourceAsync</code> → <code>ModelSourceRepository.UpsertAsync</code>)</p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Admin/AdminSources.razor:354</code></td><td><code>LoadSourcesAsync</code></td><td><code>objRows</code></td><td>the configured sources, mapped to rows</td></tr>
+<tr><td><code>src/TrStudio.InProcess/InProcessEngineHandler.cs:78</code></td><td><code>SendAsync</code> (policy loop)</td><td><code>vResult.Succeeded</code></td><td>true for an admin (<code>AdminOnly</code> at <code>SetupEndpoints.cs:60</code>, <code>Phase3Endpoints.cs:38</code>)</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/SetupEndpoints.cs:261</code></td><td><code>ListSourcesAsync</code></td><td><code>vSources</code></td><td>the list (no service layer, the route calls the repo directly)</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/ModelSources/ModelSourceRepository.cs:52</code></td><td><code>ListAsync</code></td><td><code>vRows</code></td><td><code>"ModelSource"</code> rows ordered by <code>CreatedUtc</code>; tokens never returned</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Admin/AdminSources.razor:416</code></td><td><code>SaveSourceAsync</code></td><td><code>vResponse</code></td><td>POST when new, PUT <code>/{id}</code> when editing; 2xx</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/Phase3Endpoints.cs:102</code></td><td><code>CreateSourceAsync</code></td><td><code>vSource</code></td><td>upserted (<code>INSERT ... ON CONFLICT</code> at <code>ModelSourceRepository.cs:61</code>), returned with 201</td></tr>
+</tbody>
+</table>
+<p><strong>Controls (data-testid):</strong> <code>btn-add-source</code>, <code>field-search-sources</code>, <code>card-model-sources</code>, <code>table-1</code>, <code>card-add-edit-source</code>, <code>badge-new</code>, <code>field-name</code>, <code>field-type</code>, <code>field-base-url</code>, <code>field-api-token</code>, <code>switch-4</code>, <code>btn-test-connection</code>, <code>test-ok</code>, <code>test-fail</code>, <code>btn-save</code>, <code>btn-cancel</code>, <code>alert-info</code>, <code>link-model-library</code>, <code>link-registry-providers</code>, plus per-row ids built at runtime.</p>
+<p><strong>Calculations on this screen:</strong> none.</p>
+<h3 id="model-library-admin-models"><a id="model-library-adminmodels"></a>Model library (<code>/admin/models</code>)<a class="anchor-link" href="#model-library-admin-models">#</a></h3>
+<p><img src="../screenshots/TrStudio/operator-models.png" alt="Model library" style="max-width:100%"></p>
+<p><strong>Runtime:</strong> renders — 1280 and 390, light and dark, test host, 2026-11-15 (<code>tests/.artifacts/verify/screens.json</code>).</p>
+<p><strong>Call chain:</strong> <code>AdminModels.razor:InstallAsync</code> → <code>SetupEndpoints.StartInstallAsync</code> (<code>POST /api/v1/admin/installs</code>) → <code>ModelInstallService.StartInstallAsync</code> → <code>ModelInstallRepository.InsertAsync</code> → <code>"ModelInstall"</code> (the queue reloads through <code>LoadQueueAsync</code> → <code>GET /api/v1/admin/installs</code> → <code>ModelInstallService.ListAsync</code>)</p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Admin/AdminModels.razor:517</code></td><td><code>InstallAsync</code></td><td><code>vRequest</code></td><td><code>ModelName</code> + <code>SourceId</code> of an enabled source; 2xx, then the queue reloads</td></tr>
+<tr><td><code>src/TrStudio.InProcess/InProcessEngineHandler.cs:78</code></td><td><code>SendAsync</code> (policy loop)</td><td><code>vResult.Succeeded</code></td><td>true for an admin (<code>AdminOnly</code> at <code>SetupEndpoints.cs:52</code>)</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/SetupEndpoints.cs:180</code></td><td><code>StartInstallAsync</code></td><td><code>vItem</code></td><td>new install item; 400 if no model name, 404 if the source is unknown</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Install/ModelInstallService.cs:85</code></td><td><code>StartInstallAsync</code></td><td><code>vItem</code></td><td>queued install handed to the repo</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Install/ModelInstallRepository.cs:36</code></td><td><code>InsertAsync</code></td><td>SQL</td><td><code>INSERT INTO "ModelInstall"</code></td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Admin/AdminModels.razor:419</code></td><td><code>LoadQueueAsync</code></td><td><code>objQueue</code></td><td>cancelled items hidden; active first, then newest</td></tr>
+</tbody>
+</table>
+<p><strong>Controls (data-testid):</strong> <code>btn-all</code>, <code>btn-image</code>, <code>btn-video</code>, <code>btn-voice</code>, <code>btn-avatar</code> (segmented task filter), <code>field-search-models-e-g-avatar</code>, <code>field-2</code>, <code>table-1</code>, <code>btn-prev</code>, <code>btn-next</code>, <code>card-install-queue</code>, <code>badge-2-active</code>, <code>card-destination</code>, <code>card-1</code>, <code>badge-amber</code>, <code>badge-status</code>, <code>alert-info</code>, <code>alert-warn</code>, <code>no-sources-empty</code>, <code>link-hardware-setup</code>, <code>link-manage-sources</code>, <code>link-registry-providers</code>, plus row/action/state/license ids built at runtime.</p>
+<p><strong>Calculations on this screen:</strong> <code>FilteredCatalog</code> (<code>AdminModels.razor:305</code>) filters the hand-picked catalog by enabled source, search text, task and source; <code>TotalPages</code> (<code>:317</code>) is the page count; the destination rule (<code>:493</code>) sends models over <code>NetworkVolumeThresholdGb</code> (10 GB, <code>:298</code>) to the RunPod volume.</p>
+<h3 id="registry-providers-admin-registry"><a id="registry--providers-adminregistry"></a>Registry &amp; providers (<code>/admin/registry</code>)<a class="anchor-link" href="#registry-providers-admin-registry">#</a></h3>
+<p><img src="../screenshots/TrStudio/operator-registry.png" alt="Registry &amp; providers" style="max-width:100%"></p>
+<p><strong>Runtime:</strong> renders — 1280 and 390, light and dark, test host, 2026-11-15 (<code>tests/.artifacts/verify/screens.json</code>).</p>
+<p><strong>Call chain:</strong> <code>AdminRegistry.razor:TryLoadRegistryAsync</code> → <code>RegistryEndpoints.ListRegistryAsync</code> (<code>GET /api/v1/admin/registry</code>) → <code>RegistryRepository.ListAsync</code> → <code>"RegistryModel"</code>; keys: <code>RegistryEndpoints.ListProviderKeysAsync</code> (<code>GET /api/v1/admin/providers/keys</code>) → <code>AesGcmKeyStore.ListMaskedAsync</code> → <code>ProviderKeyRepository.ListAsync</code> → <code>"ProviderKey"</code></p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Admin/AdminRegistry.razor:539</code></td><td><code>TryLoadRegistryAsync</code></td><td><code>objRows</code> / <code>objModelsById</code></td><td>every registry model (enabled and disabled)</td></tr>
+<tr><td><code>src/TrStudio.InProcess/InProcessEngineHandler.cs:78</code></td><td><code>SendAsync</code> (policy loop)</td><td><code>vResult.Succeeded</code></td><td>true for an admin (<code>AdminOnly</code> at <code>RegistryEndpoints.cs:45</code> and <code>:58</code>)</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/RegistryEndpoints.cs:88</code></td><td><code>ListRegistryAsync</code></td><td><code>vModels</code></td><td><code>ListAsync(false, ...)</code>, so disabled rows are included</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/RegistryRepository.cs:83</code></td><td><code>ListAsync</code></td><td><code>vSql</code></td><td><code>SELECT ... FROM "RegistryModel"</code></td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/RegistryEndpoints.cs:149</code></td><td><code>ListProviderKeysAsync</code></td><td><code>vKeys</code></td><td>masked keys, never plaintext (<code>AesGcmKeyStore.cs:68</code>)</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/RegistryEndpoints.cs:114</code></td><td><code>UpsertRegistryModelAsync</code></td><td><code>aRequest.Model</code></td><td>saved by <code>SaveModelAsync</code> (<code>AdminRegistry.razor:889</code>); route id must match body id</td></tr>
+</tbody>
+</table>
+<p><strong>Controls (data-testid):</strong> <code>field-search-registry</code>, <code>btn-add-model</code>, <code>table-1</code>, <code>btn-row</code>, <code>card-edit-model</code>, <code>field-display-name</code>, <code>field-task</code>, <code>field-tier</code>, <code>field-provider</code>, <code>field-provider-model-id</code>, <code>btn-fill-from-venice</code>, <code>venice-model-fields</code>, <code>venice-fill-error</code>, <code>model-abilities</code>, <code>field-takes-reference-picture</code>, <code>field-keeps-fixed-character</code>, <code>param-values</code>, <code>field-error</code>, <code>btn-save</code>, <code>btn-cancel</code>, <code>card-provider-keys</code>, <code>key-protection-note</code>, <code>field-runpod-endpoint</code>, <code>provider-text-model</code>, <code>field-text-model</code>, <code>textchat-endpoint</code>, <code>textchat-key</code>, <code>textchat-model</code>, <code>textchat-vision</code>, <code>provider-venice</code>, <code>badge-cloud-venice</code>, <code>switch-venice</code>, <code>field-venice-address</code>, <code>field-venice-key</code>, <code>btn-test-connection</code>, <code>badge-connected</code>, <code>venice-error</code>, <code>alert-info</code>, <code>card-1</code>, plus tier/safety/provider/switch ids built at runtime.</p>
+<p><strong>Calculations on this screen:</strong> none.</p>
+<h3 id="runpod-ops-admin-ops"><a id="runpod--ops-adminops"></a>RunPod &amp; ops (<code>/admin/ops</code>)<a class="anchor-link" href="#runpod-ops-admin-ops">#</a></h3>
+<p><img src="../screenshots/TrStudio/operator-ops-landing.png" alt="RunPod &amp; ops" style="max-width:100%"></p>
+<p><strong>Runtime:</strong> renders — 1280 and 390, light and dark, test host, 2026-11-15 (<code>tests/.artifacts/verify/screens.json</code>).</p>
+<p><strong>Call chain:</strong> <code>AdminOps.razor:LoadAsync</code> → <code>Phase9Endpoints.GetOpsDashboardAsync</code> (<code>GET /api/v1/admin/ops</code>) → <code>OpsDashboardService.GetDashboardAsync</code> → <code>GenerationLogRepository.GetOutcomeCountsSinceAsync</code> → <code>"GenerationLog"</code> (plus <code>SpendLedger.GetSummaryAsync</code> → <code>"SpendRecord"</code>)</p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Admin/AdminOps.razor:352</code></td><td><code>LoadAsync</code></td><td><code>objOps</code> / <code>objSpend</code></td><td>live dashboard; a failure sets <code>objApiDown</code></td></tr>
+<tr><td><code>src/TrStudio.InProcess/InProcessEngineHandler.cs:78</code></td><td><code>SendAsync</code> (policy loop)</td><td><code>vResult.Succeeded</code></td><td>true for an admin (<code>AdminOnly</code> at <code>Phase9Endpoints.cs:40</code>)</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/Phase9Endpoints.cs:78</code></td><td><code>GetOpsDashboardAsync</code></td><td>result</td><td><code>OpsDashboardResponse</code></td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Ops/OpsDashboardService.cs:46</code></td><td><code>GetDashboardAsync</code></td><td><code>vOutcomes</code>, <code>vSpend</code>, <code>vHealthy</code></td><td>outcome counts for the rolling window; healthy if a heartbeat is recent</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/GenerationLogRepository.cs:124</code></td><td><code>GetOutcomeCountsSinceAsync</code></td><td>SQL</td><td><code>COUNT(*) ... FROM "GenerationLog" ... GROUP BY "Outcome"</code></td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Cost/SpendLedger.cs:64</code></td><td><code>GetSummaryAsync</code></td><td><code>vByChannel</code></td><td>month-to-date totals by channel</td></tr>
+</tbody>
+</table>
+<p><strong>Controls (data-testid):</strong> <code>card-runpod-control</code>, <code>btn-start-endpoint</code>, <code>btn-stop</code>, <code>switch</code>, <code>runpod-unconfigured</code>, <code>badge-starting</code>, <code>card-worker-health</code>, <code>card-generation-log</code>, <code>field-filter-by-user-model</code>, <code>table-1</code>, <code>card-1</code>, <code>card-2</code>, <code>card-3</code>, <code>progress</code>, <code>progress-2</code>, <code>progress-3</code>, <code>badge-status</code>, <code>badge-status-2</code>, <code>badge-0-8</code>, <code>badge-2-jobs</code>, <code>badge-88</code>, <code>badge-billing-cycle-jun-1-jun</code>, <code>badge-heygen-fal-ai</code>, <code>badge-this-cycle</code>, <code>alert-info</code>, <code>alert-warn</code>, <code>api-down-alert</code>, plus per-row <code>@objRow.OutcomeTestId</code> / <code>@objRow.ReproduceTestId</code>.</p>
+<p><strong>Calculations on this screen:</strong> <code>OpsDashboardService.BuildErrorRate</code> (<code>:81</code>) gives the error rate as (failed + blocked) / total over the window; <code>GetDashboardAsync</code> adds up the enqueued and processing counts (<code>:66-67</code>); <code>AdminOps.MapSpend</code> (<code>AdminOps.razor:420</code>) splits spend into RunPod and closed-API channel totals against the monthly cap.</p>
+<h3 id="comfyui-import-debug-admin-comfy-import"><a id="comfyui-import--debug-admincomfyimport"></a>ComfyUI import &amp; debug (<code>/admin/comfy/import</code>)<a class="anchor-link" href="#comfyui-import-debug-admin-comfy-import">#</a></h3>
+<p><img src="../screenshots/TrStudio/operator-comfy.png" alt="ComfyUI import &amp; debug" style="max-width:100%"></p>
+<p><strong>Runtime:</strong> renders — 1280 and 390, light and dark, test host, 2026-11-15 (<code>tests/.artifacts/verify/screens.json</code>).</p>
+<p><strong>Call chain:</strong> <code>AdminComfy.razor:SaveAsModelAsync</code> → <code>ComfyEndpoints.SaveAsModelAsync</code> (<code>POST /api/v1/admin/comfy/save-as-model</code>, body <code>ComfySaveAsModelRequest</code>) → <code>ComfyPipelineService.SaveAsModelAsync</code> → <code>ComfyWorkflowRepository.InsertWorkflowAsync</code> / <code>InsertVersionAsync</code> + <code>RegistryRepository.UpsertAsync</code> → <code>"ComfyWorkflow"</code>, <code>"ComfyWorkflowVersion"</code>, <code>"RegistryModel"</code></p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Admin/AdminComfy.razor:772</code></td><td><code>SaveAsModelAsync</code></td><td><code>vRequest</code></td><td><code>ModelId</code> slug (<code>:753</code>), name, workflow JSON, mappings; a non-2xx shows the error body</td></tr>
+<tr><td><code>src/TrStudio.InProcess/InProcessEngineHandler.cs:78</code></td><td><code>SendAsync</code> (policy loop)</td><td><code>vResult.Succeeded</code></td><td>true for an admin (<code>AdminOnly</code> at <code>ComfyEndpoints.cs:36</code>)</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/ComfyEndpoints.cs:126</code></td><td><code>SaveAsModelAsync</code></td><td><code>vModel</code></td><td>registered model; 401 if there is no user, 400 <code>COMFY_SAVE_ERROR</code> on an <code>ArgumentException</code></td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Comfy/ComfyPipelineService.cs:133</code></td><td><code>SaveAsModelAsync</code></td><td><code>vWorkflow</code>, <code>vVersion</code></td><td>workflow inserted, then version (<code>:145</code>)</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Comfy/ComfyPipelineService.cs:164</code></td><td><code>SaveAsModelAsync</code></td><td><code>vModel</code></td><td>registry row upserted</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/ComfyWorkflowRepository.cs:36</code></td><td><code>InsertWorkflowAsync</code></td><td>SQL</td><td><code>INSERT INTO "ComfyWorkflow"</code> (version at <code>:77</code>)</td></tr>
+</tbody>
+</table>
+<p><strong>Controls (data-testid):</strong> <code>card-import-workflow</code>, <code>btn-parse-workflow</code>, <code>card-input-registry-param-mapping</code>, <code>table-1</code>, <code>badge-4-inputs</code>, <code>card-run-debug</code>, <code>btn-run</code>, <code>progress</code>, <code>card-exact-json-sent</code>, <code>btn-install-node</code>, <code>card-save-version</code>, <code>field-model-name-e-g-sdxl-port</code>, <code>btn-save-as-model</code>, <code>badge-known-good</code>, <code>badge-workflow-sdxl-portrait-a</code>, <code>field-1</code>, <code>field-15</code>, <code>field-error</code>, <code>alert-info</code>, <code>alert-warn</code>, plus mapping-row ids built at runtime.</p>
+<p><strong>Calculations on this screen:</strong> <code>ApplyDebug</code> (<code>AdminComfy.razor:642</code>) gives run progress as the share of nodes in state ok; <code>ApplyLocalProgression</code> (<code>:679</code>) gives progress up to the first missing dependency; <code>CanSave</code> (<code>:296</code>) needs a known-good run, no missing dependency and a model name.</p>
+<h3 id="content-policy-admin-policy"><a id="content-policy-adminpolicy"></a>Content policy (<code>/admin/policy</code>)<a class="anchor-link" href="#content-policy-admin-policy">#</a></h3>
+<p><img src="../screenshots/TrStudio/operator-policy.png" alt="Content policy" style="max-width:100%"></p>
+<p><strong>Runtime:</strong> renders — 1280 and 390, light and dark, test host, 2026-11-15 (<code>tests/.artifacts/verify/screens.json</code>).</p>
+<p><strong>Call chain:</strong> <code>AdminPolicy.razor:TryLoadPolicyAsync</code> → <code>SafetyEndpoints.GetNsfwPolicyAsync</code> (<code>GET /api/v1/admin/policy/nsfw</code>) → <code>SafetyPolicyService.GetNsfwPolicyAsync</code> → <code>SafetyPolicyRepository.GetAsync</code> → <code>"SafetyPolicy"</code> (save: <code>PersistAsync</code> → <code>PUT</code> → <code>SetNsfwEnabledAsync</code> → <code>UpsertAsync</code>)</p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Admin/AdminPolicy.razor:201</code></td><td><code>TryLoadPolicyAsync</code></td><td><code>objNsfwEnabled</code> (<code>:227</code>)</td><td>the effective NSFW flag; off by default</td></tr>
+<tr><td><code>src/TrStudio.InProcess/InProcessEngineHandler.cs:78</code></td><td><code>SendAsync</code> (policy loop)</td><td><code>vResult.Succeeded</code></td><td>true for an admin (<code>AdminOnly</code> at <code>SafetyEndpoints.cs:45</code>)</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/SafetyEndpoints.cs:100</code></td><td><code>GetNsfwPolicyAsync</code></td><td>result</td><td><code>NsfwPolicyResponse</code></td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Safety/SafetyPolicyService.cs:40</code></td><td><code>GetNsfwPolicyAsync</code></td><td><code>vStored</code></td><td>stored flag, false if there is no row</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/SafetyPolicyRepository.cs:30</code></td><td><code>GetAsync</code></td><td>SQL</td><td><code>FROM "SafetyPolicy" WHERE "PolicyKey" = 'default'</code></td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/SafetyEndpoints.cs:108</code></td><td><code>SetNsfwPolicyAsync</code></td><td><code>vResponse</code></td><td>409 when an enable is refused in multi-user mode, else 200</td></tr>
+</tbody>
+</table>
+<p><strong>Controls (data-testid):</strong> <code>nsfw-switch</code>, <code>nsfw-confirm</code>, <code>nsfw-confirm-action</code>, <code>multiuser-note</code>, <code>card-1</code>, <code>card-safety-floors-always-enforced</code>, <code>badge-auto-off-in-saas</code>, <code>badge-non-disableable</code>, <code>badge-owner-only</code>, <code>badge-personal-mode-only</code>, <code>badge-personal-mode-owner</code>, plus per-floor <code>@vLockTestId</code>.</p>
+<p><strong>Calculations on this screen:</strong> <code>SafetyPolicyService.BuildResponse</code> (<code>:71</code>) sets effective NSFW = stored AND personal mode; <code>SetNsfwEnabledAsync</code> (<code>:49</code>) forces it off and saves false in multi-user mode.</p>
+<h2 id="cross-cutting-flows">Cross-cutting flows<a class="anchor-link" href="#cross-cutting-flows">#</a></h2>
+<h3 id="sign-in">Sign-in<a class="anchor-link" href="#sign-in">#</a></h3>
+<p><strong>Call chain:</strong> see the Sign in (<code>/login</code>) entry above; the session is stored through <code>IAuthSession</code> (desktop <code>MauiAuthSession</code>; the test host keeps the July web auth pieces) before navigation.</p>
+<h3 id="configuration-logging-errors">Configuration, logging, errors<a class="anchor-link" href="#configuration-logging-errors">#</a></h3>
 <ul>
-<li><strong>How a screen gets its data:</strong> Razor page → injected typed <strong>HttpClient service</strong> → <strong><code>/api/v1/*</code> endpoint</strong> (<code>src/TrStudioApi/Endpoints/</code>) → <strong>engine service</strong> (<code>Engine/Domain/&lt;Area&gt;/</code>) → <strong>Dapper repository</strong> → <strong>SQL against a table</strong> (defined in <code>src/TrStudioDb/Scripts/</code>). The "Stored proc / Query" lineage column names the repository method + its SQL/table, since there are no procs.
+<li>Configuration: the named HttpClient <code>TrStudioApi</code> routes every page call in process (<code>src/TrStudio/MauiProgram.cs:67</code>; test host <code>tests/TrStudio.TestHost/Program.cs:69-70</code>); handler base address <code>http://trstudio.local/</code> (<code>src/TrStudio.InProcess/InProcessEngineHandler.cs:22</code>).
 </li>
-<li><strong>Auth model:</strong> every user-scoped handler resolves the AppManager <code>userId</code> and applies the owner filter server-side (BRD-81); admin endpoints require the Owner/Operator role policy.
+<li>Logging: Serilog (<code>src/TrStudio/MauiProgram.cs:50</code>, file logging <code>MauiProgram.cs:105-112</code>).
+</li>
+<li>Errors: pages catch the HTTP failure and show an inline <code>Alert</code>; see each entry's page handler row.
 </li>
 </ul>
-<h2 id="screen-inventory">Screen inventory<a class="anchor-link" href="#screen-inventory">#</a></h2>
-<ul>
-<li><strong>Creator (16 screens):</strong> Login, Register, Forgot-password, Setup-required, Home, Avatar studio (flagship), Character library, Image studio, Voice studio, Video studio, <strong>Prompt studio</strong> (<code>/prompt-studio</code>, Phase 10 — added + runtime-verified 2026-07-07), Gallery, Projects, Comparison, Library, Account — see <a href="./TrStudio-DevGuide-Creator.html">Creator file</a>.
+<h3 id="how-to-fix-a-bug-with-this-guide">How to fix a bug with this guide<a class="anchor-link" href="#how-to-fix-a-bug-with-this-guide">#</a></h3>
+<ol>
+<li>Reproduce; note the <strong>screen</strong> and <strong>control</strong> (its <code>data-testid</code>).
 </li>
-<li><strong>Operator / Management surface (7 screens, role-gated within the one app):</strong> Hardware &amp; Guided setup (dual route), Model sources, Model library, Registry &amp; providers, RunPod &amp; Ops, ComfyUI import &amp; debug (dual route), Content policy / NSFW — now in <code>src/TrStudioUI/Pages/Admin/</code> — see <a href="./TrStudio-DevGuide-Operator.html">Operator file</a>.
+<li>Find the screen below or in its role file; set breakpoints at the rows of its where-to-break table.
 </li>
-</ul>
-<h2 id="defects-surfaced-while-mapping-logged-to-docs-trstudio-checklist-md"><a id="defects-surfaced-while-mapping-logged-to-docstrstudio-checklistmd"></a>Defects surfaced while mapping (logged to <code>docs/TrStudio-Checklist.md</code>)<a class="anchor-link" href="#defects-surfaced-while-mapping-logged-to-docs-trstudio-checklist-md">#</a></h2>
+<li>Walk the chain top-down: Razor → in-process route → engine service → repository → SQL. The bug is in one of those hops.
+</li>
+<li>If a value is <em>calculated</em>, the entry names the calculator method.
+</li>
+<li>After fixing, re-run the screen's walkthrough in <code>docs/TrStudio-UsageGuide.md</code>, then re-run <code>*devguide TrStudio --update</code>.
+</li>
+</ol>
+<h2 id="known-issues">Known issues<a class="anchor-link" href="#known-issues">#</a></h2>
 <p>The DevGuide's static map + runtime OBSERVE caught a cluster of <strong>FE↔API wiring defects</strong> — client calls a route the API doesn't expose, or a save handler that's toast-only, swallowed by try/catch so the screen still demos on seed data (which is why they passed visual verification). <strong>✅ ALL 9 FIXED + RE-VERIFIED LIVE 2026-07-04</strong> (<code>*fix-issues</code>) — each row is back to <code>Verified</code>; the table below is the record of what was caught and closed:</p>
 <table>
 <thead><tr><th>#</th><th>REQ</th><th>Defect (file:line)</th></tr></thead>
@@ -208,22 +641,18 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tr><td>9</td><td>UI-073</td><td><strong>Runtime (OBSERVE):</strong> <code>/admin/ops</code> doesn't reflow at 390px — 823px horizontal overflow, text clipped (<code>⚠ visual:</code>)</td></tr>
 </tbody>
 </table>
-<p><strong>9 defects caught (8 static FE↔API wiring + 1 runtime visual), all FIXED + re-verified live 2026-07-04</strong> — each fixed call now lands on the API request log (200/201; registry edit persists on reload; comfy <code>/status</code> probe removed; admin-ops <code>scrollWidth==390</code>). Only residual: <code>/video/edit</code> returns a clean 404 until a real source clip exists (placeholder-timeline limitation — the route is now correct). Core flows (job spine, tier routing, safety floors, per-user isolation, image ops, provenance, consent gate) were never affected. All nine <code>REQ-UI-*</code> rows are <code>Verified</code> in <code>docs/TrStudio-Checklist.md</code>.</p>
-<h2 id="how-to-fix-a-bug-with-this-guide">How to fix a bug with this guide<a class="anchor-link" href="#how-to-fix-a-bug-with-this-guide">#</a></h2>
-<ol>
-<li>Reproduce; note the <strong>screen</strong> and <strong>control</strong>.
+<p><strong>9 defects caught (8 static FE↔API wiring + 1 runtime visual), all FIXED + re-verified live 2026-07-04</strong> — each fixed call now lands on the API request log (200/201; registry edit persists on reload; comfy <code>/status</code> probe removed; admin-ops <code>scrollWidth==390</code>). Only residual: <code>/video/edit</code> returns a clean 404 until a real source clip exists (placeholder-timeline limitation — the route is now correct). Core flows (job spine, tier routing, safety floors, per-user isolation, image ops, provenance, consent gate) were never affected. All nine <code>REQ-UI-*</code> rows are <code>Verified</code> in <code>docs/TrStudio-Checklist.md</code>. (The file:line references in this table are the July lines at the time of the fix.)</p>
+<p><strong>Found while refreshing on 2026-11-15 (documented here only; not yet logged to the checklist):</strong></p>
+<ul>
+<li>Avatar studio does not reopen the newest run on load: <code>OnAfterRenderAsync</code> loads characters, voices, projects and spend only (see its entry's <code>{unresolved}</code> row).
 </li>
-<li>Open the role file, find the screen, find the control in its <strong>Data lineage</strong> table.
+<li><code>SpineEndpoints.GetJobResultAsync</code> (<code>src/TrStudio.InProcess/Routes/SpineEndpoints.cs</code>) builds <code>AssetResponse</code> without <code>ParamsJson</code>, so <code>/jobs/{id}/result</code> returns it empty; the assets list route (<code>WorkspaceEndpoints.ToAssetResponse</code>) sets it, and the reopen-on-load code uses that route.
 </li>
-<li>Walk the lineage top-down: Razor → client service → API endpoint → engine service → repository → SQL. The bug is in one of those hops.
+<li>Video studio's reopen is partial: it rebuilds the timeline and the newest narration (<code>VideoStudio.razor:570</code>, <code>:604</code>) but does not restore the last run's settings as Image and Voice do.
 </li>
-<li>If a value is <em>calculated</em>, the row names the calculator method.
-</li>
-<li>After fixing, re-run the screen's walkthrough in <code>docs/TrStudio-UsageGuide.md</code>, then re-run <code>*devguide TrStudio --update</code>.
-</li>
-</ol>
+</ul>
 <hr>
-<p><em>Generated by <code>*devguide TrStudio</code> · reflects code as built · realigned 2026-07-05 for the one-app role-based consolidation (BRD-86 / ADR-012) + MAUI desktop head. Regenerate after code changes.</em></p>
+<p><em>Generated by <code>*devguide TrStudio</code> · reflects code as built · realigned 2026-07-05 for the one-app role-based consolidation (BRD-86 / ADR-012) + MAUI desktop head · 22 screen entries refreshed 2026-11-15 (<code>--update</code>). Regenerate after code changes.</em></p>
   </main>
 </div>
 

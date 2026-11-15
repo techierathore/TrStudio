@@ -2,31 +2,35 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject ToastService ToastService
 @inject IAuthSession AuthSession
+@using TrBlazeUI.Components.Table
+@using TrBlazeUI.Components.NativeSelect
 
 @*
     Admin Model library (REQ-UI-076). A search box, task Tabs and source Select over a results table
     (name, source, task, size, min VRAM, license Badge — restrictive licenses flagged) with one-click
-    Install and footer Pagination; a right rail carrying the resumable install queue (Progress,
-    Pause/Resume/Cancel, speed + destination from /admin/installs), a destination card and an
-    over-disk Alert; plus a registry hand-off Alert. Browses ENABLED sources only, with a no-sources
-    empty state linking to /admin/sources.
+    Install and footer page buttons; a right rail carrying the resumable install queue (Progress,
+    Pause/Resume/Cancel, speed + destination from /admin/installs), a destination card (free disk from
+    the live capability report) and an over-disk Alert shown only when a model does not fit that disk;
+    plus a registry hand-off Alert. Browses ENABLED sources only, with a no-sources empty state linking
+    to /admin/sources. The model list is curated (no source-browse endpoint yet); every row's install
+    state is the real install queue's. Control names follow docs/mockups/admin-models.html.
 *@
 
 <PageTitle>TrStudio — Model Library</PageTitle>
 
-<div class="stack">
-    <div class="flex-between">
+<div class="stack models-page">
+    <div class="flex-between" style="flex-wrap:wrap;gap:12px">
         <div>
             <h1 class="page-title">Model Library</h1>
             <p class="page-sub" style="margin-bottom:0">
-                Browse and install open models from your enabled sources.
+                Browse and install open models from your enabled sources@(objEnabledSources.Count > 0 ? $" — {string.Join(" and ", objEnabledSources)}" : "").
             </p>
         </div>
         <div class="flex-row">
-            <Badge Variant="BadgeVariant.Outline" Class="@(objEnabledSources.Count > 0 ? "badge-ok" : "")">
+            <Badge Variant="BadgeVariant.Outline" Class="@(objEnabledSources.Count > 0 ? "badge-ok" : "")" data-testid="badge-status">
                 <span class="dot @(objEnabledSources.Count > 0 ? "ok" : "")"></span> @objEnabledSources.Count sources enabled
             </Badge>
-            <Button Href="/admin/sources" Variant="ButtonVariant.Outline">Manage sources</Button>
+            <Button Href="/admin/sources" Variant="ButtonVariant.Outline" data-testid="link-manage-sources">Manage sources</Button>
         </div>
     </div>
 
@@ -54,116 +58,159 @@
     else
     {
         <div class="filter-bar">
-            <Input @bind-Value="objSearch" Placeholder="Search models… e.g. avatar, sdxl, tts" Class="max-w-[260px]" />
+            <Input @bind-Value="objSearch" @bind-Value:after="ResetPage" Placeholder="Search models… e.g. avatar, sdxl, tts" Class="max-w-[260px]" style="max-width:260px"
+                   aria-label="Search models" data-testid="field-search-models-e-g-avatar" />
             <Tabs Value="@objTask" ValueChanged="OnTaskChanged">
-                <TabsList>
-                    <TabsTrigger Value="all">All</TabsTrigger>
-                    <TabsTrigger Value="image">Image</TabsTrigger>
-                    <TabsTrigger Value="video">Video</TabsTrigger>
-                    <TabsTrigger Value="avatar">Avatar</TabsTrigger>
-                    <TabsTrigger Value="voice">Voice</TabsTrigger>
+                <TabsList Class="models-seg">
+                    <TabsTrigger Value="all" data-testid="btn-all">All</TabsTrigger>
+                    <TabsTrigger Value="image" data-testid="btn-image">Image</TabsTrigger>
+                    <TabsTrigger Value="video" data-testid="btn-video">Video</TabsTrigger>
+                    <TabsTrigger Value="avatar" data-testid="btn-avatar">Avatar</TabsTrigger>
+                    <TabsTrigger Value="voice" data-testid="btn-voice">Voice</TabsTrigger>
                 </TabsList>
             </Tabs>
-            <Select @bind-Value="objSourceFilter" TValue="string" Class="max-w-[170px]">
-                <SelectTrigger><SelectValue Placeholder="All sources" /></SelectTrigger>
-                <SelectContent>
-                    <SelectItem Value="@("all")" Text="All sources" TValue="string">All sources</SelectItem>
-                    @foreach (var vSource in objEnabledSources)
-                    {
-                        <SelectItem Value="@vSource" Text="@vSource" TValue="string">@vSource</SelectItem>
-                    }
-                </SelectContent>
-            </Select>
+            <NativeSelect TValue="string" Value="@objSourceFilter" ValueChanged="@((string? aValue) => OnSourceChanged(aValue))"
+                          Class="w-auto" style="max-width:170px" aria-label="Source" data-testid="field-2">
+                <option value="all">All sources</option>
+                @foreach (var vSource in objEnabledSources)
+                {
+                    <option value="@vSource">@vSource</option>
+                }
+            </NativeSelect>
             <span class="grow"></span>
-            <span class="kpi-lbl">@FilteredCatalog.Count models · sorted by downloads</span>
+            <span class="kpi-lbl">@FilteredCatalog.Count models · curated for TrStudio</span>
         </div>
 
         <div class="models-layout">
-            <Card Class="p-0" data-testid="models-table">
+            <Card Class="p-0 overflow-hidden" data-testid="card-1">
                 <div class="table-scroll">
-                    <DataTable TData="CatalogRow" Data="@PagedCatalog" IsLoading="@objLoading" ShowToolbar="false" ShowPagination="false" InitialPageSize="@PageSize">
-                        <Columns>
-                            <DataTableColumn TData="CatalogRow" TValue="string" Property="@(r => r.Name)" Header="Model" Sortable>
-                                <CellTemplate Context="objRow">
-                                    <div><b>@objRow.Name</b></div>
-                                    <div class="kpi-lbl" style="font-size:11px">@objRow.Subtitle</div>
-                                </CellTemplate>
-                            </DataTableColumn>
-                            <DataTableColumn TData="CatalogRow" TValue="string" Property="@(r => r.Source)" Header="Source" Sortable />
-                            <DataTableColumn TData="CatalogRow" TValue="string" Property="@(r => r.TaskLabel)" Header="Task" Sortable />
-                            <DataTableColumn TData="CatalogRow" TValue="string" Property="@(r => r.Size)" Header="Size" />
-                            <DataTableColumn TData="CatalogRow" TValue="string" Property="@(r => r.MinVram)" Header="Min VRAM" />
-                            <DataTableColumn TData="CatalogRow" TValue="string" Property="@(r => r.License)" Header="License">
-                                <CellTemplate Context="objRow">
-                                    <Badge Variant="BadgeVariant.Outline" Class="@objRow.LicenseTone">@objRow.License</Badge>
-                                </CellTemplate>
-                            </DataTableColumn>
-                            <DataTableColumn TData="CatalogRow" TValue="string" Property="@(r => r.Name)" Header="Action">
-                                <CellTemplate Context="objRow">
-                                    @if (objRow.InstallState == CatalogInstallState.Available)
-                                    {
-                                        <Button Size="ButtonSize.Small" OnClick="@(() => InstallAsync(objRow))">Install</Button>
-                                    }
-                                    else if (objRow.InstallState == CatalogInstallState.Installing)
-                                    {
-                                        <Badge Variant="BadgeVariant.Outline" Class="badge-brand"><span class="dot brand"></span> Installing @objRow.ProgressLabel</Badge>
-                                    }
-                                    else if (objRow.InstallState == CatalogInstallState.Installed)
-                                    {
-                                        <Badge Variant="BadgeVariant.Outline" Class="badge-ok"><span class="dot ok"></span> Installed</Badge>
-                                    }
-                                    else if (objRow.InstallState == CatalogInstallState.Paused)
-                                    {
-                                        <Badge Variant="BadgeVariant.Outline" Class="badge-warn"><span class="dot warn"></span> Paused</Badge>
-                                    }
-                                    else
-                                    {
-                                        <Badge Variant="BadgeVariant.Outline" Class="badge-warn">Needs volume</Badge>
-                                    }
-                                </CellTemplate>
-                            </DataTableColumn>
-                        </Columns>
-                    </DataTable>
+                    <Table Class="models-table" data-testid="table-1">
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Model</TableHead>
+                                <TableHead>Source</TableHead>
+                                <TableHead>Task</TableHead>
+                                <TableHead>Size</TableHead>
+                                <TableHead>Min VRAM</TableHead>
+                                <TableHead>License</TableHead>
+                                <TableHead Class="text-right">Action</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            @if (objLoading)
+                            {
+                                <TableRow><TableCell colspan="7" Class="kpi-lbl">Loading models…</TableCell></TableRow>
+                            }
+                            else if (PagedCatalog.Count == 0)
+                            {
+                                <TableRow><TableCell colspan="7" Class="kpi-lbl">No models match these filters.</TableCell></TableRow>
+                            }
+                            @{
+                                var vStatusIndex = 1;
+                                var vInstallIndex = 0;
+                                var vVolumeIndex = 0;
+                            }
+                            @foreach (var vRow in objLoading ? new List<CatalogRow>() : PagedCatalog)
+                            {
+                                var vState = StateOf(vRow);
+                                string vActionId;
+                                if (vState.Kind == CatalogInstallState.Available)
+                                {
+                                    vActionId = Numbered("btn-install", ++vInstallIndex);
+                                }
+                                else if (vState.Kind == CatalogInstallState.NeedsVolume)
+                                {
+                                    vActionId = Numbered("badge-needs-volume", ++vVolumeIndex);
+                                }
+                                else
+                                {
+                                    vActionId = Numbered("badge-status", ++vStatusIndex);
+                                }
+                                <TableRow>
+                                    <TableCell>
+                                        <div><b>@vRow.Name</b></div>
+                                        <div class="kpi-lbl" style="font-size:11px">@vRow.Subtitle</div>
+                                    </TableCell>
+                                    <TableCell>@vRow.Source</TableCell>
+                                    <TableCell>@vRow.TaskLabel</TableCell>
+                                    <TableCell>@vRow.SizeLabel</TableCell>
+                                    <TableCell>@vRow.MinVram</TableCell>
+                                    <TableCell>
+                                        <Badge Variant="BadgeVariant.Outline" Class="@(vRow.IsRestrictive ? "badge-warn" : "badge-ok")" data-testid="@LicenseTestId(vRow.License)">@vRow.License</Badge>
+                                    </TableCell>
+                                    <TableCell Class="text-right">
+                                        @switch (vState.Kind)
+                                        {
+                                            case CatalogInstallState.Available:
+                                                <Button Size="ButtonSize.Small" Class="models-install" OnClick="@(() => InstallAsync(vRow))" data-testid="@vActionId">Install</Button>
+                                                break;
+                                            case CatalogInstallState.Installing:
+                                                <Badge Variant="BadgeVariant.Outline" Class="badge-brand" data-testid="@vActionId"><span class="dot brand"></span> @vState.Label</Badge>
+                                                break;
+                                            case CatalogInstallState.Installed:
+                                                <Badge Variant="BadgeVariant.Outline" Class="badge-ok" data-testid="@vActionId"><span class="dot ok"></span> @vState.Label</Badge>
+                                                break;
+                                            case CatalogInstallState.Paused:
+                                                <Badge Variant="BadgeVariant.Outline" data-testid="@vActionId"><span class="dot warn"></span> @vState.Label</Badge>
+                                                break;
+                                            default:
+                                                <Badge Variant="BadgeVariant.Outline" Class="badge-warn" data-testid="@vActionId" title="Over 10 GB — installs to the RunPod network volume">Needs volume</Badge>
+                                                break;
+                                        }
+                                    </TableCell>
+                                </TableRow>
+                            }
+                        </TableBody>
+                    </Table>
                 </div>
-                <div class="flex-row" style="padding:12px 16px" data-testid="models-pager">
+                <div class="flex-row models-pager" style="padding:12px 16px;gap:6px;flex-wrap:wrap">
                     <span class="kpi-lbl">Showing @PageRangeLabel of @FilteredCatalog.Count models</span>
                     <span class="grow"></span>
                     <Button Size="ButtonSize.Small" Variant="ButtonVariant.Outline"
-                            Disabled="@(objPage <= 1)" OnClick="@(() => OnPageChanged(objPage - 1))">Prev</Button>
+                            Disabled="@(objPage <= 1)" OnClick="@(() => OnPageChanged(objPage - 1))" data-testid="btn-prev">Prev</Button>
                     @for (var vIndex = 1; vIndex <= TotalPages; vIndex++)
                     {
                         var vTarget = vIndex;
                         <Button Size="ButtonSize.Small" Variant="@(vTarget == objPage ? ButtonVariant.Default : ButtonVariant.Outline)"
-                                OnClick="@(() => OnPageChanged(vTarget))">@vTarget</Button>
+                                OnClick="@(() => OnPageChanged(vTarget))" data-testid="@($"btn-{vTarget}")">@vTarget</Button>
                     }
                     <Button Size="ButtonSize.Small" Variant="ButtonVariant.Outline"
-                            Disabled="@(objPage >= TotalPages)" OnClick="@(() => OnPageChanged(objPage + 1))">Next</Button>
+                            Disabled="@(objPage >= TotalPages)" OnClick="@(() => OnPageChanged(objPage + 1))" data-testid="btn-next">Next</Button>
                 </div>
             </Card>
 
             <div class="stack">
-                <Card data-testid="install-queue">
+                <Card data-testid="card-install-queue">
                     <CardContent Class="pt-6">
                         <div class="flex-between">
                             <h3 class="card-h3" style="margin:0">Install queue</h3>
-                            <Badge Variant="BadgeVariant.Outline" Class="badge-brand">@objQueue.Count(aItem => aItem.IsActive) active</Badge>
+                            <Badge Variant="BadgeVariant.Outline" Class="badge-brand" data-testid="badge-2-active">@objQueue.Count(aItem => aItem.IsActive) active</Badge>
                         </div>
 
                         @if (objQueue.Count == 0)
                         {
-                            <div class="kpi-lbl" style="margin-top:10px">No installs in progress. Install a model to see live progress here.</div>
+                            <div class="kpi-lbl" style="margin-top:10px">No installs yet. Install a model to see live progress here.</div>
+                        }
+                        @{
+                            var vStateCounts = new Dictionary<string, int>();
+                            var vProgressIndex = 0;
+                            var vPauseIndex = 0;
+                            var vResumeIndex = 0;
+                            var vCancelIndex = 0;
                         }
                         @foreach (var vItem in objQueue)
                         {
+                            vStateCounts[vItem.State] = vStateCounts.GetValueOrDefault(vItem.State) + 1;
+                            var vStateId = Numbered($"badge-{vItem.State}", vStateCounts[vItem.State]);
                             <div class="q-item">
                                 <div class="flex-row">
-                                    <span style="font-weight:600;font-size:13px">@vItem.ModelName</span>
+                                    <span style="font-weight:600;font-size:13px">@vItem.DisplayName</span>
                                     <span class="grow"></span>
-                                    <Badge Variant="BadgeVariant.Outline" Class="@vItem.StateTone">@vItem.StateLabel</Badge>
+                                    <Badge Variant="BadgeVariant.Outline" Class="@vItem.StateTone" data-testid="@vStateId">@vItem.StateLabel</Badge>
                                 </div>
                                 @if (vItem.ShowProgress)
                                 {
-                                    <Progress Value="@vItem.Progress" Class="h-2" />
+                                    <Progress Value="@vItem.Progress" Class="models-prog" IndicatorClass="@(vItem.State == "paused" ? "hw-ind opacity-60" : "hw-ind")" data-testid="@Numbered("progress", ++vProgressIndex)" />
                                     <div class="flex-row" style="font-size:11.5px;margin-top:4px">
                                         <span class="kpi-lbl">@vItem.SizeLabel</span>
                                         <span class="grow"></span>
@@ -177,15 +224,15 @@
                                 @if (vItem.State is "downloading" or "queued")
                                 {
                                     <div class="flex-row" style="margin-top:8px">
-                                        <Button Size="ButtonSize.Small" Variant="ButtonVariant.Outline" OnClick="@(() => ControlInstallAsync(vItem, "pause"))">Pause</Button>
-                                        <Button Size="ButtonSize.Small" Variant="ButtonVariant.Ghost" OnClick="@(() => ControlInstallAsync(vItem, "cancel"))">Cancel</Button>
+                                        <Button Size="ButtonSize.Small" Variant="ButtonVariant.Outline" Class="models-qbtn" OnClick="@(() => ControlInstallAsync(vItem, "pause"))" data-testid="@Numbered("btn-pause", ++vPauseIndex)">Pause</Button>
+                                        <Button Size="ButtonSize.Small" Variant="ButtonVariant.Ghost" Class="models-qbtn" OnClick="@(() => ControlInstallAsync(vItem, "cancel"))" data-testid="@Numbered("btn-cancel", ++vCancelIndex)">Cancel</Button>
                                     </div>
                                 }
                                 else if (vItem.State == "paused")
                                 {
                                     <div class="flex-row" style="margin-top:8px">
-                                        <Button Size="ButtonSize.Small" Variant="ButtonVariant.Outline" OnClick="@(() => ControlInstallAsync(vItem, "resume"))">Resume</Button>
-                                        <Button Size="ButtonSize.Small" Variant="ButtonVariant.Ghost" OnClick="@(() => ControlInstallAsync(vItem, "cancel"))">Cancel</Button>
+                                        <Button Size="ButtonSize.Small" Variant="ButtonVariant.Outline" Class="models-qbtn" OnClick="@(() => ControlInstallAsync(vItem, "resume"))" data-testid="@Numbered("btn-resume", ++vResumeIndex)">Resume</Button>
+                                        <Button Size="ButtonSize.Small" Variant="ButtonVariant.Ghost" Class="models-qbtn" OnClick="@(() => ControlInstallAsync(vItem, "cancel"))" data-testid="@Numbered("btn-cancel", ++vCancelIndex)">Cancel</Button>
                                     </div>
                                 }
                             </div>
@@ -193,11 +240,11 @@
                     </CardContent>
                 </Card>
 
-                <Card>
+                <Card data-testid="card-destination">
                     <CardContent Class="pt-6">
                         <h3 class="card-h3">Destination</h3>
-                        <div class="kv-row"><span class="kv-lbl">Local disk free</span><b>412 GB</b></div>
-                        <div class="kv-row"><span class="kv-lbl">RunPod network volume</span><b>1.2 TB free</b></div>
+                        <div class="kv-row"><span class="kv-lbl">Local disk free</span><b>@(objFreeDiskGb is { } vFree ? $"{vFree:0} GB" : "not measured")</b></div>
+                        <div class="kv-row"><span class="kv-lbl">RunPod network volume</span><b>models over 10 GB</b></div>
                         <p class="kpi-lbl" style="margin:8px 0 0">
                             Models over 10 GB install to the RunPod network volume by default; local (Mac) models
                             stay on disk. Downloads resume automatically after interruption.
@@ -205,22 +252,23 @@
                     </CardContent>
                 </Card>
 
-                <div data-testid="over-disk-alert">
-                    <Alert Variant="AlertVariant.Warning" AccentBorder="true">
+                @if (OverDiskModel is { } vOver)
+                {
+                    <Alert Variant="AlertVariant.Warning" AccentBorder="true" data-testid="alert-warn">
                         <LucideIcon Name="triangle-alert" Size="16" />
-                        <AlertTitle>FLUX.1 [dev] exceeds free local disk</AlertTitle>
+                        <AlertTitle>@vOver.Name exceeds free local disk</AlertTitle>
                         <AlertDescription>
-                            23.8 GB needed, 12 GB headroom reserved — install to the RunPod network volume, or free
-                            space in <a href="/admin/setup">Hardware &amp; Setup</a>.
+                            @vOver.SizeLabel needed, @HeadroomGb GB headroom reserved — install to the RunPod network volume, or free
+                            space in <a href="/admin/setup/hardware" class="models-link" data-testid="link-hardware-setup">Hardware &amp; Setup</a>.
                         </AlertDescription>
                     </Alert>
-                </div>
+                }
 
-                <Alert Variant="AlertVariant.Default">
-                    <LucideIcon Name="info" Size="16" />
+                <Alert Variant="AlertVariant.Info" AccentBorder="true" data-testid="alert-info">
                     <AlertDescription>
+                        Restrictive licenses are flagged <Badge Variant="BadgeVariant.Outline" Class="badge-warn" data-testid="badge-amber">amber</Badge>.
                         Installed models still need a registry row before creators can use them —
-                        <a href="/admin/registry">Registry &amp; Providers →</a>
+                        <a href="/admin/registry" class="models-link" data-testid="link-registry-providers">Registry &amp; Providers →</a>
                     </AlertDescription>
                 </Alert>
             </div>
@@ -229,10 +277,10 @@
 </div>
 
 @code {
-    private List<CatalogRow> objCatalog = new();
     private List<QueueItem> objQueue = new();
     private List<string> objEnabledSources = new();
-    private Guid? objInstallSourceId;
+    private Dictionary<string, Guid> objSourceIds = new(StringComparer.OrdinalIgnoreCase);
+    private double? objFreeDiskGb;
 
     private bool objLoading = true;
     private bool objNoSources;
@@ -243,12 +291,23 @@
     private int objPage = 1;
     private const int PageSize = 8;
 
-    /// <summary>The catalog narrowed by search text, the selected task tab and the source Select.</summary>
-    private List<CatalogRow> FilteredCatalog => objCatalog.Where(aRow =>
+    /// <summary>Free space kept back on the local disk before a model may install there.</summary>
+    private const int HeadroomGb = 12;
+
+    /// <summary>Models over this size install to the RunPod network volume by default (the engine's planner rule).</summary>
+    private const double NetworkVolumeThresholdGb = 10.0;
+
+    /// <summary>
+    /// The curated open-model list, narrowed to sources that are enabled, then by search text, the task tab
+    /// and the source Select. There is no live source-browse endpoint yet, so the list itself is curated;
+    /// every row's install state comes from the real install queue.
+    /// </summary>
+    private List<CatalogRow> FilteredCatalog => Catalog.Where(aRow =>
+        objEnabledSources.Contains(aRow.Source, StringComparer.OrdinalIgnoreCase) &&
         (string.IsNullOrWhiteSpace(objSearch) ||
             aRow.Name.Contains(objSearch, StringComparison.OrdinalIgnoreCase) ||
             aRow.Subtitle.Contains(objSearch, StringComparison.OrdinalIgnoreCase)) &&
-        (objTask == "all" || string.Equals(aRow.Task, objTask, StringComparison.OrdinalIgnoreCase)) &&
+        (objTask == "all" || aRow.Tasks.Contains(objTask ?? "all", StringComparer.OrdinalIgnoreCase)) &&
         (objSourceFilter == "all" || string.Equals(aRow.Source, objSourceFilter, StringComparison.OrdinalIgnoreCase)))
         .ToList();
 
@@ -274,10 +333,20 @@
     }
 
     /// <summary>
-    /// Loads the enabled sources and install queue AFTER the first interactive render — once
-    /// <see cref="IAuthSession"/> can hydrate the bearer token so the admin calls carry it. The
-    /// browsable catalog is representative (there is no source-browse endpoint yet); the install
-    /// queue and enabled-source list are live.
+    /// The largest browsable model not yet installed that does not fit the measured free local disk once
+    /// the headroom is kept back; null when the disk is not measured or every model fits.
+    /// </summary>
+    private CatalogRow? OverDiskModel => objFreeDiskGb is not { } vFree
+        ? null
+        : FilteredCatalog
+            .Where(aRow => StateOf(aRow).Kind is CatalogInstallState.Available or CatalogInstallState.NeedsVolume)
+            .Where(aRow => aRow.SizeGb + HeadroomGb > vFree)
+            .OrderByDescending(aRow => aRow.SizeGb)
+            .FirstOrDefault();
+
+    /// <summary>
+    /// Loads the enabled sources, the install queue and the free disk AFTER the first interactive render —
+    /// once <see cref="IAuthSession"/> can hydrate the bearer token so the admin calls carry it.
     /// </summary>
     /// <param name="aFirstRender">Whether this is the component's first render.</param>
     protected override async Task OnAfterRenderAsync(bool aFirstRender)
@@ -287,10 +356,6 @@
             return;
         }
 
-        objCatalog = BuildRepresentativeCatalog();
-        objQueue = BuildRepresentativeQueue();
-        objEnabledSources = new List<string> { "Hugging Face", "Civitai" };
-
         var vHasSession = await AuthSession.EnsureLoadedAsync();
         await LoadAsync(vHasSession);
         objLoading = false;
@@ -298,9 +363,9 @@
     }
 
     /// <summary>
-    /// Enriches the enabled-source list and install queue from their admin endpoints. When the
-    /// authenticated sources call reports zero enabled sources, the page swaps to the no-sources empty
-    /// state that links to /admin/sources.
+    /// Reads the enabled sources, the install queue and the capability report from their admin endpoints.
+    /// When the sources call reports zero enabled sources, the page swaps to the no-sources empty state that
+    /// links to /admin/sources.
     /// </summary>
     /// <param name="aHasSession">Whether a signed-in session is present.</param>
     private async Task LoadAsync(bool aHasSession)
@@ -318,38 +383,52 @@
             if (vResponse.IsSuccessStatusCode)
             {
                 var vSources = await vResponse.Content.ReadFromJsonAsync<List<ModelSource>>();
-                if (vSources is not null)
-                {
-                    var vEnabled = vSources.Where(aSource => aSource.IsEnabled).ToList();
-                    objNoSources = vEnabled.Count == 0;
-                    if (vEnabled.Count > 0)
-                    {
-                        objEnabledSources = vEnabled.Select(aSource => aSource.Name).ToList();
-                        objInstallSourceId = vEnabled[0].SourceId;
-                    }
-                }
+                var vEnabled = (vSources ?? new()).Where(aSource => aSource.IsEnabled).ToList();
+                objNoSources = vEnabled.Count == 0;
+                objEnabledSources = vEnabled.Select(aSource => aSource.Name).ToList();
+                objSourceIds = vEnabled.GroupBy(aSource => aSource.Name, StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(aGroup => aGroup.Key, aGroup => aGroup.First().SourceId, StringComparer.OrdinalIgnoreCase);
             }
         }
         catch
         {
-            // Sources endpoint not reachable — keep the representative enabled-source list.
+            // Sources endpoint not reachable — the library shows no sources rather than invented ones.
         }
+
+        await LoadQueueAsync(vClient);
 
         try
         {
-            var vInstalls = await vClient.GetAsync(ApiRoutes.Installs);
-            if (vInstalls.IsSuccessStatusCode)
+            var vResponse = await vClient.GetAsync(ApiRoutes.Capabilities);
+            if (vResponse.IsSuccessStatusCode)
             {
-                var vItems = await vInstalls.Content.ReadFromJsonAsync<List<ModelInstallItem>>();
-                if (vItems is { Count: > 0 })
-                {
-                    objQueue = vItems.Select(MapQueue).ToList();
-                }
+                var vReport = await vResponse.Content.ReadFromJsonAsync<HostCapabilityReport>();
+                objFreeDiskGb = vReport?.FreeDiskGb;
             }
         }
         catch
         {
-            // Installs endpoint not reachable — keep the representative install queue.
+            // Capability report not reachable — the destination card says the disk is not measured.
+        }
+    }
+
+    private async Task LoadQueueAsync(HttpClient aClient)
+    {
+        try
+        {
+            var vInstalls = await aClient.GetAsync(ApiRoutes.Installs);
+            if (vInstalls.IsSuccessStatusCode)
+            {
+                var vItems = await vInstalls.Content.ReadFromJsonAsync<List<ModelInstallItem>>();
+                objQueue = (vItems ?? new()).Where(aItem => aItem.State != "cancelled")
+                    .OrderBy(aItem => aItem.State switch { "downloading" or "queued" => 0, "paused" => 1, "failed" => 2, _ => 3 })
+                    .ThenByDescending(aItem => aItem.CreatedUtc).Select(MapQueue).ToList();
+            }
+        }
+        catch
+        {
+            // Installs endpoint not reachable — the queue stays empty.
+            // (Order: running first, then paused, failed, finished; newest first within each.)
         }
     }
 
@@ -359,18 +438,76 @@
         objPage = 1;
     }
 
-    private void OnPageChanged(int aPage)
+    private void OnSourceChanged(string? aSource)
     {
-        objPage = aPage;
+        objSourceFilter = aSource ?? "all";
+        objPage = 1;
     }
 
-    /// <summary>Starts a resumable install for the chosen catalog model against an enabled source.</summary>
+    private void ResetPage() => objPage = 1;
+
+    private void OnPageChanged(int aPage)
+    {
+        objPage = Math.Clamp(aPage, 1, TotalPages);
+    }
+
+    /// <summary>A control name with the mockup's numbering: the first is bare, the next ones get -2, -3, …</summary>
+    private static string Numbered(string aPrefix, int aIndex) => aIndex <= 1 ? aPrefix : $"{aPrefix}-{aIndex}";
+
+    /// <summary>The license Badge's control name: badge- plus the license in lower case, words joined by dashes.</summary>
+    private static string LicenseTestId(string aLicense) =>
+        "badge-" + System.Text.RegularExpressions.Regex.Replace(aLicense.ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
+
+    /// <summary>
+    /// A catalog row's install state, read from the real install queue: a running or queued install of any
+    /// of its files shows its progress, a paused one shows paused, a completed main file shows Installed.
+    /// Otherwise a model over 10 GB needs the network volume and a smaller one offers Install.
+    /// </summary>
+    private (CatalogInstallState Kind, string Label) StateOf(CatalogRow aRow)
+    {
+        foreach (var vPart in aRow.Parts)
+        {
+            var vItem = objQueue.FirstOrDefault(aItem => aItem.IsActive &&
+                string.Equals(aItem.ModelName, vPart.Reference, StringComparison.OrdinalIgnoreCase));
+            if (vItem is null)
+            {
+                continue;
+            }
+
+            var vPrefix = string.IsNullOrEmpty(vPart.Label) ? string.Empty : vPart.Label + " ";
+            if (vItem.State == "paused")
+            {
+                return (CatalogInstallState.Paused, vPrefix.Length == 0 ? "Paused" : $"{vPrefix}paused");
+            }
+
+            var vVerb = vPrefix.Length == 0 ? "Installing" : $"{vPrefix}installing";
+            return (CatalogInstallState.Installing, vItem.State == "queued" ? $"{vVerb} · queued" : $"{vVerb} {vItem.Progress:0}%");
+        }
+
+        var vMain = aRow.Parts[0].Reference;
+        if (objQueue.Any(aItem => aItem.State == "completed" && string.Equals(aItem.ModelName, vMain, StringComparison.OrdinalIgnoreCase)))
+        {
+            return (CatalogInstallState.Installed, "Installed");
+        }
+
+        return aRow.SizeGb > NetworkVolumeThresholdGb
+            ? (CatalogInstallState.NeedsVolume, "Needs volume")
+            : (CatalogInstallState.Available, "Install");
+    }
+
+    /// <summary>Starts a resumable install of the row's main file from its enabled source, then reloads the queue.</summary>
     private async Task InstallAsync(CatalogRow aRow)
     {
+        if (!objSourceIds.TryGetValue(aRow.Source, out var vSourceId))
+        {
+            ToastService.Error($"{aRow.Source} is not enabled — enable it on Model Sources first.", "Model library");
+            return;
+        }
+
         var vRequest = new ModelInstallStartRequest
         {
-            ModelName = aRow.Reference,
-            SourceId = objInstallSourceId ?? Guid.Empty,
+            ModelName = aRow.Parts[0].Reference,
+            SourceId = vSourceId,
             Destination = null
         };
 
@@ -380,126 +517,119 @@
             var vResponse = await vClient.PostAsJsonAsync(ApiRoutes.Installs, vRequest);
             if (vResponse.IsSuccessStatusCode)
             {
-                var vItem = await vResponse.Content.ReadFromJsonAsync<ModelInstallItem>();
-                if (vItem is not null)
-                {
-                    objQueue.Insert(0, MapQueue(vItem));
-                }
-
-                aRow.InstallState = CatalogInstallState.Installing;
-                aRow.ProgressLabel = "queued";
+                await LoadQueueAsync(vClient);
                 ToastService.Success($"Queued \"{aRow.Name}\" for install.", "Model library");
                 return;
             }
-        }
-        catch
-        {
-            // Fall through to the optimistic queue entry while the install endpoint is wiring.
-        }
 
-        aRow.InstallState = CatalogInstallState.Installing;
-        aRow.ProgressLabel = "queued";
-        objQueue.Insert(0, new QueueItem
+            ToastService.Error($"Could not start \"{aRow.Name}\" ({(int)vResponse.StatusCode}).", "Model library");
+        }
+        catch (Exception vException)
         {
-            InstallId = Guid.NewGuid(),
-            ModelName = aRow.Name,
-            State = "queued",
-            StateLabel = "queued",
-            StateTone = "badge-brand",
-            SizeLabel = $"0 / {aRow.Size}",
-            Destination = "resolving…",
-            ShowProgress = true,
-            Progress = 0
-        });
-        ToastService.Success($"Queued \"{aRow.Name}\" for install.", "Model library");
+            ToastService.Error($"Could not start \"{aRow.Name}\": {vException.Message}", "Model library");
+        }
     }
 
-    /// <summary>Applies pause/resume/cancel to a queued install.</summary>
+    /// <summary>Applies pause/resume/cancel to an install, then reloads the queue from the engine.</summary>
     private async Task ControlInstallAsync(QueueItem aItem, string aAction)
     {
         var vClient = HttpClientFactory.CreateClient("TrStudioApi");
         try
         {
-            await vClient.PostAsync($"{ApiRoutes.Installs}/{aItem.InstallId}/{aAction}", content: null);
+            var vResponse = await vClient.PostAsync($"{ApiRoutes.Installs}/{aItem.InstallId}/{aAction}", content: null);
+            if (!vResponse.IsSuccessStatusCode)
+            {
+                ToastService.Error($"{aItem.DisplayName}: {aAction} failed ({(int)vResponse.StatusCode}).", "Install queue");
+                return;
+            }
         }
-        catch
+        catch (Exception vException)
         {
-            // Optimistic state change applied below while the control endpoint is wiring.
+            ToastService.Error($"{aItem.DisplayName}: {aAction} failed — {vException.Message}", "Install queue");
+            return;
         }
 
-        switch (aAction)
-        {
-            case "pause":
-                aItem.State = "paused";
-                aItem.StateLabel = "paused";
-                aItem.StateTone = "badge-warn";
-                break;
-            case "resume":
-                aItem.State = "downloading";
-                aItem.StateLabel = "downloading";
-                aItem.StateTone = "badge-brand";
-                break;
-            case "cancel":
-                objQueue.Remove(aItem);
-                break;
-        }
-
-        ToastService.Show($"{aItem.ModelName}: {aAction} requested.", "Install queue");
+        await LoadQueueAsync(vClient);
+        ToastService.Show($"{aItem.DisplayName}: {aAction} requested.", "Install queue");
     }
+
+    /// <summary>Where an install lands, in words: the RunPod network volume or this machine's disk.</summary>
+    private static string DestinationLabel(string aDestination) =>
+        aDestination.Contains("runpod", StringComparison.OrdinalIgnoreCase) ? "RunPod network volume" : "local disk";
 
     private static QueueItem MapQueue(ModelInstallItem aItem)
     {
+        var vState = aItem.State.ToLowerInvariant();
         var vProgress = aItem.TotalBytes is > 0
             ? aItem.DownloadedBytes / (double)aItem.TotalBytes.Value * 100.0
             : 0.0;
-        var (vLabel, vTone) = aItem.State.ToLowerInvariant() switch
+        var vTone = vState switch
         {
-            "downloading" => ("downloading", "badge-brand"),
-            "paused" => ("paused", "badge-warn"),
-            "completed" => ("completed", "badge-ok"),
-            "failed" => ("failed", "badge-warn"),
-            _ => (aItem.State, "badge-brand")
+            "paused" or "failed" => "badge-warn",
+            "completed" => "badge-ok",
+            _ => "badge-brand"
         };
 
-        var vShowProgress = aItem.State is "downloading" or "paused" or "queued";
-        var vSpeed = aItem.SpeedBytesPerSec is > 0 ? $" · {aItem.SpeedBytesPerSec.Value / 1_000_000.0:0} MB/s" : string.Empty;
-        var vSizeLabel = aItem.TotalBytes is > 0
-            ? $"{Gb(aItem.DownloadedBytes)} / {Gb(aItem.TotalBytes.Value)} · {vProgress:0}%{vSpeed}"
-            : Gb(aItem.DownloadedBytes);
+        var vSizeLabel = vState switch
+        {
+            "completed" => Gb(aItem.TotalBytes ?? aItem.DownloadedBytes),
+            "paused" or "failed" when aItem.TotalBytes is > 0 => $"{GbNumber(aItem.DownloadedBytes)} / {Gb(aItem.TotalBytes.Value)} · resumable",
+            _ when aItem.TotalBytes is > 0 =>
+                $"{GbNumber(aItem.DownloadedBytes)} / {Gb(aItem.TotalBytes.Value)} · {vProgress:0}%" +
+                (aItem.SpeedBytesPerSec is > 0 ? $" · {aItem.SpeedBytesPerSec.Value / 1_000_000.0:0} MB/s" : string.Empty),
+            _ => Gb(aItem.DownloadedBytes)
+        };
 
         return new QueueItem
         {
             InstallId = aItem.InstallId,
             ModelName = aItem.ModelName,
-            State = aItem.State.ToLowerInvariant(),
-            StateLabel = vLabel,
+            DisplayName = DisplayNameOf(aItem.ModelName),
+            State = vState,
+            StateLabel = vState,
             StateTone = vTone,
             Progress = vProgress,
-            ShowProgress = vShowProgress,
+            ShowProgress = vState is "downloading" or "paused" or "queued" or "failed",
             SizeLabel = vSizeLabel,
-            Destination = string.IsNullOrWhiteSpace(aItem.Destination) ? "local disk" : aItem.Destination
+            Destination = DestinationLabel(aItem.Destination)
         };
     }
 
-    private static string Gb(long aBytes) => $"{aBytes / 1_000_000_000.0:0.0} GB";
+    /// <summary>The queue's name for an install: the curated name of that file when it is in the list, else its reference.</summary>
+    private static string DisplayNameOf(string aReference) =>
+        Catalog.SelectMany(aRow => aRow.Parts).FirstOrDefault(aPart =>
+            string.Equals(aPart.Reference, aReference, StringComparison.OrdinalIgnoreCase))?.QueueName ?? aReference;
 
-    private static List<CatalogRow> BuildRepresentativeCatalog() => new()
-    {
-        new("Hunyuan-Avatar", "tencent/HunyuanVideo-Avatar", "Hugging Face", "avatar", "Avatar / video", "24.0 GB", "24 GB", "Tencent Community", "badge-warn", CatalogInstallState.Installing, "62%"),
-        new("SDXL 1.0", "stabilityai/stable-diffusion-xl · base + refiner", "Hugging Face", "image", "Image", "13.4 GB", "12 GB", "OpenRAIL++", "badge-warn", CatalogInstallState.Paused, ""),
-        new("MuseTalk", "TMElyralab/MuseTalk · lip-sync", "Hugging Face", "avatar", "Avatar", "1.8 GB", "8 GB", "MIT", "badge-ok", CatalogInstallState.Installed, ""),
-        new("FLUX.1 [dev]", "black-forest-labs/FLUX.1-dev", "Hugging Face", "image", "Image", "23.8 GB", "24 GB", "FLUX non-commercial", "badge-warn", CatalogInstallState.NeedsVolume, ""),
-        new("XTTS v2", "coqui/XTTS-v2 · voice clone", "Hugging Face", "voice", "Voice", "1.9 GB", "6 GB", "Coqui CPML", "badge-warn", CatalogInstallState.Available, ""),
-        new("IndicF5", "ai4bharat/IndicF5 · Hindi + 10 Indic languages", "Hugging Face", "voice", "Voice", "1.2 GB", "6 GB", "Apache-2.0", "badge-ok", CatalogInstallState.Available, ""),
-        new("Realistic Vision v6", "SD 1.5 checkpoint · photoreal portraits", "Civitai", "image", "Image", "4.3 GB", "8 GB", "OpenRAIL-M", "badge-warn", CatalogInstallState.Available, ""),
-        new("RealESRGAN x4", "4× upscaler for final renders", "Civitai", "image", "Image", "67 MB", "4 GB", "BSD-3", "badge-ok", CatalogInstallState.Available, "")
-    };
+    private static string GbNumber(long aBytes) => $"{aBytes / 1_000_000_000.0:0.0}";
 
-    private static List<QueueItem> BuildRepresentativeQueue() => new()
+    private static string Gb(long aBytes) => aBytes >= 1_000_000_000
+        ? $"{aBytes / 1_000_000_000.0:0.0} GB"
+        : $"{aBytes / 1_000_000.0:0} MB";
+
+    /// <summary>
+    /// The curated open models the library offers from Hugging Face and Civitai, with each one's size,
+    /// minimum VRAM and license as published by its source. A row can carry more than one file (SDXL's base
+    /// and refiner); the first is the one Install starts.
+    /// </summary>
+    private static readonly List<CatalogRow> Catalog = new()
     {
-        new() { InstallId = Guid.NewGuid(), ModelName = "Hunyuan-Avatar", State = "downloading", StateLabel = "downloading", StateTone = "badge-brand", Progress = 62, ShowProgress = true, SizeLabel = "14.9 / 24.0 GB · 62% · 41 MB/s", Destination = "RunPod network volume" },
-        new() { InstallId = Guid.NewGuid(), ModelName = "SDXL refiner", State = "paused", StateLabel = "paused", StateTone = "badge-warn", Progress = 46, ShowProgress = true, SizeLabel = "2.8 / 6.1 GB · resumable", Destination = "local disk" },
-        new() { InstallId = Guid.NewGuid(), ModelName = "MuseTalk", State = "completed", StateLabel = "completed", StateTone = "badge-ok", Progress = 100, ShowProgress = false, SizeLabel = "1.8 GB · verified checksum", Destination = "local disk" }
+        new("Hunyuan-Avatar", "tencent/HunyuanVideo-Avatar", "Hugging Face", new[] { "avatar", "video" }, "Avatar / video", 24.0, "24 GB", "Tencent Community", true,
+            new CatalogPart("tencent/HunyuanVideo-Avatar", "Hunyuan-Avatar", "")),
+        new("SDXL 1.0", "stabilityai/stable-diffusion-xl · base + refiner", "Hugging Face", new[] { "image" }, "Image", 13.4, "12 GB", "OpenRAIL++", true,
+            new CatalogPart("stabilityai/stable-diffusion-xl-base-1.0", "SDXL base", ""),
+            new CatalogPart("stabilityai/stable-diffusion-xl-refiner-1.0", "SDXL refiner", "Refiner")),
+        new("MuseTalk", "TMElyralab/MuseTalk · lip-sync", "Hugging Face", new[] { "avatar" }, "Avatar", 1.8, "8 GB", "MIT", false,
+            new CatalogPart("TMElyralab/MuseTalk", "MuseTalk", "")),
+        new("FLUX.1 [dev]", "black-forest-labs/FLUX.1-dev", "Hugging Face", new[] { "image" }, "Image", 23.8, "24 GB", "FLUX non-commercial", true,
+            new CatalogPart("black-forest-labs/FLUX.1-dev", "FLUX.1 [dev]", "")),
+        new("XTTS v2", "coqui/XTTS-v2 · voice clone", "Hugging Face", new[] { "voice" }, "Voice", 1.9, "6 GB", "Coqui CPML", true,
+            new CatalogPart("coqui/XTTS-v2", "XTTS v2", "")),
+        new("IndicF5", "ai4bharat/IndicF5 · Hindi + 10 Indic languages", "Hugging Face", new[] { "voice" }, "Voice", 1.2, "6 GB", "Apache-2.0", false,
+            new CatalogPart("ai4bharat/IndicF5", "IndicF5", "")),
+        new("Realistic Vision v6", "SD 1.5 checkpoint · photoreal portraits", "Civitai", new[] { "image" }, "Image", 4.3, "8 GB", "OpenRAIL-M", true,
+            new CatalogPart("realistic-vision-v6", "Realistic Vision v6", "")),
+        new("RealESRGAN x4", "4× upscaler for final renders", "Civitai", new[] { "image" }, "Image", 0.067, "4 GB", "BSD-3", false,
+            new CatalogPart("realesrgan-x4", "RealESRGAN x4", ""))
     };
 
     private enum CatalogInstallState
@@ -511,43 +641,44 @@
         NeedsVolume
     }
 
+    /// <summary>One file of a catalog model: its source reference, its name in the queue, and the word that prefixes its state.</summary>
+    private sealed record CatalogPart(string Reference, string QueueName, string Label);
+
     private sealed class CatalogRow
     {
-        public CatalogRow(string aName, string aSubtitle, string aSource, string aTask, string aTaskLabel,
-            string aSize, string aMinVram, string aLicense, string aLicenseTone, CatalogInstallState aState, string aProgressLabel)
+        public CatalogRow(string aName, string aSubtitle, string aSource, string[] aTasks, string aTaskLabel,
+            double aSizeGb, string aMinVram, string aLicense, bool aIsRestrictive, params CatalogPart[] aParts)
         {
             Name = aName;
             Subtitle = aSubtitle;
-            Reference = aSubtitle.Split(' ')[0];
             Source = aSource;
-            Task = aTask;
+            Tasks = aTasks;
             TaskLabel = aTaskLabel;
-            Size = aSize;
+            SizeGb = aSizeGb;
             MinVram = aMinVram;
             License = aLicense;
-            LicenseTone = aLicenseTone;
-            InstallState = aState;
-            ProgressLabel = aProgressLabel;
+            IsRestrictive = aIsRestrictive;
+            Parts = aParts;
         }
 
         public string Name { get; }
         public string Subtitle { get; }
-        public string Reference { get; }
         public string Source { get; }
-        public string Task { get; }
+        public string[] Tasks { get; }
         public string TaskLabel { get; }
-        public string Size { get; }
+        public double SizeGb { get; }
+        public string SizeLabel => SizeGb >= 1 ? $"{SizeGb:0.0} GB" : $"{SizeGb * 1000:0} MB";
         public string MinVram { get; }
         public string License { get; }
-        public string LicenseTone { get; }
-        public CatalogInstallState InstallState { get; set; }
-        public string ProgressLabel { get; set; }
+        public bool IsRestrictive { get; }
+        public CatalogPart[] Parts { get; }
     }
 
     private sealed class QueueItem
     {
         public Guid InstallId { get; set; }
         public string ModelName { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
         public string State { get; set; } = string.Empty;
         public string StateLabel { get; set; } = string.Empty;
         public string StateTone { get; set; } = string.Empty;

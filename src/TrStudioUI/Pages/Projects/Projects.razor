@@ -1,20 +1,31 @@
 @page "/projects"
+@using System.Text.Json
+@using Microsoft.AspNetCore.Components.Sections
 @inject IHttpClientFactory HttpClientFactory
 @inject ToastService ToastService
 @inject NavigationManager Navigation
 @inject IAuthSession AuthSession
+@inject IJSRuntime Js
 
 @*
     Projects (REQ-UI-051). Folders that keep every generation's full parameter set. A searchable
-    left project list (Cards with asset counts + dates, plus "New project") drives a right-hand
-    detail: project header (Open in Gallery / Rename / Archive), a generation-history DataTable with
-    All/Images/Video/Voice Tabs and a per-row Reproduce that carries the stored params, and a
-    run-parameters Card with "Reproduce with these params". Per-user: /api/v1/projects and its
-    /history are owner-filtered server-side; live-only — no representative seed; an unreachable API
-    raises a warning Alert.
+    left project list (Cards with asset counts + dates, then the "Create a project" hint) drives a
+    right-hand detail: project header (asset count, free-local runs, updated; Open in Gallery /
+    Rename / Archive), a generation-history table with All/Images/Video/Voice segmented filter and a per-row
+    Reproduce that carries the stored params, and a run-parameters Card with "Reproduce with these
+    params". "New project" sits in the shell topbar. Per-user: /api/v1/projects, its /history and
+    the asset counts are owner-filtered server-side; live-only — an unreachable API raises a warning
+    Alert. Control names follow docs/mockups/projects.html.
 *@
 
 <PageTitle>TrStudio — Projects</PageTitle>
+
+<SectionContent SectionName="topbar-context">
+    <Button OnClick="CreateProjectAsync" data-testid="btn-new-project">
+        <LucideIcon Name="plus" Size="14" />
+        New project
+    </Button>
+</SectionContent>
 
 <h1 class="page-title">Projects</h1>
 <p class="page-sub">Folders that keep every generation's full parameter set — pick any past run and reproduce it in one click.</p>
@@ -30,15 +41,11 @@
     </div>
 }
 
-<div class="projlayout" data-testid="projects">
+<div class="projlayout">
 
     @* ---- LEFT: searchable project list ---- *@
     <div class="projlist">
-        <Button OnClick="CreateProjectAsync" data-testid="new-project-btn">
-            <LucideIcon Name="plus" Size="14" />
-            New project
-        </Button>
-        <Input @bind-Value="objSearch" @bind-Value:after="StateHasChanged" Placeholder="Search projects…" />
+        <Input @bind-Value="objSearch" @bind-Value:after="StateHasChanged" Placeholder="Search projects…" aria-label="Search projects" data-testid="field-search-projects" />
 
         @if (objLoading)
         {
@@ -53,27 +60,31 @@
                 </Card>
             }
         }
-        else if (FilteredProjects.Count == 0)
-        {
-            <Card Class="hintcard" data-testid="projects-empty">
-                <div style="margin-bottom:8px"><LucideIcon Name="folder-plus" Size="20" /></div>
-                No projects yet. Create one to start capturing the full parameter history of every generation.
-                <div style="margin-top:10px"><Button Variant="ButtonVariant.Outline" OnClick="CreateProjectAsync">Create a project</Button></div>
-            </Card>
-        }
         else
         {
-            @foreach (var vProject in FilteredProjects)
+            @if (FilteredProjects.Count == 0)
+            {
+                <div class="muted-sm">@(objProjects.Count == 0 ? "No projects yet." : "No projects match your search.")</div>
+            }
+
+            @foreach (var (vProject, vIndex) in FilteredProjects.Select((aProject, aIndex) => (aProject, aIndex)))
             {
                 <Card Class="@(vProject.ProjectId == objSelectedId ? "projcard projcard-sel" : "projcard")"
-                      @key="vProject.ProjectId" @onclick="@(() => SelectProjectAsync(vProject))">
+                      @key="vProject.ProjectId" @onclick="@(() => SelectProjectAsync(vProject))"
+                      data-testid="@(vIndex < 4 ? $"card-{vIndex + 1}" : $"card-project-{vIndex + 1}")">
                     <div class="projicon"><LucideIcon Name="folder" Size="18" /></div>
                     <div>
                         <div class="projcard-name">@vProject.Name</div>
-                        <div class="projcard-meta">@vProject.AssetCount assets · updated @vProject.UpdatedLabel</div>
+                        <div class="projcard-meta">@AssetCountLabel(vProject) · updated @vProject.UpdatedLabel</div>
                     </div>
                 </Card>
             }
+
+            <Card Class="hintcard" data-testid="card-5">
+                <div style="margin-bottom:6px"><LucideIcon Name="folder-plus" Size="20" /></div>
+                Projects capture the full parameter history of every generation, so any result can be reproduced later — even after you tweak the prompt.
+                <div style="margin-top:10px"><Button Variant="ButtonVariant.Outline" OnClick="CreateProjectAsync" data-testid="btn-create-a-project">Create a project</Button></div>
+            </Card>
         }
     </div>
 
@@ -81,76 +92,92 @@
     <div class="studio-col">
         @if (SelectedProject is null)
         {
-            <Card Class="hintcard">Select a project to see its generation history and run parameters.</Card>
+            @if (!objLoading)
+            {
+                <Card Class="hintcard">Select a project to see its generation history and run parameters.</Card>
+            }
         }
         else
         {
-            <Card>
+            <Card Class="projpanel" data-testid="card-6">
                 <div class="detailhead">
                     <div>
                         <div style="font-size:16px;font-weight:650">@SelectedProject.Name</div>
                         <span class="muted-sm">@(SelectedProject.Description ?? "Campaign assets and their full parameter history.")</span>
                     </div>
                     <div class="grow"></div>
-                    <Badge Class="badge-brand">@SelectedProject.AssetCount assets</Badge>
-                    <Badge Variant="BadgeVariant.Outline" Class="badge-ok">updated @SelectedProject.UpdatedLabel</Badge>
+                    <Badge Class="badge-brand" data-testid="badge-18-assets">@AssetCountLabel(SelectedProject)</Badge>
+                    <Badge Variant="BadgeVariant.Outline" data-testid="badge-free-local-9-runs">₹-free local: @FreeLocalRuns @(FreeLocalRuns == 1 ? "run" : "runs")</Badge>
+                    <Badge Variant="BadgeVariant.Outline" Class="badge-ok" data-testid="badge-status">updated @SelectedProject.UpdatedLabel</Badge>
                 </div>
-                <div class="flex-row">
-                    <Button Variant="ButtonVariant.Outline" OnClick="OpenInGallery">
+                <div class="flex-row" style="flex-wrap:wrap">
+                    <Button Variant="ButtonVariant.Outline" OnClick="OpenInGallery" data-testid="btn-open-in-gallery">
                         <LucideIcon Name="layout-grid" Size="14" />
                         Open in Gallery
                     </Button>
-                    <Button Variant="ButtonVariant.Outline" OnClick="RenameProjectAsync">Rename</Button>
-                    <Button Variant="ButtonVariant.Ghost" OnClick="ArchiveProjectAsync">Archive</Button>
+                    <Button Variant="ButtonVariant.Outline" OnClick="RenameProjectAsync" data-testid="btn-rename">Rename</Button>
+                    <Button Variant="ButtonVariant.Ghost" OnClick="ArchiveProjectAsync" data-testid="btn-archive">Archive</Button>
                 </div>
             </Card>
 
             <div class="detailgrid">
-                <Card>
-                    <div class="flex-between" style="margin-bottom:8px">
+                <Card Class="projpanel" data-testid="card-generation-history">
+                    <div class="flex-between" style="margin-bottom:8px;flex-wrap:wrap;gap:8px">
                         <h3 class="card-h3" style="margin:0">Generation history</h3>
-                        <Tabs @bind-Value="objHistoryTab" @bind-Value:after="StateHasChanged">
-                            <TabsList>
-                                @foreach (var vTab in objHistoryTabs)
+                        <div class="image-seg" role="group" aria-label="Show runs of">
+                            @foreach (var vTab in objHistoryTabs)
+                            {
+                                <button type="button" class="@(vTab == objHistoryTab ? "is-on" : null)" aria-pressed="@(vTab == objHistoryTab ? "true" : "false")"
+                                        @onclick="@(() => objHistoryTab = vTab)" data-testid="@($"btn-{vTab.ToLowerInvariant()}")">@vTab</button>
+                            }
+                        </div>
+                    </div>
+                    <div class="table-scroll">
+                        <table class="histtable" data-testid="table-1">
+                            <thead><tr><th>Asset</th><th>Model</th><th>Provider · Tier</th><th>Seed</th><th>Date</th><th></th></tr></thead>
+                            <tbody>
+                                @if (objHistoryLoading)
                                 {
-                                    <TabsTrigger Value="@vTab">@vTab</TabsTrigger>
+                                    <tr><td colspan="6"><Skeleton Class="h-4 w-full" /></td></tr>
                                 }
-                            </TabsList>
-                        </Tabs>
+                                else if (FilteredHistory.Count == 0)
+                                {
+                                    <tr><td colspan="6" class="muted-sm">@(objHistory.Count == 0 ? "No runs in this project yet." : "No runs of this kind in this project.")</td></tr>
+                                }
+                                else
+                                {
+                                    @foreach (var vRow in FilteredHistory.Take(cHistoryRows))
+                                    {
+                                        <tr @key="vRow.JobId" class="@(vRow == objRun ? "sel" : null)" @onclick="@(() => objRun = vRow)">
+                                            <td>
+                                                <span class="assetcell">
+                                                    <span class="miniart @vRow.Art">@vRow.MiniLabel</span>
+                                                    @vRow.Title
+                                                </span>
+                                            </td>
+                                            <td>@vRow.Model</td>
+                                            <td>@vRow.ProviderTier</td>
+                                            <td>@vRow.SeedLabel</td>
+                                            <td>@vRow.DateLabel</td>
+                                            <td>
+                                                <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(() => ReproduceRowAsync(vRow))"
+                                                        data-testid="@ReproduceId(vRow)">Reproduce</Button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="table-scroll" data-testid="history-table">
-                        <DataTable TData="HistoryRow" Data="@FilteredHistory" ShowToolbar="false"
-                                   InitialPageSize="8" IsLoading="@objHistoryLoading">
-                            <Columns>
-                                <DataTableColumn TData="HistoryRow" TValue="string" Property="@(r => r.Title)" Header="Asset">
-                                    <CellTemplate Context="objRow">
-                                        <span class="assetcell">
-                                            <span class="miniart @objRow.Art">@objRow.MiniLabel</span>
-                                            @objRow.Title
-                                        </span>
-                                    </CellTemplate>
-                                </DataTableColumn>
-                                <DataTableColumn TData="HistoryRow" TValue="string" Property="@(r => r.Model)" Header="Model" Sortable />
-                                <DataTableColumn TData="HistoryRow" TValue="string" Property="@(r => r.ProviderTier)" Header="Provider · Tier" />
-                                <DataTableColumn TData="HistoryRow" TValue="string" Property="@(r => r.SeedLabel)" Header="Seed" />
-                                <DataTableColumn TData="HistoryRow" TValue="string" Property="@(r => r.DateLabel)" Header="Date" Sortable />
-                                <DataTableColumn TData="HistoryRow" TValue="string" Property="@(r => r.Title)" Header="">
-                                    <CellTemplate Context="objRow">
-                                        <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(() => ReproduceRowAsync(objRow))">Reproduce</Button>
-                                    </CellTemplate>
-                                </DataTableColumn>
-                            </Columns>
-                        </DataTable>
-                    </div>
-                    <div class="seg-hint">Every run stores its complete parameter set for one-click reproduce.</div>
+                    <div class="seg-hint">@HistoryHint</div>
                 </Card>
 
-                <Card>
+                <Card Class="projpanel" data-testid="card-run-parameters">
                     <div class="flex-between" style="margin-bottom:8px">
                         <h3 class="card-h3" style="margin:0">Run parameters</h3>
                         @if (objRun is not null)
                         {
-                            <Badge Class="badge-brand">@objRun.RunRef</Badge>
+                            <Badge Class="badge-brand" data-testid="badge-run-01jzk4">@objRun.RunRef</Badge>
                         }
                     </div>
                     @if (objRun is null)
@@ -159,13 +186,28 @@
                     }
                     else
                     {
-                        <div class="muted-sm" style="margin-bottom:8px">@objRun.Title · @objRun.DateLabel</div>
-                        <div class="promptbox">@objRun.Prompt</div>
-                        <div data-testid="run-params">
+                        <div class="muted-sm" style="margin-bottom:8px">@objRun.Title · @objRun.WhenLabel</div>
+                        @if (objRun.Prompt is not null)
+                        {
+                            <div class="promptbox">"@objRun.Prompt"</div>
+                        }
+                        <div>
+                            @if (objRun.Character is not null)
+                            {
+                                <div class="kv"><span class="muted">Character</span><b>@objRun.Character</b></div>
+                            }
                             <div class="kv"><span class="muted">Model</span><b>@objRun.Model</b></div>
                             <div class="kv"><span class="muted">Provider · Tier</span><b>@objRun.ProviderTier</b></div>
                             <div class="kv"><span class="muted">Seed</span><b>@objRun.SeedLabel</b></div>
                             <div class="kv"><span class="muted">Resolution</span><b>@objRun.Resolution</b></div>
+                            @if (objRun.Duration is not null)
+                            {
+                                <div class="kv"><span class="muted">Duration</span><b>@objRun.Duration</b></div>
+                            }
+                            @if (objRun.Voice is not null)
+                            {
+                                <div class="kv"><span class="muted">Voice</span><b>@objRun.Voice</b></div>
+                            }
                             <div class="kv"><span class="muted">Guidance / steps</span><b>@objRun.GuidanceSteps</b></div>
                             <div class="kv"><span class="muted">Cost</span><b>@objRun.Cost</b></div>
                             @if (VeniceRunDetailsFormat.IsVenice(objRun.ProviderKind))
@@ -181,28 +223,51 @@
                                     }
                                 </div>
                             }
-                            <div class="kv"><span class="muted">Provenance</span><b>@objRun.Provenance</b></div>
+                            <div class="kv">
+                                <span class="muted">Provenance</span>
+                                <b>
+                                    @if (objRun.ProvenanceSigned)
+                                    {
+                                        <Badge Variant="BadgeVariant.Outline" Class="badge-ok" data-testid="badge-c2pa-signed">C2PA signed</Badge>
+                                    }
+                                    else
+                                    {
+                                        <span>Not signed</span>
+                                    }
+                                </b>
+                            </div>
                         </div>
                         <div class="flex-col" style="margin-top:12px">
-                            <Button Class="w-full" OnClick="@(() => ReproduceRowAsync(objRun))" data-testid="reproduce-params-btn">Reproduce with these params</Button>
-                            <Button Variant="ButtonVariant.Outline" Class="w-full" OnClick="CopyParamsJson">Copy params as JSON</Button>
+                            <Button Class="w-full" OnClick="@(() => ReproduceRowAsync(objRun))" data-testid="btn-reproduce-with-these-params">Reproduce with these params</Button>
+                            <Button Variant="ButtonVariant.Outline" Class="w-full" OnClick="CopyParamsJsonAsync" data-testid="btn-copy-params-as-json">Copy params as JSON</Button>
                         </div>
                     }
                 </Card>
             </div>
+        }
+
+        @if (!objLoading)
+        {
+            <Card Class="hintcard" data-testid="card-9">
+                No runs yet in a new project? Generate from any studio and pick the project in the "Save to" selector — the full parameter set is captured automatically.
+            </Card>
         }
     </div>
 </div>
 
 @code {
     private readonly List<ProjectView> objProjects = new();
+    private readonly Dictionary<Guid, int> objAssetCounts = new();
+    private readonly Dictionary<string, CatalogModelResponse> objModels = new(StringComparer.OrdinalIgnoreCase);
     private Guid? objSelectedId;
     private string objSearch = string.Empty;
     private bool objLoading = true;
     private bool objApiDown;
 
     private readonly List<HistoryRow> objHistory = new();
+    private int objHistoryTotal;
     private bool objHistoryLoading;
+    private const int cHistoryRows = 8;
     private readonly string[] objHistoryTabs = { "All", "Images", "Video", "Voice" };
     private string objHistoryTab = "All";
     private HistoryRow? objRun;
@@ -224,6 +289,33 @@
         "Voice" => objHistory.Where(aRow => aRow.Kind == "audio").ToList(),
         _ => objHistory
     };
+
+    /// <summary>The selected project's runs that ran free on this machine (local provider, no price).</summary>
+    private int FreeLocalRuns => objHistory.Count(aRow => aRow.IsFreeLocal);
+
+    /// <summary>"Showing n of m runs" under the history table.</summary>
+    private string HistoryHint =>
+        objHistoryTotal == 0
+            ? "No runs in this project yet · every run stores its complete parameter set for one-click reproduce."
+            : $"Showing {Math.Min(FilteredHistory.Count, cHistoryRows)} of {objHistoryTotal} {(objHistoryTotal == 1 ? "run" : "runs")} · every run stores its complete parameter set for one-click reproduce.";
+
+    /// <summary>"n assets" for a project card or header (blank count while unknown).</summary>
+    private string AssetCountLabel(ProjectView aProject)
+    {
+        if (!objAssetCounts.TryGetValue(aProject.ProjectId, out var vCount))
+        {
+            return "assets";
+        }
+
+        return vCount == 1 ? "1 asset" : $"{vCount} assets";
+    }
+
+    /// <summary>The control name of a row's Reproduce button: btn-reproduce, btn-reproduce-2, … by row position.</summary>
+    private string ReproduceId(HistoryRow aRow)
+    {
+        var vIndex = FilteredHistory.IndexOf(aRow);
+        return vIndex <= 0 ? "btn-reproduce" : $"btn-reproduce-{vIndex + 1}";
+    }
 
     /// <summary>
     /// Loads owner-scoped projects AFTER the first interactive render — once JS interop is available
@@ -253,9 +345,9 @@
     }
 
     /// <summary>
-    /// Loads the owner-scoped projects. With no session the list stays empty (the real empty state).
-    /// Zero rows render the honest empty state — never sample projects — and a failed fetch raises
-    /// the API-down Alert.
+    /// Loads the owner-scoped projects, their asset counts and the model names. With no session the
+    /// list stays empty (the real empty state). Zero rows render the honest empty state — never sample
+    /// projects — and a failed fetch raises the API-down Alert.
     /// </summary>
     /// <param name="aHasSession">Whether a signed-in session is present.</param>
     private async Task TryLoadProjectsAsync(bool aHasSession)
@@ -265,9 +357,9 @@
             return;
         }
 
+        var vClient = HttpClientFactory.CreateClient("TrStudioApi");
         try
         {
-            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
             var vProjects = await vClient.GetFromJsonAsync<List<ProjectResponse>>(ApiRoutes.Projects);
             objProjects.Clear();
             objProjects.AddRange((vProjects ?? new List<ProjectResponse>()).Select(aProject => ProjectView.FromResponse(aProject)));
@@ -276,6 +368,32 @@
         {
             // API unreachable — never fake data; the warning Alert renders instead.
             objApiDown = true;
+            return;
+        }
+
+        try
+        {
+            foreach (var vModel in await vClient.GetFromJsonAsync<List<CatalogModelResponse>>(ApiRoutes.Models) ?? new())
+            {
+                objModels[vModel.Id] = vModel;
+            }
+        }
+        catch
+        {
+            // Names are a nicety: without them a row shows the model id.
+        }
+
+        foreach (var vProject in objProjects)
+        {
+            try
+            {
+                var vPage = await vClient.GetFromJsonAsync<PagedResult<AssetResponse>>($"{ApiRoutes.Assets}?aProjectId={vProject.ProjectId}&aPageSize=1");
+                objAssetCounts[vProject.ProjectId] = vPage?.TotalCount ?? 0;
+            }
+            catch
+            {
+                // The card shows no count rather than a made-up one.
+            }
         }
     }
 
@@ -296,18 +414,21 @@
     {
         objHistoryLoading = true;
         objHistory.Clear();
+        objHistoryTotal = 0;
 
         try
         {
             var vClient = HttpClientFactory.CreateClient("TrStudioApi");
             var vPage = await vClient.GetFromJsonAsync<PagedResult<AssetResponse>>($"{ApiRoutes.Projects}/{aProject.ProjectId}/history");
-            if (vPage is { Items.Count: > 0 })
+            if (vPage is not null)
             {
+                objHistoryTotal = vPage.TotalCount;
+                objAssetCounts[aProject.ProjectId] = vPage.TotalCount;
                 var vArts = new[] { "art-a", "art-b", "art-c", "art-v" };
                 var vIndex = 0;
-                foreach (var vAsset in vPage.Items)
+                foreach (var vAsset in vPage.Items.OrderByDescending(aAsset => aAsset.CreatedUtc))
                 {
-                    objHistory.Add(HistoryRow.FromResponse(vAsset, vArts[vIndex % vArts.Length]));
+                    objHistory.Add(HistoryRow.FromResponse(vAsset, vArts[vIndex % vArts.Length], objModels));
                     vIndex++;
                 }
             }
@@ -335,8 +456,10 @@
                 if (vCreated is not null)
                 {
                     objProjects.Insert(0, ProjectView.FromResponse(vCreated));
+                    objAssetCounts[vCreated.ProjectId] = 0;
                     objSelectedId = vCreated.ProjectId;
                     objHistory.Clear();
+                    objHistoryTotal = 0;
                     objRun = null;
                     ToastService.Success($"Created \"{vCreated.Name}\".", "Project");
                     return;
@@ -374,6 +497,7 @@
                 objProjects.RemoveAll(aExisting => aExisting.ProjectId == vProject.ProjectId);
                 objSelectedId = null;
                 objHistory.Clear();
+                objHistoryTotal = 0;
                 objRun = null;
                 ToastService.Success($"Archived \"{vProject.Name}\".", "Project");
                 return;
@@ -405,37 +529,134 @@
         ToastService.Success($"Reproducing \"{aRow.Title}\" with its stored params (seed {aRow.SeedLabel}).", "Reproduce");
     }
 
-    private void CopyParamsJson()
-        => ToastService.Show("Run parameters copied as JSON.", "Copied");
+    /// <summary>Copies the selected run's stored parameter set (its params JSON) to the clipboard.</summary>
+    private async Task CopyParamsJsonAsync()
+    {
+        if (objRun is null)
+        {
+            return;
+        }
 
-    /// <summary>A project card/detail projection (API project + asset count + updated label).</summary>
-    private sealed record ProjectView(Guid ProjectId, string Name, string? Description, int AssetCount, string UpdatedLabel)
+        try
+        {
+            await Js.InvokeVoidAsync("navigator.clipboard.writeText", objRun.ParamsJson);
+            ToastService.Success("Run parameters copied as JSON.", "Copied");
+        }
+        catch
+        {
+            ToastService.Error("Couldn't access the clipboard.", "Copy failed");
+        }
+    }
+
+    /// <summary>A project card/detail projection (API project + updated label).</summary>
+    private sealed record ProjectView(Guid ProjectId, string Name, string? Description, string UpdatedLabel)
     {
         /// <summary>Projects an owner-scoped API project into the view model.</summary>
         public static ProjectView FromResponse(ProjectResponse aProject) =>
-            new(aProject.ProjectId, aProject.Name, aProject.Description, 0, aProject.UpdatedUtc.ToString("d MMM yyyy"));
+            new(aProject.ProjectId, aProject.Name, aProject.Description, aProject.UpdatedUtc.ToString("d MMM yyyy"));
     }
 
     /// <summary>A generation-history row carrying its full stored parameter set for reproduce.</summary>
     private sealed record HistoryRow(
         Guid JobId, string Kind, string Title, string MiniLabel, string Art, string Model, string ProviderTier,
-        long? Seed, string DateLabel, string RunRef, string Prompt, string Resolution, string GuidanceSteps,
-        string Cost, string Provenance, string? ProviderKind = null, decimal? ActualCost = null,
+        long? Seed, string DateLabel, string WhenLabel, string RunRef, string? Prompt, string? Character,
+        string Resolution, string? Duration, string? Voice, string GuidanceSteps, string Cost, bool IsFreeLocal,
+        bool ProvenanceSigned, string ParamsJson, string? ProviderKind = null, decimal? ActualCost = null,
         string? FailureMessage = null)
     {
         /// <summary>The seed as a display label, or an em dash when the run used no seed.</summary>
         public string SeedLabel => Seed?.ToString() ?? "—";
 
-        /// <summary>Projects an owner-scoped API asset into a history row.</summary>
-        public static HistoryRow FromResponse(AssetResponse aAsset, string aArt)
+        /// <summary>Projects an owner-scoped API asset (plus the model catalog) into a history row.</summary>
+        public static HistoryRow FromResponse(AssetResponse aAsset, string aArt, IReadOnlyDictionary<string, CatalogModelResponse> aModels)
         {
-            var vMini = aAsset.Kind switch { "video" => "▶", "audio" => "VO", _ => "IMG" };
-            var vDims = aAsset is { Width: not null, Height: not null } ? $"{aAsset.Width}×{aAsset.Height}" : "—";
+            var vKind = aAsset.Kind.ToLowerInvariant();
+            var vParams = ReadParams(aAsset.ParamsJson);
+            aModels.TryGetValue(aAsset.ModelId, out var vModel);
+            var vProvider = aAsset.ProviderKind ?? vModel?.ProviderKind.ToString();
+            var vWhere = vProvider switch
+            {
+                nameof(TrStudio.Models.Enums.ProviderKind.ComfyUi) or nameof(TrStudio.Models.Enums.ProviderKind.OnnxLocal) => "Local GPU",
+                nameof(TrStudio.Models.Enums.ProviderKind.Voice) => "Local voice",
+                nameof(TrStudio.Models.Enums.ProviderKind.HeyGen) or nameof(TrStudio.Models.Enums.ProviderKind.ClosedApi) => "Closed API",
+                nameof(TrStudio.Models.Enums.ProviderKind.RunPod) => "RunPod",
+                nameof(TrStudio.Models.Enums.ProviderKind.Venice) => "Venice",
+                null => null,
+                _ => vProvider
+            };
+            var vTier = vModel?.Tier.ToString();
+            var vProviderTier = (vWhere, vTier) switch
+            {
+                (null, null) => "—",
+                (null, _) => vTier!,
+                (_, null) => vWhere,
+                _ => $"{vWhere} · {vTier}"
+            };
+            var vLocal = vProvider is nameof(TrStudio.Models.Enums.ProviderKind.ComfyUi) or nameof(TrStudio.Models.Enums.ProviderKind.OnnxLocal) or nameof(TrStudio.Models.Enums.ProviderKind.Voice);
+            var vFree = vLocal && aAsset.ActualCost is null or 0m;
+
+            var vMini = vKind switch { "video" => "▶", "audio" => "VO", _ => "IMG" };
+            var vTitle = Text(vParams, "title") ?? $"{char.ToUpperInvariant(vKind[0])}{vKind[1..]} · {aAsset.CreatedUtc:d MMM}";
+            var vSeconds = Number(vParams, "durationSeconds") ?? Number(vParams, "DurationSeconds");
+            var vFps = Number(vParams, "fps");
+            var vDims = aAsset is { Width: > 1, Height: > 1 } ? $"{aAsset.Width} × {aAsset.Height}" : "—";
+            if (vDims != "—" && vFps is > 0)
+            {
+                vDims += $" · {vFps} fps";
+            }
+
+            var vCfg = Number(vParams, "cfg") ?? Number(vParams, "guidance") ?? Number(vParams, "cfgScale");
+            var vSteps = Number(vParams, "steps");
+            var vGuidance = (vCfg, vSteps) switch
+            {
+                (null, null) => "—",
+                (null, _) => $"{vSteps} steps",
+                (_, null) => $"CFG {vCfg}",
+                _ => $"CFG {vCfg} · {vSteps} steps"
+            };
+            var vVoice = Text(vParams, "VoiceId") ?? Text(vParams, "voiceId");
+            var vLanguage = Text(vParams, "Language") ?? Text(vParams, "language");
+            if (vVoice is not null && vLanguage is not null)
+            {
+                vVoice = $"{vVoice} · {vLanguage}";
+            }
+
+            var vCost = aAsset.ActualCost is { } vPrice
+                ? (vPrice == 0m ? "Free" : $"${vPrice:0.00}")
+                : vFree ? "Free (local)" : "—";
+
             return new HistoryRow(
-                aAsset.JobId, aAsset.Kind, $"{aAsset.Kind} · {aAsset.CreatedUtc:d MMM}", vMini, aArt,
-                aAsset.ModelId, aAsset.Kind, aAsset.SeedUsed, aAsset.CreatedUtc.ToString("d MMM"),
-                $"run_{aAsset.JobId.ToString()[..6]}", "Stored parameter set for this run.", vDims, "—", "—", "—",
+                aAsset.JobId, vKind, vTitle, vMini, aArt, vModel?.DisplayName ?? aAsset.ModelId, vProviderTier,
+                aAsset.SeedUsed, aAsset.CreatedUtc.ToString("d MMM"), aAsset.CreatedUtc.ToLocalTime().ToString("d MMM yyyy, HH:mm"),
+                $"run_{aAsset.JobId.ToString("N")[..6].ToUpperInvariant()}",
+                Text(vParams, "prompt") ?? Text(vParams, "script") ?? Text(vParams, "Text"),
+                Text(vParams, "characterName") ?? Text(vParams, "character"),
+                vDims,
+                vKind is "video" or "audio" && vSeconds is > 0 ? TimeSpan.FromSeconds(Math.Round(vSeconds.Value)).ToString(@"m\:ss") : null,
+                vVoice, vGuidance, vCost, vFree, aAsset.ProvenanceSigned, aAsset.ParamsJson,
                 aAsset.ProviderKind, aAsset.ActualCost, aAsset.FailureMessage);
         }
+
+        private static Dictionary<string, JsonElement> ReadParams(string? aJson)
+        {
+            try
+            {
+                return string.IsNullOrWhiteSpace(aJson)
+                    ? new()
+                    : JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(aJson) ?? new();
+            }
+            catch (JsonException)
+            {
+                return new();
+            }
+        }
+
+        private static string? Text(Dictionary<string, JsonElement> aParams, string aKey) =>
+            aParams.TryGetValue(aKey, out var vValue) && vValue.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(vValue.GetString())
+                ? vValue.GetString()
+                : null;
+
+        private static double? Number(Dictionary<string, JsonElement> aParams, string aKey) =>
+            aParams.TryGetValue(aKey, out var vValue) && vValue.ValueKind == JsonValueKind.Number ? vValue.GetDouble() : null;
     }
 }

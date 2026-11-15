@@ -34,8 +34,8 @@
 }
 
 @* ---- Profile + license ---- *@
-<div class="acct-top" data-testid="account-identity">
-    <Card>
+<div class="acct-top">
+    <Card Class="acct-card" data-testid="card-profile">
         <h3 class="card-h3">Profile</h3>
         @if (objLoading)
         {
@@ -54,7 +54,7 @@
                     <span class="muted-sm">AppManager userId · @objProfile.UserId · joined @objProfile.Joined</span>
                 </div>
                 <div class="grow"></div>
-                <Button Variant="ButtonVariant.Outline" OnClick="ManageInAppManager">
+                <Button Variant="ButtonVariant.Outline" OnClick="ManageInAppManager" data-testid="btn-manage-in-appmanager">
                     Manage in AppManager
                     <LucideIcon Name="external-link" Size="13" />
                 </Button>
@@ -62,7 +62,7 @@
         }
     </Card>
 
-    <Card>
+    <Card Class="acct-card" data-testid="card-license-tier">
         <h3 class="card-h3">License &amp; tier</h3>
         @if (objLoading)
         {
@@ -86,28 +86,28 @@
                     <b style="font-size:15px">@objLicense.Name</b>
                     <span class="muted">@objLicense.StatusMessage</span>
                 </div>
-                <Badge Class="@(objLicense.Gated ? "badge-warn" : "badge-brand")">@objLicense.TierBadge</Badge>
+                <Badge Variant="BadgeVariant.Outline" Class="@(objLicense.Gated ? "acct-badge-warn" : "acct-badge-tier")" data-testid="badge-pro">@objLicense.TierBadge</Badge>
             </div>
             <div class="muted-sm" style="margin-bottom:12px">@objLicense.RenewalLabel · read-only from AppManager LicenseSvc</div>
             @if (objLicense.Gated)
             {
-                <Button Class="acct-cta" OnClick="Upgrade" data-testid="upgrade-btn">Renew / upgrade to restore access</Button>
+                <Button Class="acct-cta" OnClick="Upgrade" data-testid="btn-upgrade-to-studio-higher-cap">Renew / upgrade to restore access</Button>
             }
             else
             {
-                <Button Class="acct-cta" OnClick="Upgrade">Manage subscription in AppManager</Button>
+                <Button Class="acct-cta" OnClick="Upgrade" data-testid="btn-upgrade-to-studio-higher-cap">Upgrade to a higher cap in AppManager</Button>
             }
         }
     </Card>
 </div>
 
 @* ---- Spend KPIs ---- *@
-<div class="acct-kpis" data-testid="spend-kpis">
+<div class="acct-kpis">
     @if (objLoading)
     {
         @for (var vIndex = 0; vIndex < 3; vIndex++)
         {
-            <Card>
+            <Card Class="acct-card">
                 <Skeleton Class="h-4 w-2/5 mb-3" />
                 <Skeleton Class="h-6 w-1/3 mb-3" />
                 <Skeleton Class="h-2 w-full" />
@@ -116,46 +116,57 @@
     }
     else
     {
-        <Card>
+        <Card Class="acct-card" data-testid="card-runpod-gpu">
             <div class="flex-between" style="margin-bottom:6px">
                 <h3 class="card-h3" style="margin:0">RunPod (GPU)</h3>
-                <Badge Variant="BadgeVariant.Outline">serverless GPU jobs</Badge>
+                @if (objSpend.MonthlyCapUsd > 0)
+                {
+                    @* RunPod's own month-to-date against the cap, on the same 80% / 100% marks as the total *@
+                    var vGpuPct = Pct(objSpend.RunPodUsd, objSpend.MonthlyCapUsd);
+                    <Badge Variant="BadgeVariant.Outline" Class="@(vGpuPct >= 100 ? "badge-danger" : vGpuPct >= 80 ? "acct-badge-warn" : "acct-badge-ok")" data-testid="badge-status-2">
+                        <span class="dot @(vGpuPct >= 100 ? "danger" : vGpuPct >= 80 ? "warn" : "ok")"></span>@(vGpuPct >= 100 ? "over cap" : vGpuPct >= 80 ? "near cap" : "on track")
+                    </Badge>
+                }
+                else
+                {
+                    <Badge Variant="BadgeVariant.Outline" data-testid="badge-status-2">serverless GPU jobs</Badge>
+                }
             </div>
             <div class="acct-kpi-big">@Money(objSpend.RunPodUsd)</div>
-            <div class="muted-sm" style="margin:4px 0 8px">@Pct(objSpend.RunPodUsd, objSpend.SpentToDateUsd)% of this month's spend</div>
-            <Progress Value="@PctValue(objSpend.RunPodUsd, objSpend.SpentToDateUsd)" Class="h-2" IndicatorClass="acct-ind-ok" />
+            <div class="muted-sm" style="margin:4px 0 8px">@Pct(objSpend.RunPodUsd, objSpend.SpentToDateUsd)% of this month's spend · serverless GPU jobs</div>
+            <Progress Value="@PctValue(objSpend.RunPodUsd, objSpend.SpentToDateUsd)" Class="acct-prog" IndicatorClass="acct-ind-ok" data-testid="progress" />
         </Card>
-        <Card>
+        <Card Class="acct-card" data-testid="card-closed-apis">
             <div class="flex-between" style="margin-bottom:6px">
                 <h3 class="card-h3" style="margin:0">Closed APIs</h3>
-                <Badge Variant="BadgeVariant.Outline">HeyGen + aggregators</Badge>
+                <Badge Variant="BadgeVariant.Outline" data-testid="badge-heygen-aggregators">HeyGen + aggregators</Badge>
             </div>
             <div class="acct-kpi-big">@Money(objSpend.ClosedApiUsd)</div>
             <div class="muted-sm" style="margin:4px 0 8px">@Pct(objSpend.ClosedApiUsd, objSpend.SpentToDateUsd)% of this month's spend</div>
-            <Progress Value="@PctValue(objSpend.ClosedApiUsd, objSpend.SpentToDateUsd)" Class="h-2" IndicatorClass="acct-ind-brand" />
+            <Progress Value="@PctValue(objSpend.ClosedApiUsd, objSpend.SpentToDateUsd)" Class="acct-prog" IndicatorClass="acct-ind-brand" data-testid="progress-2" />
         </Card>
-        <Card Class="@(objSpend.OverCap ? "acct-kpi-danger" : objSpend.NearCap ? "acct-kpi-warn" : null)">
+        <Card Class="@(objSpend.OverCap ? "acct-card acct-kpi-danger" : objSpend.NearCap ? "acct-card acct-kpi-warn" : "acct-card")" data-testid="card-total-vs-cap">
             <div class="flex-between" style="margin-bottom:6px">
                 <h3 class="card-h3" style="margin:0">@(objSpend.MonthlyCapUsd > 0 ? "Total vs cap" : "Total this month")</h3>
                 @if (objSpend.OverCap)
                 {
-                    <Badge Variant="BadgeVariant.Outline" Class="badge-danger"><span class="dot danger"></span>over cap</Badge>
+                    <Badge Variant="BadgeVariant.Outline" Class="badge-danger" data-testid="badge-status-3"><span class="dot danger"></span>over cap</Badge>
                 }
                 else if (objSpend.NearCap)
                 {
-                    <Badge Variant="BadgeVariant.Outline" Class="badge-warn"><span class="dot warn"></span>near cap</Badge>
+                    <Badge Variant="BadgeVariant.Outline" Class="acct-badge-warn" data-testid="badge-status-3"><span class="dot warn"></span>near cap</Badge>
                 }
                 else if (objSpend.MonthlyCapUsd > 0)
                 {
-                    <Badge Variant="BadgeVariant.Outline" Class="badge-ok"><span class="dot ok"></span>on track</Badge>
+                    <Badge Variant="BadgeVariant.Outline" Class="badge-ok" data-testid="badge-status-3"><span class="dot ok"></span>on track</Badge>
                 }
             </div>
             @if (objSpend.MonthlyCapUsd > 0)
             {
                 <div class="acct-kpi-big">@Money(objSpend.SpentToDateUsd) <span class="muted" style="font-size:14px;font-weight:500">/ @Money(objSpend.MonthlyCapUsd)</span></div>
                 <div class="muted-sm" style="margin:4px 0 8px">@Pct(objSpend.SpentToDateUsd, objSpend.MonthlyCapUsd)% of monthly cap</div>
-                <Progress Value="@PctValue(objSpend.SpentToDateUsd, objSpend.MonthlyCapUsd)" Class="h-2"
-                          IndicatorClass="@(objSpend.OverCap ? "acct-ind-danger" : objSpend.NearCap ? "acct-ind-warn" : "acct-ind-ok")" />
+                <Progress Value="@PctValue(objSpend.SpentToDateUsd, objSpend.MonthlyCapUsd)" Class="acct-prog"
+                          IndicatorClass="@(objSpend.OverCap ? "acct-ind-danger" : objSpend.NearCap ? "acct-ind-warn" : "acct-ind-ok")" data-testid="progress-3" />
             }
             else
             {
@@ -168,8 +179,8 @@
 
 @if (!objLoading && (objSpend.NearCap || objSpend.OverCap))
 {
-    <div data-testid="cap-alert">
-        <Alert Variant="@(objSpend.OverCap ? AlertVariant.Danger : AlertVariant.Warning)" Class="acct-alert">
+    <div>
+        <Alert Variant="@(objSpend.OverCap ? AlertVariant.Danger : AlertVariant.Warning)" Class="acct-alert" data-testid="alert-warn">
             <AlertDescription>
                 You are at <b>@Pct(objSpend.SpentToDateUsd, objSpend.MonthlyCapUsd)%</b> of your @Money(objSpend.MonthlyCapUsd) monthly cap.
                 @if (objSpend.OverCap)
@@ -185,27 +196,46 @@
     </div>
 }
 
+@* ---- Spend split ---- *@
+@if (!objLoading)
+{
+    <Card Class="acct-card" style="margin-bottom:14px" data-testid="card-spend-split-runpod-vs-closed-api">
+        <div class="flex-between">
+            <h3 class="card-h3" style="margin:0">Spend split — RunPod vs closed APIs</h3>
+            <span class="muted-sm">cycle: @CycleLabel</span>
+        </div>
+        <div class="acct-splitbar" role="img" aria-label="RunPod @SplitPct(objSpend.RunPodUsd)%, closed APIs @SplitPct(objSpend.ClosedApiUsd)%">
+            <i class="acct-split-runpod" style="width:@SplitPct(objSpend.RunPodUsd)%"></i><i class="acct-split-closed" style="width:@SplitPct(objSpend.ClosedApiUsd)%"></i>
+        </div>
+        <div class="acct-legend">
+            <span class="flex-row" style="gap:6px"><span class="dot brand"></span>RunPod GPU · @Money(objSpend.RunPodUsd) (@SplitPct(objSpend.RunPodUsd)%)</span>
+            <span class="flex-row" style="gap:6px"><span class="dot warn"></span>Closed APIs · @Money(objSpend.ClosedApiUsd) (@SplitPct(objSpend.ClosedApiUsd)%)</span>
+            <span class="grow"></span>
+            <span>@objSpend.JobCount jobs this cycle</span>
+        </div>
+    </Card>
+}
+
 @* ---- Recent usage ---- *@
-<Card>
-    <div class="flex-between" style="margin-bottom:10px">
+<Card Class="acct-card" data-testid="card-recent-jobs">
+    <div class="flex-between" style="margin-bottom:10px;flex-wrap:wrap;gap:8px">
         <h3 class="card-h3" style="margin:0">Recent jobs</h3>
-        <Tabs @bind-Value="objJobsTab" @bind-Value:after="StateHasChanged">
-            <TabsList>
-                @foreach (var vTab in objJobTabs)
-                {
-                    <TabsTrigger Value="@vTab">@vTab</TabsTrigger>
-                }
-            </TabsList>
-        </Tabs>
+        <div class="cmp-seg" role="group" aria-label="Job kind">
+            @foreach (var vTab in objJobTabs)
+            {
+                <button type="button" class="@(objJobsTab == vTab ? "active" : null)" aria-pressed="@(objJobsTab == vTab ? "true" : "false")"
+                        @onclick="@(() => objJobsTab = vTab)" data-testid="@($"btn-{vTab.ToLowerInvariant()}")">@vTab</button>
+            }
+        </div>
     </div>
-    <div class="table-scroll" data-testid="usage-table">
-        <DataTable TData="UsageRow" Data="@FilteredJobs" ShowToolbar="false" InitialPageSize="8" IsLoading="@objLoading">
+    <div class="table-scroll">
+        <DataTable TData="UsageRow" Data="@FilteredJobs" ShowToolbar="false" InitialPageSize="8" IsLoading="@objLoading" data-testid="table-1">
             <Columns>
                 <DataTableColumn TData="UsageRow" TValue="string" Property="@(r => r.Title)" Header="Job" />
-                <DataTableColumn TData="UsageRow" TValue="string" Property="@(r => r.Model)" Header="Model" Sortable />
+                <DataTableColumn TData="UsageRow" TValue="string" Property="@(r => r.Model)" Header="Model" />
                 <DataTableColumn TData="UsageRow" TValue="string" Property="@(r => r.Tier)" Header="Tier" />
                 <DataTableColumn TData="UsageRow" TValue="string" Property="@(r => r.Duration)" Header="Duration" />
-                <DataTableColumn TData="UsageRow" TValue="string" Property="@(r => r.Cost)" Header="Cost" Sortable />
+                <DataTableColumn TData="UsageRow" TValue="string" Property="@(r => r.Cost)" Header="Cost" />
                 <DataTableColumn TData="UsageRow" TValue="string" Property="@(r => r.Outcome)" Header="Outcome">
                     <CellTemplate Context="objRow">
                         <span class="flex-row"><span class="dot @(objRow.Ok ? "ok" : "danger")"></span>@objRow.Outcome</span>
@@ -216,7 +246,7 @@
     </div>
     @if (!objLoading)
     {
-        <div class="seg-hint">Showing @FilteredJobs.Count of @objSpend.JobCount jobs this cycle · spend tracked against RunPod + closed APIs; local-GPU runs are $0.00.</div>
+        <div class="seg-hint">Showing @Math.Min(FilteredJobs.Count, 8) of @objSpend.JobCount jobs this cycle · spend tracked against RunPod + closed APIs; local-GPU runs are $0.00.</div>
     }
 </Card>
 </div>
@@ -335,11 +365,26 @@
             // Cap not readable for this role — the total card renders without a cap bar.
         }
 
+        // The model catalog names each logged model and says what it makes (picture, video or voice).
+        var vModels = new Dictionary<string, CatalogModelResponse>(StringComparer.OrdinalIgnoreCase);
+        try
+        {
+            foreach (var vModel in await vClient.GetFromJsonAsync<List<CatalogModelResponse>>(ApiRoutes.Models) ?? new())
+            {
+                vModels[vModel.Id] = vModel;
+            }
+        }
+        catch
+        {
+            // Names are a nicety: without them a row shows the model id and lists under All only.
+        }
+
         try
         {
             var vLog = await vClient.GetFromJsonAsync<PagedResult<GenerationLogEntry>>($"{ApiRoutes.GenerationLog}?aPage=1&aPageSize=20");
             objJobs.Clear();
-            objJobs.AddRange((vLog?.Items ?? Array.Empty<GenerationLogEntry>()).Select(UsageRow.FromLog));
+            objJobs.AddRange((vLog?.Items ?? Array.Empty<GenerationLogEntry>())
+                .Select(aEntry => UsageRow.FromLog(aEntry, vModels.GetValueOrDefault(aEntry.ModelId))));
             objSpend = objSpend with { JobCount = vLog?.TotalCount ?? 0 };
         }
         catch
@@ -353,6 +398,20 @@
 
     private void Upgrade()
         => ToastService.Show("Licensing is managed in AppManager LicenseSvc — opening the upgrade flow.", "Upgrade");
+
+    /// <summary>The current billing cycle (the calendar month, as the spend ledger counts it), e.g. "1 Nov – 30 Nov 2026".</summary>
+    private static string CycleLabel
+    {
+        get
+        {
+            var vNow = DateTime.UtcNow;
+            var vStart = new DateTime(vNow.Year, vNow.Month, 1);
+            return $"{vStart:d MMM} – {vStart.AddMonths(1).AddDays(-1):d MMM yyyy}";
+        }
+    }
+
+    /// <summary>A channel's share (0..100) of this month's spend, for the split bar and its legend.</summary>
+    private int SplitPct(decimal aChannelUsd) => Pct(aChannelUsd, objSpend.RunPodUsd + objSpend.ClosedApiUsd);
 
     /// <summary>Formats a USD amount for display (e.g. $46.20).</summary>
     private static string Money(decimal aAmount) => aAmount.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-US"));
@@ -449,18 +508,68 @@
     private sealed record UsageRow(string Kind, string Title, string Model, string Tier, string Duration, string Cost, string Outcome, bool Ok)
     {
         /// <summary>
-        /// Projects a generation-log entry into the usage table model. The log carries no media kind,
-        /// so Kind stays empty (rows list under the All tab) rather than inventing one.
+        /// Projects a generation-log entry into the usage table model. The media kind (Images / Video /
+        /// Voice tabs) comes from the catalog model's task; the job name from the run's own "title"
+        /// parameter when it has one, else the model name and date. Unknown models list under All only.
         /// </summary>
-        public static UsageRow FromLog(GenerationLogEntry aEntry)
+        public static UsageRow FromLog(GenerationLogEntry aEntry, CatalogModelResponse? aModel)
         {
+            var vKind = aModel?.Task switch
+            {
+                GenerationTaskType.TextToSpeech => "audio",
+                GenerationTaskType.LipSync or GenerationTaskType.ImageToVideo or GenerationTaskType.TextToVideo => "video",
+                GenerationTaskType.TextToImage or GenerationTaskType.ImageToImage or GenerationTaskType.Inpaint
+                    or GenerationTaskType.Upscale or GenerationTaskType.BackgroundRemove => "image",
+                _ => string.Empty
+            };
+            var vModelName = string.IsNullOrWhiteSpace(aModel?.DisplayName) ? aEntry.ModelId : aModel.DisplayName;
+            var vTitle = ReadTitle(aEntry.ParamsJson) ?? $"{vModelName} · {aEntry.CreatedUtc:d MMM}";
             var vDuration = aEntry.DurationMs is null ? "—" : $"{TimeSpan.FromMilliseconds(aEntry.DurationMs.Value):m\\m\\ ss\\s}";
             var vCost = aEntry.ActualCost ?? aEntry.CostEstimate;
             var vOk = string.Equals(aEntry.Outcome, "succeeded", StringComparison.OrdinalIgnoreCase);
-            return new UsageRow(string.Empty,
-                $"{aEntry.ModelId} · {aEntry.CreatedUtc:d MMM}", aEntry.ModelId, aEntry.Tier.ToString(),
+            return new UsageRow(vKind, vTitle, vModelName, aEntry.Tier.ToString(),
                 vDuration, vCost is null ? "$0.00" : vCost.Value.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-US")),
-                string.IsNullOrWhiteSpace(aEntry.Outcome) ? "—" : aEntry.Outcome, vOk);
+                OutcomeLabel(aEntry), vOk);
+        }
+
+        /// <summary>"Completed", "Failed (reason)" or the logged outcome as-is.</summary>
+        private static string OutcomeLabel(GenerationLogEntry aEntry)
+        {
+            if (string.IsNullOrWhiteSpace(aEntry.Outcome))
+            {
+                return "—";
+            }
+
+            if (string.Equals(aEntry.Outcome, "succeeded", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Completed";
+            }
+
+            if (string.Equals(aEntry.Outcome, "failed", StringComparison.OrdinalIgnoreCase))
+            {
+                return string.IsNullOrWhiteSpace(aEntry.FailureMessage) ? "Failed" : $"Failed ({aEntry.FailureMessage})";
+            }
+
+            return aEntry.Outcome;
+        }
+
+        /// <summary>The run's "title" parameter, when its params JSON carries one.</summary>
+        private static string? ReadTitle(string aParamsJson)
+        {
+            try
+            {
+                using var vDoc = System.Text.Json.JsonDocument.Parse(string.IsNullOrWhiteSpace(aParamsJson) ? "{}" : aParamsJson);
+                return vDoc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object
+                       && vDoc.RootElement.TryGetProperty("title", out var vTitle)
+                       && vTitle.ValueKind == System.Text.Json.JsonValueKind.String
+                       && !string.IsNullOrWhiteSpace(vTitle.GetString())
+                    ? vTitle.GetString()
+                    : null;
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                return null;
+            }
         }
     }
 }

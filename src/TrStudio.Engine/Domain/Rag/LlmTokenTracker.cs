@@ -8,7 +8,7 @@ namespace TrStudio.Engine.Domain.Rag;
 
 /// <summary>
 /// Default <see cref="ILlmTokenTracker"/> (RAG-003/BRD-56). Accrues text-LLM token counts and cost
-/// per user in-process (no Redis — in-memory rollup) and FEEDS the spend rollup: any positive-cost
+/// per user in-process for the current calendar month, UTC (no Redis — in-memory rollup) and FEEDS the spend rollup: any positive-cost
 /// usage is recorded to the <see cref="SpendChannel.LlmText"/> channel via the shared
 /// <see cref="ISpendLedger"/>, so text-LLM spend appears in the monthly-cap report alongside the
 /// RunPod and closed-API channels.
@@ -37,6 +37,7 @@ public class LlmTokenTracker : ILlmTokenTracker
         var vUsage = objUsageByUser.GetOrAdd(vUserId, _ => new UserUsage());
         lock (vUsage.Gate)
         {
+            vUsage.RollOverIfNewMonth();
             vUsage.InputTokens += Math.Max(0, aInputTokens);
             vUsage.OutputTokens += Math.Max(0, aOutputTokens);
             vUsage.CostUsd += aCostUsd > 0m ? aCostUsd : 0m;
@@ -68,6 +69,7 @@ public class LlmTokenTracker : ILlmTokenTracker
 
         lock (vUsage.Gate)
         {
+            vUsage.RollOverIfNewMonth();
             return new LlmUsageResponse
             {
                 InputTokens = vUsage.InputTokens,
@@ -82,9 +84,31 @@ public class LlmTokenTracker : ILlmTokenTracker
     private sealed class UserUsage
     {
         public object Gate { get; } = new();
+
+        /// <summary>The calendar month (UTC, yyyy*12+month) the counts belong to.</summary>
+        public int Month { get; private set; } = CurrentMonth();
+
         public int InputTokens { get; set; }
         public int OutputTokens { get; set; }
         public decimal CostUsd { get; set; }
         public int OperationCount { get; set; }
+
+        /// <summary>Zeroes the counts when a new calendar month (UTC) has begun, so the rollup is this month's.</summary>
+        public void RollOverIfNewMonth()
+        {
+            var vNow = CurrentMonth();
+            if (vNow == Month)
+            {
+                return;
+            }
+
+            Month = vNow;
+            InputTokens = 0;
+            OutputTokens = 0;
+            CostUsd = 0m;
+            OperationCount = 0;
+        }
+
+        private static int CurrentMonth() => (DateTime.UtcNow.Year * 12) + DateTime.UtcNow.Month;
     }
 }

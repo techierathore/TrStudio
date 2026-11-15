@@ -111,6 +111,7 @@ tr.sel td{background:var(--sel)}
 .pgbtn:hover{background:var(--hover)}
 .pgbtn.active{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;border-color:transparent;font-weight:600}
 </style>
+<style data-note="tf-phone-layout: owner decision 13, the app shows the sidebar as a slide-out menu on a phone">@media (max-width:600px){.app{grid-template-columns:1fr}.side[data-testid="sidebar"]{display:none}}</style>
 </head>
 <body>
 <div class="app">
@@ -223,11 +224,11 @@ tr.sel td{background:var(--sel)}
         <span class="spacer"></span>
         <button class="pgbtn" type="button" onclick="alert('Prev: done in the built app')" data-testid="btn-prev">Prev</button>
         <button class="pgbtn active" type="button" data-page="1" onclick="alert('1: done in the built app')" data-testid="btn-1">1</button>
-        <button class="pgbtn" type="button" data-page="2" onclick="alert('2: done in the built app')" data-testid="btn-2">2</button>
-        <button class="pgbtn" type="button" data-page="3" onclick="alert('3: done in the built app')" data-testid="btn-3">3</button>
-        <button class="pgbtn" type="button" data-page="4" onclick="alert('4: done in the built app')" data-testid="btn-4">4</button>
-        <button class="pgbtn" type="button" data-page="5" onclick="alert('5: done in the built app')" data-testid="btn-5">5</button>
-        <button class="pgbtn" type="button" data-page="6" onclick="alert('6: done in the built app')" data-testid="btn-6">6</button>
+        <button class="pgbtn" type="button" data-tf-sample data-page="2" onclick="alert('2: done in the built app')" data-testid="btn-2">2</button>
+        <button class="pgbtn" type="button" data-tf-sample data-page="3" onclick="alert('3: done in the built app')" data-testid="btn-3">3</button>
+        <button class="pgbtn" type="button" data-tf-sample data-page="4" onclick="alert('4: done in the built app')" data-testid="btn-4">4</button>
+        <button class="pgbtn" type="button" data-tf-sample data-page="5" onclick="alert('5: done in the built app')" data-testid="btn-5">5</button>
+        <button class="pgbtn" type="button" data-tf-sample data-page="6" onclick="alert('6: done in the built app')" data-testid="btn-6">6</button>
         <button class="pgbtn" type="button" onclick="alert('Next: done in the built app')" data-testid="btn-next">Next</button>
       </div>
     </div>
@@ -261,7 +262,7 @@ tr.sel td{background:var(--sel)}
         <p class="muted" style="font-size:12px;margin:8px 0 0">Models over 10 GB install to the RunPod network volume by default; local (Mac) models stay on disk. Downloads resume automatically after interruption.</p>
       </div>
 
-      <div class="alert warn" data-testid="alert-warn"><b>FLUX.1 [dev] exceeds free local disk.</b> 23.8 GB needed, 12 GB headroom reserved — install to the RunPod network volume, or free space in <a href="admin-hardware.html" style="color:inherit;font-weight:600" data-testid="link-hardware-setup">Hardware &amp; Setup</a>.</div>
+      <div class="alert warn" data-tf-state="over-disk" data-testid="alert-warn"><b>FLUX.1 [dev] exceeds free local disk.</b> 23.8 GB needed, 12 GB headroom reserved — install to the RunPod network volume, or free space in <a href="admin-hardware.html" style="color:inherit;font-weight:600" data-testid="link-hardware-setup">Hardware &amp; Setup</a>.</div>
 
       <div class="alert" data-testid="alert-info">Restrictive licenses are flagged <span class="badge warn" style="vertical-align:middle" data-testid="badge-amber">amber</span>. Installed models still need a registry row before creators can use them — <a href="admin-registry.html" style="color:inherit;font-weight:600" data-testid="link-registry-providers">Registry &amp; Providers →</a></div>
     </div>

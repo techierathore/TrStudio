@@ -17,7 +17,7 @@ namespace TrStudio;
 /// <para><b>Code Flow:</b> <c>MainPage</c> hands the platform web view to <see cref="Attach"/> once the BlazorWebView is
 /// initialised, which applies the saved level. Mac Catalyst: the View menu's Zoom In (Cmd+=), Zoom Out (Cmd+-) and
 /// Actual Size (Cmd+0), added by <see cref="BuildMenu"/> from the app delegate, call <see cref="ZoomBy"/> and
-/// <see cref="Reset"/>, which set <c>WKWebView.PageZoom</c>. Windows: WebView2's own zoom (25% to 500%, uneven steps,
+/// <see cref="Reset"/>, which set CSS zoom on the page (WKWebView.PageZoom does not lay the page out again). Windows: WebView2's own zoom (25% to 500%, uneven steps,
 /// not kept) is turned off, and a script run on every page handles Ctrl+plus, Ctrl+minus, Ctrl+0 and Ctrl+wheel with
 /// the same steps, posting each new level back to be saved (and keeping it for the session, so a page reload keeps
 /// it). The WinUI WebView2 control does not expose WebView2's own ZoomFactor, so that cannot be saved instead.</para>
@@ -56,6 +56,16 @@ public static class BlazorZoom
     public static void Attach(object aPlatformWebView)
     {
         objWebView = aPlatformWebView as WKWebView;
+        if (objWebView != null)
+        {
+            // A page load (a reload, a sign-out) starts from a fresh document: this script, run at its
+            // start, gives it the level kept in localStorage before anything is drawn.
+            var strSaved = Clamp(Preferences.Default.Get(PreferenceKey, FirstLevel)).ToString(System.Globalization.CultureInfo.InvariantCulture);
+            objWebView.Configuration.UserContentController.AddUserScript(new WKUserScript(
+                new NSString("(function(){var z=parseFloat(localStorage.getItem('tf.zoom'))||" + strSaved + ";" + ApplyScript("z") + "})();"),
+                WKUserScriptInjectionTime.AtDocumentStart, true));
+        }
+
         Apply(Preferences.Default.Get(PreferenceKey, FirstLevel));
         if (!blnMenuSet && OperatingSystem.IsMacCatalystVersionAtLeast(26))
         {
@@ -115,9 +125,20 @@ public static class BlazorZoom
         Preferences.Default.Set(PreferenceKey, Level);
         if (objWebView != null)
         {
-            objWebView.PageZoom = (nfloat)Level;
+            // WKWebView.PageZoom on Mac Catalyst magnifies the page without laying it out again, so a
+            // centred card lands right of centre (seen 15 Nov 2026 at 1.6). CSS zoom lays the page out at
+            // the new size; --tr-zoom lets full-height boxes (.auth-shell) stay one window tall.
+            objWebView.PageZoom = 1;
+            var strLevel = Level.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            objWebView.EvaluateJavaScript("(function(){var z=" + strLevel + ";localStorage.setItem('tf.zoom',z);" + ApplyScript("z") + "})();", null);
         }
     }
+
+    /// <summary>The script that puts zoom level <paramref name="aVariable"/> on the page.</summary>
+    /// <param name="aVariable">The name of the script variable holding the level.</param>
+    /// <returns>Script text, no trailing return.</returns>
+    internal static string ApplyScript(string aVariable)
+        => "var d=document.documentElement;if(d){d.style.zoom=" + aVariable + ";d.style.setProperty('--tr-zoom'," + aVariable + ");}";
 #elif WINDOWS
     private const string MessagePrefix = "tfzoom:";
 

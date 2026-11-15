@@ -38,6 +38,9 @@ public class AssetResponse
     /// <summary>UTC timestamp when the asset was persisted.</summary>
     public DateTime CreatedUtc { get; set; }
 
+    /// <summary>The settings the asset was made with (prompt and params, as JSON), so a studio can reopen the run.</summary>
+    public string ParamsJson { get; set; } = "{}";
+
     /// <summary>The provider kind that produced the asset (e.g. "Venice"), from the generation log; null when unknown.</summary>
     public string? ProviderKind { get; set; }
 
@@ -49,4 +52,38 @@ public class AssetResponse
 
     /// <summary>The provider's own failure text for the run, when it failed (e.g. "Venice: ..."); null on success.</summary>
     public string? FailureMessage { get; set; }
+
+    /// <summary>
+    /// True when the asset carries a signed provenance manifest (the C2PA-style claim plus its
+    /// signature, SAFE-04 / BRD-63) — shown as "C2PA signed" beside the run's parameters.
+    /// </summary>
+    public bool ProvenanceSigned { get; set; }
+
+    /// <summary>Whether a stored provenance manifest JSON carries a claim and a non-empty signature value.</summary>
+    /// <param name="aProvenanceJson">The asset's stored provenance manifest JSON, or null.</param>
+    /// <returns>True for a signed manifest; false when absent, unsigned or unreadable.</returns>
+    public static bool IsSignedManifest(string? aProvenanceJson)
+    {
+        if (string.IsNullOrWhiteSpace(aProvenanceJson))
+        {
+            return false;
+        }
+
+        try
+        {
+            using var vDocument = System.Text.Json.JsonDocument.Parse(aProvenanceJson);
+            var vRoot = vDocument.RootElement;
+            return vRoot.ValueKind == System.Text.Json.JsonValueKind.Object
+                && vRoot.TryGetProperty("claim", out _)
+                && vRoot.TryGetProperty("signature", out var vSignature)
+                && vSignature.ValueKind == System.Text.Json.JsonValueKind.Object
+                && vSignature.TryGetProperty("value", out var vValue)
+                && vValue.ValueKind == System.Text.Json.JsonValueKind.String
+                && !string.IsNullOrWhiteSpace(vValue.GetString());
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return false;
+        }
+    }
 }

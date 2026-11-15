@@ -15,8 +15,7 @@
 
 <PageTitle>TrStudio — Sign in</PageTitle>
 
-<Card Class="auth-card" data-testid="login-card">
-  <div data-testid="card-1">
+<Card Class="auth-card" data-testid="card-1">
     <div class="auth-brand">
         <div class="auth-brand-logo shell-logo brand-gradient">TR</div>
         <div>
@@ -110,7 +109,7 @@
         <Label For="remember-me">Remember me on this computer for 30 days</Label>
     </div>
 
-    <div data-testid="sign-in">
+    <span data-testid="sign-in" style="display:block">
     <Button Class="auth-submit" Type="ButtonType.Submit" OnClick="HandleSignInAsync"
             Disabled="@(objBusy || !IsFormValid || objMissingSettings is not null)" data-testid="signin-btn">
         @if (objBusy)
@@ -124,7 +123,7 @@
             <span>Sign in</span>
         }
     </Button>
-    </div>
+    </span>
 
     <div class="auth-divline">AppManager</div>
     <div class="auth-note">
@@ -137,7 +136,6 @@
 
     <div class="auth-switch" style="margin-top:6px">Workspace not set up yet? <a href="/setup-required" data-testid="setup-required-link">See the setup gate</a></div>
     <div class="auth-switch">New to TrStudio? <a href="/register" data-testid="link-create-an-account">Create an account</a></div>
-  </div>
 </Card>
 
 @code {

@@ -37,7 +37,7 @@ public static class RagModule
 
         // RAG-005 (ADR-013): Prompt Studio chat over a picked text-chat registry LLM via TechieRag
         // direct chat-completion — deliberately NO RAG/vector pipeline. Needs IHttpClientFactory for the
-        // best-effort vision path (TechieRag 1.0.5 has no image seam, TR-RAG-001).
+        // best-effort vision path (TechieRag 1.0.5 had no image seam; kept on 1.1.5, TR-RAG-001).
         aServices.AddHttpClient();
         aServices.TryAddSingleton<IPromptChatService, PromptChatService>();
 
@@ -53,7 +53,8 @@ public static class RagModule
 
         // Phase 3 (ADR-017): character-bible vectors live in TechieRag's own SQLite file beside the
         // app database (LocalStore:VectorsPath, set by the host from the user's data folder). TechieRag
-        // falls back to in-process similarity when its vector extension cannot load (TR-RAG-005).
+        // 1.1.5 takes a bare file path here (not "Data Source=…", TR-RAG-005) and searches by an exact
+        // cosine scan in managed code, with no native extension, on Mac Catalyst too.
         // Script and caption writing take their model from the registry's text-chat row
         // (RegistryTextModelSource), never from a key in configuration (REQ-RAG-006, REQ-NFR-018).
         var vVectorsPath = aConfiguration[TrStudio.Engine.Infrastructure.Data.LocalStoreOptions.VectorsPathKey];

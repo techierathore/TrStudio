@@ -109,6 +109,7 @@ tr.diff td:first-child{border-left:3px solid var(--brand)}
 .emptystate{margin-top:18px;text-align:center;padding:34px 16px}
 .emptyicon{width:46px;height:46px;border-radius:12px;background:var(--brand-soft);color:var(--brand-ink);display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
 </style>
+<style data-note="tf-phone-layout: owner decision 13, the app shows the sidebar as a slide-out menu on a phone">@media (max-width:600px){.app{grid-template-columns:1fr}.side[data-testid="sidebar"]{display:none}}</style>
 </head>
 <body>
 <div class="app">
@@ -216,7 +217,7 @@ tr.diff td:first-child{border-left:3px solid var(--brand)}
   <div class="alert" data-testid="alert-info">Same seed, same script — only the model, tier, resolution and cost differ. Use <b>Reproduce</b> on the winner to re-run it, or export both for review.</div>
 
   <!-- Empty state (fewer than two picked) -->
-  <div class="card emptystate" data-testid="card-nothing-to-compare-yet">
+  <div class="card emptystate" data-tf-state="empty" data-testid="card-nothing-to-compare-yet">
     <div class="emptyicon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M21 3 3 21"/></svg></div>
     <h3 style="margin:0 0 4px">Nothing to compare yet</h3>
     <div class="muted" style="margin-bottom:14px">Select two or more assets in the Gallery and hit Compare, or pick them in the slots above.</div>

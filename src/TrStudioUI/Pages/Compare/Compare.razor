@@ -1,4 +1,7 @@
 @page "/compare"
+@using TrBlazeUI.Components.NativeSelect
+@using System.Text.Json
+@using System.Text.RegularExpressions
 @inject IHttpClientFactory HttpClientFactory
 @inject ToastService ToastService
 @inject NavigationManager Navigation
@@ -7,20 +10,23 @@
 @*
     Comparison (REQ-UI-052). Side-by-side across models, seeds and providers — reached from the
     Gallery Compare action (breadcrumb Gallery / Compare) carrying an owner-scoped ?assetIds= set.
-    A slot toolbar (A/B asset Selects, "Add third", side-by-side/overlay Tabs, sync-playback Switch)
-    drives result panes: each shows a preview with a duration chip, model/provider·tier/seed/provenance
-    Badges and cost/duration/resolution rows, plus per-pane Reproduce/Export/Open-in-Gallery. A
-    parameter-diff DataTable marks the rows that differ, with a "N differ" badge and a show-identical
-    toggle. Per-user: the slot options come from the owner-scoped /api/v1/assets listing and the
-    param sets from GET /api/v1/compare?assetIds= — live-only, no representative seed; an unreachable
-    API raises a warning Alert. Fewer than two picks shows an empty state to Gallery.
+    A slot toolbar (A/B asset selects, "Add third", a side-by-side/overlay toggle, sync-playback Switch)
+    drives result panes: each shows a preview with a duration chip, model / tier·provider / seed /
+    provenance Badges and cost/created/resolution rows, plus per-pane Reproduce/Export/Open-in-Gallery.
+    A parameter-diff DataTable marks the rows that differ, with a "N differ" badge and a show-identical
+    toggle. Per-user: the slot options come from the owner-scoped /api/v1/assets listing (with each
+    run's provider and price from the generation log), model names and tiers from the model catalog,
+    and the param sets from GET /api/v1/compare?assetIds= — live-only, no representative seed; an
+    unreachable API raises a warning Alert. With no ?assetIds= the slots open on the newest pair of
+    runs that share a title (two variants of one piece), else the two newest runs. Fewer than two
+    picks shows an empty state to Gallery. Control names follow docs/mockups/compare.html.
 *@
 
 <PageTitle>TrStudio — Compare</PageTitle>
 
 <Breadcrumb>
     <BreadcrumbList>
-        <BreadcrumbItem><BreadcrumbLink Href="/gallery">Gallery</BreadcrumbLink></BreadcrumbItem>
+        <BreadcrumbItem><BreadcrumbLink Href="/gallery" data-testid="link-gallery">Gallery</BreadcrumbLink></BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem><BreadcrumbPage>Compare</BreadcrumbPage></BreadcrumbItem>
     </BreadcrumbList>
@@ -57,57 +63,63 @@ else
 {
     @* ---- Slot toolbar ---- *@
     <div class="cmp-slotbar" data-testid="compare-slotbar">
-        @foreach (var vSlot in objSlots)
+        @for (var vSlotIndex = 0; vSlotIndex < objSlots.Count; vSlotIndex++)
         {
+            var vSlot = objSlots[vSlotIndex];
+            <span class="cmp-slot">
             <span class="cmp-slottag">@vSlot.Tag</span>
-            <Select @bind-Value="vSlot.AssetId" @bind-Value:after="OnSlotsChangedAsync" TValue="string" Class="cmp-slot-select">
-                <SelectTrigger><SelectValue Placeholder="Pick an asset" /></SelectTrigger>
-                <SelectContent>
-                    @foreach (var vAsset in objAssets)
-                    {
-                        <SelectItem Value="@vAsset.AssetId" Text="@vAsset.OptionLabel" TValue="string">@vAsset.OptionLabel</SelectItem>
-                    }
-                </SelectContent>
-            </Select>
+            <NativeSelect TValue="string" Value="@vSlot.AssetId" ValueChanged="@(aValue => OnSlotChangedAsync(vSlot, aValue))"
+                          Placeholder="Pick an asset" Class="cmp-slot-select" aria-label="@($"Slot {vSlot.Tag}")" data-testid="@($"field-{vSlotIndex + 1}")">
+                @foreach (var vAsset in objAssets)
+                {
+                    <option value="@vAsset.AssetId">@vAsset.OptionLabel</option>
+                }
+            </NativeSelect>
+            </span>
         }
         @if (objSlots.Count < 3)
         {
-            <Button Variant="ButtonVariant.Outline" OnClick="AddThirdAsync" data-testid="add-third-btn">
+            <Button Variant="ButtonVariant.Outline" OnClick="AddThirdAsync" data-testid="btn-add-third">
                 <LucideIcon Name="plus" Size="14" />
                 Add third
             </Button>
         }
         <div class="grow"></div>
-        <Tabs @bind-Value="objViewMode" @bind-Value:after="StateHasChanged">
-            <TabsList>
-                <TabsTrigger Value="side">Side-by-side</TabsTrigger>
-                <TabsTrigger Value="overlay">Overlay</TabsTrigger>
-            </TabsList>
-        </Tabs>
+        <div class="cmp-seg" role="group" aria-label="View">
+            <button type="button" class="@(objViewMode == "side" ? "active" : null)" aria-pressed="@(objViewMode == "side" ? "true" : "false")"
+                    @onclick="@(() => objViewMode = "side")" data-testid="btn-side-by-side">Side-by-side</button>
+            <button type="button" class="@(objViewMode == "overlay" ? "active" : null)" aria-pressed="@(objViewMode == "overlay" ? "true" : "false")"
+                    @onclick="@(() => objViewMode = "overlay")" data-testid="btn-overlay">Overlay</button>
+        </div>
         <div class="flex-row">
-            <Switch @key="@("sync")" @bind-Checked="objSyncPlayback" Id="cmp-sync" />
+            <Switch @key="@("sync")" @bind-Checked="objSyncPlayback" Id="cmp-sync" data-testid="switch" />
             <Label For="cmp-sync" Class="muted-sm">Sync playback</Label>
         </div>
     </div>
 
     @if (Panes.Count < 2)
     {
-        <Card Class="emptystate" data-testid="compare-empty">
+        <Card Class="emptystate" data-testid="card-nothing-to-compare-yet">
             <div class="emptyicon"><LucideIcon Name="git-compare" Size="22" /></div>
             <h3 style="margin:0 0 4px">Nothing to compare yet</h3>
             <div class="muted-sm" style="margin-bottom:14px">Select two or more assets in the Gallery and hit Compare, or pick them in the slots above.</div>
-            <Button OnClick="@(() => Navigation.NavigateTo("/gallery"))">Go to Gallery</Button>
+            <Button Href="/gallery" data-testid="link-go-to-gallery">Go to Gallery</Button>
         </Card>
     }
     else
     {
+        var vPanes = Panes;
+        var vBadgeIds = BadgeTestIds(vPanes);
         @* ---- Result panes ---- *@
         <div class="cmp-panes @(objViewMode == "overlay" ? "cmp-panes-overlay" : "cmp-panes-2")" data-testid="compare-panes">
-            @foreach (var vPane in Panes)
+            @for (var vPaneIndex = 0; vPaneIndex < vPanes.Count; vPaneIndex++)
             {
-                <Card Class="cmp-pane" @key="vPane.Tag">
+                var vPane = vPanes[vPaneIndex];
+                var vPaneNo = vPaneIndex;
+                var vSuffix = vPaneIndex == 0 ? string.Empty : $"-{vPaneIndex + 1}";
+                <Card Class="cmp-pane" @key="vPane.Tag" data-testid="@($"card-{vPaneNo + 1}")">
                     <div class="cmp-thumb @vPane.Art">
-                        <span class="cmp-play"><LucideIcon Name="@(vPane.IsVideo ? "play" : "image")" Size="16" /></span>
+                        <span class="cmp-play"><LucideIcon Name="@(vPane.IsVideo ? "play" : vPane.Kind == "audio" ? "audio-lines" : "image")" Size="16" /></span>
                         @if (vPane.Duration is not null)
                         {
                             <span class="cmp-durchip">@vPane.Duration</span>
@@ -115,39 +127,37 @@ else
                     </div>
                     <div class="cmp-pane-title">@vPane.Tag — @vPane.Title</div>
                     <div class="cmp-badges">
-                        <Badge Class="badge-brand">@vPane.Model</Badge>
-                        @if (vPane.Tier != "—" || vPane.Provider != "—")
+                        @foreach (var vBadge in vPane.Badges)
                         {
-                            <Badge Variant="BadgeVariant.Outline">@vPane.Tier · @vPane.Provider</Badge>
+                            <Badge Variant="@(vBadge.Tone == "badge-brand" ? BadgeVariant.Default : BadgeVariant.Outline)" Class="@vBadge.Tone" data-testid="@vBadgeIds[(vPaneNo, vBadge.Text)]">@vBadge.Text</Badge>
                         }
-                        <Badge Variant="BadgeVariant.Outline">seed @vPane.SeedLabel</Badge>
                     </div>
                     <div class="kv"><span class="muted">Cost</span><b>@vPane.Cost</b></div>
                     <div class="kv"><span class="muted">Created</span><b>@vPane.Created</b></div>
-                    <div class="kv"><span class="muted">Resolution</span><b>@vPane.Resolution</b></div>
+                    <div class="kv"><span class="muted">Resolution</span><b>@vPane.ResolutionLabel</b></div>
                     <div class="cmp-acts">
-                        <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => ReproduceAsync(vPane))">Reproduce</Button>
-                        <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => Export(vPane))">Export</Button>
-                        <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => Navigation.NavigateTo("/gallery"))">Open in Gallery</Button>
+                        <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" Class="cmp-act" OnClick="@(() => ReproduceAsync(vPane))" data-testid="@($"btn-reproduce{vSuffix}")">Reproduce</Button>
+                        <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" Class="cmp-act" OnClick="@(() => Export(vPane))" data-testid="@($"btn-export{vSuffix}")">Export</Button>
+                        <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" Class="cmp-act" Href="/gallery" data-testid="@($"link-open-in-gallery{vSuffix}")">Open in Gallery</Button>
                     </div>
                 </Card>
             }
         </div>
 
         @* ---- Parameter diff ---- *@
-        <Card Class="cmp-diff-card">
+        <Card Class="cmp-diff-card" data-testid="@($"card-parameters-{DiffCount}-differ")">
             <div class="flex-between" style="margin-bottom:6px">
                 <h3 class="card-h3" style="margin:0">
                     Parameters
                     <span class="cmp-diffmark">@DiffCount differ</span>
                 </h3>
                 <div class="flex-row">
-                    <Switch @key="@("show-identical")" @bind-Checked="objShowIdentical" @bind-Checked:after="StateHasChanged" Id="cmp-identical" />
+                    <Switch @key="@("show-identical")" @bind-Checked="objShowIdentical" @bind-Checked:after="StateHasChanged" Id="cmp-identical" data-testid="switch-2" />
                     <Label For="cmp-identical" Class="muted-sm">Show identical rows</Label>
                 </div>
             </div>
             <div class="table-scroll" data-testid="compare-diff">
-                <DataTable TData="DiffRow" Data="@VisibleDiffRows" ShowToolbar="false" ShowPagination="false">
+                <DataTable TData="DiffRow" Data="@VisibleDiffRows" ShowToolbar="false" ShowPagination="false" data-testid="table-1">
                     <Columns>
                         <DataTableColumn TData="DiffRow" TValue="string" Property="@(r => r.Parameter)" Header="Parameter">
                             <CellTemplate Context="objRow">
@@ -175,9 +185,9 @@ else
             </div>
         </Card>
 
-        <Alert Variant="AlertVariant.Default" Class="cmp-alert">
+        <Alert Variant="AlertVariant.Default" Class="cmp-alert" data-testid="alert-info">
             <AlertDescription>
-                @DiffCount parameter(s) differ between these runs — use <b>Reproduce</b> on the winner to re-run it, or export both for review.
+                @SummaryLead — use <b>Reproduce</b> on the winner to re-run it, or export both for review.
             </AlertDescription>
         </Alert>
     }
@@ -200,16 +210,16 @@ else
 
     /// <summary>The panes currently filled by the A/B/C slots (a slot with no pick is skipped).</summary>
     private List<CompareAsset> Panes =>
-        objSlots.Select(aSlot => objAssets.FirstOrDefault(aAsset => aAsset.AssetId == aSlot.AssetId))
-            .Where(aAsset => aAsset is not null)
-            .Select((aAsset, aIndex) => aAsset! with { Tag = objSlots[aIndex].Tag })
+        objSlots.Select(aSlot => (Slot: aSlot, Asset: objAssets.FirstOrDefault(aAsset => aAsset.AssetId == aSlot.AssetId)))
+            .Where(aPair => aPair.Asset is not null)
+            .Select(aPair => aPair.Asset! with { Tag = aPair.Slot.Tag })
             .ToList();
 
     /// <summary>Header for the A column, naming the model in slot A.</summary>
-    private string ColumnAHeader => Panes.Count > 0 ? $"A — {Panes[0].Model}" : "A";
+    private string ColumnAHeader => Panes.Count > 0 ? $"{Panes[0].Tag} — {Panes[0].Model}" : "A";
 
     /// <summary>Header for the B column, naming the model in slot B.</summary>
-    private string ColumnBHeader => Panes.Count > 1 ? $"B — {Panes[1].Model}" : "B";
+    private string ColumnBHeader => Panes.Count > 1 ? $"{Panes[1].Tag} — {Panes[1].Model}" : "B";
 
     /// <summary>The parameter rows comparing the first two panes.</summary>
     private List<DiffRow> DiffRows => Panes.Count < 2 ? new List<DiffRow>() : BuildDiff(Panes[0], Panes[1]);
@@ -220,6 +230,33 @@ else
 
     /// <summary>The count of parameters that differ between the first two panes.</summary>
     private int DiffCount => DiffRows.Count(aRow => aRow.Differs);
+
+    /// <summary>
+    /// The lead of the summary note under the table, read from the diff: what the two runs share
+    /// (seed, script or prompt) and which parameters differ — e.g. "Same seed, same script — only the
+    /// model, provider · tier, resolution and cost differ".
+    /// </summary>
+    private string SummaryLead
+    {
+        get
+        {
+            var vRows = DiffRows;
+            var vSame = vRows.Where(aRow => !aRow.Differs && !string.IsNullOrEmpty(aRow.ValueA) && aRow.ValueA != "—")
+                .Select(aRow => aRow.Parameter.ToLowerInvariant())
+                .Where(aName => aName is "seed" or "script" or "prompt" or "text")
+                .Select(aName => $"same {aName}")
+                .ToList();
+            var vDiffer = vRows.Where(aRow => aRow.Differs).Select(aRow => aRow.Parameter.ToLowerInvariant()).ToList();
+            if (vDiffer.Count == 0)
+            {
+                return "These runs share every parameter";
+            }
+
+            var vList = vDiffer.Count == 1 ? vDiffer[0] : $"{string.Join(", ", vDiffer.Take(vDiffer.Count - 1))} and {vDiffer[^1]}";
+            var vLead = vSame.Count == 0 ? string.Empty : $"{char.ToUpperInvariant(vSame[0][0])}{string.Join(", ", vSame)[1..]} — ";
+            return vLead.Length == 0 ? $"Only the {vList} differ" : $"{vLead}only the {vList} differ";
+        }
+    }
 
     /// <summary>
     /// Loads the owner-scoped compare set AFTER the first interactive render — the point at which JS
@@ -242,10 +279,10 @@ else
     }
 
     /// <summary>
-    /// Loads the owner-scoped asset options (the slot Selects), pre-assigns the slots from
-    /// <c>?assetIds=</c> when the Gallery handed a set across, then fetches the picked assets' live
-    /// param sets. No seed data: an empty library renders the honest empty state, and a failed fetch
-    /// raises the API-down Alert.
+    /// Loads the owner-scoped asset options (the slot selects) and the model catalog (display names
+    /// and tiers), pre-assigns the slots from <c>?assetIds=</c> when the Gallery handed a set across,
+    /// then fetches the picked assets' live param sets. No seed data: an empty library renders the
+    /// honest empty state, and a failed fetch raises the API-down Alert.
     /// </summary>
     /// <param name="aHasSession">Whether a signed-in session is present.</param>
     private async Task TryLoadCompareAsync(bool aHasSession)
@@ -255,16 +292,29 @@ else
             return;
         }
 
+        var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+        var vModels = new Dictionary<string, CatalogModelResponse>(StringComparer.OrdinalIgnoreCase);
         try
         {
-            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            foreach (var vModel in await vClient.GetFromJsonAsync<List<CatalogModelResponse>>(ApiRoutes.Models) ?? new())
+            {
+                vModels[vModel.Id] = vModel;
+            }
+        }
+        catch
+        {
+            // Names are a nicety: without them a pane shows the model id and no tier.
+        }
+
+        try
+        {
             var vPage = await vClient.GetFromJsonAsync<PagedResult<AssetResponse>>($"{ApiRoutes.Assets}?aPageSize=100");
             objAssets.Clear();
-            var vArts = new[] { "art-a", "art-b", "art-c", "art-v" };
+            var vArts = new[] { "art-v", "art-a", "art-b", "art-c" };
             var vIndex = 0;
-            foreach (var vAsset in vPage?.Items ?? Array.Empty<AssetResponse>())
+            foreach (var vAsset in vPage?.Items ?? new List<AssetResponse>())
             {
-                objAssets.Add(CompareAsset.FromResponse(vAsset, vArts[vIndex % vArts.Length]));
+                objAssets.Add(CompareAsset.FromResponse(vAsset, vArts[vIndex % vArts.Length], vModels));
                 vIndex++;
             }
         }
@@ -282,7 +332,7 @@ else
     /// <summary>
     /// Fetches the picked assets' generation params from the live compare endpoint
     /// (<c>GET /api/v1/compare?assetIds=</c>) so the diff table reflects the stored run parameters.
-    /// Runs whenever the slot picks change; fewer than two picks clears nothing and fetches nothing.
+    /// Runs whenever the slot picks change; fewer than two picks fetches nothing.
     /// </summary>
     private async Task RefreshComparedParamsAsync()
     {
@@ -313,9 +363,10 @@ else
         }
     }
 
-    /// <summary>Re-fetches the compared param sets after a slot pick changes.</summary>
-    private async Task OnSlotsChangedAsync()
+    /// <summary>Stores a slot's new pick and re-fetches the compared param sets.</summary>
+    private async Task OnSlotChangedAsync(Slot aSlot, string? aAssetId)
     {
+        aSlot.AssetId = string.IsNullOrEmpty(aAssetId) ? null : aAssetId;
         await RefreshComparedParamsAsync();
         StateHasChanged();
     }
@@ -342,12 +393,26 @@ else
         return new List<string>();
     }
 
-    /// <summary>Fills the A/B (and any added) slots — from the Gallery's ?assetIds= set when present, otherwise the first available assets.</summary>
+    /// <summary>
+    /// Fills the A/B (and any added) slots: from the Gallery's ?assetIds= set when present; otherwise
+    /// the newest pair of runs sharing a title (two variants of one piece, newest first); otherwise
+    /// the newest runs.
+    /// </summary>
     /// <param name="aRequestedIds">Asset ids handed across from the Gallery, in slot order.</param>
     private void AssignSlots(List<string> aRequestedIds)
     {
-        var vOrdered = aRequestedIds
-            .Where(aId => objAssets.Any(aAsset => aAsset.AssetId == aId))
+        var vRequested = aRequestedIds.Where(aId => objAssets.Any(aAsset => aAsset.AssetId == aId)).ToList();
+        var vVariants = vRequested.Count > 0
+            ? new List<string>()
+            : objAssets.Where(aAsset => aAsset.HasOwnTitle)
+                .GroupBy(aAsset => aAsset.Title)
+                .Where(aGroup => aGroup.Count() >= 2)
+                .OrderByDescending(aGroup => aGroup.Max(aAsset => aAsset.CreatedUtc))
+                .Select(aGroup => aGroup.OrderByDescending(aAsset => aAsset.CreatedUtc).Select(aAsset => aAsset.AssetId).ToList())
+                .FirstOrDefault() ?? new List<string>();
+
+        var vOrdered = vRequested
+            .Concat(vVariants)
             .Concat(objAssets.Select(aAsset => aAsset.AssetId))
             .Distinct()
             .ToList();
@@ -398,9 +463,34 @@ else
         => ToastService.Success($"Exporting \"{aPane.Title}\".", "Export");
 
     /// <summary>
-    /// Builds the parameter comparison between two panes: the asset-level rows (model / seed /
-    /// resolution / cost) plus the union of both runs' stored parameter keys from the live compare
-    /// endpoint, flagging the rows that differ.
+    /// The control name of each pane badge: <c>badge-</c> and the badge's words (as the mockup names
+    /// them), with <c>-2</c>, <c>-3</c>, … on repeats across the panes.
+    /// </summary>
+    private static Dictionary<(int Pane, string Text), string> BadgeTestIds(List<CompareAsset> aPanes)
+    {
+        var vSeen = new Dictionary<string, int>();
+        var vIds = new Dictionary<(int, string), string>();
+        for (var vIndex = 0; vIndex < aPanes.Count; vIndex++)
+        {
+            foreach (var vBadge in aPanes[vIndex].Badges)
+            {
+                var vBase = $"badge-{Slug(vBadge.Text)}";
+                vBase = vBase.Length > 30 ? vBase[..30].TrimEnd('-') : vBase;
+                vSeen[vBase] = vSeen.TryGetValue(vBase, out var vCount) ? vCount + 1 : 1;
+                vIds[(vIndex, vBadge.Text)] = vSeen[vBase] == 1 ? vBase : $"{vBase}-{vSeen[vBase]}";
+            }
+        }
+
+        return vIds;
+    }
+
+    private static string Slug(string aText) =>
+        Regex.Replace(aText.ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
+
+    /// <summary>
+    /// Builds the parameter comparison between two panes: the asset-level rows (model, provider ·
+    /// tier, resolution, cost, seed) plus the union of both runs' stored parameter keys from the live
+    /// compare endpoint (the run title is left out — it is the pane heading), flagging the rows that differ.
     /// </summary>
     private List<DiffRow> BuildDiff(CompareAsset aA, CompareAsset aB)
     {
@@ -410,17 +500,27 @@ else
         var vRows = new List<DiffRow>
         {
             DiffRow.Of("Model", aA.Model, aB.Model),
-            DiffRow.Of("Seed", aA.SeedLabel, aB.SeedLabel),
+            DiffRow.Of("Provider · tier", aA.ProviderTier, aB.ProviderTier),
             DiffRow.Of("Resolution", aA.Resolution, aB.Resolution),
             DiffRow.Of("Cost", aA.Cost, aB.Cost),
+            DiffRow.Of("Seed", aA.SeedLabel, aB.SeedLabel),
         };
 
-        foreach (var vKey in vParamsA.Keys.Union(vParamsB.Keys).OrderBy(aKey => aKey, StringComparer.OrdinalIgnoreCase))
+        foreach (var vKey in vParamsA.Keys.Union(vParamsB.Keys)
+                     .Where(aKey => !string.Equals(aKey, "title", StringComparison.OrdinalIgnoreCase))
+                     .OrderBy(aKey => aKey, StringComparer.OrdinalIgnoreCase))
         {
-            vRows.Add(DiffRow.Of(vKey, vParamsA.GetValueOrDefault(vKey, string.Empty), vParamsB.GetValueOrDefault(vKey, string.Empty)));
+            vRows.Add(DiffRow.Of(Humanize(vKey), vParamsA.GetValueOrDefault(vKey, string.Empty), vParamsB.GetValueOrDefault(vKey, string.Empty)));
         }
 
         return vRows;
+    }
+
+    /// <summary>A stored parameter key as a row label: "durationSeconds" → "Duration seconds".</summary>
+    private static string Humanize(string aKey)
+    {
+        var vWords = Regex.Replace(aKey, "(?<=[a-z0-9])(?=[A-Z])", " ").Replace('_', ' ').ToLowerInvariant();
+        return vWords.Length == 0 ? aKey : $"{char.ToUpperInvariant(vWords[0])}{vWords[1..]}";
     }
 
     /// <summary>A compare slot (A/B/C) holding the picked asset id.</summary>
@@ -435,26 +535,130 @@ else
         public string? AssetId { get; set; }
     }
 
+    /// <summary>A pane badge: its words and its tone class (null for the plain outline badge).</summary>
+    private sealed record PaneBadge(string Text, string? Tone);
+
     /// <summary>A compare pane's display projection over a live owner-scoped asset.</summary>
     private sealed record CompareAsset(
-        string Tag, string AssetId, Guid JobId, string Title, string Model, string Provider, string Tier,
-        long? Seed, string Cost, string Created, string Resolution, string? Duration, bool IsVideo, string Art)
+        string Tag, string AssetId, Guid JobId, string Kind, string Title, bool HasOwnTitle, string Model,
+        string? Provider, string? Tier, long? Seed, bool ProvenanceSigned, string Cost, DateTime CreatedUtc,
+        string Created, string Resolution, string? Aspect, string? Duration, string Art)
     {
+        /// <summary>Whether the asset is a video (play icon on the preview).</summary>
+        public bool IsVideo => Kind == "video";
+
         /// <summary>The seed as a display label, or an em dash when the run used no seed.</summary>
         public string SeedLabel => Seed?.ToString() ?? "—";
 
-        /// <summary>The option label shown in the A/B slot selects.</summary>
+        /// <summary>The resolution with its shape, e.g. "1280×720 (16:9)".</summary>
+        public string ResolutionLabel => Aspect is null ? Resolution : $"{Resolution} ({Aspect})";
+
+        /// <summary>Where it ran and at which tier, e.g. "RunPod · High".</summary>
+        public string ProviderTier => string.Join(" · ", new[] { Provider, Tier }.Where(aPart => !string.IsNullOrEmpty(aPart))) is { Length: > 0 } vText ? vText : "—";
+
+        /// <summary>The option label shown in the slot selects.</summary>
         public string OptionLabel => $"{Title} ({Model}{(Seed is null ? string.Empty : $" · seed {Seed}")})";
 
-        /// <summary>Projects a live owner-scoped asset into a compare pane model.</summary>
-        public static CompareAsset FromResponse(AssetResponse aAsset, string aArt)
+        /// <summary>The pane badges: model, tier · where it ran, seed, and a signed provenance mark.</summary>
+        public List<PaneBadge> Badges
         {
+            get
+            {
+                var vBadges = new List<PaneBadge> { new(Model, "badge-brand") };
+                var vTierWhere = string.Join(" · ", new[] { Tier, Provider }.Where(aPart => !string.IsNullOrEmpty(aPart)));
+                if (vTierWhere.Length > 0)
+                {
+                    vBadges.Add(new PaneBadge(vTierWhere, null));
+                }
+
+                if (Seed is not null)
+                {
+                    vBadges.Add(new PaneBadge($"seed {Seed}", null));
+                }
+
+                if (ProvenanceSigned)
+                {
+                    vBadges.Add(new PaneBadge("provenance ✓", "badge-ok"));
+                }
+
+                return vBadges;
+            }
+        }
+
+        /// <summary>
+        /// Projects a live owner-scoped asset into a compare pane: the run's own title, the model's
+        /// display name and tier from the catalog, where it ran (from the generation log, else the
+        /// model's provider) and its price.
+        /// </summary>
+        public static CompareAsset FromResponse(AssetResponse aAsset, string aArt, IReadOnlyDictionary<string, CatalogModelResponse> aModels)
+        {
+            var vKind = aAsset.Kind.ToLowerInvariant();
+            var vParams = ReadParams(aAsset.ParamsJson);
+            aModels.TryGetValue(aAsset.ModelId, out var vModel);
+            var vOwnTitle = Text(vParams, "title");
+            var vTitle = vOwnTitle ?? $"{char.ToUpperInvariant(vKind[0])}{vKind[1..]} · {aAsset.CreatedUtc:d MMM}";
+            var vProvider = WhereLabel(aAsset.ProviderKind ?? vModel?.ProviderKind.ToString());
+            var vLocal = vProvider is not null && vProvider.Contains("local", StringComparison.OrdinalIgnoreCase);
+            var vCost = aAsset.ActualCost switch
+            {
+                null => "—",
+                0m when vLocal => "$0.00 (local)",
+                { } vPrice => $"${vPrice:0.00}"
+            };
+            var vSeconds = Number(vParams, "durationSeconds") ?? Number(vParams, "DurationSeconds");
             var vDims = aAsset is { Width: not null, Height: not null } ? $"{aAsset.Width}×{aAsset.Height}" : "—";
             return new CompareAsset(
-                string.Empty, aAsset.AssetId.ToString(), aAsset.JobId,
-                $"{aAsset.Kind} · {aAsset.CreatedUtc:d MMM}", aAsset.ModelId, "—", "—",
-                aAsset.SeedUsed, "—", aAsset.CreatedUtc.ToString("d MMM yyyy"), vDims,
-                null, aAsset.Kind == "video", aArt);
+                string.Empty, aAsset.AssetId.ToString(), aAsset.JobId, vKind, vTitle, vOwnTitle is not null,
+                vModel?.DisplayName ?? aAsset.ModelId, vProvider, vModel?.Tier.ToString(), aAsset.SeedUsed,
+                aAsset.ProvenanceSigned, vCost, aAsset.CreatedUtc, aAsset.CreatedUtc.ToString("d MMM yyyy"), vDims,
+                AspectOf(aAsset.Width, aAsset.Height),
+                vKind is "video" or "audio" && vSeconds is > 0 ? TimeSpan.FromSeconds(Math.Round(vSeconds.Value)).ToString(@"m\:ss") : null,
+                aArt);
+        }
+
+        /// <summary>Where a run ran, in words: RunPod, Mac local (this host's own GPU), HeyGen, Venice, ….</summary>
+        private static string? WhereLabel(string? aProviderKind) => aProviderKind switch
+        {
+            null or "" => null,
+            nameof(TrStudio.Models.Enums.ProviderKind.ComfyUi) or nameof(TrStudio.Models.Enums.ProviderKind.OnnxLocal)
+                => OperatingSystem.IsMacOS() ? "Mac local" : "local GPU",
+            nameof(TrStudio.Models.Enums.ProviderKind.ClosedApi) => "closed API",
+            _ => aProviderKind
+        };
+
+        private static Dictionary<string, JsonElement> ReadParams(string? aJson)
+        {
+            try
+            {
+                return string.IsNullOrWhiteSpace(aJson)
+                    ? new()
+                    : JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(aJson) ?? new();
+            }
+            catch (JsonException)
+            {
+                return new();
+            }
+        }
+
+        private static string? Text(Dictionary<string, JsonElement> aParams, string aKey) =>
+            aParams.TryGetValue(aKey, out var vValue) && vValue.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(vValue.GetString())
+                ? vValue.GetString()
+                : null;
+
+        private static double? Number(Dictionary<string, JsonElement> aParams, string aKey) =>
+            aParams.TryGetValue(aKey, out var vValue) && vValue.ValueKind == JsonValueKind.Number ? vValue.GetDouble() : null;
+
+        /// <summary>The picture's shape as a ratio ("16:9"), or null when its size is unknown.</summary>
+        private static string? AspectOf(int? aWidth, int? aHeight)
+        {
+            if (aWidth is not > 0 || aHeight is not > 0)
+            {
+                return null;
+            }
+
+            static int Gcd(int aA, int aB) => aB == 0 ? aA : Gcd(aB, aA % aB);
+            var vDivisor = Gcd(aWidth.Value, aHeight.Value);
+            return $"{aWidth / vDivisor}:{aHeight / vDivisor}";
         }
     }
 

@@ -20,4 +20,7 @@ public class PromptChatPostMessageResponse
 
     /// <summary>True when the reply came from the degrade path (LLM not configured / unreachable).</summary>
     public bool Degraded { get; set; }
+
+    /// <summary>The chat's running token count after this turn (input + output tokens of every completion).</summary>
+    public int SessionTokens { get; set; }
 }

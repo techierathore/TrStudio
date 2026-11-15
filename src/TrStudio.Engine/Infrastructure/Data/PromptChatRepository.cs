@@ -13,15 +13,15 @@ namespace TrStudio.Engine.Infrastructure.Data;
 public class PromptChatRepository : IPromptChatRepository
 {
     private const string SessionColumns =
-        "\"SessionId\", \"UserId\", \"Title\", \"ModelId\", \"CreatedUtc\", \"UpdatedUtc\"";
+        "\"SessionId\", \"UserId\", \"Title\", \"ModelId\", \"CreatedUtc\", \"UpdatedUtc\", \"Tokens\"";
 
     private const string MessageColumns =
         "\"MessageId\", \"SessionId\", \"UserId\", \"Role\", \"Content\", \"HasImage\", \"CreatedUtc\"";
 
     /// <summary>Session insert SQL; the row carries its owner in <c>"UserId"</c>.</summary>
     internal const string CreateSessionSql =
-        "INSERT INTO \"PromptChatSession\" (\"SessionId\", \"UserId\", \"Title\", \"ModelId\", \"CreatedUtc\", \"UpdatedUtc\") " +
-        "VALUES (@SessionId, @UserId, @Title, @ModelId, @CreatedUtc, @UpdatedUtc)";
+        "INSERT INTO \"PromptChatSession\" (\"SessionId\", \"UserId\", \"Title\", \"ModelId\", \"CreatedUtc\", \"UpdatedUtc\", \"Tokens\") " +
+        "VALUES (@SessionId, @UserId, @Title, @ModelId, @CreatedUtc, @UpdatedUtc, @Tokens)";
 
     /// <summary>Owner-filtered session list SQL (BRD-81), most-recently-updated first.</summary>
     internal const string ListSessionsSql =
@@ -56,9 +56,9 @@ public class PromptChatRepository : IPromptChatRepository
         "SELECT " + MessageColumns + " FROM \"PromptChatMessage\" " +
         "WHERE \"SessionId\" = @aSessionId AND \"UserId\" = @aUserId ORDER BY \"CreatedUtc\" ASC";
 
-    /// <summary>Owner-filtered session touch SQL (BRD-81); bumps <c>"UpdatedUtc"</c> to now.</summary>
+    /// <summary>Owner-filtered session touch SQL (BRD-81); bumps <c>"UpdatedUtc"</c> to now and adds the turn's tokens.</summary>
     internal const string TouchSessionSql =
-        "UPDATE \"PromptChatSession\" SET \"UpdatedUtc\" = now() " +
+        "UPDATE \"PromptChatSession\" SET \"UpdatedUtc\" = now(), \"Tokens\" = \"Tokens\" + @aTokens " +
         "WHERE \"SessionId\" = @aSessionId AND \"UserId\" = @aUserId";
 
     private readonly IDbConnectionFactory objConnectionFactory;
@@ -83,7 +83,8 @@ public class PromptChatRepository : IPromptChatRepository
             aSession.Title,
             aSession.ModelId,
             aSession.CreatedUtc,
-            aSession.UpdatedUtc
+            aSession.UpdatedUtc,
+            aSession.Tokens
         }, cancellationToken: aCancellationToken)).ConfigureAwait(false);
     }
 
@@ -149,10 +150,10 @@ public class PromptChatRepository : IPromptChatRepository
     }
 
     /// <inheritdoc />
-    public async Task TouchSessionAsync(Guid aSessionId, string aUserId, CancellationToken aCancellationToken = default)
+    public async Task TouchSessionAsync(Guid aSessionId, string aUserId, int aTokens = 0, CancellationToken aCancellationToken = default)
     {
         using var vConnection = await objConnectionFactory.CreateOpenConnectionAsync(aCancellationToken).ConfigureAwait(false);
         await vConnection.ExecuteAsync(
-            new CommandDefinition(TouchSessionSql, new { aSessionId, aUserId }, cancellationToken: aCancellationToken)).ConfigureAwait(false);
+            new CommandDefinition(TouchSessionSql, new { aSessionId, aUserId, aTokens = Math.Max(0, aTokens) }, cancellationToken: aCancellationToken)).ConfigureAwait(false);
     }
 }

@@ -92,7 +92,7 @@ public class VeniceLiveTests
             Duration = Shortest(aModel.Durations),
             Resolution = aModel.Resolutions.FirstOrDefault(aRes => aRes.Equals("480p", StringComparison.OrdinalIgnoreCase)) ?? aModel.Resolutions.FirstOrDefault(),
             AspectRatio = aModel.AspectRatios.FirstOrDefault(),
-            Audio = false
+            Audio = null // sent only when the model has an audio setting; Venice refuses "audio" on a model without one
         };
 
         var vQuote = await objClient.QuoteVideoAsync(aConnection, VeniceRequestBuilder.VideoQuote(vRow, vParams), CancellationToken.None);
@@ -152,7 +152,7 @@ public class VeniceLiveTests
         var vBestPrice = decimal.MaxValue;
         foreach (var vCandidate in vCandidates)
         {
-            var vParams = new VeniceJobParams { Duration = Shortest(vCandidate.Durations), Resolution = "480p", AspectRatio = vCandidate.AspectRatios.FirstOrDefault(), Audio = false };
+            var vParams = new VeniceJobParams { Duration = Shortest(vCandidate.Durations), Resolution = "480p", AspectRatio = vCandidate.AspectRatios.FirstOrDefault(), Audio = null };
             try
             {
                 var vQuote = await objClient.QuoteVideoAsync(aConnection, VeniceRequestBuilder.VideoQuote(Row(GenerationTaskType.TextToVideo, vCandidate.Id), vParams), CancellationToken.None);

@@ -3,6 +3,8 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject ToastService ToastService
 @inject IAuthSession AuthSession
+@inject AppShellNavigation Shell
+@using Microsoft.AspNetCore.Components.Sections
 
 @*
     Admin Content policy / NSFW (REQ-UI-075). A single content-policy surface that makes the safety
@@ -18,89 +20,95 @@
 
 <PageTitle>TrStudio — Content Policy</PageTitle>
 
-<div class="policy-page">
-    <div class="stack">
-        <div>
-            <h1 class="page-title">Content Policy</h1>
-            <p class="page-sub" style="margin-bottom:0">Personal mode — visible to the owner only.</p>
-        </div>
+@* Deployment mode and the viewer's role, from the policy endpoint and the signed-in session. *@
+<SectionContent SectionName="topbar-context">
+    @if (!objLoading)
+    {
+        <Badge Variant="BadgeVariant.Outline" Class="badge-brand" data-testid="badge-personal-mode-owner">@ModeBadgeText</Badge>
+    }
+</SectionContent>
 
-        @* ---- Unrestricted (NSFW) mode — the only owner-toggleable control ---- *@
-        <Card data-testid="nsfw-card">
-            <div class="policy-nsfw-head">
-                <div class="policy-nsfw-copy">
-                    <span class="policy-nsfw-title">Unrestricted (NSFW) content mode</span>
-                    <span class="muted-sm">
-                        Lifts the general SFW filter for <b>fully-synthetic adult (18+) personas</b> only.
-                        Off by default.
-                    </span>
-                    <div class="policy-badges">
-                        <Badge Variant="BadgeVariant.Outline">owner-only</Badge>
-                        <Badge Variant="BadgeVariant.Outline">personal mode only</Badge>
-                        <Badge Variant="BadgeVariant.Outline" Class="badge-warn">auto-off in SaaS</Badge>
-                    </div>
-                </div>
-                <div class="policy-switch-slot" data-testid="nsfw-switch">
-                    @if (objLoading)
-                    {
-                        <Skeleton Class="h-7 w-[52px] rounded-full" />
-                    }
-                    else
-                    {
-                        <Switch @key="objSwitchNonce" Checked="@objNsfwEnabled" CheckedChanged="OnToggleRequestedAsync"
-                                Size="SwitchSize.Large" Disabled="@(!objPersonalMode)"
-                                AriaLabel="Unrestricted content mode" Id="nsfw-switch-input" />
-                    }
-                </div>
-            </div>
-
-            @if (!objLoading && !objPersonalMode)
-            {
-                <div class="policy-mode-note" data-testid="multiuser-note">
-                    <Alert Variant="AlertVariant.Warning" AccentBorder="true">
-                        <AlertTitle>Disabled in multi-user / SaaS mode</AlertTitle>
-                        <AlertDescription>
-                            Unrestricted mode is a personal, single-user setting. This instance is running
-                            in multi-user mode, so the toggle is disabled and forced OFF for every account.
-                        </AlertDescription>
-                    </Alert>
-                </div>
-            }
-        </Card>
-
-        @* ---- Always-locked safety floors — non-disableable in every mode ---- *@
-        <Card data-testid="safety-floors">
-            <div class="flex-between">
-                <h3 class="card-h3" style="margin:0">Safety floors — always enforced</h3>
-                <Badge Variant="BadgeVariant.Outline" Class="badge-danger">non-disableable</Badge>
-            </div>
-            <p class="muted-sm" style="margin:4px 0 4px">
-                These controls stay on in every mode, including Unrestricted. They cannot be switched off
-                by any setting, key, or API call.
-            </p>
-
-            @foreach (var vFloor in objFloors)
-            {
-                <div class="policy-floor" data-testid="floor-row">
-                    <div class="policy-lockic"><LucideIcon Name="lock" Size="14" /></div>
-                    <div class="policy-floor-body">
-                        <span class="policy-floor-t">@vFloor.Title</span>
-                        <span class="policy-floor-d">@vFloor.Description</span>
-                    </div>
-                    <span class="policy-lock-pill" title="Locked — cannot be disabled" aria-label="Locked — cannot be disabled">
-                        <LucideIcon Name="lock" Size="12" />
-                        <span>cannot be disabled</span>
-                    </span>
-                </div>
-            }
-        </Card>
-
-        <p class="muted-sm" style="margin:0">
-            Unrestricted mode applies only to characters flagged <b>synthetic + adult</b>. The toggle is
-            disabled and forced OFF in multi-user / SaaS mode.
-        </p>
-    </div>
+@* The page's parts sit directly in the shell's content box, as the mockup draws them (no wrapper). *@
+<div class="policy-part">
+    <h1 class="page-title">Content Policy</h1>
+    <p class="page-sub" style="margin-bottom:0">Personal mode — visible to the owner only.</p>
 </div>
+
+@* ---- Unrestricted (NSFW) mode — the only owner-toggleable control ---- *@
+<Card Class="policy-part policy-card" data-testid="card-1">
+    <div class="policy-nsfw-head">
+        <div class="policy-nsfw-copy">
+            <span class="policy-nsfw-title">Unrestricted (NSFW) content mode</span>
+            <span class="muted-sm">
+                Lifts the general SFW filter for <b>fully-synthetic adult (18+) personas</b> only.
+                Off by default.
+            </span>
+            <div class="policy-badges">
+                <Badge Variant="BadgeVariant.Outline" data-testid="badge-owner-only">owner-only</Badge>
+                <Badge Variant="BadgeVariant.Outline" data-testid="badge-personal-mode-only">personal mode only</Badge>
+                <Badge Variant="BadgeVariant.Outline" Class="badge-warn" data-testid="badge-auto-off-in-saas">auto-off in SaaS</Badge>
+            </div>
+        </div>
+        <div class="policy-switch-slot" data-testid="nsfw-switch">
+            @if (objLoading)
+            {
+                <Skeleton Class="h-7 w-[52px] rounded-full" />
+            }
+            else
+            {
+                <Switch @key="objSwitchNonce" Checked="@objNsfwEnabled" CheckedChanged="OnToggleRequestedAsync"
+                        Size="SwitchSize.Large" Disabled="@(!objPersonalMode)"
+                        AriaLabel="Unrestricted content mode" Id="nsfw-switch-input" />
+            }
+        </div>
+    </div>
+
+    @if (!objLoading && !objPersonalMode)
+    {
+        <div class="policy-mode-note" data-testid="multiuser-note">
+            <Alert Variant="AlertVariant.Warning" AccentBorder="true">
+                <AlertTitle>Disabled in multi-user / SaaS mode</AlertTitle>
+                <AlertDescription>
+                    Unrestricted mode is a personal, single-user setting. This instance is running
+                    in multi-user mode, so the toggle is disabled and forced OFF for every account.
+                </AlertDescription>
+            </Alert>
+        </div>
+    }
+</Card>
+
+@* ---- Always-locked safety floors — non-disableable in every mode ---- *@
+<Card Class="policy-part policy-card" data-testid="card-safety-floors-always-enforced">
+    <div class="flex-between">
+        <h3 class="card-h3" style="margin:0">Safety floors — always enforced</h3>
+        <Badge Variant="BadgeVariant.Outline" Class="badge-danger" data-testid="badge-non-disableable">non-disableable</Badge>
+    </div>
+    <p class="muted-sm" style="margin:4px 0 4px">
+        These controls stay on in every mode, including Unrestricted. They cannot be switched off
+        by any setting, key, or API call.
+    </p>
+
+    @for (var vIndex = 0; vIndex < objFloors.Length; vIndex++)
+    {
+        var vFloor = objFloors[vIndex];
+        var vLockTestId = vIndex == 0 ? "switch" : $"switch-{vIndex + 1}";
+        <div class="policy-floor">
+            <div class="policy-lockic"><LucideIcon Name="lock" Size="14" /></div>
+            <div class="policy-floor-body">
+                <span class="policy-floor-t">@vFloor.Title</span>
+                <span class="policy-floor-d">@vFloor.Description</span>
+            </div>
+            <span class="policy-lock-toggle" role="switch" aria-checked="true" aria-disabled="true"
+                  title="Locked — cannot be disabled" aria-label="@($"{vFloor.Title}: locked on, cannot be disabled")"
+                  data-testid="@vLockTestId"></span>
+        </div>
+    }
+</Card>
+
+<p class="muted-sm policy-part" style="margin-bottom:0">
+    Unrestricted mode applies only to characters flagged <b>synthetic + adult</b>. The toggle is
+    disabled and forced OFF in multi-user / SaaS mode.
+</p>
 
 @* Confirmation gate for ENABLING NSFW mode (controlled — no trigger; opened from the Switch). *@
 <AlertDialog Open="objConfirmOpen" OpenChanged="OnConfirmOpenChanged">
@@ -216,7 +224,7 @@
             return;
         }
 
-        objNsfwEnabled = ReadBool(aState, false, "enabled", "isEnabled", "nsfwEnabled");
+        objNsfwEnabled = ReadBool(aState, false, "effectiveNsfwEnabled", "enabled", "isEnabled", "nsfwEnabled");
 
         if (TryGetBool(aState, out var vPersonal, "personalMode", "isPersonalMode", "allowedInPersonalMode"))
         {
@@ -329,6 +337,10 @@
                 : "Unrestricted mode OFF — the general SFW filter is active.",
             "Content policy saved");
     }
+
+    /// <summary>The topbar badge: the deployment mode (personal or multi-user) and the viewer's role.</summary>
+    private string ModeBadgeText
+        => $"{(objPersonalMode ? "Personal mode" : "Multi-user mode")} · {(Shell.Role?.ToString() ?? "admin").ToLowerInvariant()}";
 
     /// <summary>An always-enforced safety floor shown in the locked, non-disableable list.</summary>
     /// <param name="Title">The floor's short name.</param>

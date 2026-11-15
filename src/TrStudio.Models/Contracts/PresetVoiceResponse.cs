@@ -19,6 +19,9 @@ public class PresetVoiceResponse
     /// <summary>Perceived gender label (for pickers).</summary>
     public string Gender { get; set; } = string.Empty;
 
+    /// <summary>Short delivery descriptor shown in pickers (for example <c>warm</c>); may be empty.</summary>
+    public string Tone { get; set; } = string.Empty;
+
     /// <summary>Whether this is a fully-synthetic voice (never consent-gated).</summary>
     public bool IsSynthetic { get; set; }
 

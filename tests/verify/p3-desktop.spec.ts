@@ -60,7 +60,7 @@ test('REQ-UI-099 sign-in service unreachable', async ({ page, request }) => {
   const mode = await signInMode(request, 'unreachable');
   test.skip(mode.realSettings === true, 'Real AppManager settings are present in testsettings.Local.json; the unreachable case is covered by the unit test.');
   await page.goto('/login');
-  await expect(page.getByTestId('login-card')).toBeVisible({ timeout: 30000 });
+  await expect(page.getByTestId('card-1')).toBeVisible({ timeout: 30000 });
   await settle(page);
   await typeInto(page, '#email', 'creator@studio.example');
   await typeInto(page, '#pwd', 'not-a-real-password');
@@ -74,7 +74,7 @@ test('REQ-UI-099 sign-in service unreachable', async ({ page, request }) => {
 
 test('REQ-UI-100 first run asks nothing', async ({ page }) => {
   await page.goto('/login');
-  await expect(page.getByTestId('login-card')).toBeVisible({ timeout: 30000 });
+  await expect(page.getByTestId('card-1')).toBeVisible({ timeout: 30000 });
   await expect(page.locator('input:not([type="checkbox"]):not([role="checkbox"])')).toHaveCount(2);
   await expect(page.getByTestId('note-local-data')).toContainText('stays on this computer');
   const text = (await page.locator('body').innerText()).toLowerCase();
@@ -112,7 +112,7 @@ test('REQ-UI-104 registry key note', async ({ page, request }) => {
 test('REQ-UI-103 ops shows queue', async ({ page, request }) => {
   await openSession(page, request, 'Owner');
   await page.goto('/admin/ops');
-  const health = page.getByTestId('worker-health');
+  const health = page.getByTestId('card-worker-health');
   await expect(health).toBeVisible({ timeout: 30000 });
   await expect(health).toContainText('Queue depth');
   await expect(health).toContainText(/\d+ queued · \d+ running/);

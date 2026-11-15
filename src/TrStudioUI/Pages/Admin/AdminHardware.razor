@@ -3,6 +3,7 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject ToastService ToastService
 @inject IAuthSession AuthSession
+@using Microsoft.AspNetCore.Components.Sections
 
 @*
     Admin Hardware & guided setup (REQ-UI-070). Readiness summary cards (GPU / memory /
@@ -15,7 +16,21 @@
 
 <PageTitle>TrStudio — Hardware &amp; Setup</PageTitle>
 
-<div class="stack" style="max-width:1100px">
+<SectionContent SectionName="topbar-context">
+    @if (objReport is not null)
+    {
+        <Badge Variant="BadgeVariant.Outline" Class="@(objReport.IsReadyForLocalInference ? "hw-status badge-ok" : "hw-status badge-warn")" data-testid="badge-status"
+               title="@string.Join(" ", objReport.Warnings)">
+            <span class="dot @(objReport.IsReadyForLocalInference ? "ok" : "warn")" style="margin-right:5px"></span>
+            @(objReport.IsReadyForLocalInference ? "Node healthy" : "Needs attention")
+        </Badge>
+    }
+    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Class="hw-redetect" Disabled="@objRedetecting" OnClick="RedetectAsync" data-testid="btn-re-detect">
+        @(objRedetecting ? "Detecting…" : "Re-detect")
+    </Button>
+</SectionContent>
+
+<div class="stack hw-page" style="max-width:1100px">
     <div>
         <h1 class="page-title">Hardware &amp; Setup</h1>
         <p class="page-sub" style="margin-bottom:0">
@@ -52,21 +67,24 @@
     }
     else if (objCapabilityCards.Count > 0)
     {
-        <div class="kpi-grid" data-testid="capability-cards">
-            @foreach (var vCard in objCapabilityCards)
+        <div class="kpi-grid">
+            @for (var vIndex = 0; vIndex < objCapabilityCards.Count; vIndex++)
             {
-                <Card>
+                var vCard = objCapabilityCards[vIndex];
+                var vCardTestId = $"card-{vIndex + 1}";
+                var vBadgeTestId = CardBadgeTestIds[vIndex];
+                <Card data-testid="@vCardTestId">
                     <CardContent Class="pt-6">
                         <div class="flex-between">
                             <span class="kpi-lbl">@vCard.Label</span>
-                            <Badge Variant="BadgeVariant.Outline" Class="@(vCard.Warn ? "badge-warn" : "badge-ok")">
+                            <Badge Variant="BadgeVariant.Outline" Class="@(vCard.Warn ? "badge-warn" : "badge-ok")" data-testid="@vBadgeTestId">
                                 @(vCard.Warn ? "low" : "ready")
                             </Badge>
                         </div>
                         <div class="kpi-big">@vCard.Value</div>
                         @if (vCard.Progress is not null)
                         {
-                            <Progress Value="@vCard.Progress.Value" Class="h-2" />
+                            <Progress Value="@vCard.Progress.Value" Class="hw-prog" IndicatorClass="hw-ind" data-testid="progress" />
                         }
                         <div class="kpi-lbl">@vCard.Detail</div>
                     </CardContent>
@@ -86,22 +104,23 @@
         </Card>
     }
 
-    <Card>
+    <Card data-testid="card-guided-setup">
         <CardContent Class="pt-6">
             <div class="flex-between">
                 <h3 class="setup-step-title" style="font-size:14px">Guided setup</h3>
-                <span data-testid="setup-progress">
-                    <Badge Variant="BadgeVariant.Outline" Class="badge-brand">
-                        @objCompletedSteps of @objSteps.Count complete
-                    </Badge>
-                </span>
+                <Badge Variant="BadgeVariant.Outline" Class="badge-brand" data-testid="badge-2-of-4-complete">
+                    @objCompletedSteps of @objSteps.Count complete
+                </Badge>
             </div>
             <p class="kpi-lbl" style="margin:6px 0 4px">
                 Provisions an isolated environment — never collides with system Python.
             </p>
 
-            @foreach (var vStep in objSteps)
+            @{ var vButtonIds = StepButtonTestIds(); }
+            @for (var vStepIndex = 0; vStepIndex < objSteps.Count; vStepIndex++)
             {
+                var vStep = objSteps[vStepIndex];
+                var vButtonId = vButtonIds[vStepIndex];
                 <div class="setup-step">
                     <div class="setup-stepdot @vStep.DotClass">@vStep.DotLabel</div>
                     <div class="setup-step-body">
@@ -109,17 +128,17 @@
                         <div class="kpi-lbl" style="margin-bottom:@(vStep.Progress is null ? "0" : "6px")">@vStep.Detail</div>
                         @if (vStep.Progress is not null)
                         {
-                            <Progress Value="@vStep.Progress.Value" />
+                            <Progress Value="@vStep.Progress.Value" Class="hw-prog" IndicatorClass="hw-ind" data-testid="progress-2" />
                             <div class="kpi-lbl" style="margin-top:4px">@vStep.Progress.Value.ToString("0") % · resolving dependencies</div>
                         }
                     </div>
                     @if (vStep.Disabled)
                     {
-                        <Button Disabled="true">Start</Button>
+                        <Button Disabled="true" data-testid="@vButtonId">Start</Button>
                     }
                     else
                     {
-                        <Button Variant="ButtonVariant.Outline" OnClick="@(() => RunStepAsync(vStep))">@vStep.ActionLabel</Button>
+                        <Button Variant="ButtonVariant.Outline" OnClick="@(() => StepActionAsync(vStep))" data-testid="@vButtonId">@vStep.ActionLabel</Button>
                     }
                 </div>
             }
@@ -128,14 +147,14 @@
 
     @if (objLowDisk)
     {
-        <div data-testid="low-disk-alert">
-            <Alert Variant="AlertVariant.Warning" AccentBorder="true">
-                <LucideIcon Name="triangle-alert" Size="16" />
+        <div>
+            <Alert Variant="AlertVariant.Warning" AccentBorder="true" data-testid="alert-warn">
                 <AlertTitle>Disk space low</AlertTitle>
                 <AlertDescription>
                     Only @objFreeDiskGb.ToString("0") GB of @objTotalDiskGb.ToString("0") GB is free on this node —
                     large checkpoints may not fit. Attach a network volume before installing from the
-                    <a href="/admin/models">Model Library</a>.
+                    <a href="/admin/models" class="hw-link" data-testid="link-model-library">Model Library</a>.
+                    <a href="/admin/ops" class="hw-link" data-testid="link-configure-volume">Configure volume →</a>
                 </AlertDescription>
             </Alert>
         </div>
@@ -146,10 +165,33 @@
     private List<CapabilityCard> objCapabilityCards = new();
     private List<SetupStepRow> objSteps = new();
     private bool objCapabilitiesLoading = true;
+    private HostCapabilityReport? objReport;
+    private bool objRedetecting;
     private bool objApiDown;
     private bool objLowDisk;
     private double objFreeDiskGb;
     private double objTotalDiskGb;
+
+    /// <summary>The mockup's names for the four readiness cards' status badges, in card order.</summary>
+    private static readonly string[] CardBadgeTestIds = { "badge-ready", "badge-ready-2", "badge-ready-3", "badge-low" };
+
+    /// <summary>
+    /// The mockup's control name for each step's action button, from its label (btn-reinstall, btn-verify,
+    /// btn-logs, btn-start); a repeated label gets -2, -3 … in page order, as the mockups number them.
+    /// </summary>
+    private List<string> StepButtonTestIds()
+    {
+        var vSeen = new Dictionary<string, int>();
+        var vIds = new List<string>();
+        foreach (var vStep in objSteps)
+        {
+            var vBase = "btn-" + (vStep.Disabled ? "start" : vStep.ActionLabel.ToLowerInvariant());
+            vSeen[vBase] = vSeen.TryGetValue(vBase, out var vCount) ? vCount + 1 : 1;
+            vIds.Add(vSeen[vBase] == 1 ? vBase : $"{vBase}-{vSeen[vBase]}");
+        }
+
+        return vIds;
+    }
 
     private int objCompletedSteps => objSteps.Count(aStep => aStep.DotClass == "done");
 
@@ -219,9 +261,27 @@
         }
     }
 
+    /// <summary>Probes the node again (the capability report is detected fresh on every request) and redraws the cards.</summary>
+    private async Task RedetectAsync()
+    {
+        objRedetecting = true;
+        objApiDown = false;
+        await TryLoadCapabilitiesAsync(await AuthSession.EnsureLoadedAsync());
+        objRedetecting = false;
+        if (objApiDown)
+        {
+            ToastService.Error("Couldn't reach the API — hardware wasn't re-detected.", "Hardware");
+        }
+        else
+        {
+            ToastService.Success("Hardware re-detected.", "Hardware");
+        }
+    }
+
     /// <summary>Maps a live capability report onto the readiness cards.</summary>
     private void ApplyReport(HostCapabilityReport aReport)
     {
+        objReport = aReport;
         var vDiskUsedPct = aReport.TotalDiskGb > 0
             ? (aReport.TotalDiskGb - aReport.FreeDiskGb) / aReport.TotalDiskGb * 100.0
             : 0.0;
@@ -284,7 +344,11 @@
             var vStatus = await vResponse.Content.ReadFromJsonAsync<SetupStatus>();
             if (vStatus is { Steps.Length: > 0 })
             {
+                // The live steps replace the neutral ones; the network-volume row has no backing step and stays.
+                var vVolumeRow = objSteps.Last(aStep => string.IsNullOrEmpty(aStep.StepKey));
                 objSteps = vStatus.Steps.Select((aStep, aIndex) => MapSetupStep(aStep, aIndex)).ToList();
+                vVolumeRow.DotLabel = (objSteps.Count + 1).ToString();
+                objSteps.Add(vVolumeRow);
             }
         }
         catch
@@ -319,7 +383,10 @@
 
         aRow.DotClass = vDone ? "done" : vRunning ? "run" : string.Empty;
         aRow.DotLabel = vDone ? "✓" : aRow.DotLabel;
-        aRow.ActionLabel = vDone ? "Verify" : vRunning ? "Logs" : "Start";
+        // A finished ONNX Runtime install is re-run as a reinstall; the other finished steps re-run as a verify.
+        aRow.ActionLabel = vDone
+            ? (string.Equals(aRow.StepKey, "OnnxRuntime", StringComparison.OrdinalIgnoreCase) ? "Reinstall" : "Verify")
+            : vRunning ? "Logs" : "Start";
         aRow.Progress = vRunning ? aInfo.ProgressPercent : (double?)null;
 
         if (!string.IsNullOrWhiteSpace(aInfo.ErrorMessage))
@@ -330,6 +397,37 @@
         {
             aRow.Detail = aInfo.Message!;
         }
+    }
+
+    /// <summary>A running step's button shows its latest progress line; any other step's button runs it.</summary>
+    /// <param name="aStep">The step whose button was clicked.</param>
+    private Task StepActionAsync(SetupStepRow aStep)
+        => aStep.ActionLabel == "Logs" ? ShowStepLogAsync(aStep) : RunStepAsync(aStep);
+
+    /// <summary>
+    /// Reads the running step's latest state (<c>GET /api/v1/admin/setup/steps/{key}</c>), shows its
+    /// progress line and refreshes the row.
+    /// </summary>
+    /// <param name="aStep">The running step.</param>
+    private async Task ShowStepLogAsync(SetupStepRow aStep)
+    {
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vInfo = await vClient.GetFromJsonAsync<SetupStepInfo>($"{ApiRoutes.Setup}/steps/{Uri.EscapeDataString(aStep.StepKey)}");
+            if (vInfo is not null)
+            {
+                ApplyStepState(aStep, vInfo);
+                ToastService.Show($"{vInfo.ProgressPercent}% · {vInfo.ErrorMessage ?? vInfo.Message ?? vInfo.State}", aStep.Title);
+                return;
+            }
+        }
+        catch
+        {
+            // Fall through to the honest failure toast.
+        }
+
+        ToastService.Error($"Couldn't read the latest progress of “{aStep.Title}”.", "Guided setup");
     }
 
     /// <summary>

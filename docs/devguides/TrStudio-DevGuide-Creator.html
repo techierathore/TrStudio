@@ -106,7 +106,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <div class="layout no-toc">
   <main>
     <h1>TrStudio-DevGuide-Creator</h1>
-    <div class="subtitle">Rendered 2026-11-14 &middot; source <code>TrStudio-DevGuide-Creator.md</code></div>
+    <div class="subtitle">Rendered 2026-11-15 &middot; source <code>TrStudio-DevGuide-Creator.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
@@ -134,6 +134,9 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
         <li><a href="#defects-found">DEFECTS FOUND</a></li>
       </ol>
     </div>
+<blockquote>
+<p>✅ <strong>Refreshed 2026-11-15:</strong> the screenshots below were replaced with the 15 Nov 2026 test-host run (1280, light; every screen renders at 1280 and 390, light and dark — <code>tests/.artifacts/verify/screens.json</code>). The current <strong>Call chain:</strong> line, where-to-break table (file:line as of 2026-11-15) and <code>data-testid</code> control names for each changed screen are in the <a href="./TrStudio-DevGuide.html#screen-by-screen-code-map">index guide</a>; the file:line references in the lineage tables below date from July 2026 and may have moved.</p>
+</blockquote>
 <blockquote>
 <p>✅ <strong>Runtime-verified 2026-07-05</strong> — exercised as Creator/Owner via the <code>/dev/session</code> seam in the ONE unified role-based <code>TrStudio</code> app (BRD-86, ADR-012 supersedes ADR-001; the separate <code>TrStudioAdmin</code> host is retired). Fresh per-role live smoke (Playwright headless, <code>.smoke/results.json</code>) confirms the Creator lands on the studios shell with <strong>no management nav</strong> (<code>hasStudios:true</code>, <code>hasMgmtNav:false</code>) and is bounced to <code>&lt;AccessDenied&gt;</code> on <code>/admin/*</code> (<code>deniedVisible:true</code>, registry table not shown, admin API → <strong>403</strong>); the Owner sees both surfaces with an in-app "Switch to Management" control. All 15 Creator screens were booted and observed at runtime, and a screenshot of each is embedded below (<code>docs/screenshots/TrStudio/</code>). All screens VISUAL-OK. <strong>Prompt Studio (<code>/prompt-studio</code>, Phase 10 — the 16th Creator screen) added + runtime-verified 2026-07-07</strong> (live web :5099 + API :5102 via <code>/dev/session</code>: render gate — picker→2 registry rows, reactive vision badge, all 3 prompt-use actions; §4b VISUAL-OK @1280/390; degrades cleanly to a synthetic reply when no LLM is configured — RAG-005). NOTE: the FE↔API route defects logged to the checklist (UI-010/030/040/053/011) did <strong>not</strong> surface as render-empty because they're swallowed by try/catch — they were <strong>functional</strong> (the backend call never landed), not visual — <strong>all fixed + re-verified live 2026-07-04</strong> (<code>*fix-issues</code>): voice → <code>/voice/synthesize</code>+<code>/preset-voices</code>, avatar script-assist → <code>/rag/script</code>, video → <code>/video/edit</code>, library preset vocab (201), character-bible GET now called. The Known-issues bullets on each screen below describe what WAS caught; the checklist rows are now <code>Verified</code>.</p>
 <p><strong>Purpose:</strong> screen-by-screen code map for the <strong>Creator role</strong> of the unified <code>TrStudio</code> app — every Creator-facing screen with its Razor file, controls, data lineage (control → client → API → engine → table) and known gotchas. The Creator surface is <strong>role-gated</strong>: studios only, no management nav, and any <code>/admin/*</code> route renders <code>&lt;AccessDenied&gt;</code> in-app (see §Role-based shell &amp; access control).</p>

@@ -34,6 +34,12 @@ public static class SqliteDapperSetup
         SqlMapper.AddTypeHandler(new GuidHandler());
         SqlMapper.AddTypeHandler(new DateTimeHandler());
         SqlMapper.AddTypeHandler(new DateTimeOffsetHandler());
+
+        // A money column read back as INTEGER in one row (0 is stored as 0) and REAL in the next
+        // (0.31) made Dapper's per-reader mapper throw on the second row; read every stored form.
+        SqlMapper.RemoveTypeMap(typeof(decimal));
+        SqlMapper.RemoveTypeMap(typeof(decimal?));
+        SqlMapper.AddTypeHandler(new DecimalHandler());
     }
 
     /// <summary>
@@ -89,6 +95,28 @@ public static class SqliteDapperSetup
             string vText => Guid.Parse(vText),
             byte[] vBytes => new Guid(vBytes),
             _ => Guid.Parse(aValue.ToString()!)
+        };
+    }
+
+    /// <summary>
+    /// Decimal values: written as before, read from whichever storage class SQLite kept the row in
+    /// (INTEGER, REAL or TEXT), so a $0.00 local run and a $0.31 paid run can share one result set.
+    /// </summary>
+    private sealed class DecimalHandler : SqlMapper.TypeHandler<decimal>
+    {
+        public override void SetValue(IDbDataParameter aParameter, decimal aValue)
+        {
+            aParameter.DbType = DbType.Decimal;
+            aParameter.Value = aValue;
+        }
+
+        public override decimal Parse(object aValue) => aValue switch
+        {
+            decimal vDecimal => vDecimal,
+            long vLong => vLong,
+            double vDouble => Convert.ToDecimal(vDouble, CultureInfo.InvariantCulture),
+            string vText => decimal.Parse(vText, NumberStyles.Float, CultureInfo.InvariantCulture),
+            _ => Convert.ToDecimal(aValue, CultureInfo.InvariantCulture)
         };
     }
 

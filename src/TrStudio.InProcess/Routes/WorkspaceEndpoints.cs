@@ -300,7 +300,7 @@ public static class WorkspaceEndpoints
     /// Attaches each asset's run details from the generation log — provider kind, price, price source
     /// and failure text (phase 2, REQ-FN-082; owner-filtered, BRD-81). The latest log row per job wins.
     /// </summary>
-    private static async Task<List<AssetResponse>> WithRunInfoAsync(
+    internal static async Task<List<AssetResponse>> WithRunInfoAsync(
         List<AssetResponse> aAssets,
         string aUserId,
         IGenerationLogRepository aLogRepository,
@@ -340,6 +340,8 @@ public static class WorkspaceEndpoints
         ModelId = aAsset.ModelId,
         ProjectId = aAsset.ProjectId,
         SeedUsed = aAsset.SeedUsed,
+        ParamsJson = aAsset.ParamsJson,
+        ProvenanceSigned = AssetResponse.IsSignedManifest(aAsset.ProvenanceJson),
         CreatedUtc = aAsset.CreatedUtc
     };
 

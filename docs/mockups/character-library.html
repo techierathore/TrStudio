@@ -126,6 +126,7 @@ tr.sel td{background:var(--sel)}
 .emptyicon{width:46px;height:46px;border-radius:12px;background:var(--chip);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;color:var(--muted)}
 .spin{animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
 </style>
+<style data-note="tf-phone-layout: owner decision 13, the app shows the sidebar as a slide-out menu on a phone">@media (max-width:600px){.app{grid-template-columns:1fr}.side[data-testid="sidebar"]{display:none}}</style>
 </head>
 <body>
 <div class="app">
@@ -212,12 +213,12 @@ tr.sel td{background:var(--sel)}
           <div style="margin-top:6px"><span class="badge ok" data-testid="badge-photoreal-4">Photoreal</span></div>
         </div>
         <!-- loading skeleton cards -->
-        <div class="card charcard" data-testid="card-6">
+        <div class="card charcard" data-tf-state="loading" data-testid="card-6">
           <div class="skel" style="aspect-ratio:3/4;height:auto"></div>
           <div class="skel" style="height:14px;margin-top:10px;width:70%"></div>
           <div class="skel" style="height:11px;margin-top:6px;width:50%"></div>
         </div>
-        <div class="card charcard" data-testid="card-7">
+        <div class="card charcard" data-tf-state="loading" data-testid="card-7">
           <div class="skel" style="aspect-ratio:3/4;height:auto"></div>
           <div class="skel" style="height:14px;margin-top:10px;width:60%"></div>
           <div class="skel" style="height:11px;margin-top:6px;width:45%"></div>
@@ -225,7 +226,7 @@ tr.sel td{background:var(--sel)}
       </div>
 
       <!-- empty state (shown for a filtered/new project) -->
-      <div class="card emptybox" data-testid="card-new-character">
+      <div class="card emptybox" data-tf-state="empty" data-testid="card-new-character">
         <div class="emptyicon">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
         </div>
@@ -239,7 +240,7 @@ tr.sel td{background:var(--sel)}
 
 <!-- New / edit dialog (opens from "New Character") -->
 <div class="scrim" id="scrim"></div>
-<div class="dialog" id="dlgNew">
+<div class="dialog" id="dlgNew" data-tf-state="dialog-open">
   <div class="dlghead">
     <h3>New Character</h3>
     <span class="spacer"></span>
@@ -273,7 +274,7 @@ tr.sel td{background:var(--sel)}
 </div>
 
 <!-- Character bible sheet (opens by clicking a character card) -->
-<div class="sheet" id="sheetBible">
+<div class="sheet" id="sheetBible" data-tf-state="bible-open">
   <div class="dlghead"><h3>Character Bible</h3><span class="spacer"></span><span class="badge brand" data-testid="badge-priya-kapoor">Priya Kapoor</span><button class="btn ghost" id="sheetClose" style="padding:4px 8px;margin-left:8px" aria-label="Close" onclick="alert('✕: done in the built app')" data-testid="btn-action-2">✕</button></div>
   <div class="muted" style="font-size:12px;margin-bottom:14px">Persona notes (TechieRag / PgVector) used by script-assist.</div>
   <div class="card" style="margin-bottom:12px" data-testid="card-voice-tone">

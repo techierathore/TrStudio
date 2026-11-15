@@ -336,6 +336,8 @@ public static class WorkspaceEndpoints
         ModelId = aAsset.ModelId,
         ProjectId = aAsset.ProjectId,
         SeedUsed = aAsset.SeedUsed,
+        ParamsJson = aAsset.ParamsJson,
+        ProvenanceSigned = AssetResponse.IsSignedManifest(aAsset.ProvenanceJson),
         CreatedUtc = aAsset.CreatedUtc
     };
 

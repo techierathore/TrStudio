@@ -106,7 +106,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <div class="layout no-toc">
   <main>
     <h1>TrStudio — decisions I need from you</h1>
-    <div class="subtitle">Rendered 2026-11-14 &middot; source <code>TrStudio-Decision-Request.md</code></div>
+    <div class="subtitle">Rendered 2026-11-15 &middot; source <code>TrStudio-Decision-Request.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
@@ -124,6 +124,8 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
         <li class="h3"><a href="#character-bible-search-without-an-embedding-model">9. Character-bible search without an embedding model</a></li>
         <li class="h3"><a href="#local-picture-generation-onnx-inside-the-mac-app">10. Local picture generation (ONNX) inside the Mac app</a></li>
         <li class="h3"><a href="#matching-the-older-screens-to-their-mockups-control-by-control">11. Matching the older screens to their mockups, control by control</a></li>
+        <li class="h3"><a href="#marking-the-mockup-parts-that-belong-to-a-later-moment-of-a-screen">12. Marking the mockup parts that belong to a later moment of a screen</a></li>
+        <li class="h3"><a href="#the-sidebar-on-a-phone-width-window">13. The sidebar on a phone-width window</a></li>
         <li><a href="#what-i-do-when-you-answer">What I do when you answer</a></li>
         <li><a href="#copy-this-back-to-me">Copy this back to me</a></li>
       </ol>
@@ -133,7 +135,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tbody>
 <tr><td>App</td><td>TrStudio</td></tr>
 <tr><td>Written</td><td>2026-11-14</td></tr>
-<tr><td>Waiting on</td><td>1 new decision (11), taken with my recommended answer so the run could finish. You answered decisions 1 to 10 on 14 Nov 2026: A for 1 to 5, 7, 9 and 10; B for 6 ("Remember me"); 8 as written below.</td></tr>
+<tr><td>Waiting on</td><td>2 new decisions (12 and 13), taken with my recommended answer so the night run of 15 Nov 2026 could go on. Decision 11 you confirmed as A. You answered decisions 1 to 10 on 14 Nov 2026: A for 1 to 5, 7, 9 and 10; B for 6 ("Remember me"); 8 as written below.</td></tr>
 </tbody>
 </table>
 <h2 id="what-happened">What happened<a class="anchor-link" href="#what-happened">#</a></h2>
@@ -258,6 +260,28 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </table>
 <p><strong>My recommendation: A</strong> — it is a job of its own and is safer done in one pass with its own checks.</p>
 <p><strong>Taken in this run (14 Nov 2026): A.</strong> Paste the block below to confirm, or ask for B.</p>
+<h3 id="marking-the-mockup-parts-that-belong-to-a-later-moment-of-a-screen"><a id="12-marking-the-mockup-parts-that-belong-to-a-later-moment-of-a-screen"></a>12. Marking the mockup parts that belong to a later moment of a screen<a class="anchor-link" href="#marking-the-mockup-parts-that-belong-to-a-later-moment-of-a-screen">#</a></h3>
+<p>Decision 11's run names each screen's controls after its mockup. Some mockups draw, on the same page, things that only appear after an action — Forgot password's "the reset link is on its way" notice is the plainest. The screen checker expects every named part on the first view, so those parts can never match until the mockup says they belong to a later moment. The checker already reads a mark for this (<code>data-tf-state="…"</code>, and <code>data-tf-sample</code> for sample rows), which Login's mockup already uses.</p>
+<table>
+<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
+<tbody>
+<tr><td><strong>A — add the mark to those parts of the older mockups</strong></td><td>Only the attribute is added; nothing the mockup draws changes. Each screen's notes say which parts got it.</td><td>A small change to the approved mockups' markup.</td></tr>
+<tr><td><strong>B — leave the mockups untouched</strong></td><td>Those parts stay unmatched and those screens stay red on the mockup check.</td><td>Several screens can never pass.</td></tr>
+</tbody>
+</table>
+<p><strong>My recommendation: A.</strong></p>
+<p><strong>Taken in this run (15 Nov 2026): A.</strong> Paste the block below to confirm, or ask for B and the marks are taken out.</p>
+<h3 id="the-sidebar-on-a-phone-width-window"><a id="13-the-sidebar-on-a-phone-width-window"></a>13. The sidebar on a phone-width window<a class="anchor-link" href="#the-sidebar-on-a-phone-width-window">#</a></h3>
+<p>The 18 screens with the app's sidebar have mockups drawn only for a wide window: at phone width they still draw the 248-pixel sidebar beside the page. The app, at phone width, folds the sidebar into a menu behind the button in the top bar. So every one of those screens failed the phone-width check on the sidebar's names.</p>
+<table>
+<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
+<tbody>
+<tr><td><strong>A — the mockups show the app's phone behaviour</strong></td><td>One style rule in each of the 18 mockups hides the sidebar below 600 pixels wide; the wide drawing is unchanged.</td><td>A small change to the approved mockups.</td></tr>
+<tr><td><strong>B — the app keeps the sidebar on a phone</strong></td><td>The app always shows a fixed sidebar.</td><td>On a phone the page is left about 140 pixels wide.</td></tr>
+</tbody>
+</table>
+<p><strong>My recommendation: A.</strong></p>
+<p><strong>Taken in this run (15 Nov 2026): A</strong> — the rule is marked <code>tf-phone-layout</code> in each mockup.</p>
 <h2 id="what-i-do-when-you-answer">What I do when you answer<a class="anchor-link" href="#what-i-do-when-you-answer">#</a></h2>
 <ol>
 <li>Done on 14 Nov 2026: every answer is in the Architecture decisions log and the phase 3 documents.
@@ -281,6 +305,8 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <pre><code>TrStudio: decision 9 — go with option A. Keep word matching; plan a built-in embedding model as a later row.</code></pre>
 <pre><code>TrStudio: decision 10 — go with option A. ComfyUI, RunPod or Venice for pictures on Mac; ONNX for Mac Catalyst as a later row.</code></pre>
 <pre><code>TrStudio: decision 11 — go with option A. A dedicated run adds the 18 screens' mockup control names, the design document's routes and the sample-data scripts.</code></pre>
+<pre><code>TrStudio: decision 12 — go with option A. Mark the mockup parts that belong to a later moment of a screen; nothing drawn changes.</code></pre>
+<pre><code>TrStudio: decision 13 — go with option A. The mockups hide the sidebar at phone width, as the app does.</code></pre>
   </main>
 </div>
 

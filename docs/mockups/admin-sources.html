@@ -107,6 +107,7 @@ tr.sel td{background:var(--sel)}
 .panelwrap.open{display:block}
 .srcicon{width:34px;height:34px;border-radius:9px;background:var(--brand-soft);color:var(--brand-ink);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex:none;border:1px solid var(--brand-bd)}
 </style>
+<style data-note="tf-phone-layout: owner decision 13, the app shows the sidebar as a slide-out menu on a phone">@media (max-width:600px){.app{grid-template-columns:1fr}.side[data-testid="sidebar"]{display:none}}</style>
 </head>
 <body>
 <div class="app">
@@ -188,7 +189,7 @@ tr.sel td{background:var(--sel)}
     </div>
 
     <!-- Add / edit panel (hidden until "＋ Add source") -->
-    <div class="panelwrap" id="srcPanel">
+    <div class="panelwrap" id="srcPanel" data-tf-state="panel-open">
     <div class="card" data-testid="card-add-edit-source">
       <div class="row"><h3 style="margin:0">Add / edit source</h3><span class="spacer"></span><span class="badge brand" data-testid="badge-new">new</span></div>
       <div class="col" style="margin-top:12px">

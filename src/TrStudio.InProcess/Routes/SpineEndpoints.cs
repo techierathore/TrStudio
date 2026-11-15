@@ -5,6 +5,7 @@ using TrStudio.Engine.Domain.Jobs;
 using TrStudio.Engine.Domain.Progress;
 using TrStudio.Models;
 using TrStudio.Models.Contracts;
+using TrStudio.Models.Repositories;
 
 using Microsoft.Extensions.DependencyInjection;
 using TrStudio.InProcess.Hosting;
@@ -139,6 +140,7 @@ public static class SpineEndpoints
         Guid aJobId,
         ClaimsPrincipal aUser,
         IJobOrchestrator aOrchestrator,
+        IGenerationLogRepository aLogRepository,
         CancellationToken aCancellationToken)
     {
         var vUserId = ResolveUserId(aUser);
@@ -167,7 +169,10 @@ public static class SpineEndpoints
             SeedUsed = aAsset.SeedUsed,
             CreatedUtc = aAsset.CreatedUtc
         }).ToList();
-        return Results.Ok(vResponses);
+
+        // REQ-UI-086: say which provider made each asset (Image studio badges a Venice tile from it),
+        // the same run details the gallery and history calls attach.
+        return Results.Ok(await WorkspaceEndpoints.WithRunInfoAsync(vResponses, vUserId, aLogRepository, aCancellationToken));
     }
 
     private static async Task<IResult> CancelJobAsync(

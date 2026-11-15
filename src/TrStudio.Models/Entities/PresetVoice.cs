@@ -19,6 +19,9 @@ public class PresetVoice
     /// <summary>Perceived gender label (for pickers).</summary>
     public string Gender { get; set; } = string.Empty;
 
+    /// <summary>Short delivery descriptor shown in pickers (for example <c>warm</c> or <c>narrator</c>); may be empty.</summary>
+    public string Tone { get; set; } = string.Empty;
+
     /// <summary>Always true for preset voices (fully-synthetic).</summary>
     public bool IsSynthetic { get; set; } = true;
 
