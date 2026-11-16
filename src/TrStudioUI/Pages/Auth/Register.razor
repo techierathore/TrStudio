@@ -92,11 +92,13 @@
 
     <div class="auth-field">
         <Label>Account type</Label>
-        <div class="flex-row" role="group" aria-label="Account type" style="margin-top:4px" data-testid="account-type">
-            <span class="grow" style="display:flex" data-testid="btn-creator"><Button Class="grow" Variant="@(objIsAdmin ? ButtonVariant.Outline : ButtonVariant.Default)"
-                    OnClick="@(() => objIsAdmin = false)" data-testid="type-creator">Creator</Button></span>
-            <span class="grow" style="display:flex" data-testid="btn-admin-operator"><Button Class="grow" Variant="@(objIsAdmin ? ButtonVariant.Default : ButtonVariant.Outline)"
-                    OnClick="@(() => objIsAdmin = true)" data-testid="type-admin">Admin (Operator)</Button></span>
+        @* UIDesign "Selected / active": the chosen type is a segment on --brand-soft with --brand-ink
+           text, as the mockup's .seg (REQ-UI-002); not a solid primary button. *@
+        <div class="image-seg auth-seg" role="radiogroup" aria-label="Account type" style="margin-top:4px" data-testid="account-type">
+            <button type="button" role="radio" aria-checked="@(objIsAdmin ? "false" : "true")" class="@(objIsAdmin ? "" : "is-on")"
+                    @onclick="@(() => objIsAdmin = false)" data-testid="btn-creator">Creator</button>
+            <button type="button" role="radio" aria-checked="@(objIsAdmin ? "true" : "false")" class="@(objIsAdmin ? "is-on" : "")"
+                    @onclick="@(() => objIsAdmin = true)" data-testid="btn-admin-operator">Admin (Operator)</button>
         </div>
         <div class="auth-hint">
             Creators make avatars, images, video &amp; voice. Admins also manage models, providers &amp; spend.
@@ -125,7 +127,7 @@
         live there. TrStudio keeps only your userId.
     </div>
 
-    <div class="auth-switch">Already have an account? <a href="/login" data-testid="link-sign-in">Sign in</a></div>
+    <AuthSignInSwitch />
 </Card>
 
 @code {

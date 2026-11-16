@@ -3,26 +3,38 @@
 | | |
 |---|---|
 | App | TrStudio |
-| Count | 38 logged: 5 open, 33 fixed, 0 will not fix |
+| Count | 50 logged: 6 open, 44 fixed, 0 will not fix |
 | Source | `docs/metrics/misses.jsonl`, one row per miss record. Rewritten by `tf-misses-md.sh` on every new record. Never edit it: a wrong row is corrected by a new record. |
-| Updated | 2026-11-15 |
+| Updated | 2026-11-16 |
 
 **Whose gap** answers the four questions of the miss protocol: **the app's spec** did not say it, so the checklist line is fixed; **the framework never said it**, so one requirement line and a check are added; **the check was too weak** (a review, or a script that did not fire), so the check is fixed; **said and ignored**, so the rule becomes a hook or is deleted. **not sorted** means the record predates the sort or nobody has answered yet; `bash .tfcore/utils/tf-emit.sh --amend <miss> sort <spec|unsaid|weak-check|ignored>` completes it.
 
-## Open (5)
+## Open (6)
 
 | Miss | Found | Whose gap | What went wrong |
 |---|---|---|---|
+| MISS-TrStudio-20261115-09 (REQ-FN-047) | 2026-11-15 by owner | the check was too weak | ComfyUI import: every model file a graph names is reported missing, because the dependency scan never asks ComfyUI what it holds; so a freshly imported real graph (one naming a checkpoint) never reads known-good and Save as model stays disabled. Needs a real ComfyUI to fix and prove. |
+| MISS-TrStudio-20261115-08 (REQ-FN-046) | 2026-11-15 by owner | the check was too weak | ComfyUI import: Run drew a made-up per-node progression ('Completed 5 of 5 nodes · live WebSocket preview') when the debug service could not be reached; it now says the service was not reached and shows no results |
+| MISS-TrStudio-20261115-07 (REQ-UI-004) | 2026-11-15 by owner | the check was too weak | Setup required: the Waiting for admin setup badge used a blended amber, not the design's --warn family (app side changed); the mockup's Local library ready badge had no .badge.ok style (mockup side changed) |
 | MISS-TrStudio-20261115-04 (REQ-FN-016) | 2026-11-15 by gate | not sorted | no sentence recorded (regression, src) |
-| MISS-TrStudio-20261115-03 (REQ-FN-015) | 2026-11-15 by gate | not sorted | no sentence recorded (regression, src) |
-| MISS-TrStudio-20261115-02 (REQ-UI-002) | 2026-11-15 by gate | not sorted | no sentence recorded (regression, src) |
 | MISS-TrStudio-20261115-01 (REQ-UI-001) | 2026-11-15 by gate | not sorted | no sentence recorded (regression, src) |
 | MISS-TrStudio-20261114-07 (REQ-UI-004) | 2026-11-14 by gate | not sorted | no sentence recorded (partial-implementation, src) |
 
-## Fixed (33)
+## Fixed (44)
 
 | Miss | Found | Closed | Whose gap | What went wrong |
 |---|---|---|---|---|
+| MISS-TrStudio-20261116-07 (REQ-UI-005) | 2026-11-16 by owner | 2026-11-16 by triage-and-fix | the check was too weak | Real Mac app at 390 wide: choosing a screen from the folded menu left the menu sheet open over that screen (and over the page after widening back). Fixed: the sidebar closes the phone menu on every route change |
+| MISS-TrStudio-20261116-06 (REQ-UI-010) | 2026-11-16 by owner | 2026-11-16 by triage-and-fix | the check was too weak | Real Mac app @1280: the Render tier column covered the Script box; under the app's CSS zoom (about 1.27) neither the 1100px media query nor a container query folds the 300 + 1fr + 300 studio grid. Fixed: the studio row wraps by itself (flex-wrap), same wide layout; zoom tests at 1.25 and 1.6 in Chro |
+| MISS-TrStudio-20261116-05 (REQ-FN-094) | 2026-11-16 by owner | 2026-11-16 by triage-and-fix | the check was too weak | Real Mac app: a job closed mid-run (stub, 10%) was marked Failed with 'TrStudio was closed while this job was running' on the next open, but the reason showed nowhere: Account's Recent jobs reads the generation log, which the start-up marking never wrote. Fixed: the marking writes the failed log row |
+| MISS-TrStudio-20261116-04 (REQ-FN-104) | 2026-11-16 by owner | 2026-11-16 by triage-and-fix | the check was too weak | Real Mac app: at the default 1.6 zoom the sidebar of every signed-in screen drew 1.6 windows tall; its footer (Sign out, surface switch) sat at y=2377 in a window ending at 1651, out of reach. Fixed: full-height utilities divide by --tr-zoom; the sidebar scrolls and pins its footer |
+| MISS-TrStudio-20261116-03 (REQ-FN-099) | 2026-11-16 by owner | 2026-11-16 by triage-and-fix | the check was too weak | Real Mac app: with Remember me ticked, sign-in as test user 1 failed outright ('Sign-in failed'): keeping the sign-in uses the Keychain, which refuses this unsigned build (MissingEntitlement). Fixed: the person is signed in for the session and told the sign-in could not be kept |
+| MISS-TrStudio-20261116-02 (REQ-FN-096) | 2026-11-16 by owner | 2026-11-16 by triage-and-fix | the check was too weak | Real Mac app: saving a key on Registry & providers failed with 'Couldn't store provider keys — check your admin session'; the real cause is the macOS Keychain refusing this unsigned build (MissingEntitlement), so no Keychain item is made and no key is kept. Fixed: the page now says the Keychain refu |
+| MISS-TrStudio-20261116-01 (REQ-FN-086) | 2026-11-16 by owner | 2026-11-16 by triage-and-fix | the check was too weak | Real Mac app: sign-in as test user 1 refused with 'A public API key call must name its device in the X-Device-Id header (1 to 200 characters)'; the app sent no device id. Fixed: a per-install id kept in the data folder is sent as X-Device-Id |
+| MISS-TrStudio-20261115-06 (REQ-FN-015) | 2026-11-15 by owner | 2026-11-15 by triage-and-fix | the check was too weak | Register: the chosen account type colour differs from the mockup (same defect as REQ-UI-002, app side changed) |
+| MISS-TrStudio-20261115-05 (REQ-UI-002) | 2026-11-15 by owner | 2026-11-15 by triage-and-fix | the check was too weak | Register: the chosen account type is drawn as a solid primary button; the design's Selected/active rule and the mockup draw it as a brand-soft segment with brand-ink text (app side changed) |
+| MISS-TrStudio-20261115-03 (REQ-FN-015) | 2026-11-15 by gate | 2026-11-15 by triage-and-fix | not sorted | no sentence recorded (regression, src) |
+| MISS-TrStudio-20261115-02 (REQ-UI-002) | 2026-11-15 by gate | 2026-11-15 by triage-and-fix | not sorted | no sentence recorded (regression, src) |
 | MISS-TrStudio-20261114-24 (REQ-UI-095) | 2026-11-14 by owner | 2026-11-15 by triage-and-fix | the check was too weak | A refused Venice video call whose answer gives its reset time in milliseconds crashed the error reader (ArgumentOutOfRangeException), and a 400 dropped the fields Venice named, so Venice's own reason never reached the screen |
 | MISS-TrStudio-20261114-23 (REQ-FN-104) | 2026-11-14 by owner | 2026-11-15 by triage-and-fix | the app's spec | Zoom keeps the Mac app's screens laid out to the window |
 | MISS-TrStudio-20261114-22 (REQ-FN-077) | 2026-11-14 by owner | 2026-11-15 by triage-and-fix | the check was too weak | The fixed-character check uses a stand-in model id without 'reference-to-video', so the tick it expects after reload was never set |

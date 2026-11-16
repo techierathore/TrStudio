@@ -85,7 +85,12 @@ public sealed class EngineHost : IAsyncDisposable
             ["Jobs:WorkerCount"] = aOptions.WorkerCount.ToString(System.Globalization.CultureInfo.InvariantCulture),
             ["AppManager:UseRemoteTokenValidation"] = "false",
             ["AppManager:AllowDevSymmetricTokens"] = "false",
-            ["AppManager:PersonalMode"] = "true"
+            ["AppManager:PersonalMode"] = "true",
+            ["AppManager:DeviceId"] = DeviceIdentity.ReadOrCreate(aOptions.DataFolder),
+            // Owner decision 10: ONNX Runtime ships no Mac Catalyst library, so local ONNX pictures cannot run in the Mac app.
+            ["Image:OnnxUnavailableReason"] = OperatingSystem.IsMacCatalyst()
+                ? TrStudio.Engine.Infrastructure.Jobs.JobQueueStore.OnnxUnavailableMessage
+                : null
         };
 
         if (aOptions.SignIn.BaseUrl is { } vBaseUrl)

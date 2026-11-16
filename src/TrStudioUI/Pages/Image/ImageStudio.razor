@@ -209,10 +209,10 @@
                 }
                 @if (objProviderFailure is not null)
                 {
-                    @* BRD-113: Venice's own failure text, word for word. *@
+                    @* BRD-113: the provider's own failure text, word for word, under a title naming Venice only for Venice. *@
                     <Alert Variant="AlertVariant.Danger" AccentBorder="true" Class="mt-2" data-testid="alert-venice-failed">
                         <LucideIcon Name="circle-alert" Size="16" />
-                        <AlertTitle>Venice could not make this</AlertTitle>
+                        <AlertTitle>@ImageModelFilter.FailureTitle(SelectedModel)</AlertTitle>
                         <AlertDescription>@objProviderFailure</AlertDescription>
                     </Alert>
                 }

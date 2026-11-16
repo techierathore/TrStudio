@@ -8,7 +8,7 @@
 
 ## Summary
 
-14 entries: 0 blocking now, 0 open, 14 closed (TR-001 to TR-014).
+15 entries: 0 blocking now, 1 open (TR-015), 14 closed (TR-001 to TR-014).
 
 Nothing is blocked. On 15 Nov 2026 TrStudio moved from 1.0.9 to TrBlazeUI 2.2.5 (nuget.org, the only source this Mac's settings list), and the three open entries were checked again on it: a list inside the Add model panel now opens and can be picked (TR-014), the old icon names are accepted (TR-013), and a page with a list closes without a disposal error (TR-012). All three are closed with the proof under each entry.
 
@@ -263,4 +263,15 @@ Closed 2026-11-15: fixed by TrBlazeUI 2.2.5. Proof: on the test host, opening Ad
 - **Encountered in:** REQ-UI-084, REQ-UI-097 and the Venice rows that start from a Registry row (2026-11-14, test host, headless)
 - **Workaround:** none taken (the framework does not work around a library gap)
 - **Suggested fix:** render `SelectContent` through the same portal layer as the open sheet, above it, or document the setting that allows it
+
+### TR-015 — In a Mac Catalyst web view the sidebar's phone mode lags one window resize behind
+
+- **Severity:** minor
+- **Blocks:** no — a person dragging the window edge sends many resizes and usually ends in the right mode; the headless checks of the phone menu pass; only a single jump in size (a script, a window-snapping tool) leaves the wrong mode until the next resize
+- **Repro:** TrBlazeUI 2.2.5 `Sidebar` in a .NET MAUI Blazor Hybrid app on Mac Catalyst (WKWebView, macOS 27.2). Resize the window in one step 1280 → 390 (`osascript … set size of window 1 to {390, 844}`): the desktop sidebar stays docked and the page is squeezed to about 60 px. Resize again to 391: the phone menu appears. Back to 1280 in one step: the sidebar stays folded behind the toggle
+- **Expected:** the mode follows the window after each resize
+- **Actual:** `staticwebassets/js/sidebar.js` calls `checkMobile()` from a `ResizeObserver` on `document.body` and reads `window.innerWidth` there; in the Catalyst web view that observer fires before `innerWidth` has taken the new size, so the old width is sent to `OnMobileChange` and no later callback corrects it (TrStudio, 16 Nov 2026, `tests/.artifacts/verify/mac/lag-390.png`, `lag-391.png`, `lag-1280.png`)
+- **Encountered in:** owner run of 15 Nov 2026, part B (screen check of the real Mac app at 1280 and 390)
+- **Workaround:** none taken (the framework does not work around a library gap)
+- **Suggested fix:** decide with `window.matchMedia('(max-width: 767px)')` and its `change` event, or read `document.documentElement.clientWidth` inside the observer, or check again on the next animation frame
 

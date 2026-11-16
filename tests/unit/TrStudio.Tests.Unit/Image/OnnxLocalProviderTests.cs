@@ -22,7 +22,7 @@ public class OnnxLocalProviderTests
     private readonly IAssetRepository objAssetRepository = Substitute.For<IAssetRepository>();
     private readonly ImageProcessor objImageProcessor = new();
 
-    private OnnxLocalProvider CreateProvider(bool aSyntheticFallback)
+    private OnnxLocalProvider CreateProvider(bool aSyntheticFallback, string? aUnavailableReason = null)
     {
         objAssetStorage.SaveAsync(Arg.Any<string>(), Arg.Any<byte[]>(), Arg.Any<CancellationToken>())
             .Returns(aCall => Task.FromResult("/tmp/assets/" + aCall.Arg<string>()));
@@ -30,7 +30,8 @@ public class OnnxLocalProviderTests
         var vOptions = Options.Create(new ImageProviderOptions
         {
             OnnxModelsRoot = null,
-            SyntheticFallbackEnabled = aSyntheticFallback
+            SyntheticFallbackEnabled = aSyntheticFallback,
+            OnnxUnavailableReason = aUnavailableReason
         });
 
         return new OnnxLocalProvider(objImageProcessor, objAssetStorage, objAssetRepository, vOptions, NullLogger<OnnxLocalProvider>.Instance);
@@ -63,6 +64,26 @@ public class OnnxLocalProviderTests
         }
 
         throw new TimeoutException("ONNX job did not reach a terminal state in time.");
+    }
+
+    /// <summary>
+    /// Owner run 16 Nov 2026, real Mac app: a local ONNX job said "No runnable ONNX model is installed",
+    /// which installing a model never fixes on a Mac. Where local ONNX cannot run, the job fails with the
+    /// plain reason the host gives, and nothing is rendered, not even the synthetic fallback.
+    /// </summary>
+    [Fact(DisplayName = "REQ-FN-103 OnnxJobOnMacSaysNotAvailable")]
+    public async Task OnnxJobOnMacSaysNotAvailable()
+    {
+        const string Reason = "Local ONNX pictures are not available in the Mac app.";
+        var vProvider = CreateProvider(aSyntheticFallback: true, aUnavailableReason: Reason);
+        var vJob = CreateJob("{\"prompt\":\"a red cube\",\"width\":128,\"height\":128}", 100);
+
+        var vJobId = await vProvider.SubmitAsync(vJob, CancellationToken.None);
+        var vStatus = await PollToTerminalAsync(vProvider, vJobId);
+
+        Assert.Equal(JobState.Failed, vStatus.State);
+        Assert.Equal(Reason, vStatus.FailureMessage);
+        await objAssetRepository.DidNotReceive().InsertAsync(Arg.Any<GeneratedAsset>(), Arg.Any<CancellationToken>());
     }
 
     /// <summary>

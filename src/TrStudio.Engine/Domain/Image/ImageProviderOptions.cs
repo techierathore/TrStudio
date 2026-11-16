@@ -25,4 +25,11 @@ public class ImageProviderOptions
     /// remediation-carrying failure instead).
     /// </summary>
     public bool SyntheticFallbackEnabled { get; set; }
+
+    /// <summary>
+    /// Set when local ONNX cannot run on this computer at all (the Mac app: ONNX Runtime ships no Mac
+    /// Catalyst library, owner decision 10). A local ONNX job then fails with this plain reason instead
+    /// of "no model installed", which installing a model would never fix.
+    /// </summary>
+    public string? OnnxUnavailableReason { get; set; }
 }

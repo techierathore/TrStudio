@@ -162,6 +162,28 @@ public class JobRecoveryTests
             vSecond.Scalar($"SELECT \"FailureMessage\" FROM \"GenerationJob\" WHERE \"GenerationJobId\" = '{vJobId:D}'"));
     }
 
+    /// <summary>
+    /// REQ-FN-094 (owner run 16 Nov 2026, real Mac app): the reason is also where the person reads it.
+    /// Account's Recent jobs lists the generation log, and a job failed at start never reached it.
+    /// </summary>
+    [Fact(DisplayName = "REQ-FN-094 ClosedMidJobReasonReachesRecentJobs")]
+    public async Task ClosedMidJobReasonReachesRecentJobs()
+    {
+        var vFolder = DesktopEngine.NewFolder();
+        var vJobId = Guid.NewGuid();
+        await using (var vFirst = await DesktopEngine.StartAsync(vFolder, aStartWorkers: false))
+        {
+            vFirst.KeepFolder = true;
+            InsertRunningJob(vFirst, vJobId, "stub-echo", "TextToImage", "Fast", null);
+        }
+
+        await using var vSecond = await DesktopEngine.StartAsync(vFolder);
+        Assert.Equal("Failed", vSecond.StateOf(vJobId));
+        Assert.Equal(1L, Convert.ToInt64(vSecond.Scalar(
+            $"SELECT COUNT(*) FROM \"GenerationLog\" WHERE \"GenerationJobId\" = '{vJobId:D}' AND \"Outcome\" = 'failed' " +
+            $"AND \"FailureMessage\" = '{JobQueueStore.ClosedMidJobMessage.Replace("'", "''")}'")));
+    }
+
     /// <summary>REQ-FN-094: a Venice clip Running at close, with its queue id, resumes polling and finishes.</summary>
     [Fact(DisplayName = "REQ-FN-094 RunningVeniceClipResumesPolling")]
     public async Task RunningVeniceClipResumesPolling()

@@ -11,4 +11,10 @@ public static class AppManagerHeaders
 
     /// <summary>The API key header.</summary>
     public const string ApiKey = "X-Api-Key";
+
+    /// <summary>
+    /// The device header: AppManager refuses a public API key call that does not name its device
+    /// (1 to 200 characters; found on the real Mac app, 16 Nov 2026).
+    /// </summary>
+    public const string DeviceId = "X-Device-Id";
 }

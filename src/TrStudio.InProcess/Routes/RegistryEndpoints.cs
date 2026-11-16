@@ -155,6 +155,7 @@ public static class RegistryEndpoints
         IKeyStore aKeyStore,
         IProviderKeyRepository aRepository,
         TrStudio.Engine.Infrastructure.Security.DesktopProviderSettings aProviderSettings,
+        TrStudio.Engine.Infrastructure.Security.IKeyProtector aKeyProtector,
         CancellationToken aCancellationToken)
     {
         if (string.IsNullOrWhiteSpace(aRequest.ProviderName))
@@ -179,7 +180,20 @@ public static class RegistryEndpoints
         // Write-only: the raw key goes into the AES-GCM key store and is never echoed back.
         if (!string.IsNullOrWhiteSpace(aRequest.ApiKey))
         {
-            await aKeyStore.StoreAsync(aRequest.ProviderName, aRequest.ApiKey, aCancellationToken);
+            try
+            {
+                await aKeyStore.StoreAsync(aRequest.ProviderName, aRequest.ApiKey, aCancellationToken);
+            }
+            catch (Exception vException) when (vException is not OperationCanceledException and not ArgumentException)
+            {
+                // Owner run 16 Nov 2026: an unsigned Mac build is refused by the Keychain ("MissingEntitlement").
+                // Say so plainly, naming the protection; the key itself is never echoed.
+                return Results.Json(new
+                {
+                    error = $"The key was not saved: {aKeyProtector.Description} refused to protect it ({vException.Message}). "
+                        + "On a Mac this happens when the app is not signed; a signed build keeps keys."
+                }, statusCode: StatusCodes.Status503ServiceUnavailable);
+            }
         }
 
         await aRepository.SetEnabledAsync(aRequest.ProviderName, aRequest.IsEnabled, aCancellationToken);

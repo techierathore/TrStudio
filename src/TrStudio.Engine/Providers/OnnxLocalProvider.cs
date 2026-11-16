@@ -103,6 +103,15 @@ public class OnnxLocalProvider : IGenerationProvider
 
     private async Task RunAsync(GenerationJob aJob, OnnxExecution aExecution)
     {
+        // Owner run 16 Nov 2026: where local ONNX cannot run at all (the Mac app), say so plainly.
+        if (!string.IsNullOrWhiteSpace(objOptions.OnnxUnavailableReason))
+        {
+            objLogger.LogWarning("Local ONNX is not available here; job {JobId} fails with the plain reason", aJob.JobId);
+            aExecution.Status = new JobStatus(JobState.Failed, 0, null, objOptions.OnnxUnavailableReason,
+                "Choose a ComfyUI, RunPod or Venice model for pictures on this computer.");
+            return;
+        }
+
         try
         {
             var vParams = OnnxImageParams.Parse(aJob.ParamsJson);

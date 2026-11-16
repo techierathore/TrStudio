@@ -177,6 +177,17 @@ The 18 screens with the app's sidebar have mockups drawn only for a wide window:
 
 **Taken in this run (15 Nov 2026): A** — the rule is marked `tf-phone-layout` in each mockup.
 
+### 14. The five "Could" rows that now have tests
+
+You asked for tests for REQ-FN-041 (digital twin), REQ-FN-042 (multi-shot assembly), REQ-FN-055 (clip stitching), REQ-FN-070 (webhooks) and REQ-FN-071 (MCP server). The tests are written and run, and all five fail, because the BRD deferred these rows and none of them was ever built. The two that prove themselves fully (a twin, a stitched clip that looks right) also need a real video model.
+
+| Option | What happens | What it costs |
+|---|---|---|
+| **A — keep them deferred** | The rows stay red with "not built (deferred)" and the tests wait for the feature. | Nothing now; five red rows in phase 1. |
+| **B — build them now** | A build run adds the five features to the in-process engine and their screens, then verifies them on the test host. | A build run of its own; the twin and the stitching still need a real video model to finish. |
+
+**My recommendation: A**, until you want these features: the webhook and MCP rows were written for the API, which phase 3 set aside.
+
 ## What I do when you answer
 
 1. Done on 14 Nov 2026: every answer is in the Architecture decisions log and the phase 3 documents.
@@ -236,4 +247,8 @@ TrStudio: decision 12 — go with option A. Mark the mockup parts that belong to
 
 ```
 TrStudio: decision 13 — go with option A. The mockups hide the sidebar at phone width, as the app does.
+```
+
+```
+TrStudio: decision 14 — go with option A. The five Could rows stay deferred; their tests wait for the features.
 ```

@@ -24,4 +24,11 @@ public class LoginResponse
 
     /// <summary>Whether first-run setup has been completed on this instance.</summary>
     public bool SetupComplete { get; set; }
+
+    /// <summary>
+    /// Set when "Remember me" was ticked but this computer could not keep the sign-in (its key
+    /// protection refused, as the Keychain refuses an unsigned Mac build): the person is signed in for
+    /// this session only, and the screen says why.
+    /// </summary>
+    public string? NotKeptReason { get; set; }
 }

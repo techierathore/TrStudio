@@ -136,4 +136,13 @@ public class ImageModelFilterTests
         Assert.Equal(SubmitFailureKind.Other, vFailure.Kind);
         Assert.Contains("400", vFailure.Message);
     }
+
+    /// <summary>Owner run 16 Nov 2026, real Mac app: a local ONNX failure was titled "Venice could not make this".</summary>
+    [Fact(DisplayName = "REQ-FN-103 FailureTitleNamesVeniceOnlyForVenice")]
+    public void FailureTitleNamesVeniceOnlyForVenice()
+    {
+        Assert.Equal("Venice could not make this", ImageModelFilter.FailureTitle(new CatalogModelResponse { ProviderKind = ProviderKind.Venice }));
+        Assert.Equal("The picture was not made", ImageModelFilter.FailureTitle(new CatalogModelResponse { ProviderKind = ProviderKind.OnnxLocal }));
+        Assert.Equal("The picture was not made", ImageModelFilter.FailureTitle(null));
+    }
 }

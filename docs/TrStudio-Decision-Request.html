@@ -106,7 +106,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <div class="layout no-toc">
   <main>
     <h1>TrStudio — decisions I need from you</h1>
-    <div class="subtitle">Rendered 2026-11-15 &middot; source <code>TrStudio-Decision-Request.md</code></div>
+    <div class="subtitle">Rendered 2026-11-16 &middot; source <code>TrStudio-Decision-Request.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
@@ -126,6 +126,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
         <li class="h3"><a href="#matching-the-older-screens-to-their-mockups-control-by-control">11. Matching the older screens to their mockups, control by control</a></li>
         <li class="h3"><a href="#marking-the-mockup-parts-that-belong-to-a-later-moment-of-a-screen">12. Marking the mockup parts that belong to a later moment of a screen</a></li>
         <li class="h3"><a href="#the-sidebar-on-a-phone-width-window">13. The sidebar on a phone-width window</a></li>
+        <li class="h3"><a href="#the-five-could-rows-that-now-have-tests">14. The five &quot;Could&quot; rows that now have tests</a></li>
         <li><a href="#what-i-do-when-you-answer">What I do when you answer</a></li>
         <li><a href="#copy-this-back-to-me">Copy this back to me</a></li>
       </ol>
@@ -282,6 +283,16 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </table>
 <p><strong>My recommendation: A.</strong></p>
 <p><strong>Taken in this run (15 Nov 2026): A</strong> — the rule is marked <code>tf-phone-layout</code> in each mockup.</p>
+<h3 id="the-five-could-rows-that-now-have-tests"><a id="14-the-five-could-rows-that-now-have-tests"></a>14. The five "Could" rows that now have tests<a class="anchor-link" href="#the-five-could-rows-that-now-have-tests">#</a></h3>
+<p>You asked for tests for REQ-FN-041 (digital twin), REQ-FN-042 (multi-shot assembly), REQ-FN-055 (clip stitching), REQ-FN-070 (webhooks) and REQ-FN-071 (MCP server). The tests are written and run, and all five fail, because the BRD deferred these rows and none of them was ever built. The two that prove themselves fully (a twin, a stitched clip that looks right) also need a real video model.</p>
+<table>
+<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
+<tbody>
+<tr><td><strong>A — keep them deferred</strong></td><td>The rows stay red with "not built (deferred)" and the tests wait for the feature.</td><td>Nothing now; five red rows in phase 1.</td></tr>
+<tr><td><strong>B — build them now</strong></td><td>A build run adds the five features to the in-process engine and their screens, then verifies them on the test host.</td><td>A build run of its own; the twin and the stitching still need a real video model to finish.</td></tr>
+</tbody>
+</table>
+<p><strong>My recommendation: A</strong>, until you want these features: the webhook and MCP rows were written for the API, which phase 3 set aside.</p>
 <h2 id="what-i-do-when-you-answer">What I do when you answer<a class="anchor-link" href="#what-i-do-when-you-answer">#</a></h2>
 <ol>
 <li>Done on 14 Nov 2026: every answer is in the Architecture decisions log and the phase 3 documents.
@@ -307,6 +318,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <pre><code>TrStudio: decision 11 — go with option A. A dedicated run adds the 18 screens' mockup control names, the design document's routes and the sample-data scripts.</code></pre>
 <pre><code>TrStudio: decision 12 — go with option A. Mark the mockup parts that belong to a later moment of a screen; nothing drawn changes.</code></pre>
 <pre><code>TrStudio: decision 13 — go with option A. The mockups hide the sidebar at phone width, as the app does.</code></pre>
+<pre><code>TrStudio: decision 14 — go with option A. The five Could rows stay deferred; their tests wait for the features.</code></pre>
   </main>
 </div>
 

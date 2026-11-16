@@ -111,11 +111,9 @@
                 @if (objKeyNote is not null)
                 {
                     @* Phase 3 (REQ-UI-104): where the keys are kept and what protects them. *@
-                    <div data-testid="key-protection-note">
-                        <Alert Variant="AlertVariant.Info" AccentBorder="true">
-                            <AlertDescription>@objKeyNote</AlertDescription>
-                        </Alert>
-                    </div>
+                    <Alert Variant="AlertVariant.Info" AccentBorder="true" data-testid="key-protection-note">
+                        <AlertDescription>@objKeyNote</AlertDescription>
+                    </Alert>
                 }
                 @foreach (var vKey in objProviderKeys)
                 {
@@ -195,7 +193,7 @@
                         </FieldContent>
                     </Field>
                     <div class="flex-row mt-2">
-                        <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="TestVeniceAsync"
+                        <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="TestVeniceAsync" Class="whitespace-nowrap shrink-0"
                                 Disabled="@objVenice.Testing" data-testid="btn-test-connection">
                             @(objVenice.Testing ? "Testing…" : "Test connection")
                         </Button>
@@ -927,6 +925,7 @@
         var vClient = HttpClientFactory.CreateClient("TrStudioApi");
         var vSaved = 0;
         var vFailed = false;
+        string? vReason = null;
 
         foreach (var vKey in objProviderKeys)
         {
@@ -956,6 +955,7 @@
                     else
                     {
                         vFailed = true;
+                        vReason ??= await ReadErrorAsync(vResponse);
                     }
                 }
                 else if (vKey.Stored)
@@ -988,11 +988,25 @@
 
         if (vFailed && vSaved == 0)
         {
-            ToastService.Error("Couldn't store provider keys — check your admin session and try again.", "Save failed");
+            ToastService.Error(vReason ?? "Couldn't store provider keys — check your admin session and try again.", "Save failed");
         }
         else
         {
             ToastService.Success("Provider keys stored (encrypted, write-only).", "Saved");
+        }
+    }
+
+    /// <summary>The engine's own reason for a refused save (its <c>error</c> field), when it gave one.</summary>
+    private static async Task<string?> ReadErrorAsync(HttpResponseMessage aResponse)
+    {
+        try
+        {
+            using var vDoc = System.Text.Json.JsonDocument.Parse(await aResponse.Content.ReadAsStringAsync());
+            return vDoc.RootElement.TryGetProperty("error", out var vError) ? vError.GetString() : null;
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return null;
         }
     }
 

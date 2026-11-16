@@ -3,6 +3,7 @@
 @inject NavigationManager Navigation
 @inject IHttpClientFactory HttpClientFactory
 @inject IAuthSession AuthSession
+@inject ToastService ToastService
 
 @*
     Sign-in screen (REQ-UI-001) — centered brand card on the bare EmptyLayout.
@@ -263,6 +264,14 @@
                 }
 
                 Navigation.NavigateTo(ResolveLanding(vSession));
+                if (!string.IsNullOrWhiteSpace(vSession?.NotKeptReason))
+                {
+                    // Owner run 16 Nov 2026: "Remember me" could not be kept (an unsigned Mac build); say why
+                    // once the signed-in shell, which holds the toast area, has drawn.
+                    await Task.Delay(800);
+                    ToastService.Show(vSession.NotKeptReason, "Signed in, not remembered");
+                }
+
                 return;
             }
 

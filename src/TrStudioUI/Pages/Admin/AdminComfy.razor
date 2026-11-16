@@ -155,6 +155,17 @@
                     </div>
                 }
 
+                @if (objRunNotReached is not null)
+                {
+                    @* Owner run 15 Nov 2026: an unreachable debug service is said plainly; no node results are invented. *@
+                    <div style="margin-top:10px" data-testid="alert-run-not-reached">
+                        <Alert Variant="AlertVariant.Danger" AccentBorder="true">
+                            <AlertTitle>Debug service not reached</AlertTitle>
+                            <AlertDescription>@objRunNotReached</AlertDescription>
+                        </Alert>
+                    </div>
+                }
+
                 @if (objHasRun)
                 {
                     @if (objComfyConfigured)
@@ -268,6 +279,7 @@
     private bool objInstalling;
     private double objProgress;
     private string objRunCaption = string.Empty;
+    private string? objRunNotReached;
     private List<NodeStatus> objStatuses = new();
     private string? objMissingDep;
 
@@ -384,7 +396,7 @@
             }
 
             ApplyStoredMapping(vCurrent.MappedParamsJson);
-            await RunAsync(aAllowFallback: false);
+            await RunAsync(aReportUnreached: false);
         }
         catch
         {
@@ -558,20 +570,23 @@
     /// Smoke-tests the graph via the FN-046 run-debug bundle (<c>POST /api/v1/admin/comfy/debug</c>,
     /// <see cref="ComfyDebugRequest"/> → <see cref="ComfyDebugData"/>): the exact submitted <c>/prompt</c>
     /// JSON, per-node status and missing-dependency detection — which the backend produces WITHOUT a live
-    /// ComfyUI (reported via <see cref="ComfyDebugData.Degraded"/>). When the endpoint is unreachable it
-    /// falls back to a representative per-node progression so the debug surface is always demonstrable.
+    /// ComfyUI (reported via <see cref="ComfyDebugData.Degraded"/>). When the debug service cannot be
+    /// reached, the panel says so and shows no per-node results (owner run, 15 Nov 2026: it used to
+    /// draw a made-up progression).
     /// </summary>
-    private async Task RunAsync() => await RunAsync(aAllowFallback: true);
+    private async Task RunAsync() => await RunAsync(aReportUnreached: true);
 
-    /// <param name="aAllowFallback">Whether an unreachable endpoint falls back to the local progression (never on page load).</param>
-    private async Task RunAsync(bool aAllowFallback)
+    /// <param name="aReportUnreached">Whether an unreachable service is reported (never on page load).</param>
+    private async Task RunAsync(bool aReportUnreached)
     {
         objRunning = true;
         objHasRun = true;
         objProgress = 0;
         objMissingDep = null;
         objKnownGood = false;
+        objRunNotReached = null;
 
+        string vWhy;
         var vClient = HttpClientFactory.CreateClient("TrStudioApi");
         try
         {
@@ -587,20 +602,30 @@
                     objRunning = false;
                     return;
                 }
+
+                vWhy = "it answered with nothing";
+            }
+            else
+            {
+                vWhy = $"it answered HTTP {(int)vResponse.StatusCode}";
             }
         }
-        catch
+        catch (Exception vException) when (vException is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException or InvalidOperationException)
         {
-            // Debug endpoint unreachable — fall back to the representative progression below.
+            vWhy = vException is TaskCanceledException ? "it did not answer in time" : "it could not be contacted";
         }
 
-        if (aAllowFallback)
+        // Nothing ran: no node results, no progress and nothing known-good.
+        objHasRun = false;
+        objStatuses = new();
+        foreach (var vNode in objNodes)
         {
-            ApplyLocalProgression();
+            vNode.State = "idle";
         }
-        else
+
+        if (aReportUnreached)
         {
-            objHasRun = false;
+            objRunNotReached = $"The ComfyUI debug service was not reached ({vWhy}), so nothing ran and no node results are shown. Try Run again.";
         }
 
         objRunning = false;
@@ -650,43 +675,6 @@
             objRunCaption = aDebug.Message ?? (aDebug.Degraded
                 ? "Graph validated — no live ComfyUI configured, so this is a dry-run of the exact submitted request."
                 : $"Completed {objNodes.Count} of {objNodes.Count} nodes · live WebSocket preview.");
-        }
-    }
-
-    /// <summary>Representative per-node progression used when the debug endpoint is unreachable.</summary>
-    private void ApplyLocalProgression()
-    {
-        var vStatuses = new List<NodeStatus>();
-        var vMissing = objNodes.FirstOrDefault(aNode => !objBaseNodes.Contains(aNode.ClassType));
-        var vTotal = Math.Max(objNodes.Count, 1);
-        var vDone = 0;
-        foreach (var vNode in objNodes)
-        {
-            if (vMissing is not null && ReferenceEquals(vNode, vMissing))
-            {
-                vStatuses.Add(new NodeStatus(vNode.ClassType, "err", "missing node"));
-                vNode.State = "err";
-            }
-            else
-            {
-                vStatuses.Add(new NodeStatus(vNode.ClassType, "ok", $"{0.2 + vDone * 0.4:0.0}s"));
-                vNode.State = "ok";
-                vDone++;
-            }
-        }
-
-        objStatuses = vStatuses;
-        objProgress = vMissing is null ? 100 : Math.Round(100.0 * vDone / vTotal);
-        if (vMissing is not null)
-        {
-            objMissingDep = vMissing.ClassType;
-            objRunCaption = $"Stopped at {vMissing.ClassType} — missing custom node.";
-            objKnownGood = false;
-        }
-        else
-        {
-            objRunCaption = $"Completed {objNodes.Count} of {objNodes.Count} nodes · live WebSocket preview.";
-            objKnownGood = true;
         }
     }
 

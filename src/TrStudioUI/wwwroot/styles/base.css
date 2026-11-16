@@ -3361,3 +3361,106 @@ h1:focus {
     padding: 6px 10px;
   }
 }
+
+/* Register's account-type selector (REQ-UI-002): the mockup's full-width .seg */
+.image-seg.auth-seg {
+  display: flex;
+  width: 100%;
+  font-size: 13px;
+}
+
+.image-seg.auth-seg > button {
+  flex: 1;
+  justify-content: center;
+}
+
+/* Setup required (REQ-UI-004): the UIDesign --warn / --ok families exactly, scoped like .registry-page */
+.gate-card .badge-warn {
+  background: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.dark .gate-card .badge-warn {
+  background: #33210a;
+  color: #fcd34d;
+  border-color: #92400e;
+}
+
+.gate-card .badge-ok {
+  background: #f0fdf4;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+.dark .gate-card .badge-ok {
+  background: #0a2e1a;
+  color: #86efac;
+  border-color: #1d6a3c;
+}
+
+/* Mac app zoom (REQ-FN-104, owner run 16 Nov 2026): BlazorZoom puts CSS zoom and --tr-zoom on the page,
+   and CSS zoom scales a 100vh box too, so the signed-in shell's full-height sidebar drew 1.6 windows tall
+   and its footer (Sign out) sat below the window. TrBlazeUI's full-height utilities divide by the zoom,
+   as .auth-shell already does; unset (web head, or 1x) this is 100vh, unchanged. */
+.h-screen {
+  height: calc(100vh / var(--tr-zoom, 1));
+}
+
+.min-h-screen {
+  min-height: calc(100vh / var(--tr-zoom, 1));
+}
+
+.h-svh {
+  height: calc(100svh / var(--tr-zoom, 1));
+}
+
+.min-h-svh {
+  min-height: calc(100svh / var(--tr-zoom, 1));
+}
+
+/* The sidebar scrolls its own menu when it is taller than the window (the Mac app's zoom, a short
+   window), and its footer (surface switch, Sign out) stays pinned at the bottom, always in reach. */
+aside:has(> .shell-sidefoot) {
+  overflow-y: auto;
+}
+
+aside > .shell-sidefoot {
+  position: sticky;
+  bottom: 0;
+  background-color: var(--sidebar);
+}
+
+/* Mac app zoom (REQ-FN-104, owner run 16 Nov 2026): the Mac app zooms with CSS zoom, and neither a width
+   media query nor (in the app's WebKit) a container query measures the zoomed layout, so at about 1.27 the
+   three studio columns (300 + middle + 300) never folded and the right one covered the script (Avatar
+   studio @1280). The studio row now wraps by itself: a column that does not fit moves to the next row
+   and takes its width, at any zoom. With room for all three (1280 at 1x) the layout is what the grid drew:
+   300px, the rest, 300px. */
+.studio {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.studio > * {
+  flex: 1 1 360px;
+}
+
+.studio > :first-child,
+.studio > :last-child:not(:first-child) {
+  flex: 0.0001 0 300px;
+}
+
+.studio.video-studio > :first-child {
+  flex-basis: 320px;
+}
+
+@media (max-width: 1100px) {
+  .studio > *,
+  .studio > :first-child,
+  .studio > :last-child:not(:first-child) {
+    flex: 1 1 100%;
+  }
+}

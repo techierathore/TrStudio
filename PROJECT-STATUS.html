@@ -106,7 +106,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <div class="layout">
   <nav class="side">
     <h1>TrStudio — Status</h1>
-    <div class="sub">Last rendered: 2026-11-15</div>
+    <div class="sub">Last rendered: 2026-11-16</div>
     <div class="group">Contents</div>
     <ol>
         <li><a href="#where-i-am">Where I am</a></li>
@@ -121,7 +121,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
   </nav>
   <main>
     <h1>TrStudio — Status</h1>
-    <div class="subtitle">Rendered 2026-11-15 &middot; source <code>PROJECT-STATUS.md</code></div>
+    <div class="subtitle">Rendered 2026-11-16 &middot; source <code>PROJECT-STATUS.md</code></div>
     <div class="cta-next" style="padding:20px; background:var(--cta-bg); border:2px solid var(--accent); border-radius:10px; margin:20px 0;">
       <div style="font-size:11px; color:var(--muted); letter-spacing:.5px;">NEXT COMMAND TO RUN</div>
       <div style="font-family:var(--mono); font-size:18px; margin-top:6px;">/TechieFlow:agents:verifier *verify functional TrStudio --phase 1</div>
@@ -129,10 +129,10 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <table>
 <tbody>
 <tr><th>project</th><td>TrStudio</td></tr>
-<tr><th>last_updated</th><td>2026-11-15</td></tr>
+<tr><th>last_updated</th><td>2026-11-16</td></tr>
 <tr><th>current_phase</th><td>Phase 3 of 3 (One desktop app, Mac first) · Verify — 35 of 35 verified</td></tr>
 <tr><th>last_verified_build</th><td>PASS</td></tr>
-<tr><th>last_verified_date</th><td>2026-11-15</td></tr>
+<tr><th>last_verified_date</th><td>2026-11-16</td></tr>
 </tbody>
 </table>
     <div class="toc-inline">
@@ -149,13 +149,12 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
       </ol>
     </div>
 <h2 id="where-i-am">Where I am<a class="anchor-link" href="#where-i-am">#</a></h2>
-<p>Phase 3 of 3: desktop app, Mac first. On TrBlazeUI 2.2.5 and TechieRag 1.1.5. Verified: phase 3 35 of 35, phase 2 31 of 31, phase 1 71 of 107. All 22 older screens carry their mockups' names and sample-data scripts; 19 match their mockups. Red on the mockup check only: Login, Register, Setup required. The real Mac app was checked by screenshots; its driver needs the owner's one-time Automation Mode command.</p>
+<p>Phase 3 of 3: One desktop app, Mac first. Verified: phase 3 35 of 35, phase 2 31 of 31, phase 1 73 of 107. The real Mac app was driven end to end: sign-in as users 1 and 2, Keychain, Remember me, job resume, ONNX message, every screen at 1280 and 390. Seven defects found there were fixed and verified. Keys and kept sign-ins need a signed build.</p>
 <h2 id="next-command-to-run">Next command to run<a class="anchor-link" href="#next-command-to-run">#</a></h2>
 <p>Claude Code:</p>
 <pre><code>/TechieFlow:agents:verifier *verify functional TrStudio --phase 1</code></pre>
 <p>OpenCode:</p>
 <pre><code>/flow-verifier *verify functional TrStudio --phase 1</code></pre>
-<p>Run it after the owner's one-time Automation Mode command, or after Login, Register and Setup required are matched to their mockups.</p>
 <h2 id="open-requirements">Open requirements<a class="anchor-link" href="#open-requirements">#</a></h2>
 <table>
 <thead><tr><th>Status</th><th>Count</th></tr></thead>
@@ -173,11 +172,17 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </ul>
 <h2 id="known-blockers">Known blockers<a class="anchor-link" href="#known-blockers">#</a></h2>
 <ul>
-<li>Real-app driving: macOS asks for a password before Automation Mode comes on; the owner runs once <code>sudo automationmodetool enable-automationmode-without-authentication</code>.
+<li>The Mac app is unsigned: the macOS Keychain refuses it (MissingEntitlement), so provider keys are not saved and "Remember me" cannot keep a sign-in; a signed build is the owner's step.
 </li>
-<li>Real sign-in, "Remember me", sign-out, the Keychain item, job resume and the ONNX message on the real app: need a test user's password in <code>tests/verify/testsettings.Local.json</code> (TestUsers) and the driver above.
+<li>Test users 1 and 2 are Operators on AppManager (no studio access); users 3 and 4 are not registered.
 </li>
-<li>Phase 1 REQ-UI-001, REQ-UI-002, REQ-UI-004, REQ-FN-015, REQ-FN-016: red on the mockup comparison only (Login link box, Register account-type colour, Setup required badge, icon and border).
+<li>REQ-UI-001, REQ-FN-016, REQ-UI-004: red only through the mockup checker's own mistake when grading phase 1 (TF-003).
+</li>
+<li>REQ-FN-041, REQ-FN-042, REQ-FN-055, REQ-FN-070, REQ-FN-071: not built (deferred Could rows); decision 14.
+</li>
+<li>REQ-FN-047: a fresh real graph never reads known-good without a real ComfyUI to ask.
+</li>
+<li>TR-015: on the Mac the sidebar's phone mode lags one window resize (TrBlazeUI).
 </li>
 <li>Mac Catalyst workload 26.5 against Xcode 27.2: <code>sudo dotnet workload update</code> needs the owner's password.
 </li>
@@ -187,38 +192,38 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <table>
 <thead><tr><th>Date</th><th>Phase</th><th>Result</th><th>Status table</th></tr></thead>
 <tbody>
-<tr><td>2026-11-12</td><td>build-phase</td><td>0/31 Verified</td><td>docs/TrStudio-P2-Checklist.md#requirements-status</td></tr>
-<tr><td>2026-11-14</td><td>amend-docs</td><td>7/107 Verified, 7 N/A</td><td>docs/TrStudio-Checklist.md#requirements-status</td></tr>
 <tr><td>2026-11-14</td><td>build-phase</td><td>26/29 Verified</td><td>docs/TrStudio-P3-Checklist.md#requirements-status</td></tr>
 <tr><td>2026-11-14</td><td>triage-and-fix</td><td>33/34 Verified, 3 N/A</td><td>docs/TrStudio-P3-Checklist.md#requirements-status</td></tr>
 <tr><td>2026-11-15</td><td>triage-and-fix</td><td>35/35 Verified, 3 N/A</td><td>docs/TrStudio-P3-Checklist.md#requirements-status</td></tr>
+<tr><td>2026-11-16</td><td>triage-and-fix</td><td>35/35 Verified, 3 N/A</td><td>docs/TrStudio-P3-Checklist.md#requirements-status</td></tr>
+<tr><td>2026-11-16</td><td>triage-and-fix</td><td>35/35 Verified, 3 N/A</td><td>docs/TrStudio-P3-Checklist.md#requirements-status</td></tr>
 </tbody>
 </table>
 <h2 id="library-feedback-summary">Library feedback summary<a class="anchor-link" href="#library-feedback-summary">#</a></h2>
 <ul>
 <li>AppManager: 1 open · 0 closed — docs/TrStudio-AppManager-Feedback.md
 </li>
-<li>TechieFlow: 2 open · 0 closed — docs/TrStudio-TechieFlow-Feedback.md
+<li>TechieFlow: 7 open · 0 closed — docs/TrStudio-TechieFlow-Feedback.md
 </li>
 <li>TechieRag: 5 open · 1 closed — docs/TrStudio-TechieRag-Feedback.md
 </li>
-<li>TrBlazeUI: 0 open · 14 closed — docs/TrStudio-TrBlazeUI-Feedback.md
+<li>TrBlazeUI: 1 open · 14 closed — docs/TrStudio-TrBlazeUI-Feedback.md
 </li>
 </ul>
 <h2 id="standards-compliance">Standards compliance<a class="anchor-link" href="#standards-compliance">#</a></h2>
 <ul>
-<li>Last check 2026-11-15: 0 findings, see the checklist Remarks; no environment-variable read added in src/ or tests/, test settings only from the JSON files beside the tests.
+<li>Last check 2026-11-16: 0 findings, see the checklist Remarks.
 </li>
 </ul>
 <h2 id="deferred-future"><a id="deferred--future"></a>Deferred / future<a class="anchor-link" href="#deferred-future">#</a></h2>
 <ul>
 <li>Windows (and possibly Linux) build of the desktop app: a later version (REQ-FN-102).
 </li>
-<li>Local ONNX pictures inside the Mac app (REQ-FN-103, decision 10).
+<li>Local ONNX pictures inside the Mac app (REQ-FN-103, decision 10); the Mac app now says plainly they are not available.
 </li>
 <li>A built-in embedding model for character-bible search by meaning (REQ-RAG-008, decision 9).
 </li>
-<li>Could rows behind the MVP: digital twin, multi-shot, clip extension, webhooks, MCP server.
+<li>Could rows behind the MVP: digital twin, multi-shot, clip extension, webhooks, MCP server — tests written 16 Nov 2026, decision 14.
 </li>
 <li>Set aside: the API project and the PostgreSQL scripts, kept on disk for the external REST API row (REQ-FN-069).
 </li>

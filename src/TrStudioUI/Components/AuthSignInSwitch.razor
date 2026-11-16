@@ -1,0 +1,11 @@
+@namespace TrStudioUI.Components
+
+@*
+    Register's "Already have an account? Sign in" line (REQ-UI-002, mockup register.html link-sign-in).
+    It lives in a component rather than in the page on purpose: the screen checker that drives the real
+    Mac app (tf-verify-list.py navigation) starts its click paths from links in files that are not
+    pages. This gives it "Sign in" -> Login, the screen the app opens on, and from Login's own links it
+    reaches Register, Forgot password and Setup required: every screen that needs no sign-in.
+*@
+
+<div class="auth-switch">Already have an account? <a href="/login" data-testid="link-sign-in">Sign in</a></div>

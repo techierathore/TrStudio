@@ -48,6 +48,11 @@ public static class IdentityModule
                 {
                     aClient.DefaultRequestHeaders.Add(AppManagerHeaders.ApiKey, vOptions.ApiKey);
                 }
+
+                if (!string.IsNullOrWhiteSpace(vOptions.DeviceId))
+                {
+                    aClient.DefaultRequestHeaders.Add(AppManagerHeaders.DeviceId, vOptions.DeviceId);
+                }
             })
             .ConfigurePrimaryHttpMessageHandler(aProvider =>
                 CreateCertificateHandler(aProvider.GetRequiredService<IOptions<AppManagerOptions>>().Value));

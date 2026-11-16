@@ -22,6 +22,9 @@ public class AppManagerOptions
     /// <summary>Explicit AppManager ApplicationId, used when no API key pair is configured.</summary>
     public int? ApplicationId { get; set; }
 
+    /// <summary>This computer's device id, sent as <c>X-Device-Id</c> (kept in the data folder by the engine host).</summary>
+    public string DeviceId { get; set; } = string.Empty;
+
     /// <summary>Optional symmetric signing key for locally-validated dev tokens.</summary>
     public string JwtSigningKey { get; set; } = string.Empty;
 

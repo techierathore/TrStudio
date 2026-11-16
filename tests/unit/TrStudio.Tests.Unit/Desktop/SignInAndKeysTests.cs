@@ -10,6 +10,7 @@ using TrStudio.Engine.Domain.Avatar;
 using TrStudio.Engine.Domain.Rag;
 using TrStudio.Engine.Domain.RunPod;
 using TrStudio.Engine.Infrastructure.Identity;
+using TrStudio.Engine.Infrastructure.Security;
 using TrStudio.InProcess;
 using TrStudio.InProcess.Routes;
 using TrStudio.Models.Contracts;
@@ -87,6 +88,90 @@ public class DesktopSignInTests
 
         Assert.Equal(HttpStatusCode.OK, vResponse.StatusCode);
         AssertIdAndKeyOnly(vFake.Requests.Single(aRequest => aRequest.RequestUri!.AbsolutePath.EndsWith("AuthSvc/register", StringComparison.Ordinal)));
+    }
+
+    /// <summary>
+    /// REQ-FN-086 (owner run 16 Nov 2026, real Mac app): AppManager refuses a public API key call that
+    /// does not name its device ("must name its device in the X-Device-Id header (1 to 200 characters)").
+    /// Every call carries one device id, the same on every start of the same data folder.
+    /// </summary>
+    [Fact(DisplayName = "REQ-FN-086 LoginSendsTheSameDeviceIdOnEveryStart")]
+    public async Task LoginSendsTheSameDeviceIdOnEveryStart()
+    {
+        var vFolder = DesktopEngine.NewFolder();
+        var vIds = new List<string>();
+        for (var vStart = 0; vStart < 2; vStart++)
+        {
+            var vFake = new FakeAppManager();
+            await using var vEngine = await DesktopEngine.StartAsync(aFolder: vFolder, aSignIn: Settings, aConfigure: aServices =>
+                aServices.AddHttpClient<IAppManagerClient, AppManagerClient>().ConfigurePrimaryHttpMessageHandler(() => vFake));
+            vEngine.KeepFolder = vStart == 0;
+            using var vClient = vEngine.Client();
+
+            var vResponse = await vClient.PostAsJsonAsync("/api/v1/auth/login", new LoginRequest { Email = "creator@test.local", Password = "pass-word-1" });
+
+            Assert.Equal(HttpStatusCode.OK, vResponse.StatusCode);
+            var vLogin = vFake.Requests.Single(aRequest => aRequest.RequestUri!.AbsolutePath.EndsWith("AuthSvc/login", StringComparison.Ordinal));
+            Assert.True(vLogin.Headers.TryGetValues("X-Device-Id", out var vValues), "the login names no device (X-Device-Id)");
+            var vId = Assert.Single(vValues!);
+            Assert.InRange(vId.Length, 1, 200);
+            vIds.Add(vId);
+        }
+
+        Assert.Equal(vIds[0], vIds[1]);
+    }
+
+    /// <summary>A key protection that refuses, as the macOS Keychain refuses an unsigned build ("MissingEntitlement").</summary>
+    private sealed class RefusingKeyProtector : IKeyProtector
+    {
+        public string Description => "the macOS Keychain";
+
+        public byte[] GetOrCreateDataKey() => throw new Exception("Error adding record: MissingEntitlement");
+    }
+
+    /// <summary>
+    /// REQ-FN-096 (owner run 16 Nov 2026, real Mac app): when this computer's key protection refuses,
+    /// saving a key says so plainly, naming the protection, instead of failing with no reason (the page
+    /// then said "check your admin session").
+    /// </summary>
+    [Fact(DisplayName = "REQ-FN-096 RefusedKeyProtectionIsSaidPlainly")]
+    public async Task RefusedKeyProtectionIsSaidPlainly()
+    {
+        await using var vEngine = await DesktopEngine.StartAsync(aKeyProtector: new RefusingKeyProtector());
+        using var vClient = vEngine.Client(vEngine.SignIn(UserRole.Owner));
+
+        var vResponse = await vClient.PutAsJsonAsync("/api/v1/admin/providers/keys",
+            new ProviderKeyUpsertRequest { ProviderName = "HeyGen", ApiKey = "test-only-not-a-key", IsEnabled = true });
+        var vBody = await vResponse.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, vResponse.StatusCode);
+        Assert.Contains("the macOS Keychain", vBody, StringComparison.Ordinal);
+        Assert.Contains("not saved", vBody, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("test-only-not-a-key", vBody, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// REQ-FN-099 (owner run 16 Nov 2026, real Mac app): with "Remember me" ticked on a build whose key
+    /// protection refuses (an unsigned Mac build), the person is still signed in and told plainly that the
+    /// sign-in could not be kept; before, the whole sign-in failed with "Sign-in failed".
+    /// </summary>
+    [Fact(DisplayName = "REQ-FN-099 RefusedProtectionStillSignsInAndSaysNotKept")]
+    public async Task RefusedProtectionStillSignsInAndSaysNotKept()
+    {
+        var vFake = new FakeAppManager();
+        await using var vEngine = await DesktopEngine.StartAsync(aSignIn: Settings, aKeyProtector: new RefusingKeyProtector(), aConfigure: aServices =>
+            aServices.AddHttpClient<IAppManagerClient, AppManagerClient>().ConfigurePrimaryHttpMessageHandler(() => vFake));
+        using var vClient = vEngine.Client();
+
+        var vResponse = await vClient.PostAsJsonAsync("/api/v1/auth/login", new LoginRequest { Email = "creator@test.local", Password = "pass-word-1", RememberMe = true });
+        var vBody = await vResponse.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, vResponse.StatusCode);
+        Assert.Equal(1, vEngine.Host.Sessions.Count);
+        Assert.False(vEngine.Host.RememberedSignIn.HasKept);
+        var vLogin = JsonSerializer.Deserialize<LoginResponse>(vBody, new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
+        Assert.NotNull(vLogin.NotKeptReason);
+        Assert.Contains("the macOS Keychain", vLogin.NotKeptReason!, StringComparison.Ordinal);
     }
 
     /// <summary>REQ-UI-099: an unreachable AppManager answers with the plain sign-in-service message.</summary>

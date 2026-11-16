@@ -122,16 +122,16 @@ The price and the outcome of each Venice call are kept with the generation, and 
 
 Written by the status gate after every build, verify and handoff; not by hand.
 
-**Snapshot as of 2026-11-12.** Live per-requirement status: `PROJECT-STATUS.md` and the Requirements Status table in `docs/TrStudio-P2-Checklist.md`.
+**Snapshot as of 2026-11-16.** Live per-requirement status: `PROJECT-STATUS.md` and the Requirements Status table in `docs/TrStudio-P2-Checklist.md`.
 
 | Screen | Requirements | Verified | Open | Status |
 |---|---|---|---|---|
-| Admin — Model & Provider Registry | 7 | 0 | 7 | In progress |
-| Image studio | 10 | 0 | 10 | In progress |
-| Video studio | 5 | 0 | 5 | In progress |
-| Projects | 3 | 0 | 3 | In progress |
-| Gallery | 1 | 0 | 1 | In progress |
-| Non-functional | 5 | 0 | 5 | In progress |
+| Admin — Model & Provider Registry | 7 | 7 | 0 | Done |
+| Image studio | 10 | 10 | 0 | Done |
+| Video studio | 5 | 5 | 0 | Done |
+| Projects | 3 | 3 | 0 | Done |
+| Gallery | 1 | 1 | 0 | Done |
+| Non-functional | 5 | 5 | 0 | Done |
 
 ## 6. Where the rest lives
 

@@ -569,14 +569,14 @@ The SaaS-ready abstraction. `TrStudioApi` is designed to also serve as an extern
 
 Written by the status gate after every build, verify and handoff; not by hand.
 
-**Snapshot as of 2026-11-14.** Live per-requirement status: `PROJECT-STATUS.md` and the Requirements Status table in `docs/TrStudio-Checklist.md`.
+**Snapshot as of 2026-11-16.** Live per-requirement status: `PROJECT-STATUS.md` and the Requirements Status table in `docs/TrStudio-Checklist.md`.
 
 | Screen | Requirements | Verified | Open | Status |
 |---|---|---|---|---|
-| UI / Pages | 25 | 2 | 23 | Partial |
-| Functional requirements | 68 | 5 | 63 | Partial |
-| RAG / AI requirements (→ /techierag) | 4 | 0 | 4 | In progress |
-| Non-functional | 10 | 0 | 10 | In progress |
+| UI / Pages | 25 | 23 | 2 | Partial |
+| Functional requirements | 68 | 47 | 21 | Partial |
+| RAG / AI requirements (→ /techierag) | 4 | 2 | 2 | Partial |
+| Non-functional | 10 | 1 | 9 | Partial |
 
 ## 8. Context diagram
 

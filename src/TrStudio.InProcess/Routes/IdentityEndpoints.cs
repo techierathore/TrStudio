@@ -56,6 +56,7 @@ public static class IdentityEndpoints
         SignInSettings aSignIn,
         LocalSessionStore aSessions,
         RememberedSignInStore aRemembered,
+        TrStudio.Engine.Infrastructure.Security.IKeyProtector aKeyProtector,
         CancellationToken aCancellationToken)
     {
         // Phase 3 (REQ-UI-098): a build without its AppManager id and key cannot sign anyone in.
@@ -76,16 +77,30 @@ public static class IdentityEndpoints
 
             // Owner decision 6B (REQ-FN-099, REQ-UI-105): ticked keeps the refresh token for 30 days,
             // protected for this user; not ticked keeps nothing (and forgets an older kept sign-in).
+            string? vNotKept = null;
             if (aRequest.RememberMe && !string.IsNullOrWhiteSpace(vSession.RefreshToken))
             {
-                aRemembered.Remember(vSession.RefreshToken, aRequest.Email);
+                try
+                {
+                    aRemembered.Remember(vSession.RefreshToken, aRequest.Email);
+                }
+                catch (Exception vException) when (vException is not OperationCanceledException)
+                {
+                    // Owner run 16 Nov 2026: an unsigned Mac build is refused by the Keychain. The person is
+                    // still signed in, for this session only, and told why.
+                    vNotKept = $"You are signed in, but this computer could not keep the sign-in: {aKeyProtector.Description} refused ({vException.Message}). "
+                        + "You will be asked to sign in again next time. On a Mac this happens when the app is not signed.";
+                }
             }
             else
             {
                 aRemembered.Forget();
             }
 
-            return Results.Ok(await ApplySetupGateAsync(vSession, aSetupGate, aCancellationToken));
+            var vResult = await ApplySetupGateAsync(vSession, aSetupGate, aCancellationToken);
+            vResult.NotKeptReason = vNotKept;
+
+            return Results.Ok(vResult);
         }
         catch (UnauthorizedAccessException vException)
         {

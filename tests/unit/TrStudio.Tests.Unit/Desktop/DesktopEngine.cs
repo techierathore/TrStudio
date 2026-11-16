@@ -56,7 +56,8 @@ internal sealed class DesktopEngine : IAsyncDisposable
         int aWorkers = 2,
         bool aStartWorkers = true,
         Action<IServiceCollection>? aConfigure = null,
-        CountingKeyProtector? aProtector = null)
+        CountingKeyProtector? aProtector = null,
+        IKeyProtector? aKeyProtector = null)
     {
         var vFolder = aFolder ?? NewFolder();
         var vProtector = aProtector ?? new CountingKeyProtector();
@@ -64,7 +65,7 @@ internal sealed class DesktopEngine : IAsyncDisposable
         {
             DataFolder = vFolder,
             SignIn = aSignIn ?? SignInSettings.None,
-            KeyProtector = vProtector,
+            KeyProtector = aKeyProtector ?? vProtector,
             WorkerCount = aWorkers,
             StartWorkers = aStartWorkers,
             ConfigureServices = aConfigure

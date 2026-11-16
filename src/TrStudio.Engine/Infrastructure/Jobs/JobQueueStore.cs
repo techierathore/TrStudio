@@ -72,7 +72,23 @@ public class JobQueueStore
                 aHint = "Submit the job again from its studio."
             },
             cancellationToken: aCancellationToken)).ConfigureAwait(false);
+        await LogFailureAsync(vConnection, aJobId, ClosedMidJobMessage, aCancellationToken).ConfigureAwait(false);
     }
+
+    /// <summary>
+    /// Writes the job's "failed" generation-log row, as the worker does for a failure it sees, so the
+    /// reason shows in Account's Recent jobs (owner run 16 Nov 2026: a job failed at start never did).
+    /// One row per job: nothing is written when the job already has a log row.
+    /// </summary>
+    private static Task LogFailureAsync(System.Data.IDbConnection aConnection, Guid aJobId, string aMessage, CancellationToken aCancellationToken)
+        => aConnection.ExecuteAsync(new CommandDefinition(
+            "INSERT INTO \"GenerationLog\" (\"GenerationLogId\", \"GenerationJobId\", \"UserId\", \"ModelId\", \"Tier\", \"ParamsJson\", " +
+            "\"CostEstimate\", \"ActualCost\", \"DurationMs\", \"Outcome\", \"FailureMessage\") " +
+            "SELECT @aLogId, \"GenerationJobId\", \"UserId\", \"ModelId\", \"Tier\", \"ParamsJson\", \"CostEstimate\", \"ActualCost\", NULL, 'failed', @aMessage " +
+            "FROM \"GenerationJob\" WHERE \"GenerationJobId\" = @aJobId " +
+            "AND NOT EXISTS (SELECT 1 FROM \"GenerationLog\" WHERE \"GenerationJobId\" = @aJobId)",
+            new { aLogId = Guid.NewGuid(), aJobId, aMessage },
+            cancellationToken: aCancellationToken));
 
     /// <summary>The message stored when this build cannot load ONNX Runtime (the Mac app; owner decision 10).</summary>
     public const string OnnxUnavailableMessage =

@@ -135,8 +135,19 @@
     private void HandleLocationChanged(object? aSender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs aArgs)
     {
         UpdateActiveItem();
+        // Owner run 16 Nov 2026 (real Mac app): the phone-width menu sheet stayed open over the screen
+        // that was just chosen from it. Choosing a screen closes it.
+        if (objSidebar is { OpenMobile: true })
+        {
+            objSidebar.SetOpenMobile(false);
+        }
+
         InvokeAsync(StateHasChanged);
     }
+
+    /// <summary>The sidebar state the provider cascades (phone menu sheet open or shut).</summary>
+    [CascadingParameter]
+    private SidebarContext? objSidebar { get; set; }
 
     /// <summary>Resolves the active item for the active surface from the current route.</summary>
     private void UpdateActiveItem()

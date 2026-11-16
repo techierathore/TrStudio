@@ -14,7 +14,7 @@ Phase 3 makes TrStudio one desktop app, Mac first (Windows in a later version): 
 
 | ID | Requirement | Status | % | Remarks | Details |
 |----|-------------|--------|---|---------|---------|
-| REQ-FN-086 | Sign in through AppManager with the built-in application id and API key | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-FN-086 real sign-in through AppManager` | [view](#d-req-fn-086) |
+| REQ-FN-086 | Sign in through AppManager with the built-in application id and API key | Verified | 100% | 2026-11-16 verify: PASS — test `REQ-FN-086 real sign-in through AppManager` | [view](#d-req-fn-086) |
 | REQ-FN-087 | Register through AppManager with the same id and key | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-087 RegisterSendsAppIdAndKeyAndNoSecret` | [view](#d-req-fn-087) |
 | REQ-UI-098 | A build without its sign-in settings says so instead of failing | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-UI-098 missing sign-in settings` | [view](#d-req-ui-098) |
 | REQ-UI-099 | An unreachable sign-in service is reported in plain words | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-UI-099 sign-in service unreachable` | [view](#d-req-ui-099) |
@@ -27,10 +27,10 @@ Phase 3 makes TrStudio one desktop app, Mac first (Windows in a later version): 
 | REQ-FN-091 | A generation job is queued in the local database and runs inside the app | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-091 a throwing provider ends the job Failed with its ` | [view](#d-req-fn-091) |
 | REQ-FN-092 | No more than the set number of jobs run at once | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-092 NoMoreThanWorkerCountRunAtOnce` | [view](#d-req-fn-092) |
 | REQ-FN-093 | A job still queued when the app closed runs on the next start | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-093 QueuedJobRunsOnNextStart` | [view](#d-req-fn-093) |
-| REQ-FN-094 | A job running when the app closed is picked up or failed with its reason | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-094 OtherRunningJobFailsWithReason` | [view](#d-req-fn-094) |
+| REQ-FN-094 | A job running when the app closed is picked up or failed with its reason | Verified | 100% | 2026-11-16 verify: PASS — test `REQ-FN-094 ClosedMidJobReasonReachesRecentJobs` | [view](#d-req-fn-094) |
 | REQ-FN-095 | Polling a provider runs inside the app | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-095 NoHangfireReference` | [view](#d-req-fn-095) |
 | REQ-UI-103 | RunPod & ops shows the in-app queue | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-UI-103 ops shows queue` | [view](#d-req-ui-103) |
-| REQ-FN-096 | RunPod, HeyGen, closed-API and text-model keys are entered on Registry & providers | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-096 SavedRunPodKeyIsConfiguredAndMasked` | [view](#d-req-fn-096) |
+| REQ-FN-096 | RunPod, HeyGen, closed-API and text-model keys are entered on Registry & providers | Verified | 100% | 2026-11-16 verify: PASS — test `REQ-FN-096 SavedRunPodKeyIsConfiguredAndMasked` | [view](#d-req-fn-096) |
 | REQ-FN-097 | Keys are protected by the operating system for the signed-in user | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-097 DatabaseHoldsOnlyCiphertextAndUnlockKeyComesFromP` | [view](#d-req-fn-097) |
 | REQ-FN-098 | A saved key is used on the next call without a restart | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-098 SavedHeyGenKeyIsUsedWithoutRestart` | [view](#d-req-fn-098) |
 | REQ-RAG-006 | Script and caption writing use a text-model row from the registry | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-RAG-006 ScriptUsesTheEnabledTextChatRow` | [view](#d-req-rag-006) |
@@ -43,15 +43,15 @@ Phase 3 makes TrStudio one desktop app, Mac first (Windows in a later version): 
 | REQ-NFR-020 | A test host serves the same screens and in-process engine on SQLite for headless checks only; it is never shipped | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-NFR-020 DesktopDoesNotReferenceTheTestHost` | [view](#d-req-nfr-020) |
 | REQ-NFR-021 | ComfyUI behaves exactly as before | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-NFR-021 ComfyUI test files and provider are unchanged` | [view](#d-req-nfr-021) |
 | REQ-NFR-022 | The desktop project builds and runs on Mac | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-NFR-022 MacBuildProducesTrStudioApp` | [view](#d-req-nfr-022) |
-| REQ-FN-099 | A ticked "Remember me" keeps the sign-in on this computer for 30 days, protected for this user | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-099 TickedSignInKeepsTheTokenProtectedFor30Days` | [view](#d-req-fn-099) |
+| REQ-FN-099 | A ticked "Remember me" keeps the sign-in on this computer for 30 days, protected for this user | Verified | 100% | 2026-11-16 verify: PASS — test `REQ-FN-099 TickedSignInKeepsTheTokenProtectedFor30Days` | [view](#d-req-fn-099) |
 | REQ-FN-100 | With a kept sign-in, the next open signs in without asking | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-100 ticked: a second open needs no sign-in` | [view](#d-req-fn-100) |
 | REQ-FN-101 | After 30 days, or when AppManager refuses or revokes the token, the user signs in again with a plain message | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-101 refused kept sign-in: plain message and sign in a` | [view](#d-req-fn-101) |
 | REQ-UI-105 | Without the tick nothing is kept, and the user signs in each time the app opens | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-UI-105 not ticked: a second open asks for sign-in` | [view](#d-req-ui-105) |
 | REQ-UI-106 | Signing out always removes what was kept | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-UI-106 signed out: a second open asks for sign-in` | [view](#d-req-ui-106) |
 | REQ-FN-102 | The desktop project builds and runs on Windows | N/A | 0% | deferred 2026-11-14 (later version): TrStudio is Mac first; the Windows head stays in the project and no first-version row waits on a Windows machine. | [view](#d-req-fn-102) |
-| REQ-FN-103 | Local ONNX pictures run inside the Mac app | N/A | 0% | deferred 2026-11-14 (later version, owner decision 10A): ONNX Runtime ships no Mac Catalyst build; Mac pictures come from ComfyUI, RunPod or Venice. | [view](#d-req-fn-103) |
+| REQ-FN-103 | Local ONNX pictures run inside the Mac app | N/A | 0% | deferred 2026-11-14 (later version, owner decision 10A): Mac pictures come from ComfyUI, RunPod or Venice. 2026-11-16 real Mac app: a local ONNX job now fails with the plain reason (ONNX Runtime is not included in the Mac app) under the title 'The picture was not made'. | [view](#d-req-fn-103) |
 | REQ-RAG-008 | Character-bible search by meaning with an embedding model built into the app | N/A | 0% | deferred 2026-11-14 (later version, owner decision 9A): word matching now; a built-in embedding model later. | [view](#d-req-rag-008) |
-| REQ-FN-104 | Zoom keeps the Mac app's screens laid out to the window | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-FN-104 Mac zoom uses CSS zoom and --tr-zoom, never WKWeb` | [d](#d-req-fn-104) |
+| REQ-FN-104 | Zoom keeps the Mac app's screens laid out to the window | Verified | 100% | 2026-11-16 verify: PASS — test `REQ-FN-104 at the Mac zoom the sidebar footer (Sign out) sta` | [d](#d-req-fn-104) |
 
 **Status values:** `Not Started` · `In Progress` · `Implemented` · `Verified` · `Done (pre-existing)` · `Needs re-verify` · `PARTIAL` · `FAIL` · `Blocked` · `Owner-UAT` · `N/A`.
 

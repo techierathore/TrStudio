@@ -66,9 +66,13 @@ var vHost = EngineHost.Create(new EngineHostOptions
 await vHost.StartAsync();
 vBuilder.Services.AddSingleton(vHost);
 
+// TEST ONLY: the outage switch sits in front of the engine, so a check can make one route unreachable.
+var vOutage = new TestOutage();
+vBuilder.Services.AddSingleton(vOutage);
 vBuilder.Services.AddHttpClient("TrStudioApi", aClient => aClient.BaseAddress = InProcessEngineHandler.BaseAddress)
     .ConfigurePrimaryHttpMessageHandler(aProvider => new InProcessEngineHandler(aProvider.GetRequiredService<EngineHost>()))
-    .AddHttpMessageHandler<AuthTokenHandler>();
+    .AddHttpMessageHandler<AuthTokenHandler>()
+    .AddHttpMessageHandler(() => new TestOutageHandler(vOutage));
 
 var vApp = vBuilder.Build();
 
@@ -99,6 +103,21 @@ vApp.MapPost("/test/sign-in-mode", (string? mode) =>
     };
     vFakeAppManager.Active = string.Equals(mode, "fake", StringComparison.OrdinalIgnoreCase);
     return Results.Ok(new { configured = vSignIn.Current.IsConfigured, realSettings = vFileSignIn.IsConfigured });
+});
+
+// TEST ONLY: make one engine route unreachable for the screens (path=/api/v1/...), or clear it (no path).
+vApp.MapPost("/test/outage", (string? path) =>
+{
+    vOutage.Path = path;
+    return Results.Ok(new { path = vOutage.Path });
+});
+
+// TEST ONLY: whether a registry model exists, for the ComfyUI "Save as model" check.
+vApp.MapGet("/test/registry-model", async (string id, EngineHost aHost) =>
+{
+    var vRepo = aHost.Services.GetRequiredService<TrStudio.Models.Repositories.IRegistryRepository>();
+    var vModel = await vRepo.GetAsync(id);
+    return Results.Ok(new { exists = vModel is not null, modelId = vModel?.Id, displayName = vModel?.DisplayName });
 });
 
 // TEST ONLY: what the stand-in AppManager saw, and a server-side revoke of every token it issued.

@@ -36,6 +36,14 @@ public static class ImageModelFilter
     public static bool IsVenice(CatalogModelResponse aModel) => aModel.ProviderKind == ProviderKind.Venice;
 
     /// <summary>
+    /// The title over a failed run's own words: Venice's failures say Venice (BRD-113); any other
+    /// provider's failure does not (owner run 16 Nov 2026: a local ONNX job on the Mac read "Venice could
+    /// not make this").
+    /// </summary>
+    public static string FailureTitle(CatalogModelResponse? aModel)
+        => aModel is not null && IsVenice(aModel) ? "Venice could not make this" : "The picture was not made";
+
+    /// <summary>
     /// The rows the model Select offers: picture rows only; with a reference picture only rows that take
     /// one; with a drawn mask only rows that support a mask (never a Venice row).
     /// </summary>
