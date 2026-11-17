@@ -74,7 +74,7 @@ public sealed class FakeAppManager
         {
             var vBearer = aRequest.Headers.Authorization?.Parameter ?? string.Empty;
             return objAccessTokens.TryGetValue(vBearer, out var vEmail)
-                ? Ok(new { userId = 4242, email = vEmail, firstName = "Test", lastName = "Owner", applicationRole = "Owner" })
+                ? Ok(new { userId = 4242, email = vEmail, firstName = "Test", lastName = "Owner", applicationRole = "Admin" })
                 : Refuse("UNAUTHORIZED", "Invalid token");
         }
 
@@ -98,7 +98,7 @@ public sealed class FakeAppManager
         var vRefresh = "fake-refresh-" + Guid.NewGuid().ToString("N");
         objAccessTokens[vAccess] = aEmail;
         objRefreshTokens[vRefresh] = aEmail;
-        return new Issued(4242, aEmail, "Owner", "ApplicationUser", vAccess, vRefresh, DateTime.UtcNow.AddHours(1));
+        return new Issued(4242, aEmail, "Admin", "ApplicationUser", vAccess, vRefresh, DateTime.UtcNow.AddHours(1));
     }
 
     private static HttpResponseMessage Ok(object aData) => Json(HttpStatusCode.OK, new { success = true, data = aData, message = "ok" });

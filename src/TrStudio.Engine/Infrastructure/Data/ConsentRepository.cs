@@ -50,11 +50,12 @@ public class ConsentRepository : IConsentRepository
     public async Task<bool> HasGrantedConsentAsync(string aUserId, string aSubjectReference, ConsentModality aModality, CancellationToken aCancellationToken = default)
     {
         const string Sql = """
-            SELECT EXISTS (
-                SELECT 1 FROM "ConsentEvidence"
+            SELECT COALESCE((
+                SELECT "ConsentGranted" FROM "ConsentEvidence"
                 WHERE "UserId" = @aUserId AND "SubjectReference" = @aSubjectReference
-                  AND "Modality" = @aModality AND "ConsentGranted" = TRUE
-            )
+                  AND "Modality" = @aModality
+                ORDER BY "CreatedUtc" DESC, rowid DESC LIMIT 1
+            ), FALSE)
             """;
 
         using var vConnection = await objConnectionFactory.CreateOpenConnectionAsync(aCancellationToken).ConfigureAwait(false);

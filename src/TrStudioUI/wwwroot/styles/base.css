@@ -330,6 +330,17 @@ h1:focus {
   font-size: 18px;
 }
 
+/* The approved logo (owner, 17 Nov 2026): the horizontal logo on light, the tile and the white
+   wordmark on dark. Files copied unchanged from the brand folder. */
+.auth-brand-art { display: flex; justify-content: center; }
+.auth-brand-art img { display: block; }
+.brand-logo-light { height: 56px; width: auto; }
+.brand-logo-dark { display: none; align-items: center; gap: 12px; }
+.brand-logo-tile { height: 46px; width: 46px; border-radius: 12px; }
+.brand-logo-word { height: 30px; width: auto; }
+.dark .brand-logo-light { display: none; }
+.dark .brand-logo-dark { display: flex; }
+
 .auth-brand-name {
   font-size: 20px;
   font-weight: 650;
@@ -3462,5 +3473,25 @@ aside > .shell-sidefoot {
   .studio > :first-child,
   .studio > :last-child:not(:first-child) {
     flex: 1 1 100%;
+  }
+}
+
+/* Phase 3 (17 Nov 2026): Avatar studio's digital twin and multi-shot cards, two columns below the
+   studio; one column on a narrow window. */
+.avatar-grid-p3 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+  align-items: start;
+}
+
+.avatar-grid-p3 > * {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .avatar-grid-p3 {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

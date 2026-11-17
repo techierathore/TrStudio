@@ -5,16 +5,21 @@ namespace TrStudio.Engine.Domain.Identity;
 /// <summary>
 /// Maps AppManager identity data (email, AppManager role, application role) onto TrStudio's
 /// <see cref="UserRole"/>, and registration account types onto AppManager application role
-/// codes (BRD-83/84). The generic superadmin (<c>admin@appmanager.local</c>) always maps to
-/// <see cref="UserRole.Owner"/> — it pre-exists in AppManager and is never created locally.
+/// codes (BRD-83/84). AppManager has three application roles, which every application maps to
+/// its own (owner, 17 Nov 2026): <c>Admin</c> is Owner, <c>Manager</c> is Operator and
+/// <c>User</c> is Creator. The older TrStudio names (Owner, Operator, Creator) are still read.
+/// The generic superadmin (<c>admin@appmanager.local</c>) always maps to <see cref="UserRole.Owner"/>.
 /// </summary>
 public static class UserRoleMapper
 {
-    /// <summary>AppManager application role code provisioned for creator accounts.</summary>
-    public const string CreatorRoleCode = "Creator";
+    /// <summary>AppManager's application role that TrStudio reads as Owner.</summary>
+    public const string OwnerRoleCode = "Admin";
 
-    /// <summary>AppManager application role code provisioned for admin/operator accounts.</summary>
-    public const string OperatorRoleCode = "Operator";
+    /// <summary>AppManager's application role that TrStudio reads as Operator; provisioned for operator accounts.</summary>
+    public const string OperatorRoleCode = "Manager";
+
+    /// <summary>AppManager's application role that TrStudio reads as Creator; provisioned for creator accounts.</summary>
+    public const string CreatorRoleCode = "User";
 
     /// <summary>
     /// Resolves the TrStudio role for an authenticated AppManager user.
@@ -31,12 +36,12 @@ public static class UserRoleMapper
             return UserRole.Owner;
         }
 
-        if (IsAnyOf(aAppManagerRole, "SuperAdmin", "SystemAdmin", "Owner") || IsAnyOf(aApplicationRole, "Owner"))
+        if (IsAnyOf(aAppManagerRole, "SuperAdmin", "SystemAdmin", "Owner") || IsAnyOf(aApplicationRole, OwnerRoleCode, "Owner"))
         {
             return UserRole.Owner;
         }
 
-        if (IsAnyOf(aApplicationRole, OperatorRoleCode, "Admin", "AdminOperator", "Admin-Operator"))
+        if (IsAnyOf(aApplicationRole, OperatorRoleCode, "Operator", "AdminOperator", "Admin-Operator"))
         {
             return UserRole.Operator;
         }
@@ -46,7 +51,7 @@ public static class UserRoleMapper
 
     /// <summary>
     /// Maps a registration account type label onto the AppManager application role code to
-    /// provision ("Creator" by default; admin/operator variants map to "Operator").
+    /// provision: AppManager's "User" (Creator) by default; operator variants map to "Manager" (Operator).
     /// </summary>
     /// <param name="aAccountType">The requested account type label from the register form.</param>
     /// <returns>The AppManager <c>applicationRoleCode</c> to send with the register call.</returns>

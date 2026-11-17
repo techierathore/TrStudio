@@ -3,16 +3,17 @@
 | | |
 |---|---|
 | App | TrStudio |
-| Count | 50 logged: 6 open, 44 fixed, 0 will not fix |
+| Count | 52 logged: 7 open, 45 fixed, 0 will not fix |
 | Source | `docs/metrics/misses.jsonl`, one row per miss record. Rewritten by `tf-misses-md.sh` on every new record. Never edit it: a wrong row is corrected by a new record. |
 | Updated | 2026-11-16 |
 
 **Whose gap** answers the four questions of the miss protocol: **the app's spec** did not say it, so the checklist line is fixed; **the framework never said it**, so one requirement line and a check are added; **the check was too weak** (a review, or a script that did not fire), so the check is fixed; **said and ignored**, so the rule becomes a hook or is deleted. **not sorted** means the record predates the sort or nobody has answered yet; `bash .tfcore/utils/tf-emit.sh --amend <miss> sort <spec|unsaid|weak-check|ignored>` completes it.
 
-## Open (6)
+## Open (7)
 
 | Miss | Found | Whose gap | What went wrong |
 |---|---|---|---|
+| MISS-TrStudio-20261116-09 (REQ-FN-097) | 2026-11-16 by owner | the app's spec | A Mac Catalyst app can only use the data protection keychain, whose access group must be authorised by a Mac provisioning profile; the design never said so, so the unsigned app cannot keep keys or a kept sign-in |
 | MISS-TrStudio-20261115-09 (REQ-FN-047) | 2026-11-15 by owner | the check was too weak | ComfyUI import: every model file a graph names is reported missing, because the dependency scan never asks ComfyUI what it holds; so a freshly imported real graph (one naming a checkpoint) never reads known-good and Save as model stays disabled. Needs a real ComfyUI to fix and prove. |
 | MISS-TrStudio-20261115-08 (REQ-FN-046) | 2026-11-15 by owner | the check was too weak | ComfyUI import: Run drew a made-up per-node progression ('Completed 5 of 5 nodes · live WebSocket preview') when the debug service could not be reached; it now says the service was not reached and shows no results |
 | MISS-TrStudio-20261115-07 (REQ-UI-004) | 2026-11-15 by owner | the check was too weak | Setup required: the Waiting for admin setup badge used a blended amber, not the design's --warn family (app side changed); the mockup's Local library ready badge had no .badge.ok style (mockup side changed) |
@@ -20,10 +21,11 @@
 | MISS-TrStudio-20261115-01 (REQ-UI-001) | 2026-11-15 by gate | not sorted | no sentence recorded (regression, src) |
 | MISS-TrStudio-20261114-07 (REQ-UI-004) | 2026-11-14 by gate | not sorted | no sentence recorded (partial-implementation, src) |
 
-## Fixed (44)
+## Fixed (45)
 
 | Miss | Found | Closed | Whose gap | What went wrong |
 |---|---|---|---|---|
+| MISS-TrStudio-20261116-08 (REQ-FN-016) | 2026-11-16 by owner | 2026-11-16 by amend-docs | the app's spec | AppManager sends its own role names (user 1 Admin, user 2 Manager); TrStudio read Admin as Operator and never knew Admin=Owner, Manager=Operator, User=Creator, so both test users landed wrong |
 | MISS-TrStudio-20261116-07 (REQ-UI-005) | 2026-11-16 by owner | 2026-11-16 by triage-and-fix | the check was too weak | Real Mac app at 390 wide: choosing a screen from the folded menu left the menu sheet open over that screen (and over the page after widening back). Fixed: the sidebar closes the phone menu on every route change |
 | MISS-TrStudio-20261116-06 (REQ-UI-010) | 2026-11-16 by owner | 2026-11-16 by triage-and-fix | the check was too weak | Real Mac app @1280: the Render tier column covered the Script box; under the app's CSS zoom (about 1.27) neither the 1100px media query nor a container query folds the 300 + 1fr + 300 studio grid. Fixed: the studio row wraps by itself (flex-wrap), same wide layout; zoom tests at 1.25 and 1.6 in Chro |
 | MISS-TrStudio-20261116-05 (REQ-FN-094) | 2026-11-16 by owner | 2026-11-16 by triage-and-fix | the check was too weak | Real Mac app: a job closed mid-run (stub, 10%) was marked Failed with 'TrStudio was closed while this job was running' on the next open, but the reason showed nowhere: Account's Recent jobs reads the generation log, which the start-up marking never wrote. Fixed: the marking writes the failed log row |

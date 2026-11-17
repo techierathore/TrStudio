@@ -292,6 +292,24 @@ tr.sel td{background:var(--sel)}
             </button>
           </div>
 
+          <div class="card" data-tf-phase="3" data-testid="card-join-extend">
+            <h3>Make a clip longer</h3>
+            <span class="label">Join clips end to end (on this Mac)</span>
+            <select class="select" multiple size="3" style="margin-bottom:8px" data-testid="select-join-clips">
+              <option selected>Clip 1 — 5.0 s</option>
+              <option selected>Clip 2 — 4.8 s</option>
+              <option>Clip 3 — 2.0 s</option>
+            </select>
+            <button class="btn outline" type="button" style="width:100%;justify-content:center" onclick="alert('Join: done in the built app')" data-testid="btn-join-clips">Join</button>
+            <p class="muted" style="font-size:12.5px;margin:6px 0 12px" data-tf-state="joined" data-testid="text-joined-length">Joined clip: 9.8 s</p>
+            <span class="label">Extend with Venice</span>
+            <div class="row" style="gap:8px;margin-bottom:8px">
+              <select class="select" data-testid="select-extend-clip"><option selected>Clip 3 — 2.0 s</option><option>Clip 1 — 5.0 s</option></select>
+              <select class="select" style="max-width:110px" data-testid="select-extend-seconds"><option selected>+3 s</option><option>+5 s</option><option>+10 s</option></select>
+            </div>
+            <button class="btn brand" type="button" style="width:100%;justify-content:center" onclick="alert('Extend: done in the built app')" data-testid="btn-extend-clip">Extend</button>
+          </div>
+
           <div class="card" data-testid="card-empty-segment">
             <h3>Empty segment</h3>
             <div class="thumb" style="aspect-ratio:16/9;padding:10px;text-align:center">No clip selected — pick a segment to edit</div>

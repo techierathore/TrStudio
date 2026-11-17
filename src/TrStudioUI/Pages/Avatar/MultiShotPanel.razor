@@ -1,0 +1,440 @@
+@implements IDisposable
+@inject IHttpClientFactory HttpClientFactory
+@inject IAuthSession AuthSession
+@using System.Globalization
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@using TrBlazeUI.Components.NativeSelect
+
+@*
+    Multi-shot (REQ-FN-042). A creator lists 2 to 6 shots, one line each, for one character or one
+    digital twin. Each shot starts on the last picture of the shot before and the shots are joined into
+    one video on this computer. Venice's price for every shot is shown before Start. The lead places this
+    component in Avatar Studio; it loads its own data and keeps its own state.
+*@
+
+<Card Class="avatar-card" data-testid="card-multi-shot">
+    <h3 class="card-h3">Multi-shot</h3>
+    <p class="muted-sm">Each shot starts where the last one ended, then all the shots are joined into one video on this computer.</p>
+
+    <Label For="shot-subject">Who is in the video</Label>
+    <NativeSelect Id="shot-subject" Value="@objSubject" ValueChanged="@((string aValue) => OnSubjectChanged(aValue))" Class="w-full" data-testid="select-shot-subject">
+        @if (objSubjects.Count == 0)
+        {
+            <option value="">No characters or twins yet</option>
+        }
+        @foreach (var vSubject in objSubjects)
+        {
+            <option value="@vSubject.Key">@vSubject.Label</option>
+        }
+    </NativeSelect>
+
+    <div style="margin-top:12px" data-testid="list-shots">
+        @for (var vIndex = 0; vIndex < objShots.Count; vIndex++)
+        {
+            var vShotIndex = vIndex;
+            <div class="flex-row" style="gap:8px;align-items:center;margin-bottom:8px">
+                <Badge Variant="BadgeVariant.Outline">Shot @(vShotIndex + 1)</Badge>
+                <Input Value="@objShots[vShotIndex]"
+                       ValueChanged="@((string? aValue) => OnShotChanged(vShotIndex, aValue))"
+                       Placeholder="@($"Describe shot {vShotIndex + 1} in one line")"
+                       Disabled="@objBusy"
+                       data-testid="@($"input-shot-{vShotIndex + 1}")" />
+                @if (objShots.Count > MinShots && !objBusy)
+                {
+                    <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => RemoveShot(vShotIndex))" data-testid="@($"btn-remove-shot-{vShotIndex + 1}")">
+                        <LucideIcon Name="x" Size="14" />
+                    </Button>
+                }
+            </div>
+        }
+    </div>
+
+    <Button Variant="ButtonVariant.Outline" Class="w-full" OnClick="AddShot" Disabled="@(objShots.Count >= MaxShots || objBusy)" data-testid="btn-add-shot">
+        <LucideIcon Name="plus" Size="14" />
+        <span>Add a shot</span>
+    </Button>
+
+    <div class="flex-row" style="gap:8px;margin-top:12px">
+        <div style="flex:1">
+            <Label For="shot-length">Length of each shot</Label>
+            <NativeSelect Id="shot-length" @bind-Value="objDuration" Class="w-full" Disabled="@objBusy" data-testid="select-shot-length">
+                @foreach (var vLength in objLengths)
+                {
+                    <option value="@vLength">@vLength</option>
+                }
+            </NativeSelect>
+        </div>
+        <div style="flex:1">
+            <Label For="shot-quality">Quality</Label>
+            <NativeSelect Id="shot-quality" @bind-Value="objResolution" Class="w-full" Disabled="@objBusy" data-testid="select-shot-quality">
+                @foreach (var vQuality in objQualities)
+                {
+                    <option value="@vQuality">@vQuality</option>
+                }
+            </NativeSelect>
+        </div>
+    </div>
+
+    <div style="margin-top:12px">
+        <Button Variant="ButtonVariant.Outline" Class="w-full" OnClick="CheckPriceAsync" Disabled="@(!CanCheckPrice)" data-testid="btn-check-price">
+            <span>@(objPricing ? "Asking Venice…" : "Show Venice's price")</span>
+        </Button>
+        @if (objPrice is not null)
+        {
+            <div style="margin-top:8px;font-weight:600" data-testid="text-sequence-price">Venice's price for @objPricedShots shots: @objPrice.Value.ToString("C2", CultureInfo.GetCultureInfo("en-US"))</div>
+        }
+        else
+        {
+            <div class="muted-sm" style="margin-top:8px" data-testid="text-sequence-price">Venice's price is shown here before you start.</div>
+        }
+    </div>
+
+    @if (objProblem is not null)
+    {
+        <div style="margin-top:12px" data-testid="alert-sequence-problem">
+            <Alert Variant="AlertVariant.Warning" AccentBorder="true">
+                <LucideIcon Name="circle-alert" Size="16" />
+                <AlertDescription>@objProblem</AlertDescription>
+            </Alert>
+        </div>
+    }
+
+    <Button Class="w-full mt-3" OnClick="StartAsync" Disabled="@(!CanStart)" data-testid="btn-start-sequence">
+        <LucideIcon Name="film" Size="14" />
+        <span>@(objBusy ? "Making your video…" : "Start")</span>
+    </Button>
+
+    <div class="flex-row" style="gap:8px;align-items:center;margin-top:12px">
+        <span>Status</span>
+        <Badge Variant="@StateVariant" data-testid="badge-sequence-state">@StateText</Badge>
+    </div>
+    @if (objState is not null)
+    {
+        @if (!string.IsNullOrWhiteSpace(objMessage))
+        {
+            <div class="muted-sm" style="margin-top:6px" data-testid="text-sequence-message">@objMessage</div>
+        }
+        @if (objShotStates.Count > 0)
+        {
+            <div class="muted-sm" style="margin-top:6px" data-testid="text-sequence-shots">
+                @string.Join(" · ", objShotStates.Select(aShot => $"Shot {aShot.Index}: {Plain(aShot.State)}"))
+            </div>
+        }
+        @if (objJoinedAssetId is not null)
+        {
+            <div class="muted-sm" style="margin-top:6px" data-testid="text-sequence-done">Your joined video is saved in your library.</div>
+        }
+    }
+</Card>
+
+@code {
+    private const int MinShots = 2;
+    private const int MaxShots = 6;
+
+    private readonly CancellationTokenSource objDisposed = new();
+    private readonly List<string> objShots = new() { string.Empty, string.Empty };
+    private readonly string[] objLengths = { "2s", "5s", "10s" };
+    private readonly string[] objQualities = { "480p", "720p", "1080p" };
+    private List<SubjectItem> objSubjects = new();
+    private string objSubject = string.Empty;
+    private string objDuration = "2s";
+    private string objResolution = "480p";
+
+    private bool objPricing;
+    private decimal? objPrice;
+    private int objPricedShots;
+    private string? objProblem;
+
+    private bool objBusy;
+    private string? objState;
+    private string? objMessage;
+    private Guid? objJoinedAssetId;
+    private List<ShotView> objShotStates = new();
+
+    private bool HasAllLines => objShots.Count >= MinShots && objShots.All(aShot => !string.IsNullOrWhiteSpace(aShot));
+
+    private bool CanCheckPrice => !objPricing && !objBusy && objSubject.Length > 0 && HasAllLines;
+
+    private bool CanStart => !objBusy && objPrice is not null && objSubject.Length > 0 && HasAllLines;
+
+    private string StateText => objState switch
+    {
+        "Running" => "Making shots",
+        "Joining" => "Joining",
+        "Succeeded" => "Done",
+        "Failed" => "Failed",
+        null => "Not started",
+        _ => objState
+    };
+
+    private BadgeVariant StateVariant => objState switch
+    {
+        "Succeeded" => BadgeVariant.Success,
+        "Failed" => BadgeVariant.Warning,
+        _ => BadgeVariant.Secondary
+    };
+
+    /// <summary>Loads the creator's characters and digital twins once the session is ready.</summary>
+    /// <param name="aFirstRender">Whether this is the first render.</param>
+    protected override async Task OnAfterRenderAsync(bool aFirstRender)
+    {
+        if (!aFirstRender)
+        {
+            return;
+        }
+
+        if (!await AuthSession.EnsureLoadedAsync())
+        {
+            return;
+        }
+
+        var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+        var vSubjects = new List<SubjectItem>();
+        try
+        {
+            var vCharacters = await vClient.GetFromJsonAsync<List<CharacterResponse>>(ApiRoutes.Characters) ?? new List<CharacterResponse>();
+            vSubjects.AddRange(vCharacters.Select(aChar => new SubjectItem($"character:{aChar.CharacterId:D}", $"{aChar.Name} (character)")));
+        }
+        catch (Exception)
+        {
+            objProblem = "Your characters could not be loaded.";
+        }
+
+        try
+        {
+            // Digital twins are listed by the twin feature; where it is absent the list stays characters only.
+            var vTwins = await vClient.GetFromJsonAsync<List<TwinItem>>($"{ApiRoutes.Avatar}/digital-twins") ?? new List<TwinItem>();
+            vSubjects.AddRange(vTwins.Where(aTwin => aTwin.TwinId != Guid.Empty).Select(aTwin => new SubjectItem($"twin:{aTwin.TwinId:D}", $"{aTwin.Name} (digital twin)")));
+        }
+        catch (Exception)
+        {
+            // No twin list in this build: characters only.
+        }
+
+        objSubjects = vSubjects;
+        objSubject = vSubjects.FirstOrDefault()?.Key ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private void OnSubjectChanged(string aValue)
+    {
+        objSubject = aValue;
+        ClearPrice();
+    }
+
+    private void OnShotChanged(int aIndex, string? aValue)
+    {
+        objShots[aIndex] = aValue ?? string.Empty;
+        ClearPrice();
+    }
+
+    private void AddShot()
+    {
+        if (objShots.Count < MaxShots)
+        {
+            objShots.Add(string.Empty);
+            ClearPrice();
+        }
+    }
+
+    private void RemoveShot(int aIndex)
+    {
+        if (objShots.Count > MinShots)
+        {
+            objShots.RemoveAt(aIndex);
+            ClearPrice();
+        }
+    }
+
+    private void ClearPrice()
+    {
+        objPrice = null;
+        objProblem = null;
+    }
+
+    private object BuildBody()
+    {
+        var vShots = objShots.Select(aShot => new { prompt = aShot.Trim() }).ToList();
+        var vId = Guid.Parse(objSubject[(objSubject.IndexOf(':') + 1)..]);
+        return objSubject.StartsWith("twin:", StringComparison.Ordinal)
+            ? new { twinId = (Guid?)vId, characterId = (Guid?)null, shots = vShots, duration = objDuration, resolution = objResolution }
+            : new { twinId = (Guid?)null, characterId = (Guid?)vId, shots = vShots, duration = objDuration, resolution = objResolution };
+    }
+
+    private async Task CheckPriceAsync()
+    {
+        objPricing = true;
+        objProblem = null;
+        try
+        {
+            var vResponse = await HttpClientFactory.CreateClient("TrStudioApi").PostAsJsonAsync($"{ApiRoutes.Avatar}/sequences/quote", BuildBody());
+            if (!vResponse.IsSuccessStatusCode)
+            {
+                objProblem = await ReadErrorAsync(vResponse, "Venice's price could not be read.");
+                return;
+            }
+
+            var vQuote = await vResponse.Content.ReadFromJsonAsync<QuoteView>();
+            objPrice = vQuote?.TotalUsd;
+            objPricedShots = objShots.Count;
+        }
+        catch (Exception vException)
+        {
+            objProblem = "Venice's price could not be read: " + vException.Message;
+        }
+        finally
+        {
+            objPricing = false;
+        }
+    }
+
+    private async Task StartAsync()
+    {
+        objProblem = null;
+        try
+        {
+            var vResponse = await HttpClientFactory.CreateClient("TrStudioApi").PostAsJsonAsync($"{ApiRoutes.Avatar}/sequences", BuildBody());
+            if (!vResponse.IsSuccessStatusCode)
+            {
+                objProblem = await ReadErrorAsync(vResponse, "The video could not be started.");
+                return;
+            }
+
+            var vStarted = await vResponse.Content.ReadFromJsonAsync<StartedView>();
+            if (vStarted is null)
+            {
+                return;
+            }
+
+            objBusy = true;
+            objState = "Running";
+            objMessage = null;
+            objJoinedAssetId = null;
+            _ = FollowAsync(vStarted.SequenceId);
+        }
+        catch (Exception vException)
+        {
+            objProblem = "The video could not be started: " + vException.Message;
+        }
+    }
+
+    private async Task FollowAsync(Guid aSequenceId)
+    {
+        var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+        try
+        {
+            while (!objDisposed.IsCancellationRequested)
+            {
+                var vView = await vClient.GetFromJsonAsync<SequenceView>($"{ApiRoutes.Avatar}/sequences/{aSequenceId}", objDisposed.Token);
+                if (vView is not null)
+                {
+                    objState = vView.State;
+                    objMessage = vView.Message;
+                    objJoinedAssetId = vView.JoinedAssetId;
+                    objShotStates = vView.Shots ?? new List<ShotView>();
+                    if (vView.State is "Succeeded" or "Failed")
+                    {
+                        break;
+                    }
+                }
+
+                await InvokeAsync(StateHasChanged);
+                await Task.Delay(TimeSpan.FromSeconds(2), objDisposed.Token);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        catch (Exception vException)
+        {
+            objMessage = "Could not read the video's progress: " + vException.Message;
+        }
+
+        objBusy = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private static async Task<string> ReadErrorAsync(HttpResponseMessage aResponse, string aFallback)
+    {
+        try
+        {
+            var vError = await aResponse.Content.ReadFromJsonAsync<ErrorView>();
+            return string.IsNullOrWhiteSpace(vError?.Error) ? aFallback : vError.Error;
+        }
+        catch (Exception)
+        {
+            return aFallback;
+        }
+    }
+
+    private static string Plain(string? aState) => aState switch
+    {
+        "Pending" => "waiting",
+        "Running" => "being made",
+        "Succeeded" => "done",
+        "Failed" => "failed",
+        _ => aState ?? string.Empty
+    };
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        objDisposed.Cancel();
+        objDisposed.Dispose();
+    }
+
+    private sealed record SubjectItem(string Key, string Label);
+
+    private sealed class TwinItem
+    {
+        [JsonPropertyName("digitalTwinId")]
+        public Guid TwinId { get; set; }
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; } = "Digital twin";
+    }
+
+    private sealed class QuoteView
+    {
+        [JsonPropertyName("totalUsd")]
+        public decimal TotalUsd { get; set; }
+    }
+
+    private sealed class StartedView
+    {
+        [JsonPropertyName("sequenceId")]
+        public Guid SequenceId { get; set; }
+    }
+
+    private sealed class ErrorView
+    {
+        [JsonPropertyName("error")]
+        public string? Error { get; set; }
+    }
+
+    private sealed class SequenceView
+    {
+        [JsonPropertyName("state")]
+        public string State { get; set; } = string.Empty;
+
+        [JsonPropertyName("message")]
+        public string? Message { get; set; }
+
+        [JsonPropertyName("joinedAssetId")]
+        public Guid? JoinedAssetId { get; set; }
+
+        [JsonPropertyName("shots")]
+        public List<ShotView>? Shots { get; set; }
+    }
+
+    private sealed class ShotView
+    {
+        [JsonPropertyName("index")]
+        public int Index { get; set; }
+
+        [JsonPropertyName("state")]
+        public string State { get; set; } = string.Empty;
+    }
+}

@@ -106,7 +106,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <div class="layout no-toc">
   <main>
     <h1>TrStudio — Usage Guide</h1>
-    <div class="subtitle">Rendered 2026-11-15 &middot; source <code>TrStudio-UsageGuide.md</code></div>
+    <div class="subtitle">Rendered 2026-11-17 &middot; source <code>TrStudio-UsageGuide.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
@@ -152,24 +152,25 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </table>
 <p>How to run and test TrStudio, one desktop app with the engine inside. The first version is for Mac; Windows comes in a later version. The smoke and verify agents and the owner's acceptance testing use the same test users and the same walkthrough below. The end-user manual is the Product Guide (<code>*productguide TrStudio</code>); this is the internal run and test reference.</p>
 <h2 id="test-users">Test users<a class="anchor-link" href="#test-users">#</a></h2>
-<p>Identity comes from AppManager; TrStudio stores only the AppManager <code>userId</code>, never a password. The users were registered through AppManager's register call (<code>node .tfcore/utils/tf-register-test-users.mjs</code>, run by the owner); user 1 is AppManager's own superadmin. Each password lives in the git-ignored <code>tests/verify/testsettings.Local.json</code>, laid over the committed <code>tests/verify/testsettings.json</code>; it is never written here. For switching roles in smoke runs, a Debug build of the app opens signed in as <code>Desktop:DevRole</code> from the git-ignored <code>src/TrStudio/appsettings.json</code>, and the test host serves the developer sign-in page <code>/dev/session</code>.</p>
+<p>Identity comes from AppManager; TrStudio stores only the AppManager <code>userId</code>, never a password. The users were registered by the owner in AppManager; each password lives only in the git-ignored settings file. Each password lives in the git-ignored <code>tests/verify/testsettings.Local.json</code>, laid over the committed <code>tests/verify/testsettings.json</code>; it is never written here. For switching roles in smoke runs, a Debug build of the app opens signed in as <code>Desktop:DevRole</code> from the git-ignored <code>src/TrStudio/appsettings.json</code>, and the test host serves the developer sign-in page <code>/dev/session</code>.</p>
 <table>
-<thead><tr><th>#</th><th>User</th><th>Password source</th><th>Role</th><th>Exists</th></tr></thead>
+<thead><tr><th>#</th><th>User</th><th>Password source</th><th>AppManager role → TrStudio role</th><th>Exists</th></tr></thead>
 <tbody>
-<tr><td>1</td><td>admin@appmanager.local</td><td><code>TestUsers:1:Password</code> in the git-ignored <code>tests/verify/testsettings.Local.json</code></td><td>Owner (superadmin: Creator and Operator, all tiers); the owner walkthrough. Never create or overwrite it</td><td>yes</td></tr>
-<tr><td>2</td><td>creator@trstudio.test</td><td><code>TestUsers:2:Password</code> in the git-ignored <code>tests/verify/testsettings.Local.json</code></td><td>Standard creator (Fast and High); the second user, for the isolation checks</td><td>yes</td></tr>
-<tr><td>3</td><td>admin@trstudio.test</td><td><code>TestUsers:3:Password</code> in the git-ignored <code>tests/verify/testsettings.Local.json</code></td><td>Operator; the unattended-run user for verify and smoke runs</td><td>no — register when needed</td></tr>
-<tr><td>4</td><td>premium@trstudio.test</td><td><code>TestUsers:4:Password</code> in the git-ignored <code>tests/verify/testsettings.Local.json</code></td><td>Premium creator (exercises REQ-FN-014)</td><td>no — register, then assign a Premium licence in AppManager</td></tr>
+<tr><td>1</td><td>techierathore@gmail.com</td><td><code>TestUsers:1:Password</code> in the git-ignored <code>tests/verify/testsettings.Local.json</code></td><td>Admin → <strong>Owner</strong> (creator and management screens, all tiers); the owner walkthrough. Never create or overwrite it</td><td>yes</td></tr>
+<tr><td>2</td><td>tflensdemo@techierathore.com</td><td><code>TestUsers:2:Password</code> in the git-ignored <code>tests/verify/testsettings.Local.json</code></td><td>Manager → <strong>Operator</strong> (management screens only); the second user, and the unattended-run user for the management screens</td><td>yes</td></tr>
+<tr><td>3</td><td>creator@trstudio.test</td><td><code>TestUsers:3:Password</code> in the git-ignored <code>tests/verify/testsettings.Local.json</code></td><td>User → <strong>Creator</strong>; the creator for the isolation checks</td><td>no — the owner registers it with the User role when needed</td></tr>
+<tr><td>4</td><td>premium@trstudio.test</td><td><code>TestUsers:4:Password</code> in the git-ignored <code>tests/verify/testsettings.Local.json</code></td><td>User → <strong>Creator</strong> with a Premium licence (exercises REQ-FN-014)</td><td>no — register, then assign a Premium licence in AppManager</td></tr>
 </tbody>
 </table>
+<p>AppManager has three application roles and TrStudio maps them to its own (owner, 17 Nov 2026; REQ-FN-115): Admin is Owner, Manager is Operator, User is Creator. AppManager sends the role as <code>applicationRole</code> when a user signs in.</p>
 <p>A verify test never creates, deletes or changes an account on a shared AppManager; the register-creates-an-account path is verified by hand once per release and recorded in the checklist with the date, and the automated row checks only the form's validation and the email-already-in-use path using test user 1. The Register test signs in as test user 1 before it submits anything; the test users are registered only by the owner, with <code>node .tfcore/utils/tf-register-test-users.mjs</code>.</p>
 <p><strong>Who lands where</strong> (BRD-84 role landing, BRD-85 first-run gate: setup is complete when at least one model source is enabled and at least one registry model is ready):</p>
 <table>
 <thead><tr><th>Role</th><th>Lands on</th><th>While setup is incomplete</th></tr></thead>
 <tbody>
 <tr><td>Owner (1)</td><td>Avatar studio <code>/avatar</code>; a sidebar-footer link switches to the management screens</td><td>Guided setup <code>/admin/setup</code></td></tr>
-<tr><td>Operator (3)</td><td>RunPod &amp; ops <code>/admin/ops</code></td><td>Hardware &amp; readiness <code>/admin/setup/hardware</code>, then guided setup</td></tr>
-<tr><td>Creators (2, 4)</td><td>Avatar studio <code>/avatar</code></td><td><code>/setup-required</code> ("ask your admin")</td></tr>
+<tr><td>Operator (2)</td><td>RunPod &amp; ops <code>/admin/ops</code></td><td>Hardware &amp; readiness <code>/admin/setup/hardware</code>, then guided setup</td></tr>
+<tr><td>Creators (3, 4)</td><td>Avatar studio <code>/avatar</code></td><td><code>/setup-required</code> ("ask your admin")</td></tr>
 </tbody>
 </table>
 <h2 id="execution-guide">Execution guide<a class="anchor-link" href="#execution-guide">#</a></h2>
@@ -439,7 +440,7 @@ npx playwright test</code></pre>
 </li>
 <li>Data residency and retention (REQ-NFR-010) are deployment settings.
 </li>
-<li>Not built (could-haves): digital twin, multi-shot, clip extension, webhooks, MCP server.
+<li>Not built (could-haves): webhooks and the MCP server; their tests wait for the feature. The digital twin, multi-shot assembly and making a clip longer are built on Venice (17 Nov 2026); clips are joined in the Mac app with Apple's AVFoundation. The digital twin is off until the owner turns it on in Content policy, and needs the recorded consent of the person shown.
 </li>
 <li>Every studio needs at least one enabled model source and one ready registry model; the development seed provides <code>stub-echo</code> and <code>onnx-sdxl-local</code>.
 </li>

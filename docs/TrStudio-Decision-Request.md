@@ -4,7 +4,7 @@
 |---|---|
 | App | TrStudio |
 | Written | 2026-11-14 |
-| Waiting on | 2 new decisions (12 and 13), taken with my recommended answer so the night run of 15 Nov 2026 could go on. Decision 11 you confirmed as A. You answered decisions 1 to 10 on 14 Nov 2026: A for 1 to 5, 7, 9 and 10; B for 6 ("Remember me"); 8 as written below. |
+| Waiting on | 1 new decision (15, signing the Mac app). On 17 Nov 2026 you confirmed 12 and 13 as A and answered 14 (B for the twin, multi-shot and clip stitching; A for webhooks and the MCP server). Decision 11 you confirmed as A. You answered decisions 1 to 10 on 14 Nov 2026: A for 1 to 5, 7, 9 and 10; B for 6 ("Remember me"); 8 as written below. |
 
 ## What happened
 
@@ -162,7 +162,7 @@ Decision 11's run names each screen's controls after its mockup. Some mockups dr
 
 **My recommendation: A.**
 
-**Taken in this run (15 Nov 2026): A.** Paste the block below to confirm, or ask for B and the marks are taken out.
+**Taken in this run (15 Nov 2026): A.** **Confirmed by you on 17 Nov 2026: A.**
 
 ### 13. The sidebar on a phone-width window
 
@@ -175,7 +175,7 @@ The 18 screens with the app's sidebar have mockups drawn only for a wide window:
 
 **My recommendation: A.**
 
-**Taken in this run (15 Nov 2026): A** — the rule is marked `tf-phone-layout` in each mockup.
+**Taken in this run (15 Nov 2026): A** — the rule is marked `tf-phone-layout` in each mockup. **Confirmed by you on 17 Nov 2026: A.**
 
 ### 14. The five "Could" rows that now have tests
 
@@ -187,6 +187,21 @@ You asked for tests for REQ-FN-041 (digital twin), REQ-FN-042 (multi-shot assemb
 | **B — build them now** | A build run adds the five features to the in-process engine and their screens, then verifies them on the test host. | A build run of its own; the twin and the stitching still need a real video model to finish. |
 
 **My recommendation: A**, until you want these features: the webhook and MCP rows were written for the API, which phase 3 set aside.
+
+**Answered by you on 17 Nov 2026:** B for the digital twin, multi-shot assembly and clip stitching, built now on Venice in phase 3 (REQ-FN-041, REQ-FN-042, REQ-FN-055 moved there); A for webhooks and the MCP server, which stay deferred, their tests skipped as waiting for the feature.
+
+### 15. Signing the Mac app so it can use the Keychain
+
+The Mac app keeps your provider keys and "Remember me" in the Keychain. Apple lets a Mac Catalyst app use only the newer kind of Keychain, and that needs a Keychain permission in the app's signature that a provisioning profile must allow ([Apple TN3137](https://developer.apple.com/documentation/technotes/tn3137-on-mac-keychains), [Apple TN3125](https://developer.apple.com/documentation/technotes/tn3125-inside-code-signing-provisioning-profiles)). Your free Apple ID (Personal Team, "Apple Development: S Ravi Kumar") is on this Mac, but its three profiles are for iPhone apps and do not list this Mac. Signing TrStudio with the permission and no profile makes macOS refuse to open it; without the permission it opens and the Keychain refuses it. A Mac profile would have to be made in your Apple account, which you said not to do.
+
+| Option | What happens | What it costs |
+|---|---|---|
+| **A — let Xcode make a free Mac profile once** | You open Xcode, sign in with your Apple ID, and let it register this Mac and the app id `com.techierathore.trstudio` under your Personal Team. I then sign every Debug build with it in the project settings and prove the four Keychain checks. | Two items in your Apple account. Apple's free team profiles expire after 7 days, so Xcode must renew it weekly. |
+| **B — a paid Apple Developer membership** | The same, with a profile that lasts a year and can also sign a copy for others. | US$99 a year. |
+| **C — keep keys out of the Keychain on Mac** | The app keeps its unlock key in a file only your Mac user can read, inside the app's own sandboxed folder. Works unsigned. | Weaker than the Keychain: anyone signed in as you, or any program you run outside the sandbox, can read that file. |
+
+**My recommendation: A**, then B before you give the app to anyone else.
+
 
 ## What I do when you answer
 
@@ -242,13 +257,17 @@ TrStudio: decision 11 — go with option A. A dedicated run adds the 18 screens'
 ```
 
 ```
-TrStudio: decision 12 — go with option A. Mark the mockup parts that belong to a later moment of a screen; nothing drawn changes.
+TrStudio: decision 12 — answered A (17 Nov 2026). Mark the mockup parts that belong to a later moment of a screen; nothing drawn changes.
 ```
 
 ```
-TrStudio: decision 13 — go with option A. The mockups hide the sidebar at phone width, as the app does.
+TrStudio: decision 13 — answered A (17 Nov 2026). The mockups hide the sidebar at phone width, as the app does.
 ```
 
 ```
-TrStudio: decision 14 — go with option A. The five Could rows stay deferred; their tests wait for the features.
+TrStudio: decision 14 — answered (17 Nov 2026). B for the twin, multi-shot and clip stitching (built on Venice); A for webhooks and the MCP server.
+```
+
+```
+TrStudio: decision 15 — go with option A. I let Xcode make the free Mac profile; sign the Debug build with it and prove the Keychain checks.
 ```

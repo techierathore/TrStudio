@@ -22,4 +22,19 @@ public interface ISafetyPolicyRepository
     /// <param name="aCancellationToken">Token to cancel the operation.</param>
     /// <returns>A task completing when the row is written.</returns>
     Task UpsertAsync(SafetyPolicy aPolicy, CancellationToken aCancellationToken = default);
+
+    /// <summary>
+    /// Whether the owner has turned digital twins on (REQ-FN-105); false until set.
+    /// </summary>
+    /// <param name="aCancellationToken">Token to cancel the operation.</param>
+    /// <returns>True when twins are on.</returns>
+    Task<bool> GetTwinsEnabledAsync(CancellationToken aCancellationToken = default);
+
+    /// <summary>
+    /// Turns digital twins on or off for the deployment.
+    /// </summary>
+    /// <param name="aEnabled">The new setting.</param>
+    /// <param name="aCancellationToken">Token to cancel the operation.</param>
+    /// <returns>A task completing when the setting is written.</returns>
+    Task SetTwinsEnabledAsync(bool aEnabled, CancellationToken aCancellationToken = default);
 }

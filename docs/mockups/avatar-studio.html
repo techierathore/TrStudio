@@ -307,6 +307,49 @@ tr.sel td{background:var(--sel)}
           </div>
         </div>
 
+        <div class="grid" data-tf-phase="3">
+          <div class="card" data-testid="card-digital-twin">
+            <div class="row"><h3 style="margin:0">Digital twin</h3><span class="spacer"></span><span class="badge warn" data-tf-state="twins-off" data-testid="badge-twins-off">Off — the owner turns twins on in Content policy</span></div>
+            <p class="muted" style="font-size:12px;margin:4px 0 10px">A twin of a real person, made from their pictures, a short clip and a short voice sample. Needs that person's recorded consent.</p>
+            <div class="alert danger" style="margin-bottom:10px" data-tf-state="no-consent" data-testid="alert-twin-consent">No recorded consent from Asha Rao. Record her consent before making a twin.</div>
+            <label class="label">Twin name</label>
+            <input class="input" style="margin-bottom:8px" value="Asha — presenter" data-testid="input-twin-name">
+            <label class="label">Person shown (consent needed)</label>
+            <input class="input" style="margin-bottom:8px" value="Asha Rao" data-testid="input-twin-person">
+            <div class="row" style="flex-wrap:wrap;gap:8px;margin-bottom:10px">
+              <button class="btn outline" type="button" onclick="alert('Pick 1 to 10 pictures: done in the built app')" data-testid="file-twin-pictures">Pictures (1–10)</button>
+              <button class="btn outline" type="button" onclick="alert('Pick a 1 to 15 second clip: done in the built app')" data-testid="file-twin-clip">Clip (up to 15 s)</button>
+              <button class="btn outline" type="button" onclick="alert('Pick a 5 to 15 second voice sample: done in the built app')" data-testid="file-twin-voice">Voice sample (5–15 s)</button>
+            </div>
+            <button class="btn brand" type="button" style="width:100%;justify-content:center" onclick="alert('Create twin: done in the built app')" data-testid="btn-create-twin">Create twin</button>
+            <table class="table" style="margin-top:12px" data-testid="table-twins">
+              <thead><tr><th>Twin</th><th>Person</th><th>Voice</th></tr></thead>
+              <tbody><tr data-tf-sample><td>Asha — presenter</td><td>Asha Rao</td><td>made 2 days ago</td></tr></tbody>
+            </table>
+            <label class="label" style="margin-top:10px">Line to say</label>
+            <input class="input" style="margin-bottom:8px" value="Welcome to our spring collection." data-testid="input-twin-line">
+            <button class="btn outline" type="button" style="width:100%;justify-content:center" onclick="alert('Make a clip of this line: done in the built app')" data-testid="btn-make-twin-clip">Make a clip of this line</button>
+          </div>
+
+          <div class="card" data-testid="card-multi-shot">
+            <div class="row"><h3 style="margin:0">Multi-shot</h3><span class="spacer"></span><span class="badge" data-testid="badge-sequence-state">Not started</span></div>
+            <p class="muted" style="font-size:12px;margin:4px 0 10px">Each shot starts where the last one ended; the shots are joined into one video on this Mac.</p>
+            <label class="label">Character or twin</label>
+            <select class="select" style="margin-bottom:10px" data-testid="select-shot-subject">
+              <option selected>Aarav Mehta</option>
+              <option>Nova (mascot)</option>
+            </select>
+            <div class="col" style="gap:6px;margin-bottom:8px" data-testid="list-shots">
+              <input class="input" value="Shot 1: Aarav walks into the studio and waves">
+              <input class="input" value="Shot 2: he sits at the desk and smiles">
+              <input class="input" value="Shot 3: he points at the screen behind him">
+            </div>
+            <button class="btn ghost" type="button" onclick="alert('Add a shot: done in the built app')" data-testid="btn-add-shot">+ Add a shot</button>
+            <div class="row" style="justify-content:space-between;margin:10px 0"><span class="muted" style="font-size:13px" data-testid="text-sequence-price">Venice's price for 3 shots: $0.39</span></div>
+            <button class="btn brand" type="button" style="width:100%;justify-content:center" onclick="alert('Start: done in the built app')" data-testid="btn-start-sequence">Start</button>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>

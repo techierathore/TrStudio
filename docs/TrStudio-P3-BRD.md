@@ -7,15 +7,17 @@
 | Size | Medium |
 | Phase | 3 of 3 |
 | Status | Draft |
-| Date | 2026-11-14 |
+| Date | 2026-11-17 |
 
 ## 1. Summary
 
 Phase 3 turns it into one desktop app that a person downloads, opens and signs in to. TrStudio is Mac first: the first released version is for Mac only; Windows, and possibly Linux, come in a later version. The engine runs inside the app: there is no API process and no web server. The data lives in a local SQLite file in the app's own data folder for the signed-in user, created and migrated by the app on first start. Character-bible search runs on that store through TechieRag. Generation and provider polling run as jobs inside the app; a job left queued or running when the app closed is picked up or failed with its reason on the next start. Sign-in uses AppManager with the application id and one API key put into the build from a file outside the repository; a "Remember me" box keeps the sign-in on that computer for 30 days. Every key a user owns is entered on the existing screens and kept in the local database, protected by the operating system for that user. Everything a creator can do today stays. A test host, never shipped, serves the same screens for the automated checks.
 
+Amended 17 Nov 2026 (owner): three video features come into this phase from the deferred rows, all on Venice: a digital twin of a real person, multi-shot assembly, and making a clip longer. Clips are joined inside the app on this Mac with Apple's AVFoundation, never in the cloud. AppManager's three roles map to TrStudio's own, and the approved logo replaces the placeholder.
+
 ## 2. Screens and flow
 
-This phase adds no new screen. It changes controls on phase-1 screens, which are listed in [phase 1](TrStudio-BRD.md). In each changed mockup the new controls are marked `data-tf-phase="3"`.
+This phase adds no new screen. It changes controls on phase-1 screens (on 17 Nov 2026 also Avatar studio, Video studio and Content policy), which are listed in [phase 1](TrStudio-BRD.md). In each changed mockup the new controls are marked `data-tf-phase="3"`.
 
 | Screen | Route | Role | Mockup | Fields |
 |---|---|---|---|---|
@@ -23,11 +25,12 @@ This phase adds no new screen. It changes controls on phase-1 screens, which are
 | Register (phase 1) | `/register` | Anyone | [mockup](mockups/register.html) | name, email, password |
 | Setup required (phase 1) | `/setup-required` | Anyone signed in | [mockup](mockups/setup-required.html) | data folder, start-up problem |
 | Image studio (phase 1) | `/image` | Creator | [mockup](mockups/image-studio.html) | model, prompt, job state |
-| Video studio (phase 1) | `/video` | Creator | [mockup](mockups/video-studio.html) | model, job progress |
-| Avatar studio (phase 1) | `/avatar` | Creator | [mockup](mockups/avatar-studio.html) | script brief, generated script |
+| Video studio (phase 1) | `/video` | Creator | [mockup](mockups/video-studio.html) | model, job progress, clips to join, clip to extend, seconds |
+| Avatar studio (phase 1) | `/avatar` | Creator | [mockup](mockups/avatar-studio.html) | script brief, generated script, digital twin (person, pictures, clip, voice, line), multi-shot (subject, shots, price) |
 | Character library (phase 1) | `/avatar/characters` | Creator | [mockup](mockups/character-library.html) | bible search |
 | Admin — RunPod & ops (phase 1) | `/admin/ops` | Operator | [mockup](mockups/admin-ops.html) | queued, running |
 | Admin — Model & Provider Registry (phase 1) | `/admin/registry` | Operator | [mockup](mockups/admin-registry.html) | RunPod, HeyGen, closed-API and model keys, key-protection note |
+| Admin — Content policy (NSFW) (phase 1) | `/admin/policy` | Owner | [mockup](mockups/admin-policy.html) | digital twins switch |
 
 **Primary journey:**
 1. A person downloads TrStudio for Mac, installs it and opens it. (Windows comes in a later version.)
@@ -122,6 +125,63 @@ Every key is entered on Registry & providers and kept in the local database, pro
 - **BRD-145** — Character-bible search runs on the local store through TechieRag. *Screen:* Character library · *Mockup:* [mockup](mockups/character-library.html)
   - *Acceptance:* When a creator searches a character's bible on Character library, then notes matching the words come back from the local SQLite store (amended 2026-11-14, owner decision 9A: word matching now).
 
+### Roles from AppManager
+
+Owner, 17 Nov 2026. AppManager has three application roles, and each application maps them to its own. AppManager sends the role as `applicationRole` on sign-in: test user 1 is `Admin`, test user 2 is `Manager`.
+
+- **BRD-177** — AppManager's Admin is TrStudio's Owner, Manager is Operator and User is Creator. *Screen:* Login · *Mockup:* [mockup](mockups/login.html)
+  - *Acceptance:* When users whose AppManager role is Admin, Manager and User sign in on Login, then they are Owner, Operator and Creator.
+
+### The approved logo
+
+Owner, 17 Nov 2026. The files come unchanged from the brand folder: the tile with the mark, the mark alone, the logo with the name, and the white name for dark backgrounds.
+
+- **BRD-178** — Login and Register show the approved logo with the name; in dark mode the white name. *Screen:* Login · *Mockup:* [mockup](mockups/login.html)
+  - *Acceptance:* When a user opens Login, then the approved horizontal TrStudio logo shows, and in dark mode the tile with the white name.
+
+### Digital twin
+
+Owner, 17 Nov 2026; moved here from phase 1 (BRD-32). A creator makes a twin of a real person from reference pictures, a short reference clip and a short voice sample, then makes clips of that person saying a line they write. The consent gate stays as written: no twin without recorded consent from the person shown, and twins are off by default. Venice's Seedance guide says its public API does not take media showing a person, so the twin uses Wan 3.0 reference to video (`wan-3-0-reference-to-video`: up to 10 pictures, up to 5 clips and 5 audio clips of 15 s in all). The voice is a Venice voice made from the sample (`tts-chatterbox-hd`, kept 7 days by Venice); the line is spoken in it and sent as the clip's reference audio.
+
+- **BRD-161** — No twin without recorded consent from the person shown. *Screen:* Avatar studio · *Mockup:* [mockup](mockups/avatar-studio.html)
+  - *Acceptance:* When a creator creates a twin on Avatar studio without recorded consent from the person shown, then it is refused with a consent message and nothing goes to Venice.
+- **BRD-162** — Twins are off until the owner turns them on. *Screen:* Avatar studio · *Mockup:* [mockup](mockups/avatar-studio.html)
+  - *Acceptance:* When a creator creates a twin on Avatar studio while the owner has not turned twins on, then it is refused saying twins are off.
+- **BRD-163** — Content policy has the twins switch, off on a fresh app. *Screen:* Admin — Content policy (NSFW) · *Mockup:* [mockup](mockups/admin-policy.html)
+  - *Acceptance:* When the owner opens Content policy on a fresh app, then the Digital twins switch shows off.
+- **BRD-164** — With consent and twins on, the twin is kept with its pictures, clip and voice. *Screen:* Avatar studio · *Mockup:* [mockup](mockups/avatar-studio.html)
+  - *Acceptance:* When a creator creates a twin on Avatar studio with recorded consent and twins on, then the twin is stored with its pictures, clip and the voice id Venice returned.
+- **BRD-165** — A twin clip says the creator's line in the twin's voice. *Screen:* Avatar studio · *Mockup:* [mockup](mockups/avatar-studio.html)
+  - *Acceptance:* When a creator makes a twin clip of a line on Avatar studio, then Venice gets one wan-3-0-reference-to-video job with the twin's pictures, clip and spoken line.
+- **BRD-166** — Consent is checked again for every clip. *Screen:* Avatar studio · *Mockup:* [mockup](mockups/avatar-studio.html)
+  - *Acceptance:* When the person's consent is withdrawn and a creator makes a twin clip on Avatar studio, then it is refused and nothing goes to Venice.
+- **BRD-167** — A voice older than Venice's 7 days is made again from the kept sample. *Screen:* Avatar studio · *Mockup:* [mockup](mockups/avatar-studio.html)
+  - *Acceptance:* When a twin's voice is older than 7 days and a creator makes a twin clip on Avatar studio, then a new voice is made from the sample first.
+
+### Multi-shot assembly
+
+Owner, 17 Nov 2026; moved here from phase 1 (BRD-33). Several clips of one character, avatar or twin, made one after another so each shot starts where the last ended, joined into one video on this Mac. A character's shots use Wan 3.0 image to video (`wan-3-0-image-to-video`), each later shot starting on the last frame of the one before; a twin's shots are twin clips carrying that frame as a reference picture.
+
+- **BRD-168** — Shots of one subject are made in order and joined into one video. *Screen:* Avatar studio · *Mockup:* [mockup](mockups/avatar-studio.html)
+  - *Acceptance:* When a creator assembles three shots for one character on Avatar studio, then one video is stored made of the three shots in order, all of that character.
+- **BRD-169** — Each shot after the first starts on the last frame of the one before. *Screen:* Avatar studio · *Mockup:* [mockup](mockups/avatar-studio.html)
+  - *Acceptance:* When the second shot of a sequence is queued from Avatar studio, then its start picture is the last frame of the first shot.
+- **BRD-170** — A failed shot stops the sequence and names itself; earlier shots are kept. *Screen:* Avatar studio · *Mockup:* [mockup](mockups/avatar-studio.html)
+  - *Acceptance:* When a sequence's second shot fails on Avatar studio, then the sequence shows Failed naming shot 2 and Venice's reason, and shot 1 is kept.
+- **BRD-171** — Venice's price for every shot shows before the sequence starts. *Screen:* Avatar studio · *Mockup:* [mockup](mockups/avatar-studio.html)
+  - *Acceptance:* When a creator prepares a three-shot sequence on Avatar studio, then the sum of Venice's quotes for the three shots shows before Start.
+- **BRD-172** — A twin can be the subject of a sequence. *Screen:* Avatar studio · *Mockup:* [mockup](mockups/avatar-studio.html)
+  - *Acceptance:* When a creator assembles two shots for a twin on Avatar studio, then each shot is a twin clip and the second carries the first's last frame.
+
+### Making a clip longer
+
+Owner, 17 Nov 2026; moved here from phase 1 (BRD-46). A clip is made longer by joining finished clips end to end inside the app, or by extending it through Venice: Wan 3.0 reference to video with the clip as `@Video1` and the prompt "Extend @Video1 by N seconds", where the duration is the whole result.
+
+- **BRD-173** — Finished clips are joined end to end inside the app. *Screen:* Video studio · *Mockup:* [mockup](mockups/video-studio.html)
+  - *Acceptance:* When a creator joins two finished clips on Video studio, then one new clip is stored whose length is the two lengths added together.
+- **BRD-174** — A clip is extended through Venice. *Screen:* Video studio · *Mockup:* [mockup](mockups/video-studio.html)
+  - *Acceptance:* When a creator extends a 2-second clip by 3 seconds on Video studio, then Venice gets one wan-3-0-reference-to-video job with that clip and a 5-second duration.
+
 ## 4. Non-functional requirements
 
 | Id | Area | Requirement | Measure |
@@ -133,6 +193,8 @@ Every key is entered on Registry & providers and kept in the local database, pro
 | BRD-150 | Testing | A test host serves the same screens and in-process engine on SQLite for headless checks only; it is never shipped | When the headless checks run, then they drive the test host, and the desktop project does not reference it. |
 | BRD-151 | Compatibility | ComfyUI behaves exactly as before | When the unit tests run, then the 16 ComfyUI tests pass and no file under `tests/unit/TrStudio.Tests.Unit/Comfy/` changed. |
 | BRD-152 | Portability | The desktop project builds and runs on Mac (amended 2026-11-14: Mac first) | When the desktop project is built on a Mac, then the Mac app TrStudio.app is produced. |
+| BRD-175 | Privacy | Joining clips happens on this computer with Apple's AVFoundation; nothing is uploaded | When clips are joined, then no network request is made and the Mac app's joiner is AVFoundation. |
+| BRD-176 | Brand | The app icon and the splash use the approved logo files unchanged | When the Mac app is built, then its icon and splash files match the approved logo files byte for byte. |
 
 ### Later versions
 
@@ -149,22 +211,23 @@ Deferred on 14 Nov 2026, each with its reason. No row of the first version waits
 
 Written by the status gate after every build, verify and handoff; not by hand.
 
-**Snapshot as of 2026-11-16.** Live per-requirement status: `PROJECT-STATUS.md` and the Requirements Status table in `docs/TrStudio-P3-Checklist.md`.
+**Snapshot as of 2026-11-17.** Live per-requirement status: `PROJECT-STATUS.md` and the Requirements Status table in `docs/TrStudio-P3-Checklist.md`.
 
 | Screen | Requirements | Verified | Open | Status |
 |---|---|---|---|---|
-| Login | 10 | 10 | 0 | Done |
+| Login | 12 | 12 | 0 | Done |
 | Register | 1 | 1 | 0 | Done |
 | Setup required | 5 | 5 | 0 | Done |
 | Image studio | 3 | 3 | 0 | Done |
-| Video studio | 2 | 2 | 0 | Done |
+| Video studio | 4 | 4 | 0 | Done |
 | Admin — RunPod & ops | 1 | 1 | 0 | Done |
-| Admin — Model & Provider Registry | 4 | 4 | 0 | Done |
-| Avatar studio | 1 | 1 | 0 | Done |
+| Admin — Model & Provider Registry | 4 | 3 | 1 | Partial |
+| Avatar studio | 12 | 12 | 0 | Done |
 | Character library | 1 | 1 | 0 | Done |
-| Non-functional | 7 | 7 | 0 | Done |
+| Non-functional | 9 | 9 | 0 | Done |
 | Other | 0 | 0 | 0 | Not applicable |
 | RAG / AI requirements | 0 | 0 | 0 | Not applicable |
+| Admin — Content policy (NSFW) | 1 | 1 | 0 | Done |
 
 ## 6. Where the rest lives
 

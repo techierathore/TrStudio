@@ -179,6 +179,67 @@ public class VeniceClient
         return await vResponse.Content.ReadAsByteArrayAsync(aCancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Voice cloning (REQ-FN-041): <c>POST /audio/voices</c>, multipart with <c>model</c> and <c>file</c>
+    /// (MP3, WAV, FLAC or MP4, at least 5 s of one speaker). Venice answers <c>{ "id": "vv_…" }</c>; the
+    /// handle works only with the same model and expires after 7 days (Venice's voice-cloning guide).
+    /// </summary>
+    /// <param name="aConnection">Address and key from the database.</param>
+    /// <param name="aModel">The voice model, e.g. <c>tts-chatterbox-hd</c>.</param>
+    /// <param name="aSample">The voice sample bytes.</param>
+    /// <param name="aFileName">The sample's file name (its extension names the format).</param>
+    /// <param name="aCancellationToken">Token to cancel the call.</param>
+    /// <returns>Venice's voice id.</returns>
+    public async Task<string> CreateVoiceAsync(VeniceConnection aConnection, string aModel, byte[] aSample, string aFileName, CancellationToken aCancellationToken)
+    {
+        using var vForm = new MultipartFormDataContent
+        {
+            { new StringContent(aModel), "model" }
+        };
+        var vFile = new ByteArrayContent(aSample);
+        vFile.Headers.ContentType = new MediaTypeHeaderValue(AudioMediaType(aFileName));
+        vForm.Add(vFile, "file", Path.GetFileName(aFileName));
+        using var vRequest = new HttpRequestMessage(HttpMethod.Post, BuildUri(aConnection.BaseUrl, "audio/voices")) { Content = vForm };
+        vRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", aConnection.ApiKey);
+        using var vResponse = await SendAsync(vRequest, aCancellationToken).ConfigureAwait(false);
+        var vJson = await vResponse.Content.ReadAsStringAsync(aCancellationToken).ConfigureAwait(false);
+        using var vDocument = JsonDocument.Parse(vJson);
+        return vDocument.RootElement.TryGetProperty("id", out var vId) && vId.GetString() is { Length: > 0 } vVoiceId
+            ? vVoiceId
+            : throw new VeniceApiException((int)vResponse.StatusCode, $"{VeniceApiException.Prefix}the voice answer held no id (HTTP {(int)vResponse.StatusCode})");
+    }
+
+    /// <summary>
+    /// Text to speech: <c>POST /audio/speech</c> with <c>model</c>, <c>voice</c> and <c>input</c>
+    /// (at most 4096 characters); returns the audio bytes (WAV unless <paramref name="aFormat"/> says otherwise).
+    /// </summary>
+    /// <param name="aConnection">Address and key from the database.</param>
+    /// <param name="aModel">The speech model.</param>
+    /// <param name="aVoice">The voice id (a cloned <c>vv_…</c> handle or a stock voice).</param>
+    /// <param name="aInput">The words to speak.</param>
+    /// <param name="aFormat">The response format (<c>wav</c> or <c>mp3</c>).</param>
+    /// <param name="aCancellationToken">Token to cancel the call.</param>
+    /// <returns>The audio bytes.</returns>
+    public async Task<byte[]> SpeakAsync(VeniceConnection aConnection, string aModel, string aVoice, string aInput, string aFormat, CancellationToken aCancellationToken)
+    {
+        var vBody = new JsonObject { ["model"] = aModel, ["voice"] = aVoice, ["input"] = aInput, ["response_format"] = aFormat };
+        using var vResponse = await PostJsonAsync(aConnection, "audio/speech", vBody, aCancellationToken).ConfigureAwait(false);
+        if (IsJson(vResponse))
+        {
+            throw new VeniceApiException((int)vResponse.StatusCode, $"{VeniceApiException.Prefix}the speech answer held no audio (HTTP {(int)vResponse.StatusCode})");
+        }
+
+        return await vResponse.Content.ReadAsByteArrayAsync(aCancellationToken).ConfigureAwait(false);
+    }
+
+    private static string AudioMediaType(string aFileName) => Path.GetExtension(aFileName).ToLowerInvariant() switch
+    {
+        ".mp3" => "audio/mpeg",
+        ".flac" => "audio/flac",
+        ".mp4" or ".m4a" => "audio/mp4",
+        _ => "audio/wav"
+    };
+
     /// <summary>Joins the database-held base address and a relative path.</summary>
     /// <param name="aBaseUrl">The base address (with or without a trailing slash).</param>
     /// <param name="aPath">The relative path.</param>

@@ -152,6 +152,7 @@ public sealed class EngineHost : IAsyncDisposable
         vServices.AddVideoModule(vConfiguration);
         vServices.AddComfyModule(vConfiguration);
         vServices.AddVeniceModule(vConfiguration);
+        vServices.AddSequenceModule();
         vServices.AddPhase9Module(vConfiguration);
         vServices.AddPromptChatModule(vConfiguration);
         vServices.AddSafetyModule(vConfiguration, false);

@@ -276,13 +276,42 @@ public class VeniceProvider : IGenerationProvider, TrStudio.Engine.Domain.Jobs.I
             vReferences = await objAssetIo.LoadCharacterReferencesAsync(vCharacterId, aJob.UserId, aCancellationToken).ConfigureAwait(false);
         }
 
-        var vBody = VeniceRequestBuilder.VideoQueue(aModel, aParams, vImageUrl, vReferences);
+        var vExplicit = await LoadReferencesAsync(aJob, aParams, aCancellationToken).ConfigureAwait(false);
+        var vBody = VeniceRequestBuilder.VideoQueue(aModel, aParams, vImageUrl, vReferences, vExplicit);
         var vQueued = await objClient.QueueVideoAsync(aExecution.Connection!, vBody, aCancellationToken).ConfigureAwait(false);
         aExecution.QueueId = vQueued.QueueId;
         aExecution.DownloadUrl = vQueued.DownloadUrl;
         aExecution.LastPollUtc = DateTime.MinValue;
         aExecution.Status = new JobStatus(JobState.Running, 1, null, null, null);
         objLogger.LogInformation("Venice clip queued for job {JobId} (queue {QueueId})", aJob.JobId, vQueued.QueueId);
+    }
+
+    /// <summary>
+    /// The reference media a job names (a twin's pictures, clip and spoken line; the clip being
+    /// extended; the end picture of a shot), loaded owner-scoped and encoded as data URLs.
+    /// </summary>
+    private async Task<VideoReferences> LoadReferencesAsync(GenerationJob aJob, VeniceJobParams aParams, CancellationToken aCancellationToken)
+    {
+        if (aParams.ReferenceImageAssetIds.Count == 0 && aParams.ReferenceVideoAssetIds.Count == 0
+            && aParams.ReferenceAudioAssetIds.Count == 0 && aParams.EndImageAssetId is null)
+        {
+            return VideoReferences.None;
+        }
+
+        var vImages = await objAssetIo.LoadAsync(aParams.ReferenceImageAssetIds, aJob.UserId, aCancellationToken).ConfigureAwait(false);
+        var vVideos = await objAssetIo.LoadAsync(aParams.ReferenceVideoAssetIds, aJob.UserId, aCancellationToken).ConfigureAwait(false);
+        var vAudio = await objAssetIo.LoadAsync(aParams.ReferenceAudioAssetIds, aJob.UserId, aCancellationToken).ConfigureAwait(false);
+        string? vEnd = null;
+        if (aParams.EndImageAssetId is { } vEndId)
+        {
+            vEnd = (await objAssetIo.LoadAsync(new[] { vEndId }, aJob.UserId, aCancellationToken).ConfigureAwait(false)).FirstOrDefault().DataUrl;
+        }
+
+        return new VideoReferences(
+            vImages.Select(aItem => aItem.DataUrl).ToList(),
+            vVideos.Select(aItem => aItem.DataUrl).ToList(),
+            vAudio.Select(aItem => aItem.DataUrl).ToList(),
+            vEnd);
     }
 
     private async Task TryCompleteAsync(VeniceExecution aExecution, CancellationToken aCancellationToken)

@@ -104,8 +104,6 @@ Build TrStudio — an avatar-led, self-hostable AI image & video generation plat
 | REQ-FN-038 | Script→video end-to-end pipeline | Implemented | 75% | 2026-11-15 verify: not measured — 1 test(s) named REQ-FN-038 passed and 1 skipped (`REQ-FN-038 ScriptCharacterVoiceYieldsOneNarratedCl`: unit test skipped: REQ-FN-038 ScriptCharacterVoiceYieldsOneN); a skipped test is part of the row's acceptance, so it is not measured until that test runs; screen Avatar studio renders and looks right | [view](#d-req-fn-038) |
 | REQ-FN-039 | Fast/High/Premium tier routing | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-FN-039 ChangingOnlyTierRoutesToDifferentProvider`; Avatar studio renders and looks right @1280/390 in light and dark mode; matches its mockup | [view](#d-req-fn-039) |
 | REQ-FN-040 | Captions/subtitles EN/HI (burn-in or SRT) | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-FN-040 CaptionsExportAsSrtMatchingTheScript(aLanguage: "`; Avatar studio renders and looks right @1280/390 in light and dark mode; matches its mockup | [view](#d-req-fn-040) |
-| REQ-FN-041 | Digital-twin from base video (consent-gated) | FAIL | 0% | 2026-11-16 verify: ⚠ acceptance — `unit test failed: REQ-FN-041 DigitalTwinIsRefusedWithoutRecordedConsent` | [view](#d-req-fn-041) |
-| REQ-FN-042 | Multi-shot assembly | FAIL | 0% | 2026-11-16 verify: ⚠ acceptance — `unit test failed: REQ-FN-042 AssembledSequenceKeepsOneCharacter` | [view](#d-req-fn-042) |
 | REQ-FN-043 | ComfyUI workflow import + parse | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-FN-043 ImportListsNodesAndInputs` | [view](#d-req-fn-043) |
 | REQ-FN-044 | Workflow input → registry-param mapping | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-FN-044 MappedInputsBecomeExactlyTheParams` | [view](#d-req-fn-044) |
 | REQ-FN-045 | Run workflow on chosen worker + WS previews | Implemented | 75% | 2026-11-15 verify: not measured — every test named REQ-FN-045 was skipped; acceptance not measured (1 test(s) skipped, none ran) | [view](#d-req-fn-045) |
@@ -118,7 +116,6 @@ Build TrStudio — an avatar-led, self-hostable AI image & video generation plat
 | REQ-FN-052 | First/last-frame + reference conditioning | Needs re-verify | 75% | 2026-11-15 verify: not measured — 1 test(s) named REQ-FN-052 passed and 1 skipped (`REQ-FN-052 ClipStartsAndEndsOnPinnedFrames`: unit test skipped: REQ-FN-052 ClipStartsAndEndsOnPinnedFrame); a skipped test is part of the row's acceptance, so it is not measured until that test runs; screen Video studio renders and looks right | [view](#d-req-fn-052) |
 | REQ-FN-053 | Frame interpolation + video upscale | Implemented | 75% | 2026-11-15 verify: not measured — 1 test(s) named REQ-FN-053 passed and 1 skipped (`REQ-FN-053 InterpolationRaisesFrameRate`: unit test skipped: REQ-FN-053 InterpolationRaisesFrameRate); a skipped test is part of the row's acceptance, so it is not measured until that test runs; screen Video studio renders and looks right | [view](#d-req-fn-053) |
 | REQ-FN-054 | Video edit (trim/join/reframe/audio/export) | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-FN-054 EditDegradesWithoutFfmpeg`; Video studio renders and looks right @1280/390 in light and dark mode; matches its mockup | [view](#d-req-fn-054) |
-| REQ-FN-055 | Clip extension / stitching | FAIL | 0% | 2026-11-16 verify: ⚠ acceptance — `unit test failed: REQ-FN-055 TwoClipsStitchIntoOneSequence` | [view](#d-req-fn-055) |
 | REQ-FN-056 | CSAM prevention (hash + classifier, hard block) | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-FN-056 FlaggedInputIsBlockedAndAuditedOnEveryPath` | [view](#d-req-fn-056) |
 | REQ-FN-057 | NCII / real-person sexualisation block | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-FN-057 RealPersonSexualJobIsRefusedAndLogged` | [view](#d-req-fn-057) |
 | REQ-FN-058 | Recorded consent gate (real face/voice) | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-FN-058 RealPersonFaceCloneBlockedUntilConsentRecorded` | [view](#d-req-fn-058) |
@@ -133,8 +130,8 @@ Build TrStudio — an avatar-led, self-hostable AI image & video generation plat
 | REQ-FN-067 | Export/download (single + bulk) with provenance | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-FN-067 BulkExportDeliversEveryAssetWithProvenance`; Gallery renders and looks right @1280/390 in light and dark mode; matches its mockup; mockup-parity: 4 sample box(es) not measured, the app drew no data there (a tests/verify/seed/ script puts it in the drawn state) | [view](#d-req-fn-067) |
 | REQ-FN-068 | Account usage/spend + AppManager license view | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-FN-068 AccountTotalsSpendPerUserAndReadsLiveLicence` | [view](#d-req-fn-068) |
 | REQ-FN-069 | External REST API seam (API-key auth) | N/A | 0% | set aside 2026-11-14 (deferred): outside callers need a web server, and the desktop app has none; kept in the API project, unused. | [view](#d-req-fn-069) |
-| REQ-FN-070 | Webhooks on completion/failure | FAIL | 0% | 2026-11-16 verify: ⚠ acceptance — `unit test failed: REQ-FN-070 RegisteredWebhookReceivesTheCompletionPayload` | [view](#d-req-fn-070) |
-| REQ-FN-071 | MCP server (generation as agent tools) | FAIL | 0% | 2026-11-16 verify: ⚠ acceptance — `unit test failed: REQ-FN-071 McpClientListsAndInvokesAGenerationTool` | [view](#d-req-fn-071) |
+| REQ-FN-070 | Webhooks on completion/failure | N/A | 0% | deferred 2026-11-17 (Could, owner decision 14A confirmed): its test waits for the feature and is skipped, not failed. | [view](#d-req-fn-070) |
+| REQ-FN-071 | MCP server (generation as agent tools) | N/A | 0% | deferred 2026-11-17 (Could, owner decision 14A confirmed): its test waits for the feature and is skipped, not failed. | [view](#d-req-fn-071) |
 | REQ-FN-072 | Role-based surface authorization & routing (single app) | Verified | 100% | 2026-11-15 verify: PASS — test `UI sweep REQ-FN-072 REQ-UI-080 Creator is refused the admin ` | [view](#d-req-fn-072) |
 | REQ-FN-073 | Prompt-chat sessions/messages persistence (per-user) | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-FN-073 PromptChatSessionIsHiddenFromAnotherUser` | [view](#d-req-fn-073) |
 | REQ-FN-074 | Registry `text-chat` modality + admin LLM config | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-FN-074 OperatorTextChatRowAppearsInPromptPicker` | [view](#d-req-fn-074) |
@@ -515,13 +512,7 @@ Build TrStudio — an avatar-led, self-hostable AI image & video generation plat
 - **REQ-FN-040** — Captions/subtitles (from the script or Whisper) in EN/HI, burn-in or sidecar SRT (text via REQ-RAG-002). *Also checked:* an export carries burned captions or an SRT matching the audio. (BRD-31)
   - *Acceptance:* When a Creator exports with captions on Avatar studio, then the clip carries captions matching the audio.
 
-<a id="d-req-fn-041"></a>
-- **REQ-FN-041** — Optional digital-twin from a short base video; consent-gated (SAFE-03), off by default. **Deferred (Could).** *Also checked:* twin creation refuses without recorded consent; feature flag off by default. (BRD-32)
-  - *Acceptance:* When a Creator starts a digital twin on Avatar studio without recorded consent, then creation is refused.
-
-<a id="d-req-fn-042"></a>
-- **REQ-FN-042** — Multi-shot assembly: chain multiple avatar clips into one sequence with a consistent character. **Deferred (Could).** *Also checked:* an assembled sequence preserves character identity across shots. (BRD-33)
-  - *Acceptance:* When a Creator assembles several clips on Avatar studio, then one sequence keeps the same character.
+The digital twin (BRD-32) and multi-shot assembly (BRD-33) moved to phase 3 on 17 Nov 2026 with their rows; see [the phase 3 checklist](TrStudio-P3-Checklist.md).
 
 ### Phase 6 — ComfyUI pipeline management
 
@@ -575,9 +566,7 @@ Build TrStudio — an avatar-led, self-hostable AI image & video generation plat
 - **REQ-FN-054** — Trim/join/reframe, add audio (from Voice studio), export MP4 in platform formats. *Also checked:* an edited clip with added audio exports as MP4 at the chosen format. (BRD-45)
   - *Acceptance:* When a Creator adds audio and exports on Video studio, then an MP4 in the chosen format downloads.
 
-<a id="d-req-fn-055"></a>
-- **REQ-FN-055** — Clip extension/stitching for longer sequences. **Deferred (Could).** *Also checked:* two clips stitch into one continuous sequence. (BRD-46)
-  - *Acceptance:* When a Creator stitches two clips on Video studio, then one continuous sequence is produced.
+Making a clip longer (BRD-46) moved to phase 3 on 17 Nov 2026 with its row; see [the phase 3 checklist](TrStudio-P3-Checklist.md).
 
 ### Phase 8 — Safety, provenance & NSFW mode (wired from Phase 2 onward)
 

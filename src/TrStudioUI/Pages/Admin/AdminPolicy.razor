@@ -77,6 +77,30 @@
     }
 </Card>
 
+@* ---- Digital twins (real people) — owner switch, off by default; consent is still needed per person ---- *@
+<Card Class="policy-part policy-card" data-testid="card-digital-twins">
+    <div class="policy-nsfw-head">
+        <div class="policy-nsfw-copy">
+            <span class="policy-nsfw-title">Digital twins (real people, consent needed)</span>
+            <span class="muted-sm">
+                Lets creators make clips of a real person from pictures, a short clip and a voice sample.
+                Off by default. Every twin still needs that person's recorded consent for their face and voice.
+            </span>
+        </div>
+        <div class="policy-switch-slot" data-testid="switch-digital-twins">
+            @if (objLoading)
+            {
+                <Skeleton Class="h-7 w-[52px] rounded-full" />
+            }
+            else
+            {
+                <Switch Checked="@objTwinsEnabled" CheckedChanged="OnTwinsToggledAsync"
+                        Size="SwitchSize.Large" AriaLabel="Digital twins (real people, consent needed)" Id="twins-switch-input" />
+            }
+        </div>
+    </div>
+</Card>
+
 @* ---- Always-locked safety floors — non-disableable in every mode ---- *@
 <Card Class="policy-part policy-card" data-testid="card-safety-floors-always-enforced">
     <div class="flex-between">
@@ -137,6 +161,7 @@
     private bool objNsfwEnabled;
     private bool objPersonalMode = true;
     private bool objConfirmOpen;
+    private bool objTwinsEnabled;
 
     // Bumped whenever the Switch must snap back to the C# source of truth (intercepting an
     // enable request, or closing the gate) — @key re-mounts the Switch so its own optimistic
@@ -161,6 +186,9 @@
 
     /// <summary>The admin policy endpoint (not yet in <c>ApiRoutes</c>; consumed enrich-or-seed).</summary>
     private const string NsfwPolicyRoute = "/api/v1/admin/policy/nsfw";
+
+    /// <summary>The owner's digital twins on/off route (off by default).</summary>
+    private const string TwinsPolicyRoute = "/api/v1/admin/policy/twins";
 
     /// <summary>
     /// Loads the current NSFW policy AFTER the first interactive render — once JS interop is available
@@ -203,6 +231,13 @@
             {
                 var vState = await vResponse.Content.ReadFromJsonAsync<JsonElement>();
                 ApplyState(vState);
+            }
+
+            var vTwins = await vClient.GetAsync(TwinsPolicyRoute);
+            if (vTwins.IsSuccessStatusCode)
+            {
+                var vTwinState = await vTwins.Content.ReadFromJsonAsync<JsonElement>();
+                objTwinsEnabled = ReadBool(vTwinState, false, "enabled");
             }
         }
         catch
@@ -304,6 +339,30 @@
         {
             objSwitchNonce++;
         }
+    }
+
+    /// <summary>Saves the owner's digital twins switch; twins stay off unless the owner turns them on.</summary>
+    /// <param name="aRequested">The state the owner set the switch to.</param>
+    private async Task OnTwinsToggledAsync(bool aRequested)
+    {
+        var vPrevious = objTwinsEnabled;
+        objTwinsEnabled = aRequested;
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vResponse = await vClient.PutAsJsonAsync(TwinsPolicyRoute, new { enabled = aRequested });
+            vResponse.EnsureSuccessStatusCode();
+        }
+        catch
+        {
+            objTwinsEnabled = vPrevious;
+            ToastService.Error("The setting could not be saved. Try again.", "Content policy");
+            return;
+        }
+
+        ToastService.Success(
+            aRequested ? "Digital twins are on. Each twin still needs the person's recorded consent." : "Digital twins are off.",
+            "Content policy saved");
     }
 
     /// <summary>Confirms enabling NSFW mode from the AlertDialog, then persists and closes the gate.</summary>

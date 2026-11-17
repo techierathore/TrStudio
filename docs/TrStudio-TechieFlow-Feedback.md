@@ -8,7 +8,7 @@
 
 ## Summary
 
-7 entries: 0 blocking now, 0 open, 7 fixed upstream and in TrStudio's `.tfcore`, not yet re-checked here by TrStudio (TF-001 to TF-007). Checked on the app by TechieFlow on 16 Nov 2026: TF-003, TF-004, TF-005 and TF-007 in full, TF-001 by its no-password branch, TF-006 for the admin screens; TF-002 waits for the `span` to come off, TF-006's creator screens for the test users' roles.
+8 entries: 0 blocking now, 1 open (TF-008, minor), 7 fixed upstream and in TrStudio's `.tfcore`, not yet re-checked here by TrStudio (TF-001 to TF-007). Checked on the app by TechieFlow on 16 Nov 2026: TF-003, TF-004, TF-005 and TF-007 in full, TF-001 by its no-password branch, TF-006 for the admin screens; TF-002 waits for the `span` to come off, TF-006's creator screens for the test users' roles.
 
 Nothing is blocked by the framework. On 16 Nov 2026 the Mac app was driven with the fixed checker: the four signed-out screens and the seven admin screens were reached by its own clicks at 1280 and 390. Two steps are TrStudio's: the `span` around `sign-in` (TF-002), and test users whose role gives them the creator surface (TF-006).
 
@@ -112,3 +112,15 @@ Nothing is blocked by the framework. On 16 Nov 2026 the Mac app was driven with 
 - **Workaround:** none in TrStudio
 - **Suggested fix:** scroll the found element into view (mac2 `scroll` to it, or keyboard focus) before `click`; after the clicks compare the window's source with the one before, and call the screen not reached when nothing changed
 - **Reply (TechieFlow team, 16 Nov 2026, Mac):** Fixed in TrStudio's .tfcore. The control is scrolled into the window before the click (on the web view: aimed at the window, mac2 moved your page 19 points and no more), each click must change the window or the screen is not reached, and a screen identified as another one is not reached (cases `ts_007`, `ts_007c`). On the real Mac app: Register's "Sign in" sat below the window at 1280 and 390; the checker first reported Login not reached, and after the scroll fix reached it, with a Login screenshot. Two more faults of the same kind were found on your app and fixed: "Account" was matched to "Create an account" (Register graded as Account), and the sign-in typed nothing into fields holding "@" or "!", so no signed-in screen was measured (cases `ts_007c`, `ts_007d`).
+
+### TF-008 — The status facts script prints a phase line the status guard then refuses
+
+- **Status:** open
+- **Severity:** minor
+- **Blocks:** no — shortening the phase name in `current_phase` lets the write through
+- **Repro:** a phase whose name is long ("One desktop app with the engine inside (Mac first)"); run `bash .tfcore/utils/tf-status-facts.sh TrStudio "amend-docs"`, copy its `current_phase` line into PROJECT-STATUS.md with the Write tool
+- **Expected:** the line the facts script prints is accepted as printed
+- **Actual:** the printed line is 122 characters; `guard-status.sh` refuses any `current_phase` over 120 ("must be ONE short line")
+- **Encountered in:** owner run of 17 Nov 2026, the status gate of `*amend-docs`
+- **Workaround:** shorten the phase name in the copied line by hand
+- **Suggested fix:** the facts script shortens the phase name (or drops the counts) so its line stays within the guard's 120 characters

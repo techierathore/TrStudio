@@ -35,6 +35,8 @@ public static class VideoModule
         aServices.TryAddSingleton<IVideoGenerationService, VideoGenerationService>();
         aServices.TryAddSingleton<IVideoPostProcessor, VideoPostProcessor>();
         aServices.TryAddSingleton<IVideoEditor, VideoEditor>();
+        aServices.TryAddSingleton<IClipJoiner, FfmpegClipJoiner>();
+        aServices.TryAddSingleton<ClipStitchService>();
 
         // Registered alongside the other providers; Supports() gates it to ProviderKind.ClosedApi so
         // the resolver still matches exactly one provider per model (Premium video tier).

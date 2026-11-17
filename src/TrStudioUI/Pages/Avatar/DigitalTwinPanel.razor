@@ -1,0 +1,359 @@
+@implements IDisposable
+@inject IHttpClientFactory HttpClientFactory
+@inject IAuthSession AuthSession
+@inject ToastService ToastService
+@using System.Globalization
+@using System.Text.Json
+@using TrBlazeUI.Components.FileUpload
+@using TrStudio.Models.Contracts
+@using TrStudio.Models.Enums
+
+@*
+    Digital twin (REQ-FN-041, REQ-FN-105 to REQ-FN-109). A creator makes a twin of a real person from
+    1 to 10 pictures, one short clip and one short voice sample, then makes clips of that person saying
+    a line. Twins are off until the owner turns them on in Content policy; a twin needs recorded
+    consent from the person shown, checked again on every clip. The lead places this component in
+    Avatar Studio; it loads its own data and keeps its own state.
+*@
+
+<Card Class="avatar-card" data-testid="card-digital-twin">
+    <div class="flex-between">
+        <h3 class="card-h3" style="margin:0">Digital twin</h3>
+        @if (!objEnabled)
+        {
+            <Badge Variant="BadgeVariant.Outline" Class="badge-warn" data-testid="badge-twins-off">Twins are off</Badge>
+        }
+    </div>
+    <p class="muted-sm">Make clips of a real person saying a line you write. You need that person's recorded consent for their face and their voice.</p>
+
+    @if (!objEnabled)
+    {
+        <p class="muted-sm">Digital twins are turned off. The owner can turn them on in Content policy.</p>
+    }
+
+    @if (objRefusal is not null)
+    {
+        <Alert Variant="AlertVariant.Danger" AccentBorder="true" Class="mt-3" data-testid="alert-twin-consent">
+            <AlertTitle>This twin cannot be used</AlertTitle>
+            <AlertDescription>@objRefusal</AlertDescription>
+        </Alert>
+    }
+
+    <div style="margin-top:12px">
+        <Label For="twin-name">Twin name</Label>
+        <Input Id="twin-name" @bind-Value="objName" Placeholder="For example: Asha, host" data-testid="input-twin-name" />
+    </div>
+    <div style="margin-top:12px">
+        <Label For="twin-person">Person shown (consent needed)</Label>
+        <Input Id="twin-person" @bind-Value="objPerson" Placeholder="The person's name" data-testid="input-twin-person" />
+    </div>
+
+    <div style="margin-top:12px">
+        <Label>Pictures (1 to 10)</Label>
+        <div data-testid="file-twin-pictures">
+            <FileUpload Accept="image/png,image/jpeg,image/webp" Multiple="true" FilesChanged="OnPicturesSelected" />
+        </div>
+        <div class="muted-sm" style="margin-top:4px">@(objPictures.Count == 0 ? "Choose clear, front-facing pictures" : $"{objPictures.Count} chosen")</div>
+    </div>
+    <div style="margin-top:12px">
+        <Label>Reference clip (1 to 15 seconds, MP4 or MOV)</Label>
+        <div data-testid="file-twin-clip">
+            <FileUpload Accept="video/mp4,video/quicktime,.mp4,.mov" FilesChanged="OnClipSelected" />
+        </div>
+        <Label For="twin-clip-seconds" Class="muted-sm">Clip length in seconds</Label>
+        <Input Id="twin-clip-seconds" @bind-Value="objClipSeconds" data-testid="input-twin-clip-seconds" />
+    </div>
+    <div style="margin-top:12px">
+        <Label>Voice sample (5 to 15 seconds, WAV or MP3)</Label>
+        <div data-testid="file-twin-voice">
+            <FileUpload Accept="audio/wav,audio/mpeg,.wav,.mp3" FilesChanged="OnVoiceSelected" />
+        </div>
+        <Label For="twin-voice-seconds" Class="muted-sm">Voice sample length in seconds</Label>
+        <Input Id="twin-voice-seconds" @bind-Value="objVoiceSeconds" data-testid="input-twin-voice-seconds" />
+    </div>
+
+    <div class="flex-row" style="gap:8px;margin-top:12px;flex-wrap:wrap">
+        <Button Variant="ButtonVariant.Outline" OnClick="RecordConsentAsync" Disabled="@(objBusy || string.IsNullOrWhiteSpace(objPerson))" data-testid="btn-record-twin-consent">
+            Record consent for this person
+        </Button>
+        <Button OnClick="CreateTwinAsync" Disabled="@(objBusy || !objEnabled)" data-testid="btn-create-twin">Create twin</Button>
+    </div>
+    <p class="muted-sm" style="margin-top:4px">Record consent only once the person has agreed, for their face and their voice. It is kept as evidence.</p>
+
+    <h4 class="card-h3" style="margin-top:20px">Your twins</h4>
+    @if (objTwins.Count == 0)
+    {
+        <p class="muted-sm">No twins yet.</p>
+    }
+    <Table data-testid="table-twins">
+        <TableHeader>
+            <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Person shown</TableHead>
+                <TableHead>Pictures</TableHead>
+                <TableHead>Voice made</TableHead>
+                <TableHead Class="text-right"></TableHead>
+            </TableRow>
+        </TableHeader>
+        <TableBody>
+            @foreach (var vTwin in objTwins)
+            {
+                <TableRow Selected="@(vTwin.DigitalTwinId == objSelectedId)">
+                    <TableCell><b>@vTwin.Name</b></TableCell>
+                    <TableCell>@vTwin.SubjectReference</TableCell>
+                    <TableCell>@vTwin.PictureAssetIds.Count</TableCell>
+                    <TableCell>@vTwin.VoiceCreatedUtc.ToLocalTime().ToString("d MMM yyyy", CultureInfo.CurrentCulture)</TableCell>
+                    <TableCell Class="text-right">
+                        <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => Select(vTwin.DigitalTwinId))">
+                            @(vTwin.DigitalTwinId == objSelectedId ? "Selected" : "Use this twin")
+                        </Button>
+                    </TableCell>
+                </TableRow>
+            }
+        </TableBody>
+    </Table>
+
+    <div style="margin-top:16px">
+        <Label For="twin-line">Line to say</Label>
+        <Input Id="twin-line" @bind-Value="objLine" Placeholder="Write what the person says" data-testid="input-twin-line" />
+    </div>
+    <Button Class="w-full" style="margin-top:12px" OnClick="MakeClipAsync" Disabled="@(objBusy || !objEnabled || objSelectedId is null || string.IsNullOrWhiteSpace(objLine))" data-testid="btn-make-twin-clip">
+        Make a clip of this line
+    </Button>
+    @if (objStatus is not null)
+    {
+        <p class="muted-sm" style="margin-top:8px" data-testid="text-twin-status">@objStatus</p>
+    }
+</Card>
+
+@code {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
+    private readonly CancellationTokenSource objCts = new();
+    private readonly List<DigitalTwinResponse> objTwins = new();
+    private IReadOnlyList<FileUploadItem> objPictures = Array.Empty<FileUploadItem>();
+    private FileUploadItem? objClip;
+    private FileUploadItem? objVoice;
+    private string? objName;
+    private string? objPerson;
+    private string? objClipSeconds = "5";
+    private string? objVoiceSeconds = "8";
+    private string? objLine;
+    private string? objRefusal;
+    private string? objStatus;
+    private Guid? objSelectedId;
+    private bool objEnabled;
+    private bool objBusy;
+
+    /// <summary>Loads whether twins are on and the creator's twins, after the first interactive render.</summary>
+    /// <param name="aFirstRender">Whether this is the first render.</param>
+    protected override async Task OnAfterRenderAsync(bool aFirstRender)
+    {
+        if (!aFirstRender)
+        {
+            return;
+        }
+
+        await AuthSession.EnsureLoadedAsync();
+        await LoadAsync();
+        StateHasChanged();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vStatus = await vClient.GetFromJsonAsync<DigitalTwinPolicyResponse>("/api/v1/avatar/digital-twins/status", objCts.Token);
+            objEnabled = vStatus?.Enabled ?? false;
+            var vTwins = await vClient.GetFromJsonAsync<List<DigitalTwinResponse>>("/api/v1/avatar/digital-twins", objCts.Token);
+            objTwins.Clear();
+            objTwins.AddRange(vTwins ?? new List<DigitalTwinResponse>());
+            objSelectedId ??= objTwins.FirstOrDefault()?.DigitalTwinId;
+        }
+        catch (Exception)
+        {
+            // Not signed in or the engine is not ready: the panel stays in its safe state (twins off).
+        }
+    }
+
+    private void OnPicturesSelected(IReadOnlyList<FileUploadItem> aFiles) => objPictures = aFiles;
+
+    private void OnClipSelected(IReadOnlyList<FileUploadItem> aFiles) => objClip = aFiles.Count > 0 ? aFiles[0] : null;
+
+    private void OnVoiceSelected(IReadOnlyList<FileUploadItem> aFiles) => objVoice = aFiles.Count > 0 ? aFiles[0] : null;
+
+    private void Select(Guid aTwinId) => objSelectedId = aTwinId;
+
+    /// <summary>Records granted face and voice consent for the person named (kept as evidence).</summary>
+    private async Task RecordConsentAsync()
+    {
+        objBusy = true;
+        objRefusal = null;
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            foreach (var vModality in new[] { ConsentModality.Face, ConsentModality.Voice })
+            {
+                var vResponse = await vClient.PostAsJsonAsync("/api/v1/consent", new ConsentRecordRequest
+                {
+                    SubjectReference = objPerson!.Trim(),
+                    Modality = vModality,
+                    EvidenceType = "creator-recorded",
+                    EvidenceDetail = "Recorded from the digital twin panel",
+                    ConsentGranted = true
+                }, objCts.Token);
+                vResponse.EnsureSuccessStatusCode();
+            }
+
+            ToastService.Success($"Consent recorded for {objPerson!.Trim()}.", "Consent");
+        }
+        catch (Exception)
+        {
+            objStatus = "The consent could not be recorded. Try again.";
+        }
+        finally
+        {
+            objBusy = false;
+        }
+    }
+
+    /// <summary>Uploads the chosen files and creates the twin.</summary>
+    private async Task CreateTwinAsync()
+    {
+        objRefusal = null;
+        objStatus = null;
+        if (string.IsNullOrWhiteSpace(objName) || string.IsNullOrWhiteSpace(objPerson) || objPictures.Count == 0 || objClip is null || objVoice is null)
+        {
+            objStatus = "Give the twin a name and the person shown, then choose pictures, a clip and a voice sample.";
+            return;
+        }
+
+        if (!double.TryParse(objClipSeconds, NumberStyles.Float, CultureInfo.InvariantCulture, out var vClipSeconds)
+            || !double.TryParse(objVoiceSeconds, NumberStyles.Float, CultureInfo.InvariantCulture, out var vVoiceSeconds))
+        {
+            objStatus = "Type the clip and voice sample lengths in seconds.";
+            return;
+        }
+
+        objBusy = true;
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vRequest = new DigitalTwinCreateRequest
+            {
+                Name = objName.Trim(),
+                SubjectReference = objPerson.Trim(),
+                ClipSeconds = vClipSeconds,
+                VoiceSampleSeconds = vVoiceSeconds
+            };
+
+            // Upload each file as the creator's own asset, then create the twin from their ids.
+            foreach (var vPicture in objPictures.Take(10))
+            {
+                vRequest.PictureAssetIds.Add(await UploadAsync(vClient, "picture", vPicture));
+            }
+
+            vRequest.ClipAssetId = await UploadAsync(vClient, "clip", objClip);
+            vRequest.VoiceSampleAssetId = await UploadAsync(vClient, "voice", objVoice);
+
+            var vResponse = await vClient.PostAsJsonAsync("/api/v1/avatar/digital-twin", vRequest, objCts.Token);
+            if (!vResponse.IsSuccessStatusCode)
+            {
+                objRefusal = await ReadErrorAsync(vResponse);
+                return;
+            }
+
+            ToastService.Success("Your twin is ready.", "Digital twin");
+            await LoadAsync();
+        }
+        catch (Exception vException) when (vException is not OperationCanceledException)
+        {
+            objStatus = vException.Message;
+        }
+        finally
+        {
+            objBusy = false;
+        }
+    }
+
+    /// <summary>Makes one clip of the chosen twin saying the line.</summary>
+    private async Task MakeClipAsync()
+    {
+        objRefusal = null;
+        objStatus = null;
+        objBusy = true;
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vResponse = await vClient.PostAsJsonAsync(
+                $"/api/v1/avatar/digital-twins/{objSelectedId}/clips", new DigitalTwinClipRequest { Line = objLine!.Trim() }, objCts.Token);
+            if (!vResponse.IsSuccessStatusCode)
+            {
+                objRefusal = await ReadErrorAsync(vResponse);
+                return;
+            }
+
+            objStatus = "Your clip is being made. It will appear in your gallery when it is done.";
+            ToastService.Success("Your clip is queued.", "Digital twin");
+        }
+        catch (Exception vException) when (vException is not OperationCanceledException)
+        {
+            objStatus = vException.Message;
+        }
+        finally
+        {
+            objBusy = false;
+        }
+    }
+
+    private async Task<Guid> UploadAsync(HttpClient aClient, string aKind, FileUploadItem aItem)
+    {
+        await using var vStream = aItem.File.OpenReadStream(60L * 1024 * 1024, objCts.Token);
+        using var vMemory = new MemoryStream();
+        await vStream.CopyToAsync(vMemory, objCts.Token);
+        var vResponse = await aClient.PostAsJsonAsync("/api/v1/avatar/twin-uploads", new DigitalTwinUploadRequest
+        {
+            Kind = aKind,
+            FileName = aItem.Name,
+            Base64Content = Convert.ToBase64String(vMemory.ToArray())
+        }, objCts.Token);
+        if (!vResponse.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException(await ReadErrorAsync(vResponse));
+        }
+
+        var vUpload = await vResponse.Content.ReadFromJsonAsync<DigitalTwinUploadResponse>(JsonOptions, objCts.Token);
+        return vUpload!.AssetId;
+    }
+
+    private static async Task<string> ReadErrorAsync(HttpResponseMessage aResponse)
+    {
+        try
+        {
+            using var vDocument = JsonDocument.Parse(await aResponse.Content.ReadAsStringAsync());
+            if (vDocument.RootElement.TryGetProperty("error", out var vError) && vError.GetString() is { Length: > 0 } vText)
+            {
+                return vText;
+            }
+
+            if (vDocument.RootElement.TryGetProperty("detail", out var vDetail) && vDetail.GetString() is { Length: > 0 } vDetailText)
+            {
+                return vDetailText;
+            }
+        }
+        catch (Exception)
+        {
+            // Fall through to the generic text.
+        }
+
+        return "That did not work. Try again.";
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        objCts.Cancel();
+        objCts.Dispose();
+    }
+}

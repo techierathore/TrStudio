@@ -106,7 +106,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <div class="layout no-toc">
   <main>
     <h1>TrStudio — decisions I need from you</h1>
-    <div class="subtitle">Rendered 2026-11-16 &middot; source <code>TrStudio-Decision-Request.md</code></div>
+    <div class="subtitle">Rendered 2026-11-17 &middot; source <code>TrStudio-Decision-Request.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
@@ -127,6 +127,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
         <li class="h3"><a href="#marking-the-mockup-parts-that-belong-to-a-later-moment-of-a-screen">12. Marking the mockup parts that belong to a later moment of a screen</a></li>
         <li class="h3"><a href="#the-sidebar-on-a-phone-width-window">13. The sidebar on a phone-width window</a></li>
         <li class="h3"><a href="#the-five-could-rows-that-now-have-tests">14. The five &quot;Could&quot; rows that now have tests</a></li>
+        <li class="h3"><a href="#signing-the-mac-app-so-it-can-use-the-keychain">15. Signing the Mac app so it can use the Keychain</a></li>
         <li><a href="#what-i-do-when-you-answer">What I do when you answer</a></li>
         <li><a href="#copy-this-back-to-me">Copy this back to me</a></li>
       </ol>
@@ -136,7 +137,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tbody>
 <tr><td>App</td><td>TrStudio</td></tr>
 <tr><td>Written</td><td>2026-11-14</td></tr>
-<tr><td>Waiting on</td><td>2 new decisions (12 and 13), taken with my recommended answer so the night run of 15 Nov 2026 could go on. Decision 11 you confirmed as A. You answered decisions 1 to 10 on 14 Nov 2026: A for 1 to 5, 7, 9 and 10; B for 6 ("Remember me"); 8 as written below.</td></tr>
+<tr><td>Waiting on</td><td>1 new decision (15, signing the Mac app). On 17 Nov 2026 you confirmed 12 and 13 as A and answered 14 (B for the twin, multi-shot and clip stitching; A for webhooks and the MCP server). Decision 11 you confirmed as A. You answered decisions 1 to 10 on 14 Nov 2026: A for 1 to 5, 7, 9 and 10; B for 6 ("Remember me"); 8 as written below.</td></tr>
 </tbody>
 </table>
 <h2 id="what-happened">What happened<a class="anchor-link" href="#what-happened">#</a></h2>
@@ -271,7 +272,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </tbody>
 </table>
 <p><strong>My recommendation: A.</strong></p>
-<p><strong>Taken in this run (15 Nov 2026): A.</strong> Paste the block below to confirm, or ask for B and the marks are taken out.</p>
+<p><strong>Taken in this run (15 Nov 2026): A.</strong> <strong>Confirmed by you on 17 Nov 2026: A.</strong></p>
 <h3 id="the-sidebar-on-a-phone-width-window"><a id="13-the-sidebar-on-a-phone-width-window"></a>13. The sidebar on a phone-width window<a class="anchor-link" href="#the-sidebar-on-a-phone-width-window">#</a></h3>
 <p>The 18 screens with the app's sidebar have mockups drawn only for a wide window: at phone width they still draw the 248-pixel sidebar beside the page. The app, at phone width, folds the sidebar into a menu behind the button in the top bar. So every one of those screens failed the phone-width check on the sidebar's names.</p>
 <table>
@@ -282,7 +283,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </tbody>
 </table>
 <p><strong>My recommendation: A.</strong></p>
-<p><strong>Taken in this run (15 Nov 2026): A</strong> — the rule is marked <code>tf-phone-layout</code> in each mockup.</p>
+<p><strong>Taken in this run (15 Nov 2026): A</strong> — the rule is marked <code>tf-phone-layout</code> in each mockup. <strong>Confirmed by you on 17 Nov 2026: A.</strong></p>
 <h3 id="the-five-could-rows-that-now-have-tests"><a id="14-the-five-could-rows-that-now-have-tests"></a>14. The five "Could" rows that now have tests<a class="anchor-link" href="#the-five-could-rows-that-now-have-tests">#</a></h3>
 <p>You asked for tests for REQ-FN-041 (digital twin), REQ-FN-042 (multi-shot assembly), REQ-FN-055 (clip stitching), REQ-FN-070 (webhooks) and REQ-FN-071 (MCP server). The tests are written and run, and all five fail, because the BRD deferred these rows and none of them was ever built. The two that prove themselves fully (a twin, a stitched clip that looks right) also need a real video model.</p>
 <table>
@@ -293,6 +294,18 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </tbody>
 </table>
 <p><strong>My recommendation: A</strong>, until you want these features: the webhook and MCP rows were written for the API, which phase 3 set aside.</p>
+<p><strong>Answered by you on 17 Nov 2026:</strong> B for the digital twin, multi-shot assembly and clip stitching, built now on Venice in phase 3 (REQ-FN-041, REQ-FN-042, REQ-FN-055 moved there); A for webhooks and the MCP server, which stay deferred, their tests skipped as waiting for the feature.</p>
+<h3 id="signing-the-mac-app-so-it-can-use-the-keychain"><a id="15-signing-the-mac-app-so-it-can-use-the-keychain"></a>15. Signing the Mac app so it can use the Keychain<a class="anchor-link" href="#signing-the-mac-app-so-it-can-use-the-keychain">#</a></h3>
+<p>The Mac app keeps your provider keys and "Remember me" in the Keychain. Apple lets a Mac Catalyst app use only the newer kind of Keychain, and that needs a Keychain permission in the app's signature that a provisioning profile must allow (<a href="https://developer.apple.com/documentation/technotes/tn3137-on-mac-keychains">Apple TN3137</a>, <a href="https://developer.apple.com/documentation/technotes/tn3125-inside-code-signing-provisioning-profiles">Apple TN3125</a>). Your free Apple ID (Personal Team, "Apple Development: S Ravi Kumar") is on this Mac, but its three profiles are for iPhone apps and do not list this Mac. Signing TrStudio with the permission and no profile makes macOS refuse to open it; without the permission it opens and the Keychain refuses it. A Mac profile would have to be made in your Apple account, which you said not to do.</p>
+<table>
+<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
+<tbody>
+<tr><td><strong>A — let Xcode make a free Mac profile once</strong></td><td>You open Xcode, sign in with your Apple ID, and let it register this Mac and the app id <code>com.techierathore.trstudio</code> under your Personal Team. I then sign every Debug build with it in the project settings and prove the four Keychain checks.</td><td>Two items in your Apple account. Apple's free team profiles expire after 7 days, so Xcode must renew it weekly.</td></tr>
+<tr><td><strong>B — a paid Apple Developer membership</strong></td><td>The same, with a profile that lasts a year and can also sign a copy for others.</td><td>US$99 a year.</td></tr>
+<tr><td><strong>C — keep keys out of the Keychain on Mac</strong></td><td>The app keeps its unlock key in a file only your Mac user can read, inside the app's own sandboxed folder. Works unsigned.</td><td>Weaker than the Keychain: anyone signed in as you, or any program you run outside the sandbox, can read that file.</td></tr>
+</tbody>
+</table>
+<p><strong>My recommendation: A</strong>, then B before you give the app to anyone else.</p>
 <h2 id="what-i-do-when-you-answer">What I do when you answer<a class="anchor-link" href="#what-i-do-when-you-answer">#</a></h2>
 <ol>
 <li>Done on 14 Nov 2026: every answer is in the Architecture decisions log and the phase 3 documents.
@@ -316,9 +329,10 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <pre><code>TrStudio: decision 9 — go with option A. Keep word matching; plan a built-in embedding model as a later row.</code></pre>
 <pre><code>TrStudio: decision 10 — go with option A. ComfyUI, RunPod or Venice for pictures on Mac; ONNX for Mac Catalyst as a later row.</code></pre>
 <pre><code>TrStudio: decision 11 — go with option A. A dedicated run adds the 18 screens' mockup control names, the design document's routes and the sample-data scripts.</code></pre>
-<pre><code>TrStudio: decision 12 — go with option A. Mark the mockup parts that belong to a later moment of a screen; nothing drawn changes.</code></pre>
-<pre><code>TrStudio: decision 13 — go with option A. The mockups hide the sidebar at phone width, as the app does.</code></pre>
-<pre><code>TrStudio: decision 14 — go with option A. The five Could rows stay deferred; their tests wait for the features.</code></pre>
+<pre><code>TrStudio: decision 12 — answered A (17 Nov 2026). Mark the mockup parts that belong to a later moment of a screen; nothing drawn changes.</code></pre>
+<pre><code>TrStudio: decision 13 — answered A (17 Nov 2026). The mockups hide the sidebar at phone width, as the app does.</code></pre>
+<pre><code>TrStudio: decision 14 — answered (17 Nov 2026). B for the twin, multi-shot and clip stitching (built on Venice); A for webhooks and the MCP server.</code></pre>
+<pre><code>TrStudio: decision 15 — go with option A. I let Xcode make the free Mac profile; sign the Debug build with it and prove the Keychain checks.</code></pre>
   </main>
 </div>
 

@@ -7,7 +7,8 @@ namespace TrStudio.Engine.Domain.Venice;
 /// The job params a Venice call reads (keys of the declarative params schema): <c>prompt</c>,
 /// <c>negativePrompt</c>, <c>width</c>, <c>height</c>, <c>resolution</c>, <c>aspectRatio</c>,
 /// <c>duration</c>, <c>audio</c>, <c>scale</c>, <c>sourceAssetId</c> / <c>sourceAssetIds</c>,
-/// <c>referenceAssetId</c> / <c>referenceAssetIds</c> and <c>characterId</c>.
+/// <c>referenceAssetId</c> / <c>referenceAssetIds</c>, <c>characterId</c>, and for reference to video
+/// <c>referenceImageAssetIds</c>, <c>referenceVideoAssetIds</c>, <c>referenceAudioAssetIds</c> and <c>endImageAssetId</c>.
 /// </summary>
 public sealed class VeniceJobParams
 {
@@ -46,6 +47,21 @@ public sealed class VeniceJobParams
 
     /// <summary>The chosen character, for a fixed-character model.</summary>
     public Guid? CharacterId { get; init; }
+
+    /// <summary>Reference clips (reference to video: a twin's clip, or the clip being extended), in order.</summary>
+    public IReadOnlyList<Guid> ReferenceVideoAssetIds { get; init; } = Array.Empty<Guid>();
+
+    /// <summary>Reference audio (reference to video: the line spoken in a twin's voice), in order.</summary>
+    public IReadOnlyList<Guid> ReferenceAudioAssetIds { get; init; } = Array.Empty<Guid>();
+
+    /// <summary>Reference pictures sent as <c>reference_image_urls</c> on any model (a twin's pictures), in order.</summary>
+    public IReadOnlyList<Guid> ReferenceImageAssetIds { get; init; } = Array.Empty<Guid>();
+
+    /// <summary>The picture a clip must end on (<c>end_image_url</c>), if any.</summary>
+    public Guid? EndImageAssetId { get; init; }
+
+    /// <summary>Total seconds of the reference clips; Venice bills them on top and its quote needs them.</summary>
+    public double? ReferenceVideoSeconds { get; init; }
 
     /// <summary>
     /// Resolves a value the model constrains: the requested value when given, else the first allowed
@@ -111,7 +127,12 @@ public sealed class VeniceJobParams
                 Scale = vScale >= 4 ? 4 : 2,
                 SourceAssetIds = Ids(vRoot, "sourceAssetId", "sourceAssetIds"),
                 ReferenceAssetIds = Ids(vRoot, "referenceAssetId", "referenceAssetIds"),
-                CharacterId = Ids(vRoot, "characterId", "characterIds").FirstOrDefault() is var vCharacter && vCharacter != Guid.Empty ? vCharacter : null
+                CharacterId = Ids(vRoot, "characterId", "characterIds").FirstOrDefault() is var vCharacter && vCharacter != Guid.Empty ? vCharacter : null,
+                ReferenceVideoAssetIds = Ids(vRoot, "referenceVideoAssetId", "referenceVideoAssetIds"),
+                ReferenceAudioAssetIds = Ids(vRoot, "referenceAudioAssetId", "referenceAudioAssetIds"),
+                ReferenceImageAssetIds = Ids(vRoot, "referenceImageAssetId", "referenceImageAssetIds"),
+                ReferenceVideoSeconds = Number(vRoot, "referenceVideoSeconds"),
+                EndImageAssetId = Ids(vRoot, "endImageAssetId", "endImageAssetIds").FirstOrDefault() is var vEnd && vEnd != Guid.Empty ? vEnd : null
             };
         }
     }

@@ -350,6 +350,8 @@
             </Button>
         </Card>
 
+        <ClipJoinPanel OnJoined="LoadTimelineAsync" />
+
         <Card Class="vid-card" data-testid="card-empty-segment">
             <h3 class="card-h3">@(SelectedClip is null ? "Empty segment" : "Selected segment")</h3>
             <div class="vid-empty" data-testid="segment-empty">

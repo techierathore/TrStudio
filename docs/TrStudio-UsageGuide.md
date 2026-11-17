@@ -11,14 +11,16 @@ How to run and test TrStudio, one desktop app with the engine inside. The first 
 
 ## Test users
 
-Identity comes from AppManager; TrStudio stores only the AppManager `userId`, never a password. The users were registered through AppManager's register call (`node .tfcore/utils/tf-register-test-users.mjs`, run by the owner); user 1 is AppManager's own superadmin. Each password lives in the git-ignored `tests/verify/testsettings.Local.json`, laid over the committed `tests/verify/testsettings.json`; it is never written here. For switching roles in smoke runs, a Debug build of the app opens signed in as `Desktop:DevRole` from the git-ignored `src/TrStudio/appsettings.json`, and the test host serves the developer sign-in page `/dev/session`.
+Identity comes from AppManager; TrStudio stores only the AppManager `userId`, never a password. The users were registered by the owner in AppManager; each password lives only in the git-ignored settings file. Each password lives in the git-ignored `tests/verify/testsettings.Local.json`, laid over the committed `tests/verify/testsettings.json`; it is never written here. For switching roles in smoke runs, a Debug build of the app opens signed in as `Desktop:DevRole` from the git-ignored `src/TrStudio/appsettings.json`, and the test host serves the developer sign-in page `/dev/session`.
 
-| # | User | Password source | Role | Exists |
+| # | User | Password source | AppManager role → TrStudio role | Exists |
 |---|---|---|---|---|
-| 1 | admin@appmanager.local | `TestUsers:1:Password` in the git-ignored `tests/verify/testsettings.Local.json` | Owner (superadmin: Creator and Operator, all tiers); the owner walkthrough. Never create or overwrite it | yes |
-| 2 | creator@trstudio.test | `TestUsers:2:Password` in the git-ignored `tests/verify/testsettings.Local.json` | Standard creator (Fast and High); the second user, for the isolation checks | yes |
-| 3 | admin@trstudio.test | `TestUsers:3:Password` in the git-ignored `tests/verify/testsettings.Local.json` | Operator; the unattended-run user for verify and smoke runs | no — register when needed |
-| 4 | premium@trstudio.test | `TestUsers:4:Password` in the git-ignored `tests/verify/testsettings.Local.json` | Premium creator (exercises REQ-FN-014) | no — register, then assign a Premium licence in AppManager |
+| 1 | techierathore@gmail.com | `TestUsers:1:Password` in the git-ignored `tests/verify/testsettings.Local.json` | Admin → **Owner** (creator and management screens, all tiers); the owner walkthrough. Never create or overwrite it | yes |
+| 2 | tflensdemo@techierathore.com | `TestUsers:2:Password` in the git-ignored `tests/verify/testsettings.Local.json` | Manager → **Operator** (management screens only); the second user, and the unattended-run user for the management screens | yes |
+| 3 | creator@trstudio.test | `TestUsers:3:Password` in the git-ignored `tests/verify/testsettings.Local.json` | User → **Creator**; the creator for the isolation checks | no — the owner registers it with the User role when needed |
+| 4 | premium@trstudio.test | `TestUsers:4:Password` in the git-ignored `tests/verify/testsettings.Local.json` | User → **Creator** with a Premium licence (exercises REQ-FN-014) | no — register, then assign a Premium licence in AppManager |
+
+AppManager has three application roles and TrStudio maps them to its own (owner, 17 Nov 2026; REQ-FN-115): Admin is Owner, Manager is Operator, User is Creator. AppManager sends the role as `applicationRole` when a user signs in.
 
 A verify test never creates, deletes or changes an account on a shared AppManager; the register-creates-an-account path is verified by hand once per release and recorded in the checklist with the date, and the automated row checks only the form's validation and the email-already-in-use path using test user 1. The Register test signs in as test user 1 before it submits anything; the test users are registered only by the owner, with `node .tfcore/utils/tf-register-test-users.mjs`.
 
@@ -27,8 +29,8 @@ A verify test never creates, deletes or changes an account on a shared AppManage
 | Role | Lands on | While setup is incomplete |
 |---|---|---|
 | Owner (1) | Avatar studio `/avatar`; a sidebar-footer link switches to the management screens | Guided setup `/admin/setup` |
-| Operator (3) | RunPod & ops `/admin/ops` | Hardware & readiness `/admin/setup/hardware`, then guided setup |
-| Creators (2, 4) | Avatar studio `/avatar` | `/setup-required` ("ask your admin") |
+| Operator (2) | RunPod & ops `/admin/ops` | Hardware & readiness `/admin/setup/hardware`, then guided setup |
+| Creators (3, 4) | Avatar studio `/avatar` | `/setup-required` ("ask your admin") |
 
 ## Execution guide
 
@@ -196,7 +198,7 @@ The first line runs the unit tests (497 pass, 18 skipped on 15 Nov 2026) and the
 - Without a model, key or host the backend returns a synthetic development asset: image pixels and provisioning (REQ-FN-009 to REQ-FN-011, REQ-FN-019, REQ-FN-021), voice (REQ-FN-031, REQ-FN-033 to REQ-FN-035), lip-sync and HeyGen (REQ-FN-037, REQ-FN-038), ComfyUI live runs (REQ-FN-045 to REQ-FN-047), video (REQ-FN-051, REQ-FN-053), ffmpeg export (REQ-FN-054), RunPod cold start (REQ-FN-028), language-model paths (REQ-RAG-001, REQ-RAG-002, REQ-RAG-005).
 - Premium tier gating (REQ-FN-014) needs a Premium licence on user 4.
 - Data residency and retention (REQ-NFR-010) are deployment settings.
-- Not built (could-haves): digital twin, multi-shot, clip extension, webhooks, MCP server.
+- Not built (could-haves): webhooks and the MCP server; their tests wait for the feature. The digital twin, multi-shot assembly and making a clip longer are built on Venice (17 Nov 2026); clips are joined in the Mac app with Apple's AVFoundation. The digital twin is off until the owner turns it on in Content policy, and needs the recorded consent of the person shown.
 - Every studio needs at least one enabled model source and one ready registry model; the development seed provides `stub-echo` and `onnx-sdxl-local`.
 - Libraries (15 Nov 2026): TrBlazeUI 2.2.5 and TechieRag 1.1.5 from nuget.org. TrBlazeUI has no open entry (TR-012 to TR-014 closed); TechieRag TR-RAG-002 to TR-RAG-006 are open and none blocks.
 - Each screen's sample data for the checks comes from `tests/verify/seed/<screen>.sh`, run against the test host (decision 11); a fresh app shows its own, mostly empty, data instead.

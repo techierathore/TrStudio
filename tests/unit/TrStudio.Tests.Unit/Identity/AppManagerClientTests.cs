@@ -63,6 +63,29 @@ public class AppManagerClientTests
     }
 
     /// <summary>
+    /// What AppManager really sends (17 Nov 2026): test user 1's login says applicationRole
+    /// "Admin" and test user 2's says "Manager", both with appManagerRole "ApplicationUser".
+    /// TrStudio reads Admin as Owner, Manager as Operator and User as Creator.
+    /// </summary>
+    [Theory(DisplayName = "REQ-FN-115 RealAppManagerRoleNamesMapOnLogin")]
+    [InlineData("Admin", UserRole.Owner)]
+    [InlineData("Manager", UserRole.Operator)]
+    [InlineData("User", UserRole.Creator)]
+    public async Task RealAppManagerRoleNamesMapOnLogin(string aApplicationRole, UserRole aExpected)
+    {
+        ArrangePublicKey();
+        objHandler.Respond("/AuthSvc/login", HttpStatusCode.OK, $$"""
+            {"success":true,"data":{"userId":11,"email":"someone@example.com","applicationRole":"{{aApplicationRole}}",
+             "appManagerRole":"ApplicationUser","accessToken":"jwt-r","refreshToken":"rt-r"},"message":"ok"}
+            """);
+        var vClient = CreateClient();
+
+        var vSession = await vClient.LoginAsync(new LoginRequest { Email = "someone@example.com", Password = "Secret@123" });
+
+        Assert.Equal(aExpected, vSession.Role);
+    }
+
+    /// <summary>
     /// Wrong credentials surface as UnauthorizedAccessException (mapped to a clean 401 by the
     /// endpoint), never a raw upstream failure.
     /// </summary>

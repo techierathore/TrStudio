@@ -106,7 +106,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <div class="layout">
   <nav class="side">
     <h1>TrStudio — Architecture</h1>
-    <div class="sub">Last rendered: 2026-11-14</div>
+    <div class="sub">Last rendered: 2026-11-17</div>
     <div class="group">Contents</div>
     <ol>
         <li><a href="#stack-decisions">1. Stack decisions</a></li>
@@ -131,7 +131,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
   </nav>
   <main>
     <h1>TrStudio — Architecture</h1>
-    <div class="subtitle">Rendered 2026-11-14 &middot; source <code>TrStudio-Architecture.md</code></div>
+    <div class="subtitle">Rendered 2026-11-17 &middot; source <code>TrStudio-Architecture.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
@@ -719,6 +719,12 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tr><td>2026-11-14</td><td>ADR-022: The old web head is deleted (decision 8); <code>src/TrStudio.Desktop</code> becomes <code>src/TrStudio</code>, namespace and assembly <code>TrStudio</code>; title and application id unchanged. <code>TrStudioApi</code> and the PostgreSQL scripts stay on disk, out of the build</td><td>A desktop app does not carry "Desktop" in its name; the API project serves the set-aside REST API row (REQ-FN-069)</td><td>built</td></tr>
 <tr><td>2026-11-14</td><td>ADR-023: Mac first: the first version is for Mac only; Windows, possibly Linux, later. The Windows head and ADR-020's Windows protection stay for that version</td><td>No first-version row waits on a Windows machine (BRD-152 amended, BRD-158 deferred)</td><td>planned</td></tr>
 <tr><td>2026-11-14</td><td>Owner decisions 1 to 10 answered: A for 1 to 5, 7, 9, 10; B for 6 (ADR-021); 8 as ADR-022; 9A and 10A leave two later rows (BRD-160, BRD-159)</td><td><code>docs/TrStudio-Decision-Request.md</code></td><td>answered</td></tr>
+<tr><td>2026-11-17</td><td>ADR-024: AppManager's application roles map to TrStudio's: <code>Admin</code> is Owner, <code>Manager</code> is Operator, <code>User</code> is Creator (<code>UserRoleMapper</code>); the older names Owner, Operator and Creator are still read; Register provisions <code>User</code> or <code>Manager</code></td><td>AppManager sends its own role names (user 1 <code>Admin</code>, user 2 <code>Manager</code>); TrStudio read <code>Admin</code> as Operator and both landed as Operators (BRD-177)</td><td>built</td></tr>
+<tr><td>2026-11-17</td><td>ADR-025: Digital twin on Venice Wan 3.0 reference to video (<code>wan-3-0-reference-to-video</code>): the person's pictures, one clip and the line spoken in a Venice voice made from the sample (<code>tts-chatterbox-hd</code>, <code>/audio/voices</code>, <code>/audio/speech</code>) go as <code>@Image</code>, <code>@Video</code>, <code>@Audio</code> references. Seedance is not used: its guide says its public API does not take media showing a person. Off by default; Face and Voice consent of the person checked on create and on every clip; a voice older than Venice's 7 days is made again from the kept sample</td><td>The owner has Venice, not HeyGen; Wan's guide allows reference media of a person and voice conditioning (BRD-161 to BRD-167)</td><td>planned</td></tr>
+<tr><td>2026-11-17</td><td>ADR-026: Multi-shot assembly runs shots one after another in the app: a character's shots on Wan 3.0 image to video, each later shot starting on the last frame of the one before; a twin's shots are twin clips carrying that frame; the finished shots are joined on this Mac</td><td>Continuity between shots without a cloud editor (BRD-168 to BRD-172)</td><td>planned</td></tr>
+<tr><td>2026-11-17</td><td>ADR-027: Joining clips and reading frames go through <code>IClipJoiner</code>: Apple's AVFoundation (<code>AVMutableComposition</code>, <code>AVAssetExportSession</code>, <code>AVAssetImageGenerator</code>) in the Mac app, built into macOS and allowed in the app sandbox; ffmpeg on the test host and in the unit tests. Extending a clip uses Wan 3.0 reference to video with the clip as <code>@Video1</code></td><td>A sandboxed Mac app cannot rely on running ffmpeg; nothing is uploaded to join (BRD-173 to BRD-175)</td><td>planned</td></tr>
+<tr><td>2026-11-17</td><td>ADR-028: The approved logo files are copied unchanged into <code>assets/brand/</code>; the Mac app's icon and splash, and the Login and Register logo, are those bytes</td><td>Owner approved a new logo (BRD-176, BRD-178)</td><td>built</td></tr>
+<tr><td>2026-11-17</td><td>Owner decisions 12A and 13A confirmed as taken; 14: B for the digital twin, multi-shot and clip stitching (built now on Venice), A for webhooks and the MCP server (still deferred, their tests wait for the feature)</td><td><code>docs/TrStudio-Decision-Request.md</code></td><td>answered</td></tr>
 </tbody>
 </table>
 <h2 id="module-responsibilities"><a id="7-module-responsibilities"></a>7. Module responsibilities<a class="anchor-link" href="#module-responsibilities">#</a></h2>

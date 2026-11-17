@@ -8,10 +8,10 @@ using TrStudio.Models.Enums;
 namespace TrStudio.Tests.Unit.Desktop;
 
 /// <summary>
-/// The five "Could" rows the BRD defers (BRD-32, BRD-33, BRD-46, BRD-67, BRD-68), each checked
-/// exactly as its acceptance line says, through the real in-process engine the screens call.
-/// None of the five is built yet, so these fail until it is: a route that is not there (404) is
-/// never read as the refusal or the result the line asks for.
+/// The two "Could" rows still deferred (BRD-67 webhooks, BRD-68 MCP server), each checked exactly as
+/// its acceptance line says, through the real in-process engine the screens call. Both wait for their
+/// feature (owner, 17 Nov 2026), so they are skipped, not failed. The other three Could rows (digital
+/// twin, multi-shot, clip stitching) moved to phase 3 on 17 Nov 2026 and have their own tests.
 /// </summary>
 public sealed class CouldRowsTests
 {
@@ -25,64 +25,7 @@ public sealed class CouldRowsTests
         => Assert.False(aStatus is HttpStatusCode.NotFound or HttpStatusCode.MethodNotAllowed,
             $"{aRoute} is not served by the engine (answered {(int)aStatus}): the feature is not built");
 
-    [Fact(DisplayName = "REQ-FN-041 DigitalTwinIsRefusedWithoutRecordedConsent")]
-    public async Task DigitalTwinIsRefusedWithoutRecordedConsent()
-    {
-        await using var vEngine = await DesktopEngine.StartAsync();
-        using var vClient = vEngine.Client(vEngine.SignIn(UserRole.Creator));
-        const string Route = "/api/v1/avatar/digital-twin";
-
-        var (vStatus, vBody) = await PostAsync(vClient, Route, new { characterId = Guid.NewGuid(), baseVideoAssetId = Guid.NewGuid() });
-
-        NotMissing(vStatus, Route);
-        Assert.True(vStatus is HttpStatusCode.Forbidden or HttpStatusCode.Conflict or HttpStatusCode.UnprocessableEntity,
-            $"a twin without consent must be refused, answered {(int)vStatus}");
-        Assert.Contains("consent", vBody, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact(DisplayName = "REQ-FN-042 AssembledSequenceKeepsOneCharacter")]
-    public async Task AssembledSequenceKeepsOneCharacter()
-    {
-        await using var vEngine = await DesktopEngine.StartAsync();
-        using var vClient = vEngine.Client(vEngine.SignIn(UserRole.Creator));
-        var vClips = new[] { await DesktopEngine.SubmitStubJobAsync(vClient), await DesktopEngine.SubmitStubJobAsync(vClient), await DesktopEngine.SubmitStubJobAsync(vClient) };
-        foreach (var vClip in vClips)
-        {
-            await vEngine.WaitForEndAsync(vClip);
-        }
-
-        const string Route = "/api/v1/avatar/sequences";
-        var (vStatus, vBody) = await PostAsync(vClient, Route, new { clipJobIds = vClips });
-
-        NotMissing(vStatus, Route);
-        Assert.True((int)vStatus is >= 200 and < 300, $"assembly answered {(int)vStatus}: {vBody}");
-        using var vDoc = JsonDocument.Parse(vBody);
-        var vShots = vDoc.RootElement.GetProperty("shots").EnumerateArray().ToList();
-        Assert.Equal(vClips.Length, vShots.Count);
-        var vCharacter = vDoc.RootElement.GetProperty("characterId").GetString();
-        Assert.All(vShots, s => Assert.Equal(vCharacter, s.GetProperty("characterId").GetString()));
-    }
-
-    [Fact(DisplayName = "REQ-FN-055 TwoClipsStitchIntoOneSequence")]
-    public async Task TwoClipsStitchIntoOneSequence()
-    {
-        await using var vEngine = await DesktopEngine.StartAsync();
-        using var vClient = vEngine.Client(vEngine.SignIn(UserRole.Creator));
-        var vFirst = await DesktopEngine.SubmitStubJobAsync(vClient);
-        var vSecond = await DesktopEngine.SubmitStubJobAsync(vClient);
-        await vEngine.WaitForEndAsync(vFirst);
-        await vEngine.WaitForEndAsync(vSecond);
-
-        const string Route = "/api/v1/video/stitch";
-        var (vStatus, vBody) = await PostAsync(vClient, Route, new { clipJobIds = new[] { vFirst, vSecond } });
-
-        NotMissing(vStatus, Route);
-        Assert.True((int)vStatus is >= 200 and < 300, $"stitching answered {(int)vStatus}: {vBody}");
-        using var vDoc = JsonDocument.Parse(vBody);
-        Assert.True(vDoc.RootElement.TryGetProperty("jobId", out var vJob) && vJob.GetGuid() != Guid.Empty, "one stitched sequence (one job) is produced");
-    }
-
-    [Fact(DisplayName = "REQ-FN-070 RegisteredWebhookReceivesTheCompletionPayload")]
+    [Fact(DisplayName = "REQ-FN-070 RegisteredWebhookReceivesTheCompletionPayload", Skip = "Waiting for the feature: webhooks are deferred (Could, owner decision 14A, confirmed 17 Nov 2026)")]
     public async Task RegisteredWebhookReceivesTheCompletionPayload()
     {
         var vPort = FreePort();
@@ -108,7 +51,7 @@ public sealed class CouldRowsTests
         Assert.Contains("completed", vPayload, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact(DisplayName = "REQ-FN-071 McpClientListsAndInvokesAGenerationTool")]
+    [Fact(DisplayName = "REQ-FN-071 McpClientListsAndInvokesAGenerationTool", Skip = "Waiting for the feature: the MCP server is deferred (Could, owner decision 14A, confirmed 17 Nov 2026)")]
     public async Task McpClientListsAndInvokesAGenerationTool()
     {
         await using var vEngine = await DesktopEngine.StartAsync();

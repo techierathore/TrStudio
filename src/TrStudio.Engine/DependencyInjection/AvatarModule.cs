@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using TrStudio.Engine.Domain.Avatar;
 using TrStudio.Engine.Domain.Characters;
+using TrStudio.Engine.Domain.Twin;
 using TrStudio.Engine.Infrastructure.Data;
 using TrStudio.Engine.Providers;
 using TrStudio.Models.Providers;
@@ -41,6 +42,12 @@ public static class AvatarModule
 
         aServices.TryAddSingleton<IAvatarTierRouter, AvatarTierRouter>();
         aServices.TryAddSingleton<IAvatarPipeline, AvatarPipeline>();
+
+        // Digital twin (REQ-FN-041): its own repository and service; the service also answers the
+        // IDigitalTwinShots seam multi-shot assembly uses. Needs the safety, Venice and spine modules.
+        aServices.TryAddSingleton<IDigitalTwinRepository, DigitalTwinRepository>();
+        aServices.TryAddSingleton<IDigitalTwinService, DigitalTwinService>();
+        aServices.TryAddSingleton<IDigitalTwinShots>(aProvider => aProvider.GetRequiredService<IDigitalTwinService>());
 
         // Registered alongside the other providers; Supports() gates each to its ProviderKind so the
         // resolver still matches exactly one provider per model (Fast→ComfyUi, Premium→HeyGen).

@@ -55,7 +55,11 @@ public static class MauiProgram
             DataFolder = vDataFolder,
             SignIn = AppManagerBuildSettings.Load(),
             KeyProtector = new SecureStorageKeyProtector(),
-            LoggerFactory = vLoggerFactory
+            LoggerFactory = vLoggerFactory,
+#if MACCATALYST
+            // REQ-NFR-023: the Mac app joins clips with Apple's AVFoundation (ffmpeg cannot be relied on in the sandbox).
+            ConfigureServices = aServices => Microsoft.Extensions.DependencyInjection.Extensions.ServiceCollectionDescriptorExtensions.Replace(aServices, ServiceDescriptor.Singleton<TrStudio.Engine.Domain.Video.IClipJoiner, TrStudio.Platforms.MacCatalyst.AvFoundationClipJoiner>())
+#endif
         });
         Task.Run(() => vHost.StartAsync()).GetAwaiter().GetResult();
         vBuilder.Services.AddSingleton(vHost);

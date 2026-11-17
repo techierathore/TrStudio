@@ -106,7 +106,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <div class="layout no-toc">
   <main>
     <h1>TrStudio — Business Requirements — Phase 3: One desktop app with the engine inside</h1>
-    <div class="subtitle">Rendered 2026-11-16 &middot; source <code>TrStudio-P3-BRD.md</code></div>
+    <div class="subtitle">Rendered 2026-11-17 &middot; source <code>TrStudio-P3-BRD.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
@@ -120,6 +120,11 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
         <li class="h3"><a href="#jobs-inside-the-app">Jobs inside the app</a></li>
         <li class="h3"><a href="#keys-a-user-owns">Keys a user owns</a></li>
         <li class="h3"><a href="#character-bible">Character bible</a></li>
+        <li class="h3"><a href="#roles-from-appmanager">Roles from AppManager</a></li>
+        <li class="h3"><a href="#the-approved-logo">The approved logo</a></li>
+        <li class="h3"><a href="#digital-twin">Digital twin</a></li>
+        <li class="h3"><a href="#multi-shot-assembly">Multi-shot assembly</a></li>
+        <li class="h3"><a href="#making-a-clip-longer">Making a clip longer</a></li>
         <li><a href="#non-functional-requirements">4. Non-functional requirements</a></li>
         <li class="h3"><a href="#later-versions">Later versions</a></li>
         <li><a href="#development-status">5. Development status</a></li>
@@ -134,13 +139,14 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tr><td>Size</td><td>Medium</td></tr>
 <tr><td>Phase</td><td>3 of 3</td></tr>
 <tr><td>Status</td><td>Draft</td></tr>
-<tr><td>Date</td><td>2026-11-14</td></tr>
+<tr><td>Date</td><td>2026-11-17</td></tr>
 </tbody>
 </table>
 <h2 id="summary"><a id="1-summary"></a>1. Summary<a class="anchor-link" href="#summary">#</a></h2>
 <p>Phase 3 turns it into one desktop app that a person downloads, opens and signs in to. TrStudio is Mac first: the first released version is for Mac only; Windows, and possibly Linux, come in a later version. The engine runs inside the app: there is no API process and no web server. The data lives in a local SQLite file in the app's own data folder for the signed-in user, created and migrated by the app on first start. Character-bible search runs on that store through TechieRag. Generation and provider polling run as jobs inside the app; a job left queued or running when the app closed is picked up or failed with its reason on the next start. Sign-in uses AppManager with the application id and one API key put into the build from a file outside the repository; a "Remember me" box keeps the sign-in on that computer for 30 days. Every key a user owns is entered on the existing screens and kept in the local database, protected by the operating system for that user. Everything a creator can do today stays. A test host, never shipped, serves the same screens for the automated checks.</p>
+<p>Amended 17 Nov 2026 (owner): three video features come into this phase from the deferred rows, all on Venice: a digital twin of a real person, multi-shot assembly, and making a clip longer. Clips are joined inside the app on this Mac with Apple's AVFoundation, never in the cloud. AppManager's three roles map to TrStudio's own, and the approved logo replaces the placeholder.</p>
 <h2 id="screens-and-flow"><a id="2-screens-and-flow"></a>2. Screens and flow<a class="anchor-link" href="#screens-and-flow">#</a></h2>
-<p>This phase adds no new screen. It changes controls on phase-1 screens, which are listed in <a href="TrStudio-BRD.html">phase 1</a>. In each changed mockup the new controls are marked <code>data-tf-phase="3"</code>.</p>
+<p>This phase adds no new screen. It changes controls on phase-1 screens (on 17 Nov 2026 also Avatar studio, Video studio and Content policy), which are listed in <a href="TrStudio-BRD.html">phase 1</a>. In each changed mockup the new controls are marked <code>data-tf-phase="3"</code>.</p>
 <table>
 <thead><tr><th>Screen</th><th>Route</th><th>Role</th><th>Mockup</th><th>Fields</th></tr></thead>
 <tbody>
@@ -148,11 +154,12 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tr><td>Register (phase 1)</td><td><code>/register</code></td><td>Anyone</td><td><a href="mockups/register.html">mockup</a></td><td>name, email, password</td></tr>
 <tr><td>Setup required (phase 1)</td><td><code>/setup-required</code></td><td>Anyone signed in</td><td><a href="mockups/setup-required.html">mockup</a></td><td>data folder, start-up problem</td></tr>
 <tr><td>Image studio (phase 1)</td><td><code>/image</code></td><td>Creator</td><td><a href="mockups/image-studio.html">mockup</a></td><td>model, prompt, job state</td></tr>
-<tr><td>Video studio (phase 1)</td><td><code>/video</code></td><td>Creator</td><td><a href="mockups/video-studio.html">mockup</a></td><td>model, job progress</td></tr>
-<tr><td>Avatar studio (phase 1)</td><td><code>/avatar</code></td><td>Creator</td><td><a href="mockups/avatar-studio.html">mockup</a></td><td>script brief, generated script</td></tr>
+<tr><td>Video studio (phase 1)</td><td><code>/video</code></td><td>Creator</td><td><a href="mockups/video-studio.html">mockup</a></td><td>model, job progress, clips to join, clip to extend, seconds</td></tr>
+<tr><td>Avatar studio (phase 1)</td><td><code>/avatar</code></td><td>Creator</td><td><a href="mockups/avatar-studio.html">mockup</a></td><td>script brief, generated script, digital twin (person, pictures, clip, voice, line), multi-shot (subject, shots, price)</td></tr>
 <tr><td>Character library (phase 1)</td><td><code>/avatar/characters</code></td><td>Creator</td><td><a href="mockups/character-library.html">mockup</a></td><td>bible search</td></tr>
 <tr><td>Admin — RunPod &amp; ops (phase 1)</td><td><code>/admin/ops</code></td><td>Operator</td><td><a href="mockups/admin-ops.html">mockup</a></td><td>queued, running</td></tr>
 <tr><td>Admin — Model &amp; Provider Registry (phase 1)</td><td><code>/admin/registry</code></td><td>Operator</td><td><a href="mockups/admin-registry.html">mockup</a></td><td>RunPod, HeyGen, closed-API and model keys, key-protection note</td></tr>
+<tr><td>Admin — Content policy (NSFW) (phase 1)</td><td><code>/admin/policy</code></td><td>Owner</td><td><a href="mockups/admin-policy.html">mockup</a></td><td>digital twins switch</td></tr>
 </tbody>
 </table>
 <p><strong>Primary journey:</strong></p>
@@ -355,6 +362,122 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </ul>
 </li>
 </ul>
+<h3 id="roles-from-appmanager">Roles from AppManager<a class="anchor-link" href="#roles-from-appmanager">#</a></h3>
+<p>Owner, 17 Nov 2026. AppManager has three application roles, and each application maps them to its own. AppManager sends the role as <code>applicationRole</code> on sign-in: test user 1 is <code>Admin</code>, test user 2 is <code>Manager</code>.</p>
+<ul>
+<li><strong>BRD-177</strong> — AppManager's Admin is TrStudio's Owner, Manager is Operator and User is Creator. <em>Screen:</em> Login · <em>Mockup:</em> <a href="mockups/login.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When users whose AppManager role is Admin, Manager and User sign in on Login, then they are Owner, Operator and Creator.
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="the-approved-logo">The approved logo<a class="anchor-link" href="#the-approved-logo">#</a></h3>
+<p>Owner, 17 Nov 2026. The files come unchanged from the brand folder: the tile with the mark, the mark alone, the logo with the name, and the white name for dark backgrounds.</p>
+<ul>
+<li><strong>BRD-178</strong> — Login and Register show the approved logo with the name; in dark mode the white name. <em>Screen:</em> Login · <em>Mockup:</em> <a href="mockups/login.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a user opens Login, then the approved horizontal TrStudio logo shows, and in dark mode the tile with the white name.
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="digital-twin">Digital twin<a class="anchor-link" href="#digital-twin">#</a></h3>
+<p>Owner, 17 Nov 2026; moved here from phase 1 (BRD-32). A creator makes a twin of a real person from reference pictures, a short reference clip and a short voice sample, then makes clips of that person saying a line they write. The consent gate stays as written: no twin without recorded consent from the person shown, and twins are off by default. Venice's Seedance guide says its public API does not take media showing a person, so the twin uses Wan 3.0 reference to video (<code>wan-3-0-reference-to-video</code>: up to 10 pictures, up to 5 clips and 5 audio clips of 15 s in all). The voice is a Venice voice made from the sample (<code>tts-chatterbox-hd</code>, kept 7 days by Venice); the line is spoken in it and sent as the clip's reference audio.</p>
+<ul>
+<li><strong>BRD-161</strong> — No twin without recorded consent from the person shown. <em>Screen:</em> Avatar studio · <em>Mockup:</em> <a href="mockups/avatar-studio.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a creator creates a twin on Avatar studio without recorded consent from the person shown, then it is refused with a consent message and nothing goes to Venice.
+</li>
+</ul>
+</li>
+<li><strong>BRD-162</strong> — Twins are off until the owner turns them on. <em>Screen:</em> Avatar studio · <em>Mockup:</em> <a href="mockups/avatar-studio.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a creator creates a twin on Avatar studio while the owner has not turned twins on, then it is refused saying twins are off.
+</li>
+</ul>
+</li>
+<li><strong>BRD-163</strong> — Content policy has the twins switch, off on a fresh app. <em>Screen:</em> Admin — Content policy (NSFW) · <em>Mockup:</em> <a href="mockups/admin-policy.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When the owner opens Content policy on a fresh app, then the Digital twins switch shows off.
+</li>
+</ul>
+</li>
+<li><strong>BRD-164</strong> — With consent and twins on, the twin is kept with its pictures, clip and voice. <em>Screen:</em> Avatar studio · <em>Mockup:</em> <a href="mockups/avatar-studio.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a creator creates a twin on Avatar studio with recorded consent and twins on, then the twin is stored with its pictures, clip and the voice id Venice returned.
+</li>
+</ul>
+</li>
+<li><strong>BRD-165</strong> — A twin clip says the creator's line in the twin's voice. <em>Screen:</em> Avatar studio · <em>Mockup:</em> <a href="mockups/avatar-studio.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a creator makes a twin clip of a line on Avatar studio, then Venice gets one wan-3-0-reference-to-video job with the twin's pictures, clip and spoken line.
+</li>
+</ul>
+</li>
+<li><strong>BRD-166</strong> — Consent is checked again for every clip. <em>Screen:</em> Avatar studio · <em>Mockup:</em> <a href="mockups/avatar-studio.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When the person's consent is withdrawn and a creator makes a twin clip on Avatar studio, then it is refused and nothing goes to Venice.
+</li>
+</ul>
+</li>
+<li><strong>BRD-167</strong> — A voice older than Venice's 7 days is made again from the kept sample. <em>Screen:</em> Avatar studio · <em>Mockup:</em> <a href="mockups/avatar-studio.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a twin's voice is older than 7 days and a creator makes a twin clip on Avatar studio, then a new voice is made from the sample first.
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="multi-shot-assembly">Multi-shot assembly<a class="anchor-link" href="#multi-shot-assembly">#</a></h3>
+<p>Owner, 17 Nov 2026; moved here from phase 1 (BRD-33). Several clips of one character, avatar or twin, made one after another so each shot starts where the last ended, joined into one video on this Mac. A character's shots use Wan 3.0 image to video (<code>wan-3-0-image-to-video</code>), each later shot starting on the last frame of the one before; a twin's shots are twin clips carrying that frame as a reference picture.</p>
+<ul>
+<li><strong>BRD-168</strong> — Shots of one subject are made in order and joined into one video. <em>Screen:</em> Avatar studio · <em>Mockup:</em> <a href="mockups/avatar-studio.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a creator assembles three shots for one character on Avatar studio, then one video is stored made of the three shots in order, all of that character.
+</li>
+</ul>
+</li>
+<li><strong>BRD-169</strong> — Each shot after the first starts on the last frame of the one before. <em>Screen:</em> Avatar studio · <em>Mockup:</em> <a href="mockups/avatar-studio.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When the second shot of a sequence is queued from Avatar studio, then its start picture is the last frame of the first shot.
+</li>
+</ul>
+</li>
+<li><strong>BRD-170</strong> — A failed shot stops the sequence and names itself; earlier shots are kept. <em>Screen:</em> Avatar studio · <em>Mockup:</em> <a href="mockups/avatar-studio.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a sequence's second shot fails on Avatar studio, then the sequence shows Failed naming shot 2 and Venice's reason, and shot 1 is kept.
+</li>
+</ul>
+</li>
+<li><strong>BRD-171</strong> — Venice's price for every shot shows before the sequence starts. <em>Screen:</em> Avatar studio · <em>Mockup:</em> <a href="mockups/avatar-studio.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a creator prepares a three-shot sequence on Avatar studio, then the sum of Venice's quotes for the three shots shows before Start.
+</li>
+</ul>
+</li>
+<li><strong>BRD-172</strong> — A twin can be the subject of a sequence. <em>Screen:</em> Avatar studio · <em>Mockup:</em> <a href="mockups/avatar-studio.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a creator assembles two shots for a twin on Avatar studio, then each shot is a twin clip and the second carries the first's last frame.
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="making-a-clip-longer">Making a clip longer<a class="anchor-link" href="#making-a-clip-longer">#</a></h3>
+<p>Owner, 17 Nov 2026; moved here from phase 1 (BRD-46). A clip is made longer by joining finished clips end to end inside the app, or by extending it through Venice: Wan 3.0 reference to video with the clip as <code>@Video1</code> and the prompt "Extend @Video1 by N seconds", where the duration is the whole result.</p>
+<ul>
+<li><strong>BRD-173</strong> — Finished clips are joined end to end inside the app. <em>Screen:</em> Video studio · <em>Mockup:</em> <a href="mockups/video-studio.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a creator joins two finished clips on Video studio, then one new clip is stored whose length is the two lengths added together.
+</li>
+</ul>
+</li>
+<li><strong>BRD-174</strong> — A clip is extended through Venice. <em>Screen:</em> Video studio · <em>Mockup:</em> <a href="mockups/video-studio.html">mockup</a>
+<ul>
+<li><em>Acceptance:</em> When a creator extends a 2-second clip by 3 seconds on Video studio, then Venice gets one wan-3-0-reference-to-video job with that clip and a 5-second duration.
+</li>
+</ul>
+</li>
+</ul>
 <h2 id="non-functional-requirements"><a id="4-non-functional-requirements"></a>4. Non-functional requirements<a class="anchor-link" href="#non-functional-requirements">#</a></h2>
 <table>
 <thead><tr><th>Id</th><th>Area</th><th>Requirement</th><th>Measure</th></tr></thead>
@@ -366,6 +489,8 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tr><td>BRD-150</td><td>Testing</td><td>A test host serves the same screens and in-process engine on SQLite for headless checks only; it is never shipped</td><td>When the headless checks run, then they drive the test host, and the desktop project does not reference it.</td></tr>
 <tr><td>BRD-151</td><td>Compatibility</td><td>ComfyUI behaves exactly as before</td><td>When the unit tests run, then the 16 ComfyUI tests pass and no file under <code>tests/unit/TrStudio.Tests.Unit/Comfy/</code> changed.</td></tr>
 <tr><td>BRD-152</td><td>Portability</td><td>The desktop project builds and runs on Mac (amended 2026-11-14: Mac first)</td><td>When the desktop project is built on a Mac, then the Mac app TrStudio.app is produced.</td></tr>
+<tr><td>BRD-175</td><td>Privacy</td><td>Joining clips happens on this computer with Apple's AVFoundation; nothing is uploaded</td><td>When clips are joined, then no network request is made and the Mac app's joiner is AVFoundation.</td></tr>
+<tr><td>BRD-176</td><td>Brand</td><td>The app icon and the splash use the approved logo files unchanged</td><td>When the Mac app is built, then its icon and splash files match the approved logo files byte for byte.</td></tr>
 </tbody>
 </table>
 <h3 id="later-versions">Later versions<a class="anchor-link" href="#later-versions">#</a></h3>
@@ -392,22 +517,23 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </ul>
 <h2 id="development-status"><a id="5-development-status"></a>5. Development status<a class="anchor-link" href="#development-status">#</a></h2>
 <p>Written by the status gate after every build, verify and handoff; not by hand.</p>
-<p><strong>Snapshot as of 2026-11-16.</strong> Live per-requirement status: <code>PROJECT-STATUS.md</code> and the Requirements Status table in <code>docs/TrStudio-P3-Checklist.md</code>.</p>
+<p><strong>Snapshot as of 2026-11-17.</strong> Live per-requirement status: <code>PROJECT-STATUS.md</code> and the Requirements Status table in <code>docs/TrStudio-P3-Checklist.md</code>.</p>
 <table>
 <thead><tr><th>Screen</th><th>Requirements</th><th>Verified</th><th>Open</th><th>Status</th></tr></thead>
 <tbody>
-<tr><td>Login</td><td>10</td><td>10</td><td>0</td><td>Done</td></tr>
+<tr><td>Login</td><td>12</td><td>12</td><td>0</td><td>Done</td></tr>
 <tr><td>Register</td><td>1</td><td>1</td><td>0</td><td>Done</td></tr>
 <tr><td>Setup required</td><td>5</td><td>5</td><td>0</td><td>Done</td></tr>
 <tr><td>Image studio</td><td>3</td><td>3</td><td>0</td><td>Done</td></tr>
-<tr><td>Video studio</td><td>2</td><td>2</td><td>0</td><td>Done</td></tr>
+<tr><td>Video studio</td><td>4</td><td>4</td><td>0</td><td>Done</td></tr>
 <tr><td>Admin — RunPod &amp; ops</td><td>1</td><td>1</td><td>0</td><td>Done</td></tr>
-<tr><td>Admin — Model &amp; Provider Registry</td><td>4</td><td>4</td><td>0</td><td>Done</td></tr>
-<tr><td>Avatar studio</td><td>1</td><td>1</td><td>0</td><td>Done</td></tr>
+<tr><td>Admin — Model &amp; Provider Registry</td><td>4</td><td>3</td><td>1</td><td>Partial</td></tr>
+<tr><td>Avatar studio</td><td>12</td><td>12</td><td>0</td><td>Done</td></tr>
 <tr><td>Character library</td><td>1</td><td>1</td><td>0</td><td>Done</td></tr>
-<tr><td>Non-functional</td><td>7</td><td>7</td><td>0</td><td>Done</td></tr>
+<tr><td>Non-functional</td><td>9</td><td>9</td><td>0</td><td>Done</td></tr>
 <tr><td>Other</td><td>0</td><td>0</td><td>0</td><td>Not applicable</td></tr>
 <tr><td>RAG / AI requirements</td><td>0</td><td>0</td><td>0</td><td>Not applicable</td></tr>
+<tr><td>Admin — Content policy (NSFW)</td><td>1</td><td>1</td><td>0</td><td>Done</td></tr>
 </tbody>
 </table>
 <h2 id="where-the-rest-lives"><a id="6-where-the-rest-lives"></a>6. Where the rest lives<a class="anchor-link" href="#where-the-rest-lives">#</a></h2>

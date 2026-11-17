@@ -54,4 +54,30 @@ public class SafetyPolicyRepository : ISafetyPolicyRepository
             aUpdatedUtc = aPolicy.UpdatedUtc
         }, cancellationToken: aCancellationToken)).ConfigureAwait(false);
     }
+
+    /// <inheritdoc />
+    public async Task<bool> GetTwinsEnabledAsync(CancellationToken aCancellationToken = default)
+    {
+        const string Sql = "SELECT \"TwinsEnabled\" FROM \"SafetyPolicy\" WHERE \"PolicyKey\" = 'default'";
+
+        using var vConnection = await objConnectionFactory.CreateOpenConnectionAsync(aCancellationToken).ConfigureAwait(false);
+        return await vConnection.ExecuteScalarAsync<bool?>(
+            new CommandDefinition(Sql, cancellationToken: aCancellationToken)).ConfigureAwait(false) ?? false;
+    }
+
+    /// <inheritdoc />
+    public async Task SetTwinsEnabledAsync(bool aEnabled, CancellationToken aCancellationToken = default)
+    {
+        const string Sql = """
+            INSERT INTO "SafetyPolicy" ("PolicyKey", "NsfwModeEnabled", "UpdatedUtc", "TwinsEnabled")
+            VALUES ('default', FALSE, @aUpdatedUtc, @aTwinsEnabled)
+            ON CONFLICT ("PolicyKey") DO UPDATE SET
+                "TwinsEnabled" = EXCLUDED."TwinsEnabled",
+                "UpdatedUtc" = EXCLUDED."UpdatedUtc"
+            """;
+
+        using var vConnection = await objConnectionFactory.CreateOpenConnectionAsync(aCancellationToken).ConfigureAwait(false);
+        await vConnection.ExecuteAsync(new CommandDefinition(
+            Sql, new { aUpdatedUtc = DateTime.UtcNow, aTwinsEnabled = aEnabled }, cancellationToken: aCancellationToken)).ConfigureAwait(false);
+    }
 }

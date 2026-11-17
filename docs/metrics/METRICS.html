@@ -106,134 +106,301 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <div class="layout">
   <nav class="side">
     <h1>TrStudio — Development Metrics</h1>
-    <div class="sub">Last rendered: 2026-11-15</div>
+    <div class="sub">Last rendered: 2026-11-17</div>
     <div class="group">Contents</div>
     <ol>
         <li><a href="#first-pass-rate">1. First-pass rate</a></li>
         <li><a href="#gate-catch-distribution">2. Gate catch distribution</a></li>
+        <li class="h3"><a href="#live-app-36-failures">Live · app — 36 failures</a></li>
         <li><a href="#escape-rate">3. Escape rate</a></li>
-        <li><a href="#throughput-and-rework-poolable">4. Throughput and rework — poolable</a></li>
+        <li><a href="#throughput-and-rework-these-may-be-pooled">4. Throughput and rework (these may be pooled)</a></li>
         <li><a href="#misses-what-was-missed-who-missed-it-what-the-fix-cost">5. Misses — what was missed, who missed it, what the fix cost</a></li>
         <li class="h3"><a href="#a-attribution-linked-records-only">5a. Attribution — linked records only</a></li>
-        <li class="h3"><a href="#b-discovery-cost-measured-only">5b. Discovery cost — measured only</a></li>
+        <li class="h3"><a href="#b-rework-cost-measured-and-apportioned-never-combine">5b. Rework cost — measured and apportioned never combine</a></li>
+        <li class="h3"><a href="#c-finding-cost-beside-fixing-cost">5c. Finding cost beside fixing cost</a></li>
         <li><a href="#effort-per-phase-time-tokens-model-fan-out">6. Effort per phase — time, tokens, model, fan-out</a></li>
+        <li class="h3"><a href="#a-which-model-did-the-work">6a. Which model did the work</a></li>
+        <li class="h3"><a href="#b-subagent-fan-out-measured-on-its-own-count">6b. Subagent fan-out — measured, on its own count</a></li>
         <li><a href="#c-estimate-against-actual-two-columns-never-one-number">6c. Estimate against actual — two columns, never one number</a></li>
         <li><a href="#what-is-missing">7. What is missing</a></li>
     </ol>
   </nav>
   <main>
     <h1>TrStudio — Development Metrics</h1>
-    <div class="subtitle">Rendered 2026-11-15 &middot; source <code>METRICS.md</code></div>
+    <div class="subtitle">Rendered 2026-11-17 &middot; source <code>METRICS.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
       <ol>
         <li><a href="#first-pass-rate">1. First-pass rate</a></li>
         <li><a href="#gate-catch-distribution">2. Gate catch distribution</a></li>
+        <li class="h3"><a href="#live-app-36-failures">Live · app — 36 failures</a></li>
         <li><a href="#escape-rate">3. Escape rate</a></li>
-        <li><a href="#throughput-and-rework-poolable">4. Throughput and rework — poolable</a></li>
+        <li><a href="#throughput-and-rework-these-may-be-pooled">4. Throughput and rework (these may be pooled)</a></li>
         <li><a href="#misses-what-was-missed-who-missed-it-what-the-fix-cost">5. Misses — what was missed, who missed it, what the fix cost</a></li>
         <li class="h3"><a href="#a-attribution-linked-records-only">5a. Attribution — linked records only</a></li>
-        <li class="h3"><a href="#b-discovery-cost-measured-only">5b. Discovery cost — measured only</a></li>
+        <li class="h3"><a href="#b-rework-cost-measured-and-apportioned-never-combine">5b. Rework cost — measured and apportioned never combine</a></li>
+        <li class="h3"><a href="#c-finding-cost-beside-fixing-cost">5c. Finding cost beside fixing cost</a></li>
         <li><a href="#effort-per-phase-time-tokens-model-fan-out">6. Effort per phase — time, tokens, model, fan-out</a></li>
+        <li class="h3"><a href="#a-which-model-did-the-work">6a. Which model did the work</a></li>
+        <li class="h3"><a href="#b-subagent-fan-out-measured-on-its-own-count">6b. Subagent fan-out — measured, on its own count</a></li>
         <li><a href="#c-estimate-against-actual-two-columns-never-one-number">6c. Estimate against actual — two columns, never one number</a></li>
         <li><a href="#what-is-missing">7. What is missing</a></li>
       </ol>
     </div>
+<p><strong>Snapshot as of 2026-11-17</strong> · project type <code>app</code> · schema v1 · figures from <code>tf-metrics.sh --report . --json</code></p>
 <table>
-<thead><tr><th></th><th></th></tr></thead>
+<thead><tr><th>Stream</th><th>Records</th><th>Span (UTC)</th></tr></thead>
 <tbody>
-<tr><td>App</td><td>TrStudio</td></tr>
-<tr><td>Project type</td><td>app</td></tr>
-<tr><td>Written</td><td>2026-11-15 (end of the night run), from <code>docs/metrics/*.jsonl</code> by <code>tf-metrics.sh --report</code></td></tr>
-<tr><td>Streams</td><td>runs 25 · gates 261 (0 backfilled) · sessions 4 · commits 9 · misses 38</td></tr>
+<tr><td><code>runs.jsonl</code></td><td>38</td><td>2026-11-12 → 2026-11-16</td></tr>
+<tr><td><code>gates.jsonl</code></td><td>334 (0 backfilled, 0 malformed lines)</td><td>2026-11-13 → 2026-11-16</td></tr>
+<tr><td><code>sessions.jsonl</code></td><td>6 (7 lines; 1 repeated session id collapsed)</td><td>2026-11-12 → 2026-11-16</td></tr>
+<tr><td><code>commits.jsonl</code></td><td>11</td><td>2026-07-11 → 2026-11-15</td></tr>
+<tr><td><code>misses.jsonl</code></td><td>52 miss + 56 miss-fix (0 amends, 0 withdrawn)</td><td>2026-11-12 → 2026-11-16</td></tr>
+<tr><td><code>estimates.jsonl</code></td><td>120 (one batch, phase 3)</td><td>2026-11-13</td></tr>
 </tbody>
 </table>
-<p>All figures below are live records; there are no backfilled records, so nothing is split by provenance.</p>
+<p>Every gate record is live (written at the moment of the event) and every record is classified <code>app</code>. There is no backfilled data and no unclassified data, so each table below has exactly one segment: live, <code>app</code>. Nothing on this page adds TrStudio to another project. No run was withdrawn (0 voided runs).</p>
+<hr>
 <h2 id="first-pass-rate"><a id="1-first-pass-rate"></a>1. First-pass rate<a class="anchor-link" href="#first-pass-rate">#</a></h2>
+<p><em>What share of requirements reached <code>Verified</code> on their first attempt.</em></p>
 <table>
-<thead><tr><th>Records</th><th>Requirements scored</th><th>First-pass rate</th></tr></thead>
+<thead><tr><th>Provenance</th><th>Project type</th><th>Requirements scored</th><th>First-pass</th><th>Rate</th></tr></thead>
 <tbody>
-<tr><td>261 gate records (live, app)</td><td>142</td><td>92%</td></tr>
+<tr><td><strong>Live</strong></td><td>app</td><td>162</td><td>148</td><td><strong>91%</strong></td></tr>
 </tbody>
 </table>
+<p><strong>Left out of the live rate:</strong> none. No requirement carries backfilled history (0 tainted requirements).</p>
+<hr>
 <h2 id="gate-catch-distribution"><a id="2-gate-catch-distribution"></a>2. Gate catch distribution<a class="anchor-link" href="#gate-catch-distribution">#</a></h2>
+<p><em>Of all failures, which check caught them first.</em></p>
+<h3 id="live-app-36-failures"><a id="live--app--36-failures"></a>Live · <code>app</code> — 36 failures<a class="anchor-link" href="#live-app-36-failures">#</a></h3>
 <table>
-<thead><tr><th>Gate</th><th>Failures caught</th><th>Share</th></tr></thead>
+<thead><tr><th>Check</th><th>Caught</th><th>Share of the 36</th></tr></thead>
 <tbody>
-<tr><td>acceptance</td><td>8</td><td>35%</td></tr>
-<tr><td>mockup-parity</td><td>5</td><td>22%</td></tr>
-<tr><td>render</td><td>2</td><td>9%</td></tr>
-<tr><td>test-users</td><td>1</td><td>4%</td></tr>
-<tr><td>escaped (no gate caught it)</td><td>7</td><td>30%</td></tr>
+<tr><td>test-users</td><td>1</td><td>3%</td></tr>
+<tr><td>acceptance</td><td>8</td><td>22%</td></tr>
+<tr><td>render (data shown on screen)</td><td>2</td><td>6%</td></tr>
+<tr><td>mockup-parity</td><td>6</td><td>17%</td></tr>
+<tr><td><strong>escaped</strong> — no check caught it</td><td>19</td><td>53%</td></tr>
 </tbody>
 </table>
-<p>23 failures in all. The mockup comparison ran on 44 records and caught 5 (11%): Login, Register and Setup required, the three screens that were already named before decision 11's run. The 7 escapes are the defects this run found outside a gate: the job-result provider (REQ-UI-086), three faulty Venice checks (REQ-UI-089, REQ-UI-091, REQ-UI-097 with REQ-FN-077), the Mac zoom (REQ-FN-104) and the Venice reset-time reader (REQ-UI-095).</p>
+<p>The build, assets, visual, perf and standards checks caught nothing in this period.</p>
+<p>Checks added after the stream design began are read against the records that actually ran them, never against the 36:</p>
+<table>
+<thead><tr><th>Check</th><th>Added</th><th>Ran on</th><th>Caught</th><th>Rate on the records it ran on</th></tr></thead>
+<tbody>
+<tr><td>perf</td><td>2026-08-10</td><td>0 records</td><td>0</td><td>not yet run on this data</td></tr>
+<tr><td>assets</td><td>2026-08-31</td><td>47 records</td><td>0</td><td>0%</td></tr>
+<tr><td>mockup-parity</td><td>2026-08-31</td><td>49 records</td><td>6</td><td>12%</td></tr>
+<tr><td>test-users</td><td>2026-11-01</td><td>315 records</td><td>1</td><td>0%</td></tr>
+</tbody>
+</table>
+<hr>
 <h2 id="escape-rate"><a id="3-escape-rate"></a>3. Escape rate<a class="anchor-link" href="#escape-rate">#</a></h2>
-<p>41% on the gate records. Separately, from the miss stream: 7 of 38 misses were found by a person (18%). The two are different measures and are not combined.</p>
-<h2 id="throughput-and-rework-poolable"><a id="4-throughput-and-rework--poolable"></a>4. Throughput and rework — poolable<a class="anchor-link" href="#throughput-and-rework-poolable">#</a></h2>
+<p><em>What share of requirements with a failure reached the owner instead of being caught by a check.</em></p>
 <table>
-<thead><tr><th>Figure</th><th>Value</th></tr></thead>
+<thead><tr><th>Provenance</th><th>Project type</th><th>Escape rate</th></tr></thead>
 <tbody>
-<tr><td>Runs</td><td>25: amend-docs 4, build-phase 4, estimate-phase 1, metrics-report 2, triage-and-fix 5, verify-phase 9</td></tr>
-<tr><td>Rework ratio</td><td>150% (fix-mode runs over build-phase runs)</td></tr>
-<tr><td>Batch size (median)</td><td>18 requirements per build-phase run</td></tr>
-<tr><td>Tokens per Verified</td><td>10,170.4 output tokens (what was billed is never estimated)</td></tr>
+<tr><td><strong>Live</strong></td><td>app</td><td><strong>72%</strong></td></tr>
 </tbody>
 </table>
+<p>The 19 <code>gate:"escaped"</code> records name these requirements (status before the escape in brackets):</p>
+<ul>
+<li>2026-11-14: REQ-UI-086, REQ-UI-089, REQ-UI-091, REQ-UI-097, REQ-FN-077 (Blocked); REQ-FN-104 (new row); <strong>REQ-UI-095 (Verified)</strong>
+</li>
+<li>2026-11-15: REQ-UI-002, REQ-FN-015, REQ-UI-004 (Needs re-verify); REQ-FN-046, REQ-FN-047 (Implemented)
+</li>
+<li>2026-11-16: <strong>REQ-FN-086, REQ-FN-096, REQ-FN-099, REQ-FN-104, REQ-FN-094, REQ-UI-010, REQ-UI-005 (all Verified)</strong>
+</li>
+</ul>
+<p>Eight escapes were on requirements already marked <code>Verified</code>, seven of them on 2026-11-16. Those are the strongest signal on this page: the checks passed them and the owner still found a defect.</p>
+<p>The miss stream's own "found by a person" share (40%, §5) is a different count by a different definition and stands beside this figure; it is never merged with it.</p>
+<hr>
+<h2 id="throughput-and-rework-these-may-be-pooled"><a id="4-throughput-and-rework-these-may-be-pooled"></a>4. Throughput and rework (these may be pooled)<a class="anchor-link" href="#throughput-and-rework-these-may-be-pooled">#</a></h2>
+<table>
+<thead><tr><th>Measure</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td>Runs</td><td>38 (triage-and-fix 13, verify-phase 13, amend-docs 4, build-phase 4, metrics-report 3, estimate-phase 1)</td></tr>
+<tr><td>Rework ratio (fix-mode runs ÷ build-phase runs)</td><td>350%</td></tr>
+<tr><td>Batch size: median requirements per <code>build-phase</code> run</td><td>18</td></tr>
+<tr><td>Throughput: median requirements per hour</td><td>104.35</td></tr>
+<tr><td>Sessions / total tokens</td><td>6 / 3,521,929</td></tr>
+<tr><td>Tokens per <code>Verified</code> requirement</td><td>11,818.6</td></tr>
+<tr><td>Commits</td><td>11 over 9 active days, 1.22 per active day</td></tr>
+</tbody>
+</table>
+<p><strong>No dollar figures.</strong> Every run here is Claude Code, which records token counts but no cost (<code>cost_usd</code> is always null), on a subscription. Pricing tokens from a rate card would be a guess shown as a measurement, so this page reports tokens only.</p>
+<p>The commit hook is installed on this clone (<code>commit_hook: true</code>), so the commit count is not understated for that reason. Commit records lag by one commit by design.</p>
+<hr>
 <h2 id="misses-what-was-missed-who-missed-it-what-the-fix-cost"><a id="5-misses--what-was-missed-who-missed-it-what-the-fix-cost"></a>5. Misses — what was missed, who missed it, what the fix cost<a class="anchor-link" href="#misses-what-was-missed-who-missed-it-what-the-fix-cost">#</a></h2>
 <table>
-<thead><tr><th>Figure</th><th>Value</th></tr></thead>
+<thead><tr><th>Measure</th><th>Value</th></tr></thead>
 <tbody>
-<tr><td>Misses logged</td><td>38 (5 open, 33 resolved)</td></tr>
-<tr><td>Classes</td><td>wrong-behaviour 16 · partial-implementation 13 · regression 5 · unspecified-gap 4</td></tr>
-<tr><td>Whose gap (23 sorted)</td><td>weak-check 16 · spec 6 · unsaid 1</td></tr>
-<tr><td>Found by</td><td>agent review 17 · gate 14 · owner 7</td></tr>
+<tr><td>Misses logged</td><td>52 (7 open, 45 resolved, 0 will-not-fix)</td></tr>
+<tr><td>Fix records</td><td>56 (0 with no matching miss)</td></tr>
+<tr><td>Design-miss share (<code>unspecified-gap</code>: the spec left it out)</td><td>12%</td></tr>
+<tr><td>Found by a person (<code>owner</code> / <code>production</code>)</td><td>40%</td></tr>
 </tbody>
 </table>
-<p>The 5 open misses are the mockup-comparison failures on Login (REQ-UI-001, REQ-FN-016), Register (REQ-UI-002, REQ-FN-015) and Setup required (REQ-UI-004).</p>
-<h3 id="a-attribution-linked-records-only"><a id="5a-attribution--linked-records-only"></a>5a. Attribution — <code>linked</code> records only<a class="anchor-link" href="#a-attribution-linked-records-only">#</a></h3>
-<p>14 of 38 misses are linked to the run that made them (all build-phase, builder, claude-opus-5-5); 24 are excluded as inferred or unknown. Observational only: which model gets which work is not random.</p>
-<h3 id="b-discovery-cost-measured-only"><a id="5b-discovery-cost--measured-only"></a>5b. Discovery cost — measured only<a class="anchor-link" href="#b-discovery-cost-measured-only">#</a></h3>
+<p><em>Reported beside the escape rate in §3, never merged with it.</em> Will-not-fix misses would be a decision, not a backlog item, so they are kept out of the open count; there are none.</p>
+<p><strong>Miss classes</strong> — what was missed</p>
 <table>
-<thead><tr><th>Miss</th><th>Row</th><th>Found after</th></tr></thead>
+<thead><tr><th>Class</th><th>n</th><th>Share</th></tr></thead>
 <tbody>
-<tr><td>MISS-TrStudio-20261114-09</td><td>REQ-UI-084</td><td>4.6k tokens, 0.8 min</td></tr>
-<tr><td>MISS-TrStudio-20261114-23</td><td>REQ-FN-104</td><td>41.9k tokens, 5.2 min — Login card right of centre in the Mac app</td></tr>
-<tr><td>MISS-TrStudio-20261114-24</td><td>REQ-UI-095</td><td>17.2k tokens, 3.0 min — Venice's millisecond reset time crashed the error reader</td></tr>
+<tr><td>wrong-behaviour</td><td>21</td><td>40%</td></tr>
+<tr><td>partial-implementation</td><td>13</td><td>25%</td></tr>
+<tr><td>regression</td><td>12</td><td>23%</td></tr>
+<tr><td>unspecified-gap</td><td>6</td><td>12%</td></tr>
 </tbody>
 </table>
-<p>Discovery per miss: 11,403.6 output tokens and 1.1 minutes (n=16 measured, 22 not measured: a verify pass that finds several defects at once has no window per defect). Fix cost: 5.4k output tokens per miss-fix, apportioned (1/24 of the night run's fix window each), never a measured sole cost.</p>
-<p>Root causes found on the host, outside any row (from the run's own marks): the app template deleted from the working tree broke the build (about 1 minute to find); stale <code>obj</code> output made the Mac app quit at start (about 1 minute from the look mark at 19:46:49Z); Automation Mode needing a password stopped the mac2 driver (about 9 minutes, including updating the driver).</p>
+<p><strong>Found by:</strong> owner 21 · agent review 17 · a check 14.</p>
+<p><strong>Why it was missed</strong> — which practice failed (19 of 52 misses assessed; 0 predate the field, so all 52 could have carried it)</p>
+<table>
+<thead><tr><th>Practice</th><th>n</th><th>Share of the 19</th></tr></thead>
+<tbody>
+<tr><td>insufficient-verify-method</td><td>18</td><td>95%</td></tr>
+<tr><td>missing-checklist-item</td><td>1</td><td>5%</td></tr>
+</tbody>
+</table>
+<p>33 misses are not assessed. Two of them are owner-found escapes with no reason recorded: <strong>MISS-TrStudio-20261116-08</strong> and <strong>MISS-TrStudio-20261116-09</strong>. Complete them with <code>bash .tfcore/utils/tf-emit.sh --amend &lt;miss_id&gt; why_missed &lt;value&gt;</code>, never by editing <code>misses.jsonl</code>.</p>
+<p>Read with care: nearly every assessed miss says the check was too weak for the defect, not that the spec had a hole.</p>
+<p><strong>Whose gap it was</strong> (37 of 52 sorted): weak-check 28 (76%) · spec 8 (22%) · unsaid 1 (3%).</p>
+<p>No <code>miss-amend</code> records exist (0 applied, 0 orphaned). No owner reviews are recorded (0 review records).</p>
+<h3 id="a-attribution-linked-records-only"><a id="5a-attribution--linked-records-only"></a>5a. Attribution — linked records only<a class="anchor-link" href="#a-attribution-linked-records-only">#</a></h3>
+<p><strong>18 of 52 misses are attributed; 34 are left out</strong> because they name a phase that no <code>runs.jsonl</code> record backs, so the model behind them is unknown.</p>
+<table>
+<thead><tr><th>By</th><th>Counts (over the 18)</th></tr></thead>
+<tbody>
+<tr><td>Origin phase</td><td>build-phase 18</td></tr>
+<tr><td>Origin agent</td><td>builder 14 · flow-master 4</td></tr>
+<tr><td>Origin model</td><td>claude-opus-5-5 18</td></tr>
+</tbody>
+</table>
+<p><strong>These are observations, not causes.</strong> Which model gets the hard work is not random, and here only one model ran at all, so this table cannot rank models.</p>
+<h3 id="b-rework-cost-measured-and-apportioned-never-combine"><a id="5b-rework-cost--measured-and-apportioned-never-combine"></a>5b. Rework cost — measured and apportioned never combine<a class="anchor-link" href="#b-rework-cost-measured-and-apportioned-never-combine">#</a></h3>
+<table>
+<thead><tr><th></th><th>Fix records</th><th>Tokens out per miss</th><th>Records with no token count</th></tr></thead>
+<tbody>
+<tr><td><strong>Measured</strong> (<code>sole</code>: the run fixed only this requirement)</td><td>0</td><td>insufficient data (n=0)</td><td>0</td></tr>
+<tr><td>Apportioned (<code>shared:n</code>: one run's tokens split equally; <strong>not a measurement</strong>)</td><td>41</td><td>15,068.0 (n=41)</td><td>0</td></tr>
+<tr><td>Unattributable (no usable token window)</td><td>15</td><td>—</td><td>—</td></tr>
+</tbody>
+</table>
+<p><strong>Dollars:</strong> none measured (0 priced records). Claude Code records carry no cost, and no rate card is applied.</p>
+<h3 id="c-finding-cost-beside-fixing-cost"><a id="5c-finding-cost-beside-fixing-cost"></a>5c. Finding cost beside fixing cost<a class="anchor-link" href="#c-finding-cost-beside-fixing-cost">#</a></h3>
+<p>Finding a defect cost an average of <strong>17,817.2 tokens out and 1.7 minutes</strong> per miss, over the 27 misses whose finding window was measured; 25 were not measured, each for a stated reason; 0 predate the field.</p>
+<table>
+<thead><tr><th>Miss</th><th>Requirement</th><th>Found</th><th>Fixed</th></tr></thead>
+<tbody>
+<tr><td>MISS-TrStudio-20261112-01</td><td>REQ-UI-086</td><td>not measured: no window of its own</td><td>5,360 tokens (apportioned 1/24)</td></tr>
+<tr><td>MISS-TrStudio-20261113-01</td><td>REQ-NFR-016</td><td>16,231 tokens, 86 s</td><td>not measured</td></tr>
+<tr><td>MISS-TrStudio-20261113-02</td><td>REQ-FN-093</td><td>8,677 tokens, 25 s</td><td>not measured</td></tr>
+<tr><td>MISS-TrStudio-20261113-03</td><td>REQ-FN-091</td><td>8,677 tokens, 25 s</td><td>not measured</td></tr>
+<tr><td>MISS-TrStudio-20261113-04</td><td>REQ-FN-097</td><td>6,550 tokens, 18 s</td><td>not measured</td></tr>
+<tr><td>MISS-TrStudio-20261113-05</td><td>REQ-UI-099</td><td>2,382 tokens, 11 s</td><td>not measured</td></tr>
+<tr><td>MISS-TrStudio-20261113-06</td><td>REQ-NFR-020</td><td>2,947 tokens, 10 s</td><td>not measured</td></tr>
+<tr><td>MISS-TrStudio-20261113-07</td><td>REQ-UI-098</td><td>9,723 tokens, 38 s</td><td>not measured</td></tr>
+<tr><td>MISS-TrStudio-20261113-08</td><td>REQ-UI-004</td><td>not measured: found by the screen smoke run, no start mark</td><td>not measured</td></tr>
+<tr><td>MISS-TrStudio-20261113-09</td><td>REQ-UI-004</td><td>not measured: found by the screen smoke run, no start mark</td><td>not measured</td></tr>
+<tr><td>MISS-TrStudio-20261114-01</td><td>REQ-FN-101</td><td>5,056 tokens, 35 s</td><td>not measured</td></tr>
+<tr><td>MISS-TrStudio-20261114-02</td><td>REQ-UI-098</td><td>8,700 tokens, 71 s</td><td>not measured</td></tr>
+<tr><td>MISS-TrStudio-20261114-03</td><td>REQ-UI-005</td><td>5,179 tokens, 51 s</td><td>5,360 tokens (apportioned 1/24)</td></tr>
+<tr><td>MISS-TrStudio-20261114-04</td><td>REQ-UI-005</td><td>10,072 tokens, 76 s</td><td>not measured</td></tr>
+<tr><td>MISS-TrStudio-20261114-05</td><td>REQ-FN-026</td><td>30,597 tokens, 46 s</td><td>not measured</td></tr>
+<tr><td>MISS-TrStudio-20261114-06</td><td>REQ-FN-014</td><td>3,969 tokens, 26 s</td><td>not measured</td></tr>
+<tr><td>MISS-TrStudio-20261114-07</td><td>REQ-UI-004</td><td>not measured: one verify pass found 2 at once</td><td>16,138 tokens (apportioned 1/10)</td></tr>
+<tr><td>MISS-TrStudio-20261114-08</td><td>REQ-UI-075</td><td>not measured: one verify pass found 2 at once</td><td>5,360 tokens (apportioned 1/24)</td></tr>
+<tr><td>MISS-TrStudio-20261114-09</td><td>REQ-UI-084</td><td>4,594 tokens, 47 s</td><td>5,360 tokens (apportioned 1/24)</td></tr>
+<tr><td>MISS-TrStudio-20261114-10 … -17</td><td>REQ-UI-084, REQ-FN-077, REQ-UI-085, REQ-UI-086, REQ-UI-089, REQ-UI-091, REQ-UI-096, REQ-UI-097</td><td>not measured: one verify pass found 8 at once</td><td>5,360 tokens each (apportioned 1/24)</td></tr>
+<tr><td>MISS-TrStudio-20261114-18 … -22</td><td>REQ-UI-086, REQ-UI-089, REQ-UI-091, REQ-UI-097, REQ-FN-077</td><td>not measured: logged together within 120 s</td><td>5,360 tokens each (apportioned 1/24)</td></tr>
+<tr><td>MISS-TrStudio-20261114-23</td><td>REQ-FN-104</td><td>41,916 tokens, 313 s</td><td>5,360 tokens (apportioned 1/24)</td></tr>
+<tr><td>MISS-TrStudio-20261114-24</td><td>REQ-UI-095</td><td>17,188 tokens, 182 s</td><td>5,360 tokens (apportioned 1/24)</td></tr>
+<tr><td>MISS-TrStudio-20261115-01 … -04</td><td>REQ-UI-001, REQ-UI-002, REQ-FN-015, REQ-FN-016</td><td>not measured: one verify pass found 4 at once</td><td>16,138 tokens each (apportioned 1/10)</td></tr>
+<tr><td>MISS-TrStudio-20261115-05 … -07</td><td>REQ-UI-002, REQ-FN-015, REQ-UI-004</td><td>not measured: logged together within 120 s</td><td>16,138 tokens each (apportioned 1/10)</td></tr>
+<tr><td>MISS-TrStudio-20261115-08</td><td>REQ-FN-046</td><td>1,065 tokens, 0 s</td><td>16,138 tokens (apportioned 1/10)</td></tr>
+<tr><td>MISS-TrStudio-20261115-09</td><td>REQ-FN-047</td><td>1,065 tokens, 0 s</td><td>16,138 tokens (apportioned 1/10)</td></tr>
+<tr><td>MISS-TrStudio-20261116-01</td><td>REQ-FN-086</td><td>16,087 tokens, 75 s</td><td>46,823 tokens (apportioned 1/7)</td></tr>
+<tr><td>MISS-TrStudio-20261116-02</td><td>REQ-FN-096</td><td>698 tokens, 0 s</td><td>46,823 tokens (apportioned 1/7)</td></tr>
+<tr><td>MISS-TrStudio-20261116-03</td><td>REQ-FN-099</td><td>28,214 tokens, 257 s</td><td>46,823 tokens (apportioned 1/7)</td></tr>
+<tr><td>MISS-TrStudio-20261116-04</td><td>REQ-FN-104</td><td>33,194 tokens, 283 s</td><td>46,823 tokens (apportioned 1/7)</td></tr>
+<tr><td>MISS-TrStudio-20261116-05</td><td>REQ-FN-094</td><td>57,766 tokens, 542 s</td><td>46,823 tokens (apportioned 1/7)</td></tr>
+<tr><td>MISS-TrStudio-20261116-06</td><td>REQ-UI-010</td><td>706 tokens, 4 s</td><td>46,823 tokens (apportioned 1/7)</td></tr>
+<tr><td>MISS-TrStudio-20261116-07</td><td>REQ-UI-005</td><td>738 tokens, 0 s</td><td>46,823 tokens (apportioned 1/7)</td></tr>
+<tr><td>MISS-TrStudio-20261116-08</td><td>REQ-FN-016</td><td>24,154 tokens, 206 s</td><td>not measured</td></tr>
+<tr><td>MISS-TrStudio-20261116-09</td><td>REQ-FN-097</td><td>134,919 tokens, 364 s</td><td>no fix yet</td></tr>
+</tbody>
+</table>
+<p>Every fix figure here is an apportioned share of one run's tokens, never a measurement of that one miss.</p>
+<hr>
 <h2 id="effort-per-phase-time-tokens-model-fan-out"><a id="6-effort-per-phase--time-tokens-model-fan-out"></a>6. Effort per phase — time, tokens, model, fan-out<a class="anchor-link" href="#effort-per-phase-time-tokens-model-fan-out">#</a></h2>
+<p>The unit is the <strong>run</strong>, grouped by command. This is not time per feature or per requirement; nothing on the streams can measure that.</p>
+<p>Over <strong>38 live run records</strong>. Token window coverage: <code>tree</code> 18 · <code>main</code> 20 · none 0. Every run's tokens and duration were measured (0 unmeasured).</p>
 <table>
-<thead><tr><th>Command</th><th>Runs</th><th>Wall clock</th><th>Output tokens</th><th>Share of output</th></tr></thead>
+<thead><tr><th>Phase</th><th>Runs</th><th>Wall clock (total / median / max)</th><th>Tokens out</th><th>Share of all output</th><th>Share of time</th><th>Tokens measured on</th></tr></thead>
 <tbody>
-<tr><td>triage-and-fix</td><td>5</td><td>6h21m</td><td>2.1M</td><td>43%</td></tr>
-<tr><td>build-phase</td><td>4</td><td>1h43m</td><td>1.4M</td><td>28%</td></tr>
-<tr><td>amend-docs</td><td>4</td><td>45m36s</td><td>1.2M</td><td>25%</td></tr>
-<tr><td>estimate-phase</td><td>1</td><td>1m15s</td><td>115.6k</td><td>2%</td></tr>
-<tr><td>verify-phase</td><td>9</td><td>51m46s</td><td>66.7k</td><td>1%</td></tr>
-<tr><td>metrics-report</td><td>2</td><td>0m53s</td><td>13.7k</td><td>0%</td></tr>
+<tr><td><code>triage-and-fix</code></td><td>13</td><td>10h03m / 25 s / 5h37m</td><td>2,662,808</td><td>48%</td><td>73%</td><td>13 of 13</td></tr>
+<tr><td><code>build-phase</code></td><td>4</td><td>1h43m / 24m42s / 50m03s</td><td>1,419,017</td><td>25%</td><td>13%</td><td>4 of 4</td></tr>
+<tr><td><code>amend-docs</code></td><td>4</td><td>45m36s / 13m50s / 16m20s</td><td>1,246,633</td><td>22%</td><td>6%</td><td>4 of 4</td></tr>
+<tr><td><code>estimate-phase</code></td><td>1</td><td>1m15s (n=1)</td><td>115,626</td><td>2%</td><td>0%</td><td>1 of 1</td></tr>
+<tr><td><code>verify-phase</code></td><td>13</td><td>1h06m / 2m07s / 20m58s</td><td>98,439</td><td>2%</td><td>8%</td><td>13 of 13</td></tr>
+<tr><td><code>metrics-report</code></td><td>3</td><td>1m25s / 32 s / 34 s</td><td>26,805</td><td>0%</td><td>0%</td><td>3 of 3</td></tr>
 </tbody>
 </table>
-<p>Token windows measured on all 25 runs (9 main, 16 tree). triage-and-fix fanned out 18 subagents over the night run (measured; it declared 2 kinds), which wrote 79% of that phase's observed output: one per decision 11 screen, and one for the developer guide.</p>
+<p>Tokens out per run (mean / median): triage-and-fix 204.8k / 3.9k · build-phase 354.8k / 343.6k · amend-docs 311.7k / 314.1k · verify-phase 7.6k / 2.5k · metrics-report 8.9k / 7.1k · estimate-phase insufficient data (n=1).</p>
+<p><strong>The same warning applies here as to models:</strong> a phase costing more than another is a fact about what that phase is, not a finding about either. Triage-and-fix's total is dominated by one 5h37m run; its median run is 25 seconds.</p>
+<h3 id="a-which-model-did-the-work"><a id="6a-which-model-did-the-work"></a>6a. Which model did the work<a class="anchor-link" href="#a-which-model-did-the-work">#</a></h3>
+<table>
+<thead><tr><th>Phase</th><th>Model</th><th>Output tokens</th><th>Share of the phase</th><th>Runs</th></tr></thead>
+<tbody>
+<tr><td>every phase</td><td><code>claude-opus-5-5</code></td><td>5,569,328</td><td>100%</td><td>38</td></tr>
+</tbody>
+</table>
+<p>One model did all the work, all on Claude Code, all on a subscription. Every run is recorded as drifted from its routing tier (0 on tier); routing is observed, never enforced.</p>
+<h3 id="b-subagent-fan-out-measured-on-its-own-count"><a id="6b-subagent-fan-out--measured-on-its-own-count"></a>6b. Subagent fan-out — measured, on its own count<a class="anchor-link" href="#b-subagent-fan-out-measured-on-its-own-count">#</a></h3>
+<p>Fan-out is only visible on a <code>tree</code>-scope run. On a <code>main</code>-scope run the subagent transcripts were never read, so 0 there means <em>not looked</em>, not <em>none ran</em>. Every unobserved run below is unobserved for that reason (not <code>tree</code> scope); none predate the field.</p>
+<table>
+<thead><tr><th>Phase</th><th>Runs observed</th><th>Spawns (total / median / max)</th><th>Runs that fanned out</th><th>Output tokens in subagents</th><th>Subagent share</th><th>Declared by the agent</th></tr></thead>
+<tbody>
+<tr><td><code>triage-and-fix</code></td><td>5 of 13</td><td>18 / 0 / 18</td><td>1</td><td>1,686,440</td><td>79%</td><td>4 (none 2, builder 1, trblazeui 1)</td></tr>
+<tr><td><code>build-phase</code></td><td>2 of 4</td><td>5 / 2.5 / 5</td><td>1</td><td>561,476</td><td>83%</td><td>2 (builder 1, trblazeui 1)</td></tr>
+<tr><td><code>amend-docs</code></td><td>3 of 4</td><td>7 / 1 / 6</td><td>2</td><td>223,966</td><td>35%</td><td>7 kinds named once each</td></tr>
+<tr><td><code>verify-phase</code></td><td>6 of 13</td><td>0 / 0 / 0</td><td>0</td><td>0</td><td>0%</td><td>none</td></tr>
+<tr><td><code>metrics-report</code></td><td>2 of 3</td><td>1 / 0.5 / 1</td><td>1</td><td>4,249</td><td>21%</td><td>none</td></tr>
+<tr><td><code>estimate-phase</code></td><td>0 of 1</td><td>—</td><td>—</td><td>—</td><td>—</td><td>none</td></tr>
+</tbody>
+</table>
+<p><strong>Declared and measured disagree</strong> on triage-and-fix (4 declared, 18 measured) and build-phase (2 declared, 5 measured). The measured count, read from the harness's own store, is the right one; the gap shows the tasks under-report their own fan-out.</p>
+<hr>
 <h2 id="c-estimate-against-actual-two-columns-never-one-number"><a id="6c-estimate-against-actual--two-columns-never-one-number"></a>6c. Estimate against actual — two columns, never one number<a class="anchor-link" href="#c-estimate-against-actual-two-columns-never-one-number">#</a></h2>
 <table>
-<thead><tr><th>Phase 3</th><th>Estimate</th><th>Actual</th></tr></thead>
+<thead><tr><th>Phase</th><th>Estimated by</th><th>Step</th><th>Estimate mid (low–high)</th><th>Actual</th><th>Actual runs</th></tr></thead>
 <tbody>
-<tr><td>build [0/29]</td><td>no precedent</td><td>insufficient data (n=0)</td></tr>
-<tr><td>machine QA [0/29]</td><td>no precedent</td><td>insufficient data (n=0)</td></tr>
-<tr><td>after handoff [0/29]</td><td>no precedent</td><td>insufficient data (n=0)</td></tr>
+<tr><td>3 (29 rows)</td><td><code>claude-opus-5-5</code>, 2026-11-13</td><td><code>build-phase</code> [0/29]</td><td>no precedent</td><td>insufficient data (n=0)</td><td>0</td></tr>
+<tr><td>3</td><td></td><td><code>verify-phase</code> [0/29]</td><td>no precedent</td><td>insufficient data (n=0)</td><td>0 (1 run in the repo named no row)</td></tr>
+<tr><td>3</td><td></td><td><code>fix-issues</code> [0/29]</td><td>no precedent</td><td>insufficient data (n=0)</td><td>0</td></tr>
+<tr><td>3</td><td></td><td>after handoff [0/29]</td><td>no precedent</td><td>insufficient data (n=0)</td><td>0 (10 runs in the repo named no row)</td></tr>
 </tbody>
 </table>
+<p>The phase 3 estimate was a forecast (not after the fact), but no row had three earlier runs to draw on, so every figure is "no precedent". The phase in three parts (build, machine QA, after handoff) is likewise no precedent beside insufficient data. Runs that named no row cannot be placed in a phase and are counted, never shared out. Owner testing time is not measured.</p>
+<hr>
 <h2 id="what-is-missing"><a id="7-what-is-missing"></a>7. What is missing<a class="anchor-link" href="#what-is-missing">#</a></h2>
 <ul>
-<li>Fix cost per miss as a sole figure: every fix tonight shared one run's window.
+<li><strong>Measured rework cost per miss</strong> — insufficient data (n=0). No fix run touched exactly one requirement, so every costed fix is an apportioned share.
 </li>
-<li>Driven checks on the real Mac app: the mac2 driver needs Automation Mode without a password (owner-only <code>sudo</code>); the app was checked by screenshots instead.
+<li><strong>Estimate against actual</strong> — no precedent on any of phase 3's 29 rows, and insufficient data (n=0) on every actual.
 </li>
-<li>Owner UAT time: no stream records it.
+<li><strong>Tokens out per run, estimate-phase</strong> — insufficient data (n=1).
+</li>
+<li><strong>perf check</strong> — never ran on this data; no requirement carries a performance budget that was graded.
+</li>
+<li><strong>why_missed</strong> — 33 of 52 misses not assessed, including 2 owner-found escapes (MISS-TrStudio-20261116-08, -09).
+</li>
+<li><strong>Fan-out</strong> — not observed on 20 of 38 runs (<code>main</code> scope).
+</li>
+<li><strong>Dollars</strong> — not measured anywhere; Claude Code records no cost.
+</li>
+<li><strong>Owner reviews</strong> — no review records yet.
 </li>
 </ul>
   </main>

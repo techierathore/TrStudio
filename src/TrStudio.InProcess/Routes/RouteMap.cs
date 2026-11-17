@@ -26,6 +26,8 @@ public static class RouteMap
         aApp.MapRagEndpoints();
         aApp.MapCharacterEndpoints();
         aApp.MapAvatarEndpoints();
+        aApp.MapSequenceEndpoints();
+        aApp.MapTwinEndpoints();
         aApp.MapVideoEndpoints();
         aApp.MapSafetyEndpoints();
         aApp.MapComfyEndpoints();

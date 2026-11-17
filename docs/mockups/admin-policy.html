@@ -171,6 +171,10 @@ tr.sel td{background:var(--sel)}
   </div>
 
   <!-- Always-locked safety floors -->
+  <div class="card" data-tf-phase="3" data-testid="card-digital-twins">
+    <div class="row"><div class="col" style="gap:2px;flex:1"><h3 style="margin:0">Digital twins (real people, consent needed)</h3><span class="muted" style="font-size:12px">Off by default. When on, creators can make a twin of a person who has recorded consent.</span></div>
+      <div class="toggle" role="switch" aria-checked="false" onclick="this.classList.toggle('on')" data-testid="switch-digital-twins"></div></div>
+  </div>
   <div class="card" data-testid="card-safety-floors-always-enforced">
     <div class="row"><h3 style="margin:0">Safety floors — always enforced</h3><span class="spacer"></span><span class="badge danger" data-testid="badge-non-disableable">non-disableable</span></div>
     <p class="muted" style="font-size:12px;margin:4px 0 4px">These controls stay on in every mode, including Unrestricted. They cannot be switched off by any setting, key, or API call.</p>

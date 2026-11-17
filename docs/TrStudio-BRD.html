@@ -106,7 +106,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <div class="layout">
   <nav class="side">
     <h1>TrStudio — Business Requirements</h1>
-    <div class="sub">Last rendered: 2026-11-16</div>
+    <div class="sub">Last rendered: 2026-11-17</div>
     <div class="group">Contents</div>
     <ol>
         <li><a href="#summary">1. Summary</a></li>
@@ -130,7 +130,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
   </nav>
   <main>
     <h1>TrStudio — Business Requirements</h1>
-    <div class="subtitle">Rendered 2026-11-16 &middot; source <code>TrStudio-BRD.md</code></div>
+    <div class="subtitle">Rendered 2026-11-17 &middot; source <code>TrStudio-BRD.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
@@ -638,7 +638,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </li>
 <li><strong>BRD-83</strong> — User can register an account via the AppManager API (child-app registration); a generic superadmin (<code>admin@appmanager.local</code>) bootstraps the first session. <em>(F-IDENTITY)</em>
 </li>
-<li><strong>BRD-84</strong> — System shall route each user to a role-based default landing page after login (Owner/Creator → Avatar studio <code>/avatar</code>; Operator/Admin → admin dashboard <code>/admin/ops</code>) per the landing table in §9 F-IDENTITY. <em>(F-IDENTITY)</em> &lt;!-- from: owner review 2026-07-02 --&gt;
+<li><strong>BRD-84</strong> — System shall route each user to a role-based default landing page after login (Owner/Creator → Avatar studio <code>/avatar</code>; Operator/Admin → admin dashboard <code>/admin/ops</code>) per the landing table in §9 F-IDENTITY. The role comes from AppManager's own three roles (amended 2026-11-17): Admin is Owner, Manager is Operator, User is Creator (phase 3 BRD-177). <em>(F-IDENTITY)</em> &lt;!-- from: owner review 2026-07-02 --&gt;
 </li>
 <li><strong>BRD-85</strong> — System shall check on login whether initial setup is complete (≥1 enabled model source AND ≥1 ready registry model); if not, admins are routed into guided setup and Creators land on the Setup required (first-run gate) screen (<code>/setup-required</code>) directing them to their admin — no generation offered until the gate passes. <em>(F-IDENTITY, F-ADMIN)</em> &lt;!-- from: owner review 2026-07-02 --&gt;
 </li>
@@ -706,9 +706,9 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </li>
 <li><strong>BRD-31</strong> — Creator can generate captions/subtitles (from the script or Whisper) in EN/HI, burn-in or sidecar SRT. <em>(F-AVATAR, AV-05)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
-<li><strong>BRD-32</strong> — Creator can optionally create a digital-twin from a short base video, consent-gated (SAFE-03), off by default. <em>(F-AVATAR, AV-06)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
+<li><s><strong>BRD-32</strong></s> (moved 2026-11-17 to phase 3 as BRD-161 to BRD-167: the digital twin is built on Venice) — Creator can optionally create a digital-twin from a short base video, consent-gated (SAFE-03), off by default. <em>(F-AVATAR, AV-06)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
-<li><strong>BRD-33</strong> — Creator can assemble multiple avatar clips into one sequence with a consistent character. <em>(F-AVATAR, AV-07)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
+<li><s><strong>BRD-33</strong></s> (moved 2026-11-17 to phase 3 as BRD-168 to BRD-172: multi-shot assembly on Venice) — Creator can assemble multiple avatar clips into one sequence with a consistent character. <em>(F-AVATAR, AV-07)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
 <li><strong>BRD-55</strong> — System shall maintain a RAG-backed character bible (persona voice/wording consistency) in PgVector; from phase 3 on the local SQLite store through TechieRag (BRD-145). <em>(F-TEXT, §7)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
@@ -742,7 +742,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </li>
 <li><strong>BRD-45</strong> — Creator can trim/join/reframe, add audio (from Voice studio) and export MP4 in platform formats. <em>(F-VIDEO, VID-04)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
-<li><strong>BRD-46</strong> — Creator can extend/stitch clips for longer sequences. <em>(F-VIDEO, VID-05)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
+<li><s><strong>BRD-46</strong></s> (moved 2026-11-17 to phase 3 as BRD-173 and BRD-174: joining on this Mac, extending on Venice) — Creator can extend/stitch clips for longer sequences. <em>(F-VIDEO, VID-05)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
 </ul>
 <p><strong>Phase 8 — Safety + provenance (wired from Phase 2 onward)</strong></p>
@@ -834,12 +834,12 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </ul>
 <h2 id="development-status"><a id="7-development-status"></a>7. Development status<a class="anchor-link" href="#development-status">#</a></h2>
 <p>Written by the status gate after every build, verify and handoff; not by hand.</p>
-<p><strong>Snapshot as of 2026-11-16.</strong> Live per-requirement status: <code>PROJECT-STATUS.md</code> and the Requirements Status table in <code>docs/TrStudio-Checklist.md</code>.</p>
+<p><strong>Snapshot as of 2026-11-17.</strong> Live per-requirement status: <code>PROJECT-STATUS.md</code> and the Requirements Status table in <code>docs/TrStudio-Checklist.md</code>.</p>
 <table>
 <thead><tr><th>Screen</th><th>Requirements</th><th>Verified</th><th>Open</th><th>Status</th></tr></thead>
 <tbody>
 <tr><td>UI / Pages</td><td>25</td><td>23</td><td>2</td><td>Partial</td></tr>
-<tr><td>Functional requirements</td><td>68</td><td>47</td><td>21</td><td>Partial</td></tr>
+<tr><td>Functional requirements</td><td>63</td><td>47</td><td>16</td><td>Partial</td></tr>
 <tr><td>RAG / AI requirements (→ /techierag)</td><td>4</td><td>2</td><td>2</td><td>Partial</td></tr>
 <tr><td>Non-functional</td><td>10</td><td>1</td><td>9</td><td>Partial</td></tr>
 </tbody>

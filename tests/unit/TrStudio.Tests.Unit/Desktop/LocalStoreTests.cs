@@ -25,8 +25,9 @@ public class SqliteMigrationTests
         Assert.Null(vEngine.Host.StartupProblem);
         Assert.True(File.Exists(Path.Combine(vFolder, "TrStudio.db")));
         Assert.Equal(EmbeddedScriptCount(), vEngine.Host.AppliedScripts.Count);
-        // 24 translated scripts, 1600_DesktopJobsAndKeys, and 0621_PromptChatTokens (the chat's running token count).
-        Assert.Equal(24 + 2, EmbeddedScriptCount());
+        // 24 translated scripts, 1600_DesktopJobsAndKeys, 0621_PromptChatTokens (the chat's running token count)
+        // 1700_VeniceWan3Rows (the Wan 3.0 rows), 1710_DigitalTwin and 1720_ClipSequence (17 Nov 2026).
+        Assert.Equal(24 + 5, EmbeddedScriptCount());
         Assert.Equal(1L, vEngine.Scalar("SELECT COUNT(*) FROM pragma_table_info('PromptChatSession') WHERE name = 'Tokens'"));
         Assert.Equal(1L, vEngine.Scalar("SELECT COUNT(*) FROM pragma_table_info('GenerationJob') WHERE name = 'ProviderRef'"));
         Assert.Equal(1L, vEngine.Scalar("SELECT COUNT(*) FROM \"RegistryModel\" WHERE \"RegistryModelId\" = 'stub-echo'"));

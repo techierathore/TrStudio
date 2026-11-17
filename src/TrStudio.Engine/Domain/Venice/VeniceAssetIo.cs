@@ -147,7 +147,7 @@ public class VeniceAssetIo
         }
 
         var vBytes = await File.ReadAllBytesAsync(aPath, aCancellationToken).ConfigureAwait(false);
-        return (VeniceRequestBuilder.ToDataUrl(vBytes, aPath), Convert.ToBase64String(vBytes));
+        return (VeniceRequestBuilder.ToMediaDataUrl(vBytes, aPath), Convert.ToBase64String(vBytes));
     }
 
     private static string SniffImageExtension(byte[] aBytes)

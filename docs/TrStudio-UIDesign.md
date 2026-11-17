@@ -131,6 +131,8 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 
 ### Screen: Avatar studio (/avatar)
 
+**Phase 3 additions (17 Nov 2026, marked `data-tf-phase="3"`):** a **Digital twin** card (`card-digital-twin`: `badge-twins-off` while the owner has twins off, `alert-twin-consent` on a consent refusal, `input-twin-name`, `input-twin-person`, file pickers `file-twin-pictures` / `file-twin-clip` / `file-twin-voice`, `btn-create-twin`, `table-twins`, `input-twin-line`, `btn-make-twin-clip`) and a **Multi-shot** card (`card-multi-shot`: `select-shot-subject`, `list-shots`, `btn-add-shot`, `text-sequence-price`, `btn-start-sequence`, `badge-sequence-state`). Both are TrBlazeUI `Card`, `Input`, `Select`, `Button`, `Badge`, `Alert` and `Table`. Empty: no twins yet, one empty shot line. Error: the consent or "twins are off" alert; a failed shot names its number and Venice's reason.
+
 **Mockup:** [docs/mockups/avatar-studio.html](./mockups/avatar-studio.html) · **Role(s):** Creator/Owner · **BRD:** BRD-27..33, BRD-30, BRD-53, BRD-55, BRD-63 · **REQ:** REQ-UI-010
 
 **Layout (one line):** three-column working surface — left: character + voice pickers; center: script editor + preview player; right: tier selector + job/cost panel.
@@ -258,6 +260,8 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 **Notes / interactions:** synthetic/preset voices need no gate; real-person clone requires recorded consent (BRD-62). **Empty/loading/error:** `Alert` if consent missing; spinner while synthesizing.
 
 ### Screen: Video studio (/video)
+
+**Phase 3 additions (17 Nov 2026, marked `data-tf-phase="3"`):** a **Make a clip longer** card (`card-join-extend`): join finished clips end to end on this Mac (`select-join-clips`, `btn-join-clips`, the result length `text-joined-length`) and extend a clip with Venice (`select-extend-clip`, `select-extend-seconds`, `btn-extend-clip`). Error: fewer than two clips, or a clip over 15 s to extend, is refused in plain words.
 
 **Mockup:** [docs/mockups/video-studio.html](./mockups/video-studio.html) · **Role(s):** Creator · **BRD:** BRD-42..46, BRD-30 · **REQ:** REQ-UI-040
 
@@ -635,6 +639,8 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 **Notes / interactions:** monthly cap spans RunPod **and** closed APIs (incl. HeyGen); per-job estimate enforced before run. **Empty/loading/error:** empty log message; skeleton KPIs.
 
 ### Screen: Admin — Content policy (NSFW) (/admin/policy)
+
+**Phase 3 addition (17 Nov 2026, marked `data-tf-phase="3"`):** a **Digital twins** card (`card-digital-twins`) with one `Switch` (`switch-digital-twins`), off on a fresh app.
 
 **Mockup:** [docs/mockups/admin-policy.html](./mockups/admin-policy.html) · **Role(s):** Owner (personal mode only) · **BRD:** BRD-79, BRD-80 · **REQ:** REQ-UI-075
 

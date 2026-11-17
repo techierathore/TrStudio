@@ -106,7 +106,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <div class="layout no-toc">
   <main>
     <h1>TrStudio — UI Design</h1>
-    <div class="subtitle">Rendered 2026-11-15 &middot; source <code>TrStudio-UIDesign.md</code></div>
+    <div class="subtitle">Rendered 2026-11-17 &middot; source <code>TrStudio-UIDesign.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
@@ -274,6 +274,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </table>
 <p><strong>Notes / interactions:</strong> shown to Creators whenever the BRD-85 gate fails (no enabled source or no ready registry model); admins are never sent here — they are routed into guided setup instead. <strong>Empty/loading/error:</strong> this screen IS the empty state; "Check again" re-evaluates and forwards to <code>/avatar</code> once setup completes.</p>
 <h3 id="screen-avatar-studio-avatar">Screen: Avatar studio (/avatar)<a class="anchor-link" href="#screen-avatar-studio-avatar">#</a></h3>
+<p><strong>Phase 3 additions (17 Nov 2026, marked <code>data-tf-phase="3"</code>):</strong> a <strong>Digital twin</strong> card (<code>card-digital-twin</code>: <code>badge-twins-off</code> while the owner has twins off, <code>alert-twin-consent</code> on a consent refusal, <code>input-twin-name</code>, <code>input-twin-person</code>, file pickers <code>file-twin-pictures</code> / <code>file-twin-clip</code> / <code>file-twin-voice</code>, <code>btn-create-twin</code>, <code>table-twins</code>, <code>input-twin-line</code>, <code>btn-make-twin-clip</code>) and a <strong>Multi-shot</strong> card (<code>card-multi-shot</code>: <code>select-shot-subject</code>, <code>list-shots</code>, <code>btn-add-shot</code>, <code>text-sequence-price</code>, <code>btn-start-sequence</code>, <code>badge-sequence-state</code>). Both are TrBlazeUI <code>Card</code>, <code>Input</code>, <code>Select</code>, <code>Button</code>, <code>Badge</code>, <code>Alert</code> and <code>Table</code>. Empty: no twins yet, one empty shot line. Error: the consent or "twins are off" alert; a failed shot names its number and Venice's reason.</p>
 <p><strong>Mockup:</strong> <a href="./mockups/avatar-studio.html">docs/mockups/avatar-studio.html</a> · <strong>Role(s):</strong> Creator/Owner · <strong>BRD:</strong> BRD-27..33, BRD-30, BRD-53, BRD-55, BRD-63 · <strong>REQ:</strong> REQ-UI-010</p>
 <p><strong>Layout (one line):</strong> three-column working surface — left: character + voice pickers; center: script editor + preview player; right: tier selector + job/cost panel.</p>
 <p><strong>Component map:</strong></p>
@@ -393,6 +394,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </table>
 <p><strong>Notes / interactions:</strong> synthetic/preset voices need no gate; real-person clone requires recorded consent (BRD-62). <strong>Empty/loading/error:</strong> <code>Alert</code> if consent missing; spinner while synthesizing.</p>
 <h3 id="screen-video-studio-video">Screen: Video studio (/video)<a class="anchor-link" href="#screen-video-studio-video">#</a></h3>
+<p><strong>Phase 3 additions (17 Nov 2026, marked <code>data-tf-phase="3"</code>):</strong> a <strong>Make a clip longer</strong> card (<code>card-join-extend</code>): join finished clips end to end on this Mac (<code>select-join-clips</code>, <code>btn-join-clips</code>, the result length <code>text-joined-length</code>) and extend a clip with Venice (<code>select-extend-clip</code>, <code>select-extend-seconds</code>, <code>btn-extend-clip</code>). Error: fewer than two clips, or a clip over 15 s to extend, is refused in plain words.</p>
 <p><strong>Mockup:</strong> <a href="./mockups/video-studio.html">docs/mockups/video-studio.html</a> · <strong>Role(s):</strong> Creator · <strong>BRD:</strong> BRD-42..46, BRD-30 · <strong>REQ:</strong> REQ-UI-040</p>
 <p><strong>Layout (one line):</strong> left I2V/T2V controls + tier selector; center timeline/editor; right export panel.</p>
 <p><strong>Component map:</strong></p>
@@ -741,6 +743,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </table>
 <p><strong>Notes / interactions:</strong> monthly cap spans RunPod <strong>and</strong> closed APIs (incl. HeyGen); per-job estimate enforced before run. <strong>Empty/loading/error:</strong> empty log message; skeleton KPIs.</p>
 <h3 id="screen-admin-content-policy-nsfw-admin-policy"><a id="screen-admin--content-policy-nsfw-adminpolicy"></a>Screen: Admin — Content policy (NSFW) (/admin/policy)<a class="anchor-link" href="#screen-admin-content-policy-nsfw-admin-policy">#</a></h3>
+<p><strong>Phase 3 addition (17 Nov 2026, marked <code>data-tf-phase="3"</code>):</strong> a <strong>Digital twins</strong> card (<code>card-digital-twins</code>) with one <code>Switch</code> (<code>switch-digital-twins</code>), off on a fresh app.</p>
 <p><strong>Mockup:</strong> <a href="./mockups/admin-policy.html">docs/mockups/admin-policy.html</a> · <strong>Role(s):</strong> Owner (personal mode only) · <strong>BRD:</strong> BRD-79, BRD-80 · <strong>REQ:</strong> REQ-UI-075</p>
 <p><strong>Layout (one line):</strong> a single content-policy <code>Card</code> — an "Unrestricted (NSFW) content mode" <code>Switch</code> (off by default) with a confirmation gate, beneath a clearly-labelled list of the floors that stay locked regardless.</p>
 <p><strong>Component map:</strong></p>

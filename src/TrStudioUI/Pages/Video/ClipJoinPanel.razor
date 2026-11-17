@@ -1,0 +1,214 @@
+@using System.Text.Json
+@using TrBlazeUI.Components.NativeSelect
+@inject IHttpClientFactory HttpClientFactory
+@inject ToastService ToastService
+@implements IDisposable
+
+@*
+    Make a clip longer (REQ-FN-055, REQ-FN-114): either join finished clips end to end on this Mac
+    (nothing is sent anywhere), or extend one clip through Venice Wan 3.0 (one queued job, priced by
+    Venice before it is sent). Lists the creator's own video clips, oldest first.
+*@
+
+<Card Class="vid-card" data-testid="card-join-extend">
+    <h3 class="card-h3">Make a clip longer</h3>
+
+    <label class="param-label">Join clips end to end (on this Mac)</label>
+    <div class="join-clip-list" role="group" aria-label="Clips to join" data-testid="select-join-clips">
+        @if (objClips.Count == 0)
+        {
+            <div class="vid-empty">No clips yet. Generate two or more first.</div>
+        }
+        @foreach (var vClip in objClips)
+        {
+            var vId = vClip.AssetId;
+            <div class="join-clip-row" style="display:flex;align-items:center;gap:8px;padding:4px 0">
+                <Checkbox Checked="@objPicked.Contains(vId)"
+                          CheckedChanged="@(aOn => Pick(vId, aOn))"
+                          AriaLabel="@vClip.Label" />
+                <span>@vClip.Label</span>
+                <span class="muted-sm">@FormatSeconds(vClip.Seconds)</span>
+            </div>
+        }
+    </div>
+    <Button Class="w-full mt-3" OnClick="JoinAsync" Disabled="@(objPicked.Count < 2 || objBusy)" data-testid="btn-join-clips">
+        <LucideIcon Name="link" Size="14" />
+        <span>Join clips</span>
+    </Button>
+    <div class="muted-sm" style="margin-top:8px" data-testid="text-joined-length">@objJoinedText</div>
+
+    <hr style="margin:16px 0;opacity:.2" />
+
+    <label class="param-label">Extend with Venice</label>
+    <NativeSelect TValue="string" @bind-Value="objExtendClip" Class="w-full" aria-label="Clip to extend" data-testid="select-extend-clip">
+        <option value="">Choose a clip…</option>
+        @foreach (var vClip in objClips)
+        {
+            <option value="@vClip.AssetId">@vClip.Label · @FormatSeconds(vClip.Seconds)</option>
+        }
+    </NativeSelect>
+    <label class="param-label" style="margin-top:8px">Seconds to add</label>
+    <NativeSelect TValue="string" @bind-Value="objExtendSeconds" Class="w-full" aria-label="Seconds to add" data-testid="select-extend-seconds">
+        <option value="3">3</option>
+        <option value="5">5</option>
+        <option value="10">10</option>
+    </NativeSelect>
+    <Button Variant="ButtonVariant.Outline" Class="w-full mt-3" OnClick="ExtendAsync" Disabled="@(string.IsNullOrEmpty(objExtendClip) || objBusy)" data-testid="btn-extend-clip">
+        <LucideIcon Name="plus" Size="14" />
+        <span>Extend with Venice</span>
+    </Button>
+    <div class="muted-sm" style="margin-top:8px">@objExtendText</div>
+</Card>
+
+@code {
+    private sealed record JoinClip(Guid AssetId, string Label, double Seconds);
+
+    private readonly CancellationTokenSource objCts = new();
+    private readonly List<JoinClip> objClips = new();
+    private readonly List<Guid> objPicked = new();
+    private string objExtendClip = string.Empty;
+    private string objExtendSeconds = "5";
+    private string objJoinedText = "No joined clip yet.";
+    private string objExtendText = "Venice states the price before anything is sent.";
+    private bool objBusy;
+
+    /// <summary>Called after a join stored a new clip, so the studio can refresh its timeline.</summary>
+    [Parameter] public EventCallback OnJoined { get; set; }
+
+    /// <inheritdoc />
+    protected override async Task OnInitializedAsync() => await LoadClipsAsync();
+
+    private async Task LoadClipsAsync()
+    {
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vPage = await vClient.GetFromJsonAsync<PagedResult<AssetResponse>>($"{ApiRoutes.Assets}?aKind=video&aPageSize=50", objCts.Token);
+            objClips.Clear();
+            foreach (var vAsset in (vPage?.Items ?? Array.Empty<AssetResponse>()).OrderBy(aAsset => aAsset.CreatedUtc))
+            {
+                objClips.Add(new JoinClip(vAsset.AssetId, $"clip{objClips.Count + 1:00}", ReadSeconds(vAsset.ParamsJson)));
+            }
+        }
+        catch (Exception aEx) when (aEx is not OperationCanceledException)
+        {
+            // Unreadable list: the panel shows no clips.
+        }
+    }
+
+    private static double ReadSeconds(string? aParamsJson)
+    {
+        try
+        {
+            using var vDoc = JsonDocument.Parse(string.IsNullOrWhiteSpace(aParamsJson) ? "{}" : aParamsJson);
+            return vDoc.RootElement.ValueKind == JsonValueKind.Object
+                && vDoc.RootElement.TryGetProperty("durationSeconds", out var vSeconds)
+                && vSeconds.TryGetDouble(out var vValue) ? vValue : 0;
+        }
+        catch (JsonException)
+        {
+            return 0;
+        }
+    }
+
+    private static string FormatSeconds(double aSeconds) => aSeconds > 0 ? $"{aSeconds:0.#} s" : string.Empty;
+
+    private void Pick(Guid aId, bool aOn)
+    {
+        if (aOn && !objPicked.Contains(aId))
+        {
+            objPicked.Add(aId);
+        }
+        else if (!aOn)
+        {
+            objPicked.Remove(aId);
+        }
+    }
+
+    private async Task JoinAsync()
+    {
+        objBusy = true;
+        objJoinedText = "Joining on this Mac…";
+        StateHasChanged();
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vResponse = await vClient.PostAsJsonAsync($"{ApiRoutes.Video}/stitch", new { assetIds = objPicked }, objCts.Token);
+            var vBody = await vResponse.Content.ReadAsStringAsync(objCts.Token);
+            if (!vResponse.IsSuccessStatusCode)
+            {
+                objJoinedText = ReadError(vBody, "The clips could not be joined.");
+                ToastService.Error(objJoinedText, "Join");
+                return;
+            }
+
+            using var vDoc = JsonDocument.Parse(vBody);
+            var vSeconds = vDoc.RootElement.GetProperty("durationSeconds").GetDouble();
+            objJoinedText = $"Joined clip: {vSeconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)} s";
+            ToastService.Success("The clips are joined into one new clip.", "Join");
+            objPicked.Clear();
+            await LoadClipsAsync();
+            await OnJoined.InvokeAsync();
+        }
+        catch (Exception aEx) when (aEx is not OperationCanceledException)
+        {
+            objJoinedText = "The clips could not be joined.";
+        }
+        finally
+        {
+            objBusy = false;
+        }
+    }
+
+    private async Task ExtendAsync()
+    {
+        if (!Guid.TryParse(objExtendClip, out var vId))
+        {
+            return;
+        }
+
+        objBusy = true;
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vSeconds = int.TryParse(objExtendSeconds, out var vParsed) ? vParsed : 5;
+            var vResponse = await vClient.PostAsJsonAsync($"{ApiRoutes.Video}/extend", new { assetId = vId, seconds = vSeconds }, objCts.Token);
+            var vBody = await vResponse.Content.ReadAsStringAsync(objCts.Token);
+            if (!vResponse.IsSuccessStatusCode)
+            {
+                objExtendText = ReadError(vBody, "The clip could not be extended.");
+                ToastService.Error(objExtendText, "Extend");
+                return;
+            }
+
+            objExtendText = $"Queued: Venice adds {vSeconds} seconds. The new clip appears when it is ready.";
+            ToastService.Success(objExtendText, "Extend");
+        }
+        catch (Exception aEx) when (aEx is not OperationCanceledException)
+        {
+            objExtendText = "The clip could not be extended.";
+        }
+        finally
+        {
+            objBusy = false;
+        }
+    }
+
+    private static string ReadError(string aBody, string aFallback)
+    {
+        try
+        {
+            using var vDoc = JsonDocument.Parse(aBody);
+            return vDoc.RootElement.TryGetProperty("error", out var vError) && vError.ValueKind == JsonValueKind.String
+                ? vError.GetString() ?? aFallback
+                : aFallback;
+        }
+        catch (JsonException)
+        {
+            return aFallback;
+        }
+    }
+
+    /// <inheritdoc />
+    public void Dispose() => objCts.Cancel();
+}

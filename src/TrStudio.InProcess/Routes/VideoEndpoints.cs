@@ -31,6 +31,8 @@ public static class VideoEndpoints
         vVideo.MapPost("interpolate", InterpolateAsync).WithName("InterpolateVideo");
         vVideo.MapPost("upscale", UpscaleAsync).WithName("UpscaleVideo");
         vVideo.MapPost("edit", EditAsync).WithName("EditVideo");
+        vVideo.MapPost("stitch", StitchAsync).WithName("StitchVideo");
+        vVideo.MapPost("extend", ExtendAsync).WithName("ExtendVideo");
         return aApp;
     }
 
@@ -118,6 +120,57 @@ public static class VideoEndpoints
         return vResponse.Status == "error"
             ? Results.BadRequest(vResponse)
             : Results.Ok(vResponse);
+    }
+
+    /// <summary>REQ-FN-055: joins the user's clips end to end on this computer; no network call.</summary>
+    private static async Task<IResult> StitchAsync(
+        ClipStitchRequest aRequest,
+        ClaimsPrincipal aUser,
+        ClipStitchService aService,
+        CancellationToken aCancellationToken)
+    {
+        var vUserId = ResolveUserId(aUser);
+        if (vUserId is null)
+        {
+            return Results.Unauthorized();
+        }
+
+        var vOutcome = await aService.StitchAsync(aRequest, vUserId, aCancellationToken);
+        return vOutcome.Kind switch
+        {
+            "ok" => Results.Ok(new
+            {
+                assetId = vOutcome.AssetId,
+                durationSeconds = vOutcome.DurationSeconds,
+                width = vOutcome.Width,
+                height = vOutcome.Height,
+                joinedBy = vOutcome.JoinedBy
+            }),
+            "notFound" => Results.NotFound(new { error = vOutcome.Message }),
+            _ => Results.BadRequest(new { error = vOutcome.Message })
+        };
+    }
+
+    /// <summary>REQ-FN-114: queues one Venice Wan 3.0 job that extends a clip.</summary>
+    private static async Task<IResult> ExtendAsync(
+        ClipExtendRequest aRequest,
+        ClaimsPrincipal aUser,
+        ClipStitchService aService,
+        CancellationToken aCancellationToken)
+    {
+        var vUserId = ResolveUserId(aUser);
+        if (vUserId is null)
+        {
+            return Results.Unauthorized();
+        }
+
+        var vOutcome = await aService.ExtendAsync(aRequest, vUserId, aCancellationToken);
+        return vOutcome.Kind switch
+        {
+            "ok" => Results.Ok(new { jobId = vOutcome.JobId }),
+            "notFound" => Results.NotFound(new { error = vOutcome.Message }),
+            _ => Results.BadRequest(new { error = vOutcome.Message })
+        };
     }
 
     private static string? ResolveUserId(ClaimsPrincipal aUser)

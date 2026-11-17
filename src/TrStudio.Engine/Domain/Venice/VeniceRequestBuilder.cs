@@ -125,6 +125,11 @@ public static class VeniceRequestBuilder
             vBody["audio"] = aParams.Audio.Value;
         }
 
+        if (aParams.ReferenceVideoSeconds is > 0)
+        {
+            vBody["reference_video_total_duration"] = Math.Round(aParams.ReferenceVideoSeconds.Value, 2);
+        }
+
         return vBody;
     }
 
@@ -135,23 +140,79 @@ public static class VeniceRequestBuilder
     /// <param name="aReferenceImageUrls">The character's reference set as data URLs (fixed character), if any.</param>
     /// <returns>The JSON body.</returns>
     public static JsonObject VideoQueue(RegistryModel aModel, VeniceJobParams aParams, string? aImageUrl, IReadOnlyList<string> aReferenceImageUrls)
+        => VideoQueue(aModel, aParams, aImageUrl, aReferenceImageUrls, VideoReferences.None);
+
+    /// <summary>
+    /// Body for <c>POST /video/queue</c> with reference media (reference to video, Wan 3.0: up to 10
+    /// pictures, 5 clips and 5 audio clips; Venice's Wan 3.0 guide) and an end picture.
+    /// </summary>
+    /// <param name="aModel">The registry row.</param>
+    /// <param name="aParams">The job params.</param>
+    /// <param name="aImageUrl">The start picture as a data URL (image to video), if any.</param>
+    /// <param name="aReferenceImageUrls">The character's reference set as data URLs (fixed character), if any.</param>
+    /// <param name="aReferences">Explicit reference pictures, clips, audio and end picture as data URLs.</param>
+    /// <returns>The JSON body.</returns>
+    public static JsonObject VideoQueue(RegistryModel aModel, VeniceJobParams aParams, string? aImageUrl, IReadOnlyList<string> aReferenceImageUrls, VideoReferences aReferences)
     {
         var vBody = VideoQuote(aModel, aParams);
+        // The quote needs the reference clips' length; the queue call refuses that key (Venice, 17 Nov 2026).
+        vBody.Remove("reference_video_total_duration");
         vBody["prompt"] = aParams.Prompt;
         AddIfSet(vBody, "negative_prompt", aParams.NegativePrompt);
         AddIfSet(vBody, "image_url", aImageUrl);
-        if (aModel.KeepsFixedCharacter && aReferenceImageUrls.Count > 0)
+        AddIfSet(vBody, "end_image_url", aReferences.EndImageUrl);
+        var vImages = new List<string>(aReferences.ImageUrls);
+        if (aModel.KeepsFixedCharacter)
         {
-            var vArray = new JsonArray();
-            foreach (var vUrl in aReferenceImageUrls.Take(30))
-            {
-                vArray.Add(vUrl);
-            }
-
-            vBody["reference_image_urls"] = vArray;
+            vImages.AddRange(aReferenceImageUrls);
         }
 
+        AddArray(vBody, "reference_image_urls", vImages, MaxReferenceImages);
+        AddArray(vBody, "reference_video_urls", aReferences.VideoUrls, MaxReferenceVideos);
+        AddArray(vBody, "reference_audio_urls", aReferences.AudioUrls, MaxReferenceAudio);
         return vBody;
+    }
+
+    /// <summary>Wan 3.0 reference to video takes at most 10 pictures.</summary>
+    public const int MaxReferenceImages = 10;
+
+    /// <summary>Wan 3.0 reference to video takes at most 5 clips (15 s in all).</summary>
+    public const int MaxReferenceVideos = 5;
+
+    /// <summary>Wan 3.0 reference to video takes at most 5 audio clips (15 s in all).</summary>
+    public const int MaxReferenceAudio = 5;
+
+    /// <summary>A data URL for a clip or a sound.</summary>
+    /// <param name="aBytes">The bytes.</param>
+    /// <param name="aFileName">The stored file name (its extension picks the media type).</param>
+    /// <returns><c>data:video/…;base64,…</c> or <c>data:audio/…;base64,…</c>.</returns>
+    public static string ToMediaDataUrl(byte[] aBytes, string aFileName)
+    {
+        var vType = Path.GetExtension(aFileName).ToLowerInvariant() switch
+        {
+            ".mp4" => "video/mp4",
+            ".mov" => "video/quicktime",
+            ".mp3" => "audio/mpeg",
+            ".wav" => "audio/wav",
+            _ => null
+        };
+        return vType is null ? ToDataUrl(aBytes, aFileName) : $"data:{vType};base64,{Convert.ToBase64String(aBytes)}";
+    }
+
+    private static void AddArray(JsonObject aBody, string aKey, IReadOnlyList<string> aValues, int aMax)
+    {
+        if (aValues.Count == 0)
+        {
+            return;
+        }
+
+        var vArray = new JsonArray();
+        foreach (var vValue in aValues.Take(aMax))
+        {
+            vArray.Add(vValue);
+        }
+
+        aBody[aKey] = vArray;
     }
 
     /// <summary>Folds a job seed into Venice's accepted range.</summary>
@@ -187,4 +248,15 @@ public static class VeniceRequestBuilder
             aBody[aKey] = aValue;
         }
     }
+}
+
+/// <summary>Reference media for one clip, as data URLs.</summary>
+/// <param name="ImageUrls">Reference pictures (<c>reference_image_urls</c>).</param>
+/// <param name="VideoUrls">Reference clips (<c>reference_video_urls</c>).</param>
+/// <param name="AudioUrls">Reference audio (<c>reference_audio_urls</c>).</param>
+/// <param name="EndImageUrl">The picture the clip ends on (<c>end_image_url</c>).</param>
+public sealed record VideoReferences(IReadOnlyList<string> ImageUrls, IReadOnlyList<string> VideoUrls, IReadOnlyList<string> AudioUrls, string? EndImageUrl)
+{
+    /// <summary>No reference media.</summary>
+    public static VideoReferences None { get; } = new(Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>(), null);
 }

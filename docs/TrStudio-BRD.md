@@ -450,7 +450,7 @@ The SaaS-ready abstraction. `TrStudioApi` is designed to also serve as an extern
 - **BRD-58** — System shall validate license/subscription via AppManager LicenseSvc. *(F-IDENTITY)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-59** — System shall gate features/tiers via AppManager FeatureSvc (e.g. Premium behind a paid license in multi-user mode). *(F-IDENTITY, §8.2)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-83** — User can register an account via the AppManager API (child-app registration); a generic superadmin (`admin@appmanager.local`) bootstraps the first session. *(F-IDENTITY)*
-- **BRD-84** — System shall route each user to a role-based default landing page after login (Owner/Creator → Avatar studio `/avatar`; Operator/Admin → admin dashboard `/admin/ops`) per the landing table in §9 F-IDENTITY. *(F-IDENTITY)* <!-- from: owner review 2026-07-02 -->
+- **BRD-84** — System shall route each user to a role-based default landing page after login (Owner/Creator → Avatar studio `/avatar`; Operator/Admin → admin dashboard `/admin/ops`) per the landing table in §9 F-IDENTITY. The role comes from AppManager's own three roles (amended 2026-11-17): Admin is Owner, Manager is Operator, User is Creator (phase 3 BRD-177). *(F-IDENTITY)* <!-- from: owner review 2026-07-02 -->
 - **BRD-85** — System shall check on login whether initial setup is complete (≥1 enabled model source AND ≥1 ready registry model); if not, admins are routed into guided setup and Creators land on the Setup required (first-run gate) screen (`/setup-required`) directing them to their admin — no generation offered until the gate passes. *(F-IDENTITY, F-ADMIN)* <!-- from: owner review 2026-07-02 -->
 - **BRD-14** — System shall record a generation log (who/model/params/cost/duration/outcome) for history, reproduce and audit. *(F-OPS, ADM-11)* <!-- from: TrStudio-Requirements-v0.3.md -->
 
@@ -490,8 +490,8 @@ The SaaS-ready abstraction. `TrStudioApi` is designed to also serve as an extern
 - **BRD-29** — Creator can run script→video end-to-end (type a script EN/HI, pick character + voice, get a narrated clip). *(F-AVATAR, AV-03)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-30** — Creator can select quality/cost per job: Fast (Mac local) vs High (RunPod) vs Premium (HeyGen API) on one UI control. *(F-AVATAR, AV-04)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-31** — Creator can generate captions/subtitles (from the script or Whisper) in EN/HI, burn-in or sidecar SRT. *(F-AVATAR, AV-05)* <!-- from: TrStudio-Requirements-v0.3.md -->
-- **BRD-32** — Creator can optionally create a digital-twin from a short base video, consent-gated (SAFE-03), off by default. *(F-AVATAR, AV-06)* <!-- from: TrStudio-Requirements-v0.3.md -->
-- **BRD-33** — Creator can assemble multiple avatar clips into one sequence with a consistent character. *(F-AVATAR, AV-07)* <!-- from: TrStudio-Requirements-v0.3.md -->
+- ~~**BRD-32**~~ (moved 2026-11-17 to phase 3 as BRD-161 to BRD-167: the digital twin is built on Venice) — Creator can optionally create a digital-twin from a short base video, consent-gated (SAFE-03), off by default. *(F-AVATAR, AV-06)* <!-- from: TrStudio-Requirements-v0.3.md -->
+- ~~**BRD-33**~~ (moved 2026-11-17 to phase 3 as BRD-168 to BRD-172: multi-shot assembly on Venice) — Creator can assemble multiple avatar clips into one sequence with a consistent character. *(F-AVATAR, AV-07)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-55** — System shall maintain a RAG-backed character bible (persona voice/wording consistency) in PgVector; from phase 3 on the local SQLite store through TechieRag (BRD-145). *(F-TEXT, §7)* <!-- from: TrStudio-Requirements-v0.3.md -->
 
 **Phase 6 — ComfyUI pipeline screen**
@@ -511,7 +511,7 @@ The SaaS-ready abstraction. `TrStudioApi` is designed to also serve as an extern
 - **BRD-43** — Creator can apply first/last-frame + reference-image conditioning for consistency. *(F-VIDEO, VID-02)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-44** — Creator can apply frame interpolation (RIFE/FILM) and video upscale as post-steps. *(F-VIDEO, VID-03)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-45** — Creator can trim/join/reframe, add audio (from Voice studio) and export MP4 in platform formats. *(F-VIDEO, VID-04)* <!-- from: TrStudio-Requirements-v0.3.md -->
-- **BRD-46** — Creator can extend/stitch clips for longer sequences. *(F-VIDEO, VID-05)* <!-- from: TrStudio-Requirements-v0.3.md -->
+- ~~**BRD-46**~~ (moved 2026-11-17 to phase 3 as BRD-173 and BRD-174: joining on this Mac, extending on Venice) — Creator can extend/stitch clips for longer sequences. *(F-VIDEO, VID-05)* <!-- from: TrStudio-Requirements-v0.3.md -->
 
 **Phase 8 — Safety + provenance (wired from Phase 2 onward)**
 
@@ -569,12 +569,12 @@ The SaaS-ready abstraction. `TrStudioApi` is designed to also serve as an extern
 
 Written by the status gate after every build, verify and handoff; not by hand.
 
-**Snapshot as of 2026-11-16.** Live per-requirement status: `PROJECT-STATUS.md` and the Requirements Status table in `docs/TrStudio-Checklist.md`.
+**Snapshot as of 2026-11-17.** Live per-requirement status: `PROJECT-STATUS.md` and the Requirements Status table in `docs/TrStudio-Checklist.md`.
 
 | Screen | Requirements | Verified | Open | Status |
 |---|---|---|---|---|
 | UI / Pages | 25 | 23 | 2 | Partial |
-| Functional requirements | 68 | 47 | 21 | Partial |
+| Functional requirements | 63 | 47 | 16 | Partial |
 | RAG / AI requirements (→ /techierag) | 4 | 2 | 2 | Partial |
 | Non-functional | 10 | 1 | 9 | Partial |
 
