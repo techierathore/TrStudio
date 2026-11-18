@@ -23,6 +23,8 @@ public static class TwinEndpoints
     {
         var vAvatar = aApp.MapGroup(ApiRoutes.Avatar).WithTags("DigitalTwin");
         vAvatar.MapPost("twin-uploads", UploadAsync).WithName("UploadTwinFile");
+        // REQ-FN-051/052: a frame pinned on Video studio is uploaded as the creator's own picture.
+        aApp.MapPost(ApiRoutes.FrameUploads, UploadFrameAsync).WithTags("Video").WithName("UploadVideoFrame");
         vAvatar.MapGet("digital-twins/status", GetPolicyAsync).WithName("GetDigitalTwinStatus");
         vAvatar.MapPost("digital-twin", CreateAsync).WithName("CreateDigitalTwin");
         vAvatar.MapGet("digital-twins", ListAsync).WithName("ListDigitalTwins");
@@ -48,6 +50,30 @@ public static class TwinEndpoints
         {
             var vBytes = Convert.FromBase64String(aRequest.Base64Content ?? string.Empty);
             var vAssetId = await aService.UploadAsync(aRequest.Kind, aRequest.FileName, vBytes, vUserId, aCancellationToken);
+            return Results.Ok(new DigitalTwinUploadResponse { AssetId = vAssetId });
+        }
+        catch (FormatException)
+        {
+            return Results.BadRequest(new { error = "Base64Content is not valid base64." });
+        }
+        catch (ArgumentException vException)
+        {
+            return Results.BadRequest(new { error = vException.Message });
+        }
+    }
+
+    private static async Task<IResult> UploadFrameAsync(DigitalTwinUploadRequest aRequest, ClaimsPrincipal aUser, IDigitalTwinService aService, CancellationToken aCancellationToken)
+    {
+        var vUserId = ResolveUserId(aUser);
+        if (vUserId is null)
+        {
+            return Results.Unauthorized();
+        }
+
+        try
+        {
+            var vBytes = Convert.FromBase64String(aRequest.Base64Content ?? string.Empty);
+            var vAssetId = await aService.UploadForAsync("frame", "picture", aRequest.FileName, vBytes, vUserId, aCancellationToken);
             return Results.Ok(new DigitalTwinUploadResponse { AssetId = vAssetId });
         }
         catch (FormatException)

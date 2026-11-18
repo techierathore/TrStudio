@@ -50,10 +50,7 @@
         }
     </div>
 
-    <Button Variant="ButtonVariant.Outline" Class="w-full" OnClick="AddShot" Disabled="@(objShots.Count >= MaxShots || objBusy)" data-testid="btn-add-shot">
-        <LucideIcon Name="plus" Size="14" />
-        <span>Add a shot</span>
-    </Button>
+    <Button Variant="ButtonVariant.Ghost" OnClick="AddShot" Disabled="@(objShots.Count >= MaxShots || objBusy)" data-testid="btn-add-shot">+ Add a shot</Button>
 
     <div class="flex-row" style="gap:8px;margin-top:12px">
         <div style="flex:1">
@@ -100,10 +97,7 @@
         </div>
     }
 
-    <Button Class="w-full mt-3" OnClick="StartAsync" Disabled="@(!CanStart)" data-testid="btn-start-sequence">
-        <LucideIcon Name="film" Size="14" />
-        <span>@(objBusy ? "Making your video…" : "Start")</span>
-    </Button>
+    <Button Class="w-full mt-3" OnClick="StartAsync" Disabled="@(!CanStart)" data-testid="btn-start-sequence">@(objBusy ? "Making your video…" : "Start")</Button>
 
     <div class="flex-row" style="gap:8px;align-items:center;margin-top:12px">
         <span>Status</span>
@@ -172,7 +166,7 @@
     {
         "Succeeded" => BadgeVariant.Success,
         "Failed" => BadgeVariant.Warning,
-        _ => BadgeVariant.Secondary
+        _ => BadgeVariant.Outline
     };
 
     /// <summary>Loads the creator's characters and digital twins once the session is ready.</summary>

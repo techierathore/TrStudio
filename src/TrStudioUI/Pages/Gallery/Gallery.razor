@@ -38,9 +38,7 @@
 }
 
 <div class="filterbar">
-    <div class="filterbar-search">
-        <Input @bind-Value="objSearch" @bind-Value:after="ApplyFilters" Placeholder="Search prompts, seeds, titles…" aria-label="Search" data-testid="field-search-prompts-seeds-tit" />
-    </div>
+    <Input @bind-Value="objSearch" @bind-Value:after="ApplyFilters" Class="filterbar-search" Placeholder="Search prompts, seeds, titles…" aria-label="Search" data-testid="field-search-prompts-seeds-tit" />
     <NativeSelect TValue="string" @bind-Value="objTypeFilter" Class="w-auto" aria-label="Type" data-testid="field-2">
         @foreach (var vOption in objTypeOptions)
         {
@@ -61,7 +59,7 @@
             <option value="@vProject">@vProject</option>
         }
     </NativeSelect>
-    <div class="grow"></div>
+    <span class="grow"></span>
     <div class="image-seg" role="radiogroup" aria-label="Layout">
         <button type="button" role="radio" aria-checked="@(objListView ? "false" : "true")" class="@(objListView ? null : "is-on")"
                 @onclick="@(() => objListView = false)" data-testid="btn-grid">Grid</button>

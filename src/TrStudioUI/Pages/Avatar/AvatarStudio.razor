@@ -161,10 +161,14 @@
             <Textarea @bind-Value="objScript" Rows="6" Placeholder="Write the narration for your talking-head clip…" MaxLength="2000" data-testid="field-2" />
             <div class="flex-between" style="margin-top:8px">
                 <span class="muted-sm avatar-count">~@EstimatedSeconds sec · @WordCount words</span>
-                <Button Size="ButtonSize.Small" Variant="ButtonVariant.Outline" OnClick="ScriptAssistAsync" data-testid="script-assist">
-                    <LucideIcon Name="sparkles" Size="13" />
-                    <span>Script-assist (TechieRag): tighten hook</span>
-                </Button>
+                <span class="grow"></span>
+                @* The mockup's soft brand chip (.assist) around a real button. *@
+                <span class="assist">
+                    <button type="button" class="assist-btn" @onclick="ScriptAssistAsync" data-testid="script-assist">
+                        <LucideIcon Name="sparkles" Size="13" />
+                        Script-assist (TechieRag): tighten hook
+                    </button>
+                </span>
             </div>
         </Card>
 

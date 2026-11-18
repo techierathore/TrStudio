@@ -9,6 +9,9 @@ public static class ApiRoutes
     /// <summary>Generation job endpoints (submit, status, list, cancel).</summary>
     public const string Jobs = "/api/v1/jobs";
 
+    /// <summary>REQ-FN-051/052: upload of a frame pinned on Video studio (the creator's own picture).</summary>
+    public const string FrameUploads = "/api/v1/video/frames";
+
     /// <summary>Generated asset endpoints (gallery listing, download, delete).</summary>
     public const string Assets = "/api/v1/assets";
 

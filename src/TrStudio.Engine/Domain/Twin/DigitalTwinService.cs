@@ -80,8 +80,13 @@ public class DigitalTwinService : IDigitalTwinService
         => objPolicyRepository.SetTwinsEnabledAsync(aEnabled, aCancellationToken);
 
     /// <inheritdoc />
-    public async Task<Guid> UploadAsync(string aKind, string aFileName, byte[] aBytes, string aUserId, CancellationToken aCancellationToken = default)
+    public Task<Guid> UploadAsync(string aKind, string aFileName, byte[] aBytes, string aUserId, CancellationToken aCancellationToken = default)
+        => UploadForAsync("twin", aKind, aFileName, aBytes, aUserId, aCancellationToken);
+
+    /// <inheritdoc />
+    public async Task<Guid> UploadForAsync(string aPurpose, string aKind, string aFileName, byte[] aBytes, string aUserId, CancellationToken aCancellationToken = default)
     {
+        var vPurpose = aPurpose is "twin" or "frame" ? aPurpose : throw new ArgumentException("Purpose must be twin or frame.");
         var vExtension = Path.GetExtension(aFileName ?? string.Empty).ToLowerInvariant();
         var (vAllowed, vAssetKind) = aKind switch
         {
@@ -101,7 +106,7 @@ public class DigitalTwinService : IDigitalTwinService
         }
 
         var vAssetId = Guid.NewGuid();
-        var vPath = await objAssetStorage.SaveAsync(Path.Combine(SanitizeForPath(aUserId), "twin", $"{vAssetId}{vExtension}"), aBytes, aCancellationToken).ConfigureAwait(false);
+        var vPath = await objAssetStorage.SaveAsync(Path.Combine(SanitizeForPath(aUserId), vPurpose, $"{vAssetId}{vExtension}"), aBytes, aCancellationToken).ConfigureAwait(false);
         await objAssetRepository.InsertAsync(new GeneratedAsset
         {
             AssetId = vAssetId,
@@ -109,8 +114,8 @@ public class DigitalTwinService : IDigitalTwinService
             UserId = aUserId,
             Kind = vAssetKind,
             StoragePath = vPath,
-            ModelId = $"twin-upload:{aKind}",
-            ProvenanceJson = JsonSerializer.Serialize(new { Generator = "TrStudio digital twin upload", Operation = aKind, CreatedUtc = DateTime.UtcNow }),
+            ModelId = $"{vPurpose}-upload:{aKind}",
+            ProvenanceJson = JsonSerializer.Serialize(new { Generator = vPurpose == "twin" ? "TrStudio digital twin upload" : "TrStudio video frame upload", Operation = aKind, CreatedUtc = DateTime.UtcNow }),
             CreatedUtc = DateTime.UtcNow
         }, aCancellationToken).ConfigureAwait(false);
         return vAssetId;

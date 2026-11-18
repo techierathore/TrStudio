@@ -124,3 +124,27 @@ Nothing is blocked by the framework. On 16 Nov 2026 the Mac app was driven with 
 - **Encountered in:** owner run of 17 Nov 2026, the status gate of `*amend-docs`
 - **Workaround:** shorten the phase name in the copied line by hand
 - **Suggested fix:** the facts script shortens the phase name (or drops the counts) so its line stays within the guard's 120 characters
+
+### TF-009 — The Mac boot warns "no provisioning profile" for a project that names one
+
+- **Status:** open
+- **Severity:** minor
+- **Blocks:** no — the app is signed with its profile, opens, and Appium drives it; the warning is only wrong text
+- **Repro:** `src/TrStudio/TrStudio.csproj` sets, for maccatalyst Debug, `<CodesignProvision>Mac Catalyst Team Provisioning Profile: com.techierathore.trstudio</CodesignProvision>` and `<CodesignEntitlements>Platforms\MacCatalyst\Entitlements.Debug.plist</CodesignEntitlements>` (with keychain-access-groups); run `bash .tfcore/utils/tf-verify-boot.sh start --head maccatalyst --project src/TrStudio/TrStudio.csproj`
+- **Expected:** no warning; the check sees the profile the project names (`CodesignProvision`)
+- **Actual:** `WARN … the entitlements ask for keychain-access-groups and the project names no provisioning profile; macOS will not start a locally signed build that asks for it`, then `BOOTED … mode=appium` and the app runs signed (`codesign -dvv`: Authority=Apple Development, TeamIdentifier=254ZS7W29T)
+- **Encountered in:** owner run of 17 Nov 2026 (night), `*triage-and-fix`
+- **Workaround:** none needed
+- **Suggested fix:** `tf-maccatalyst-check.sh` reads `CodesignProvision` (and `CodesignEntitlements`) in a PropertyGroup whose condition is the Mac target and the configuration being booted, before warning
+
+### TF-010 — The "select cuts its text" check measures a native select that is invisible under a label that wraps
+
+- **Status:** open
+- **Severity:** minor
+- **Blocks:** yes — REQ-UI-040 (Video studio) and REQ-UI-052 (Comparison) cannot pass the visual check, although no text is cut on the screen
+- **Repro:** Video studio's Model box and Comparison's Slot A / Slot B now draw the chosen name in a `div.select-wrap-label` that wraps, with the real `<select class="select-wrap-native">` laid exactly over it at `opacity: 0` (so a click or the keyboard still opens the native list). Seed `tests/verify/seed/video-studio.sh` and `compare.sh`; run `tf-verify-screens.sh --list … --base http://localhost:5099`
+- **Expected:** a select the person cannot see (computed `opacity` 0, or `visibility: hidden`) is not graded for cut text; the visible label is graded instead (its `scrollWidth`/`scrollHeight` within its box), as `tests/verify/video-model-fit.spec.ts` does
+- **Actual:** `FAIL Video studio … the select "Model" cuts its text at 1280px: … needs 350 px, the box has 240 px` and `FAIL Comparison … the select "Slot A" cuts its text at 390px`; the screenshots show every name whole, on two lines
+- **Encountered in:** owner run of 17 Nov 2026 (night), `*triage-and-fix`, fixing the owner's own screen check of 17 Nov
+- **Workaround:** none honest in the app: a native select's closed box never wraps, and at 390 px no layout gives a 350 px name room
+- **Suggested fix:** in `tf-dropdowns.mjs` `SELECTS`, skip a select whose computed opacity is 0 or visibility hidden; optionally grade the element drawn under it (`elementFromPoint` at the select's centre with the select hidden) for clipping

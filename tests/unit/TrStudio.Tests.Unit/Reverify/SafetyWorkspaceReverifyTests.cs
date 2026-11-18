@@ -483,8 +483,8 @@ public class SafetyWorkspaceReverifyTests
         Assert.Contains("chat/completions", vFake.LastUri);
     }
 
-    [Fact(DisplayName = "REQ-RAG-005 TextOnlyLiveReplyFromConfiguredLlm", Skip = "The text-only chat path builds a TechieRag LLM provider with its own HTTP stack (no engine seam to fake it); proving it needs a live LLM endpoint this machine does not have. The image path and the degraded path are proven by the other REQ-RAG-005 tests.")]
-    public Task TextOnlyLiveReplyFromConfiguredLlmAsync() => Task.CompletedTask;
+    // REQ-RAG-005 TextOnlyLiveReplyFromConfiguredLlm: a live reply from Venice's chat endpoint in
+    // tests/integration/…/Venice/PromptChatLiveTests.cs (paid, a fraction of a cent; Category=Live).
 
     [Fact(DisplayName = "REQ-RAG-005 UnconfiguredModelDegradesWithUsableReply")]
     public async Task UnconfiguredModelDegradesWithUsableReplyAsync()

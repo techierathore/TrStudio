@@ -26,6 +26,16 @@ public interface IComfyPipelineService
     /// <returns>The dependency report.</returns>
     ComfyDependencyReport ScanDependencies(string aWorkflowJson);
 
+    /// <summary>
+    /// REQ-FN-047: the same scan, asking the running ComfyUI what it holds first, so a node or a model
+    /// file ComfyUI has is not reported missing. Without a reachable ComfyUI it is <see cref="ScanDependencies"/>.
+    /// </summary>
+    /// <param name="aWorkflowJson">The workflow JSON to scan.</param>
+    /// <param name="aCancellationToken">Cancellation token.</param>
+    /// <returns>The dependency report.</returns>
+    Task<ComfyDependencyReport> ScanDependenciesAsync(string aWorkflowJson, CancellationToken aCancellationToken = default)
+        => Task.FromResult(ScanDependencies(aWorkflowJson));
+
     /// <summary>FN-046: builds the run-debug bundle — the exact submitted JSON, per-node status and missing-dependency detection.</summary>
     /// <param name="aWorkflowJson">The workflow JSON.</param>
     /// <param name="aParamsJson">Optional param values keyed by <c>{NodeId}.{InputName}</c> to substitute.</param>

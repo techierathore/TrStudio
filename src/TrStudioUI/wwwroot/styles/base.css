@@ -941,6 +941,8 @@ h1:focus {
   margin-bottom: 14px;
 }
 
+/* The search box sits straight in the filter bar, as the Gallery mockup draws it (no wrapper box). */
+.filterbar > input.filterbar-search,
 .filterbar-search {
   width: 250px;
   max-width: 100%;
@@ -2058,6 +2060,12 @@ h1:focus {
 .cmp-slot select.cmp-slot-select {
   min-width: 0;
   flex: 1 1 250px;
+}
+
+.cmp-slot .cmp-slot-wrap {
+  flex: 1 1 250px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .cmp-slottag {
@@ -3211,6 +3219,38 @@ h1:focus {
   padding: 16px;
 }
 
+/* A select whose chosen text wraps (Video studio's Model box, owner check 17 Nov 2026): the label
+   draws the box and the full name; the native select lies on top, invisible, and takes every click
+   and key, so its own list still opens. */
+.select-wrap {
+  position: relative;
+}
+
+.select-wrap-label {
+  min-height: 40px;
+  padding: 9px 32px 9px 12px;
+  line-height: 20px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-size: 1rem;
+  background-position: right 0.5rem center;
+}
+
+.select-wrap > select.select-wrap-native {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.select-wrap:focus-within > .select-wrap-label {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
 .vid-tierseg > button {
   display: flex;
   flex-direction: column;
@@ -3494,4 +3534,72 @@ aside > .shell-sidefoot {
   .avatar-grid-p3 {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* Sliders: the filled part of the track is a rounded bar, as every studio mockup draws it
+   (.slider > i, border-radius 999px). TrBlazeUI draws it square-ended inside the rounded track. */
+[role="slider"] > div > div.bg-primary {
+  border-radius: 9999px;
+}
+
+/* Avatar studio: script-assist is the mockup's soft brand chip (.assist) around a real button. */
+.assist {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  color: var(--brand-ink);
+  background: var(--brand-soft);
+  border: 1px solid var(--brand-bd);
+  border-radius: 8px;
+}
+.assist > .assist-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.assist > .assist-btn:hover {
+  filter: brightness(.97);
+}
+.assist > .assist-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Digital twin: the three pickers are a row of outline buttons (mockup .btn.outline), not drop zones. */
+.twin-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.twin-pick.w-full,
+.twin-pick {
+  width: auto;
+}
+.twin-pick > div.relative {
+  min-height: 0;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-style: solid;
+  border-radius: 8px;
+  background: var(--background);
+  font-size: 13px;
+  font-weight: 500;
+  flex-direction: row;
+}
+.twin-pick > div.relative:hover {
+  background: var(--accent);
+}
+.twin-lengths {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
 }

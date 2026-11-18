@@ -53,7 +53,7 @@ test('REQ-UI-098 missing sign-in settings', async ({ page, request }) => {
   await settle(page);
   await typeInto(page, '#email', 'creator@studio.example');
   await typeInto(page, '#pwd', 'not-a-real-password');
-  await expect(page.getByTestId('signin-btn')).toBeDisabled();
+  await expect(page.getByTestId('sign-in')).toBeDisabled();
 });
 
 test('REQ-UI-099 sign-in service unreachable', async ({ page, request }) => {
@@ -64,8 +64,8 @@ test('REQ-UI-099 sign-in service unreachable', async ({ page, request }) => {
   await settle(page);
   await typeInto(page, '#email', 'creator@studio.example');
   await typeInto(page, '#pwd', 'not-a-real-password');
-  await expect(page.getByTestId('signin-btn')).toBeEnabled({ timeout: 30000 });
-  await page.getByTestId('signin-btn').click();
+  await expect(page.getByTestId('sign-in')).toBeEnabled({ timeout: 30000 });
+  await page.getByTestId('sign-in').click();
   const alert = page.getByTestId('alert-sign-in-unreachable');
   await expect(alert).toBeVisible({ timeout: 30000 });
   await expect(alert).toContainText('cannot be reached');
@@ -107,6 +107,37 @@ test('REQ-UI-104 registry key note', async ({ page, request }) => {
   await expect(page.getByTestId('field-runpod-endpoint')).toBeVisible();
   await expect(page.getByTestId('provider-heygen')).toBeVisible();
   await page.screenshot({ path: 'tests/.artifacts/verify/p3-registry.png', fullPage: true });
+});
+
+// REQ-FN-116 (owner, 17 Nov 2026): a stored key can be removed on the screen itself. The key typed
+// here is a made-up test value, not a secret.
+test('REQ-FN-116 a stored HeyGen key is removed on Registry & providers', async ({ page, request }) => {
+  await openSession(page, request, 'Owner');
+  await page.goto('/admin/registry');
+  await expect(page.getByTestId('provider-heygen')).toBeVisible({ timeout: 30000 });
+  await settle(page);
+  await typeInto(page, '[data-testid="field-heygen"]', 'made-up-heygen-key-9z9z');
+  await page.getByRole('button', { name: 'Save keys' }).click();
+  await expect(page.getByTestId('badge-heygen-configured')).toBeVisible({ timeout: 15000 });
+
+  // Remove asks once; Keep leaves the key alone.
+  await page.getByTestId('btn-remove-heygen').click();
+  await page.getByTestId('btn-remove-heygen-keep').click();
+  await expect(page.getByTestId('badge-heygen-configured')).toBeVisible();
+
+  await page.getByTestId('btn-remove-heygen').click();
+  await page.getByTestId('btn-remove-heygen-confirm').click();
+  await expect(page.getByTestId('badge-heygen-configured')).toHaveCount(0, { timeout: 15000 });
+  await expect(page.getByTestId('field-heygen')).toHaveAttribute('placeholder', 'Enter the key');
+
+  // Still gone after the page is read again from the engine.
+  await page.reload();
+  await expect(page.getByTestId('provider-heygen')).toBeVisible({ timeout: 30000 });
+  await settle(page);
+  await expect(page.getByTestId('badge-heygen-configured')).toHaveCount(0);
+  await expect(page.getByTestId('btn-remove-heygen')).toHaveCount(0);
+  const keys = await (await page.request.get('/api/v1/admin/providers/keys')).text().catch(() => '');
+  expect(keys).not.toContain('9z9z');
 });
 
 test('REQ-UI-103 ops shows queue', async ({ page, request }) => {

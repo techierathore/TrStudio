@@ -61,8 +61,21 @@ public static class TestHostSettings
 
                 var vBaseUrl = Text(vSection, "BaseUrl") ?? vSettings.BaseUrl;
                 var vKey = Text(vSection, "ApiKey") ?? vSettings.ApiKey;
-                var vId = vSection.TryGetProperty("ApplicationId", out var vIdElement) && vIdElement.ValueKind == JsonValueKind.Number
-                    && vIdElement.TryGetInt32(out var vNumber) && vNumber > 0 ? vNumber : vSettings.ApplicationId;
+                // The id may be written as a number or, by the verify tool's settings writer, as text ("5").
+                int? vRead = null;
+                if (vSection.TryGetProperty("ApplicationId", out var vIdElement))
+                {
+                    if (vIdElement.ValueKind == JsonValueKind.Number && vIdElement.TryGetInt32(out var vNumber))
+                    {
+                        vRead = vNumber;
+                    }
+                    else if (vIdElement.ValueKind == JsonValueKind.String && int.TryParse(vIdElement.GetString(), out var vParsed))
+                    {
+                        vRead = vParsed;
+                    }
+                }
+
+                var vId = vRead is > 0 ? vRead : vSettings.ApplicationId;
                 vSettings = new SignInSettings(vBaseUrl, vId, vKey);
             }
             catch (JsonException)

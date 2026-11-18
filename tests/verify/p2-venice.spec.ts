@@ -35,6 +35,10 @@ const VideoList = {
 
 let objServer: http.Server;
 let objBaseUrl = '';
+// REQ-FN-052: what Venice's /video/queue received, in order.
+const objQueued: Record<string, unknown>[] = [];
+// The smallest MP4 header the app accepts as a clip.
+const TinyMp4 = Buffer.from([0, 0, 0, 24, 102, 116, 121, 112, 105, 115, 111, 109, 0, 0, 2, 0, 105, 115, 111, 109, 105, 115, 111, 50]);
 
 function send(aResponse: http.ServerResponse, aStatus: number, aBody: unknown) {
   aResponse.writeHead(aStatus, { 'Content-Type': 'application/json' });
@@ -57,6 +61,28 @@ test.beforeAll(async () => {
     }
     if (vUrl.pathname.endsWith('/image/generate')) {
       send(aResponse, 200, { id: 'fake-1', images: [OnePixelPng] });
+      return;
+    }
+    if (vUrl.pathname.endsWith('/video/quote')) {
+      send(aResponse, 200, { quote: 0.01 });
+      return;
+    }
+    if (vUrl.pathname.endsWith('/video/queue')) {
+      let vBody = '';
+      aRequest.on('data', (aChunk) => { vBody += aChunk; });
+      aRequest.on('end', () => {
+        objQueued.push(JSON.parse(vBody || '{}'));
+        send(aResponse, 200, { model: 'fake-reference-to-video', queue_id: `q-${objQueued.length}` });
+      });
+      return;
+    }
+    if (vUrl.pathname.endsWith('/video/retrieve')) {
+      aResponse.writeHead(200, { 'Content-Type': 'video/mp4' });
+      aResponse.end(TinyMp4);
+      return;
+    }
+    if (vUrl.pathname.endsWith('/video/complete')) {
+      send(aResponse, 200, { success: true });
       return;
     }
     send(aResponse, 404, { error: 'no fake route' });
@@ -277,4 +303,29 @@ test('REQ-UI-091 Image to video lists only image-to-video rows', async ({ page, 
   const vModels = page.getByTestId('field-video-model');
   await expect(vModels.locator('option', { hasText: 'Fake R2V — Cloud · Venice' })).toHaveCount(1, { timeout: 15000 });
   await expect(vModels.locator('option', { hasText: /Fake T2V/ })).toHaveCount(0);
+});
+
+// REQ-FN-052 (owner run of 17 Nov 2026): the frames pinned on Video studio reach the model. Before, only
+// their file names were sent and Venice got no picture at all.
+const RedPng = 'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGP8z8DAwMDAxMDAwMDAAAANHQEDasKb6QAAAABJRU5ErkJggg==';
+test('REQ-FN-052 pinned first and last frames reach Venice as the start and end pictures', async ({ page, request }) => {
+  await openOwnerSession(page, request);
+  await saveVenice(page, GoodKey);
+  await addVeniceRow(page, 'fake-reference-to-video', true);
+  await page.goto('/video');
+  await expect(page.getByTestId('video-studio')).toBeVisible({ timeout: 30000 });
+  await settle(page);
+  const vFrames = page.getByTestId('card-conditioning-frames').locator('input[type=file]');
+  await vFrames.nth(0).setInputFiles({ name: 'start.png', mimeType: 'image/png', buffer: Buffer.from(OnePixelPng, 'base64') });
+  await vFrames.nth(1).setInputFiles({ name: 'end.png', mimeType: 'image/png', buffer: Buffer.from(RedPng, 'base64') });
+  await expect(page.getByTestId('card-conditioning-frames')).toContainText('start.png');
+  await expect(page.getByTestId('card-conditioning-frames')).toContainText('end.png');
+  const vModels = page.getByTestId('field-video-model');
+  await vModels.selectOption({ label: 'Fake R2V — Cloud · Venice' });
+  const vBefore = objQueued.length;
+  await page.getByRole('button', { name: 'Generate from frame' }).click();
+  await expect.poll(() => objQueued.length, { timeout: 30000 }).toBeGreaterThan(vBefore);
+  const vSent = objQueued[objQueued.length - 1];
+  expect(String(vSent['image_url'])).toBe(`data:image/png;base64,${OnePixelPng}`);
+  expect(String(vSent['end_image_url'])).toBe(`data:image/png;base64,${RedPng}`);
 });

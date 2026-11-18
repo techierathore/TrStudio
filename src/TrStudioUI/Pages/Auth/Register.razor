@@ -108,9 +108,9 @@
         </div>
     </div>
 
-    <span data-testid="btn-create-account" style="display:block">
+    @* The mockup's btn-create-account is the button itself (a wrapper here measured as the card's colour). *@
     <Button Class="auth-submit" Type="ButtonType.Submit" OnClick="HandleCreateAsync"
-            Disabled="@(objBusy || !IsFormValid)" data-testid="create-btn">
+            Disabled="@(objBusy || !IsFormValid)" data-testid="btn-create-account">
         @if (objBusy)
         {
             <Spinner Size="SpinnerSize.Small" Class="mr-2" />
@@ -122,7 +122,7 @@
             <span>Create account</span>
         }
     </Button>
-    </span>
+    
 
     <div class="auth-divline">AppManager</div>
     <div class="auth-note">

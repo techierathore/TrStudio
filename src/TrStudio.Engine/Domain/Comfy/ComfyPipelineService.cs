@@ -30,6 +30,10 @@ public class ComfyPipelineService : IComfyPipelineService
     private readonly IRegistryRepository objRegistryRepository;
     private readonly ComfyUiOptions objOptions;
     private readonly ILogger<ComfyPipelineService> objLogger;
+    private readonly IHttpClientFactory? objHttpClientFactory;
+
+    /// <summary>The named HTTP client used to ask ComfyUI what it holds (REQ-FN-047).</summary>
+    public const string InventoryHttpClientName = "ComfyUI";
 
     /// <summary>
     /// Initialises the pipeline service.
@@ -50,8 +54,10 @@ public class ComfyPipelineService : IComfyPipelineService
         IComfyWorkflowRepository aWorkflowRepository,
         IRegistryRepository aRegistryRepository,
         ComfyUiOptions aOptions,
-        ILogger<ComfyPipelineService> aLogger)
+        ILogger<ComfyPipelineService> aLogger,
+        IHttpClientFactory? aHttpClientFactory = null)
     {
+        objHttpClientFactory = aHttpClientFactory;
         objParser = aParser;
         objMapper = aMapper;
         objScanner = aScanner;
@@ -71,6 +77,38 @@ public class ComfyPipelineService : IComfyPipelineService
 
     /// <inheritdoc />
     public ComfyDependencyReport ScanDependencies(string aWorkflowJson) => objScanner.Scan(aWorkflowJson);
+
+    /// <inheritdoc />
+    public async Task<ComfyDependencyReport> ScanDependenciesAsync(string aWorkflowJson, CancellationToken aCancellationToken = default)
+    {
+        var vInventory = await ReadInventoryAsync(aCancellationToken).ConfigureAwait(false);
+        var vReport = objScanner.Scan(aWorkflowJson, vInventory);
+        vReport.CheckedWithComfyUi = vInventory is not null;
+        return vReport;
+    }
+
+    /// <summary>Asks the configured ComfyUI for <c>/object_info</c>; null when not set up or not reachable.</summary>
+    private async Task<ComfyInventory?> ReadInventoryAsync(CancellationToken aCancellationToken)
+    {
+        if (!objOptions.IsConfigured || objHttpClientFactory is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var vClient = objHttpClientFactory.CreateClient(InventoryHttpClientName);
+            using var vTimeout = CancellationTokenSource.CreateLinkedTokenSource(aCancellationToken);
+            vTimeout.CancelAfter(TimeSpan.FromSeconds(15));
+            var vJson = await vClient.GetStringAsync($"{objOptions.BaseUrl.TrimEnd('/')}/object_info", vTimeout.Token).ConfigureAwait(false);
+            return ComfyInventory.Parse(vJson);
+        }
+        catch (Exception vException) when (vException is HttpRequestException or TaskCanceledException or JsonException)
+        {
+            objLogger.LogWarning("ComfyUI at {BaseUrl} could not be asked what it holds: {Message}", objOptions.BaseUrl, vException.Message);
+            return null;
+        }
+    }
 
     /// <inheritdoc />
     public ComfyDebugData BuildDebug(string aWorkflowJson, string? aParamsJson)

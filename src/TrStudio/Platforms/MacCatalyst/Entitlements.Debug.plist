@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <!-- Debug-only entitlements (decision 15, option A): the Release ones plus the Keychain access group
+         MAUI SecureStorage needs on Mac Catalyst. Allowed by the Personal Team's Mac Catalyst profile;
+         $(AppIdentifierPrefix) becomes the team id at build time. -->
+    <dict>
+        <key>com.apple.security.app-sandbox</key>
+        <true/>
+        <key>com.apple.security.network.client</key>
+        <true/>
+        <key>keychain-access-groups</key>
+        <array>
+            <string>$(AppIdentifierPrefix)com.techierathore.trstudio</string>
+        </array>
+    </dict>
+</plist>

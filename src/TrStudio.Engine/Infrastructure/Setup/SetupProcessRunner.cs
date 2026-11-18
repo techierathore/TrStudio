@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using TrStudio.Engine.Domain.Setup;
 
 namespace TrStudio.Engine.Infrastructure.Setup;
 
@@ -60,7 +61,21 @@ public class SetupProcessRunner
         vProcess.OutputDataReceived += (_, aEvent) => HandleLine(aEvent.Data, aOnOutputLine);
         vProcess.ErrorDataReceived += (_, aEvent) => HandleLine(aEvent.Data, aOnOutputLine);
 
-        vProcess.Start();
+        try
+        {
+            vProcess.Start();
+        }
+        catch (System.ComponentModel.Win32Exception vRefused) when (vRefused.NativeErrorCode == 1 && TrStudio.Engine.Infrastructure.HostPlatform.IsMac)
+        {
+            // EPERM on a Mac: the Mac app runs in Apple's App Sandbox, which does not let it run a program
+            // it downloaded (owner run of 17 Nov 2026; owner decision 17). Say so plainly.
+            throw new SetupStepException(
+                "macOS does not let TrStudio run the Python it downloaded: the Mac app runs in Apple's App Sandbox, " +
+                "which blocks programs an app downloads itself. Python and ComfyUI cannot run inside this copy of the app; " +
+                "use RunPod, Venice or a ComfyUI worker on its own address instead.",
+                vRefused);
+        }
+
         vProcess.BeginOutputReadLine();
         vProcess.BeginErrorReadLine();
 

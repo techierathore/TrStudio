@@ -83,6 +83,18 @@
     <!-- Phase 3: the engine (and with it ONNX Runtime's managed assembly) runs inside the app. That
          assembly declares the ONNX Runtime Extensions entry point RegisterCustomOps, which no Mac Catalyst
          build ships, so the linker is told not to require it (the extensions are never called). -->
+    <!-- Decision 15 (option A, 17 Nov 2026): every Mac Debug build is signed with the owner's free
+         Personal Team and the Mac Catalyst team profile Xcode's tools made for this app id and this Mac.
+         The Debug entitlements add the Keychain access group MAUI SecureStorage needs on Mac Catalyst
+         (Apple TN3137); Release keeps the plain Entitlements.plist until a paid team signs it (option B).
+         The profile is found by name, so a renewed profile (new UUID) needs no change here. -->
+    <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst' And '$(Configuration)' == 'Debug'">
+        <EnableCodeSigning>true</EnableCodeSigning>
+        <CodesignKey>Apple Development: S Ravi Kumar (8QKUY63E2Z)</CodesignKey>
+        <CodesignProvision>Mac Catalyst Team Provisioning Profile: com.techierathore.trstudio</CodesignProvision>
+        <CodesignEntitlements>Platforms\MacCatalyst\Entitlements.Debug.plist</CodesignEntitlements>
+    </PropertyGroup>
+
     <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">
         <ReferenceNativeSymbol Include="RegisterCustomOps" SymbolType="Function" SymbolMode="Ignore" />
     </ItemGroup>

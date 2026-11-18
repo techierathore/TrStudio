@@ -1005,7 +1005,31 @@ vApp.MapPost("/test/seed/admin-ops", async (EngineHost aHost) =>
     var vServices = aHost.Services;
     await SeedMonthSpendAsync(vServices, "4242", 41.20m);
     vServices.GetRequiredService<TrStudio.Engine.Domain.RunPod.RunPodOptions>().AutoIdleStop = true;
-    return Results.Ok(new { seeded = "admin-ops" });
+
+    // The mockup draws a 0.8 % failure rate over the last 24 hours. The browser tests that run before the
+    // screen checks fail some runs on purpose, so top up finished runs, under a seed-only user that no
+    // creator screen shows, until the failures are at most 0.8 % of the window.
+    var vLog = vServices.GetRequiredService<TrStudio.Models.Repositories.IGenerationLogRepository>();
+    var vCounts = await vLog.GetOutcomeCountsSinceAsync(DateTime.UtcNow.AddHours(-24));
+    var vErrors = vCounts.Where(aPair => aPair.Key is "failed" or "blocked").Sum(aPair => aPair.Value);
+    var vTotal = vCounts.Values.Sum();
+    var vWanted = vErrors == 0 ? 0 : (int)Math.Ceiling(vErrors / 0.008) - vTotal;
+    for (var vIndex = 0; vIndex < vWanted; vIndex++)
+    {
+        await vLog.InsertAsync(new TrStudio.Models.Entities.GenerationLogEntry
+        {
+            LogId = Guid.NewGuid(),
+            JobId = Guid.NewGuid(),
+            UserId = "ops-seed",
+            ModelId = "flux-1-dev-gguf",
+            Tier = GenerationTier.High,
+            ParamsJson = "{}",
+            Outcome = "succeeded",
+            CreatedUtc = DateTime.UtcNow.AddMinutes(-1)
+        });
+    }
+
+    return Results.Ok(new { seeded = "admin-ops", toppedUp = Math.Max(0, vWanted) });
 });
 
 // TEST ONLY: the ComfyUI import & debug mockup's sample data (docs/mockups/admin-comfy.html): one imported
@@ -1268,6 +1292,7 @@ static async Task SeedImageStudioAsync(IServiceProvider aServices)
         var vParams = System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, object?>
         {
             ["prompt"] = "A glowing brass diya lantern on a marble table, warm golden bokeh, festive Diwali mood, ultra-detailed, cinematic lighting",
+            ["testSeed"] = "image-studio",
             ["steps"] = 28,
             ["cfgScale"] = 4.5,
             ["sampler"] = "Euler",
@@ -1489,6 +1514,61 @@ static async Task SeedGalleryAsync(IServiceProvider vServices)
                 ProviderKind = nameof(ProviderKind.Venice),
                 CreatedUtc = vSample.Created
             });
+        }
+    }
+
+    // The browser tests run before the screen checks and add runs of their own for this user, newer than
+    // the sample tiles, so the grid no longer opens as the mockup draws it. Move the seeded tiles (the
+    // gallery samples, the Image studio run and the Aanya narration) back above every other asset,
+    // keeping their order. Only the test host does this, and only when something newer is in the way.
+    var vAll = (await vAssets.ListAsync(new TrStudio.Models.Contracts.AssetFilterRequest { PageSize = 500 }, cUserId)).Items;
+    bool IsSeeded(TrStudio.Models.Entities.GeneratedAsset aAsset) =>
+        vSamples.Any(aSample => aAsset.ModelId == aSample.ModelId && aAsset.ParamsJson.Contains(System.Text.Json.JsonSerializer.Serialize(aSample.Title), StringComparison.Ordinal))
+        || (aAsset.Kind == "image" && aAsset.ParamsJson.Contains("\"testSeed\":\"image-studio\"", StringComparison.Ordinal))
+        || (aAsset.Kind == "audio" && aAsset.ParamsJson.Contains("sample Hinglish narration", StringComparison.Ordinal));
+    // The order the mockup draws: video, picture, video, picture, voice, video, picture, picture.
+    string TitleOf(TrStudio.Models.Entities.GeneratedAsset aAsset) =>
+        vSamples.FirstOrDefault(aSample => aAsset.ParamsJson.Contains(System.Text.Json.JsonSerializer.Serialize(aSample.Title), StringComparison.Ordinal)).Title ?? string.Empty;
+    var vRunImages = vAll.Where(aAsset => aAsset.Kind == "image" && aAsset.ParamsJson.Contains("\"testSeed\":\"image-studio\"", StringComparison.Ordinal))
+        .OrderBy(aAsset => aAsset.SeedUsed).ToList();
+    var vNarrations = vAll.Where(aAsset => aAsset.Kind == "audio" && aAsset.ParamsJson.Contains("sample Hinglish narration", StringComparison.Ordinal)).ToList();
+    var vOrder = new List<TrStudio.Models.Entities.GeneratedAsset>();
+    // One tile per sample, by title and model: another screen's sample data reuses a title with its own model.
+    void Take(string aTitle)
+    {
+        var vModel = vSamples.First(aSample => aSample.Title == aTitle).ModelId;
+        var vTile = vAll.Where(aAsset => TitleOf(aAsset) == aTitle && aAsset.ModelId == vModel).OrderBy(aAsset => aAsset.CreatedUtc).FirstOrDefault();
+        if (vTile is not null)
+        {
+            vOrder.Add(vTile);
+        }
+    }
+    Take("Diwali avatar intro — Kavya");
+    vOrder.AddRange(vNarrations);
+    Take("Product reel teaser — saree line");
+    vOrder.AddRange(vRunImages.Take(2));
+    Take("Lip-sync test — MuseTalk");
+    vOrder.AddRange(vRunImages.Skip(2));
+    foreach (var vSample in vSamples.Skip(3))
+    {
+        Take(vSample.Title);
+    }
+
+    var vOthersNewest = vAll.Where(aAsset => !IsSeeded(aAsset)).Select(aAsset => aAsset.CreatedUtc).DefaultIfEmpty(DateTime.MinValue).Max();
+    var vInOrder = vOrder.Zip(vOrder.Skip(1), (aNewer, aOlder) => aNewer.CreatedUtc > aOlder.CreatedUtc).All(aOk => aOk);
+    var vOnTop = vOrder.Count == 0 || vOrder[^1].CreatedUtc > vOthersNewest || vOrder.Take(8).All(aAsset => aAsset.CreatedUtc > vOthersNewest);
+    if (vOrder.Count > 0 && (!vInOrder || !vOnTop))
+    {
+        var vTop = (vOthersNewest > DateTime.UtcNow ? vOthersNewest : DateTime.UtcNow).AddMinutes(1);
+        var vFactory = vServices.GetRequiredService<TrStudio.Engine.Infrastructure.Data.IDbConnectionFactory>();
+        using var vConnection = await vFactory.CreateOpenConnectionAsync();
+        for (var vIndex = 0; vIndex < vOrder.Count; vIndex++)
+        {
+            // The first eight are a second apart at the top; the older samples keep their days apart below.
+            var vWhen = vIndex < 8 ? vTop.AddSeconds(-vIndex) : vTop.AddDays(-(vIndex - 6));
+            await Dapper.SqlMapper.ExecuteAsync(vConnection,
+                "UPDATE \"GeneratedAsset\" SET \"CreatedUtc\" = @aWhen WHERE \"GeneratedAssetId\" = @aId",
+                new { aWhen = vWhen, aId = vOrder[vIndex].AssetId });
         }
     }
 

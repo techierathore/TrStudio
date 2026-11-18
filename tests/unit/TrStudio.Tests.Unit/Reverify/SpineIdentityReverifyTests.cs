@@ -504,11 +504,8 @@ public class SpineIdentityReverifyTests
     {
     }
 
-    /// <summary>REQ-FN-010: provisioning the managed Python environment touches only its path.</summary>
-    [Fact(DisplayName = "REQ-FN-010 PythonProvisionTouchesOnlyManagedPath", Skip = "Needs a real Python environment to be provisioned (downloads, pip installs); a unit test must not provision Python on this Mac.")]
-    public void PythonProvisionTouchesOnlyManagedPath()
-    {
-    }
+    // REQ-FN-010: the real provisioning check is tests/integration/…/Setup/PythonProvisionTests.cs
+    // (it downloads Python into a temporary managed root and proves nothing outside it changed).
 
     /// <summary>REQ-FN-011: an interrupted model download resumes from where it stopped (HTTP Range).</summary>
     [Fact(DisplayName = "REQ-FN-011 InterruptedDownloadResumesWhereItStopped")]

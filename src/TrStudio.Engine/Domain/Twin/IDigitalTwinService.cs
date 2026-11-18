@@ -29,6 +29,19 @@ public interface IDigitalTwinService : IDigitalTwinShots
     /// <exception cref="ArgumentException">The file is empty, too big or the wrong format.</exception>
     Task<Guid> UploadAsync(string aKind, string aFileName, byte[] aBytes, string aUserId, CancellationToken aCancellationToken = default);
 
+    /// <summary>
+    /// The same upload for another purpose (REQ-FN-051/052: the first and last frames pinned on Video
+    /// studio): stored in the user's own <paramref name="aPurpose"/> folder and labelled with it.
+    /// </summary>
+    /// <param name="aPurpose">A short folder name, e.g. <c>frame</c>.</param>
+    /// <param name="aKind">picture, clip or voice.</param>
+    /// <param name="aFileName">The file's name (its extension decides the format).</param>
+    /// <param name="aBytes">The file bytes.</param>
+    /// <param name="aUserId">The signed-in user.</param>
+    /// <param name="aCancellationToken">Token to cancel the write.</param>
+    /// <returns>The asset id.</returns>
+    Task<Guid> UploadForAsync(string aPurpose, string aKind, string aFileName, byte[] aBytes, string aUserId, CancellationToken aCancellationToken = default);
+
     /// <summary>Creates a twin: refused when twins are off or consent is missing; otherwise makes the Venice voice and stores the twin.</summary>
     /// <param name="aRequest">The twin's name, person, pictures, clip and voice sample.</param>
     /// <param name="aUserId">The signed-in user.</param>

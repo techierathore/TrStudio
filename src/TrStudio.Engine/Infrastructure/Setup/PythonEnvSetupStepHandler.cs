@@ -192,24 +192,12 @@ public class PythonEnvSetupStepHandler : ISetupStepHandler
     private string ResolvePlatformTriple()
     {
         var vArchitecture = RuntimeInformation.OSArchitecture;
-        if (OperatingSystem.IsMacOS())
-        {
-            return vArchitecture == Architecture.Arm64 ? "aarch64-apple-darwin" : "x86_64-apple-darwin";
-        }
-
-        if (OperatingSystem.IsLinux())
-        {
-            return vArchitecture == Architecture.Arm64 ? "aarch64-unknown-linux-gnu" : "x86_64-unknown-linux-gnu";
-        }
-
-        if (OperatingSystem.IsWindows())
-        {
-            return vArchitecture == Architecture.Arm64 ? "aarch64-pc-windows-msvc" : "x86_64-pc-windows-msvc";
-        }
-
-        throw new SetupStepException(
-            $"Unsupported host platform '{RuntimeInformation.OSDescription} ({vArchitecture})' — " +
-            "the isolated Python environment supports macOS, Linux and Windows on x64/arm64.");
+        // HostPlatform.IsMac: inside the Mac app the engine is a Mac Catalyst process, not "macOS".
+        return TrStudio.Engine.Infrastructure.HostPlatform.PythonTriple(
+                   TrStudio.Engine.Infrastructure.HostPlatform.IsMac, OperatingSystem.IsLinux(), OperatingSystem.IsWindows(), vArchitecture)
+            ?? throw new SetupStepException(
+                $"Unsupported host platform '{RuntimeInformation.OSDescription} ({vArchitecture})' — " +
+                "the isolated Python environment supports macOS, Linux and Windows on x64/arm64.");
     }
 
     private static SetupStepProgress MapDownloadProgress(InstallDownloadProgress aSample)

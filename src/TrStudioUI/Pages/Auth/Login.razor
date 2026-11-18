@@ -113,9 +113,9 @@
         <Label For="remember-me">Remember me on this computer for 30 days</Label>
     </div>
 
-    <span data-testid="sign-in" style="display:block">
+    @* The mockup's `sign-in` is the button itself (a wrapper here measured as the card's colour). *@
     <Button Class="auth-submit" Type="ButtonType.Submit" OnClick="HandleSignInAsync"
-            Disabled="@(objBusy || !IsFormValid || objMissingSettings is not null)" data-testid="signin-btn">
+            Disabled="@(objBusy || !IsFormValid || objMissingSettings is not null)" data-testid="sign-in">
         @if (objBusy)
         {
             <Spinner Size="SpinnerSize.Small" Class="mr-2" />
@@ -127,7 +127,6 @@
             <span>Sign in</span>
         }
     </Button>
-    </span>
 
     <div class="auth-divline">AppManager</div>
     <div class="auth-note">

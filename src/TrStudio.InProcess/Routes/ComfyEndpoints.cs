@@ -85,7 +85,7 @@ public static class ComfyEndpoints
     }
 
     /// <summary>FN-047: reports required + missing custom nodes / model files.</summary>
-    private static IResult ScanDependenciesAsync(ComfyDependencyRequest aRequest, IComfyPipelineService aService)
+    private static async Task<IResult> ScanDependenciesAsync(ComfyDependencyRequest aRequest, IComfyPipelineService aService, CancellationToken aCancellationToken)
     {
         var vParsed = aService.Parse(aRequest.WorkflowJson);
         if (!vParsed.Ok)
@@ -93,7 +93,7 @@ public static class ComfyEndpoints
             return Results.Problem(statusCode: 400, title: "COMFY_PARSE_ERROR", detail: vParsed.Error);
         }
 
-        return Results.Ok(aService.ScanDependencies(aRequest.WorkflowJson));
+        return Results.Ok(await aService.ScanDependenciesAsync(aRequest.WorkflowJson, aCancellationToken));
     }
 
     /// <summary>FN-046: builds the exact submitted JSON + per-node status + missing-dependency detection.</summary>

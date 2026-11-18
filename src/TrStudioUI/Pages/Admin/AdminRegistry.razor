@@ -125,6 +125,19 @@
                                 @if (vKey.Stored)
                                 {
                                     <Badge Variant="BadgeVariant.Outline" Class="badge-ok" data-testid="@($"badge-{vSlug}-configured")">Configured</Badge>
+                                    @* Owner, 17 Nov 2026: a stored key can be removed here, after one confirming click. *@
+                                    @if (objConfirmRemove == vKey.ProviderName)
+                                    {
+                                        <Button Variant="ButtonVariant.Destructive" Size="ButtonSize.Small" OnClick="@(() => RemoveKeyAsync(vKey))"
+                                                aria-label="@($"Confirm remove {KeyLabel(vKey)} key")" data-testid="@($"btn-remove-{vSlug}-confirm")">Remove</Button>
+                                        <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => objConfirmRemove = null)"
+                                                aria-label="@($"Keep {KeyLabel(vKey)} key")" data-testid="@($"btn-remove-{vSlug}-keep")">Keep</Button>
+                                    }
+                                    else
+                                    {
+                                        <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => objConfirmRemove = vKey.ProviderName)"
+                                                aria-label="@($"Remove {KeyLabel(vKey)} key")" data-testid="@($"btn-remove-{vSlug}")">Remove key</Button>
+                                    }
                                 }
                             </div>
                             <div class="flex-row">
@@ -994,6 +1007,51 @@
         {
             ToastService.Success("Provider keys stored (encrypted, write-only).", "Saved");
         }
+    }
+
+    /// <summary>The provider whose Remove key is waiting for its confirming click, or null.</summary>
+    private string? objConfirmRemove;
+
+    /// <summary>
+    /// Removes one stored key (owner, 17 Nov 2026): <c>DELETE /api/v1/admin/providers/keys/{name}</c>
+    /// deletes its encrypted row, and the provider shows as not configured. A provider this screen
+    /// always lists stays listed, empty; any other leaves the list.
+    /// </summary>
+    private async Task RemoveKeyAsync(ProviderKeyRow aKey)
+    {
+        objConfirmRemove = null;
+        var vLabel = KeyLabel(aKey);
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vResponse = await vClient.DeleteAsync($"{ApiRoutes.Providers}/keys/{Uri.EscapeDataString(aKey.ProviderName)}");
+            if (!vResponse.IsSuccessStatusCode)
+            {
+                ToastService.Error(await ReadErrorAsync(vResponse) ?? $"Couldn't remove the {vLabel} key.", "Not removed");
+                return;
+            }
+        }
+        catch
+        {
+            ToastService.Error($"Couldn't remove the {vLabel} key.", "Not removed");
+            return;
+        }
+
+        if (KnownOrder(aKey.ProviderName) < KnownProviders.Length)
+        {
+            aKey.Stored = false;
+            aKey.MaskedKey = string.Empty;
+            aKey.Value = string.Empty;
+            aKey.Account = null;
+            aKey.StoredAccount = null;
+            aKey.Enabled = true;
+        }
+        else
+        {
+            objProviderKeys.Remove(aKey);
+        }
+
+        ToastService.Success($"The {vLabel} key is removed from this computer.", "Key removed");
     }
 
     /// <summary>The engine's own reason for a refused save (its <c>error</c> field), when it gave one.</summary>

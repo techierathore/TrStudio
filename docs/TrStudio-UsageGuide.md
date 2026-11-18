@@ -5,20 +5,20 @@
 | App | TrStudio |
 | Kind | app |
 | Size | Large |
-| Date | 2026-11-15 |
+| Date | 2026-11-18 |
 
 How to run and test TrStudio, one desktop app with the engine inside. The first version is for Mac; Windows comes in a later version. The smoke and verify agents and the owner's acceptance testing use the same test users and the same walkthrough below. The end-user manual is the Product Guide (`*productguide TrStudio`); this is the internal run and test reference.
 
 ## Test users
 
-Identity comes from AppManager; TrStudio stores only the AppManager `userId`, never a password. The users were registered by the owner in AppManager; each password lives only in the git-ignored settings file. Each password lives in the git-ignored `tests/verify/testsettings.Local.json`, laid over the committed `tests/verify/testsettings.json`; it is never written here. For switching roles in smoke runs, a Debug build of the app opens signed in as `Desktop:DevRole` from the git-ignored `src/TrStudio/appsettings.json`, and the test host serves the developer sign-in page `/dev/session`.
+Identity comes from AppManager; TrStudio stores only the AppManager `userId`, never a password. Users 1 and 2 were registered by the owner; users 3 and 4 were registered on 18 Nov 2026 through AppManager's public register call (`POST /AuthSvc/register`, application 5) by `node .tfcore/utils/tf-register-test-users.mjs`, which made their passwords. Each password lives in the git-ignored `tests/verify/testsettings.Local.json`, laid over the committed `tests/verify/testsettings.json`; it is never written here. For switching roles in smoke runs, a Debug build of the app opens signed in as `Desktop:DevRole` from the git-ignored `src/TrStudio/appsettings.json`, and the test host serves the developer sign-in page `/dev/session`.
 
 | # | User | Password source | AppManager role → TrStudio role | Exists |
 |---|---|---|---|---|
 | 1 | techierathore@gmail.com | `TestUsers:1:Password` in the git-ignored `tests/verify/testsettings.Local.json` | Admin → **Owner** (creator and management screens, all tiers); the owner walkthrough. Never create or overwrite it | yes |
 | 2 | tflensdemo@techierathore.com | `TestUsers:2:Password` in the git-ignored `tests/verify/testsettings.Local.json` | Manager → **Operator** (management screens only); the second user, and the unattended-run user for the management screens | yes |
-| 3 | creator@trstudio.test | `TestUsers:3:Password` in the git-ignored `tests/verify/testsettings.Local.json` | User → **Creator**; the creator for the isolation checks | no — the owner registers it with the User role when needed |
-| 4 | premium@trstudio.test | `TestUsers:4:Password` in the git-ignored `tests/verify/testsettings.Local.json` | User → **Creator** with a Premium licence (exercises REQ-FN-014) | no — register, then assign a Premium licence in AppManager |
+| 3 | creator@trstudio.test | `TestUsers:3:Password` in the git-ignored `tests/verify/testsettings.Local.json` | User → **Creator**; the creator for the isolation checks | yes (AppManager user 19, role User, 18 Nov 2026) |
+| 4 | premium@trstudio.test | `TestUsers:4:Password` in the git-ignored `tests/verify/testsettings.Local.json` | User → **Creator** with a Premium licence (exercises REQ-FN-014) | yes (AppManager user 20, role User, 18 Nov 2026); no Premium licence yet — the owner assigns it in AppManager |
 
 AppManager has three application roles and TrStudio maps them to its own (owner, 17 Nov 2026; REQ-FN-115): Admin is Owner, Manager is Operator, User is Creator. AppManager sends the role as `applicationRole` when a user signs in.
 
@@ -31,6 +31,8 @@ A verify test never creates, deletes or changes an account on a shared AppManage
 | Owner (1) | Avatar studio `/avatar`; a sidebar-footer link switches to the management screens | Guided setup `/admin/setup` |
 | Operator (2) | RunPod & ops `/admin/ops` | Hardware & readiness `/admin/setup/hardware`, then guided setup |
 | Creators (3, 4) | Avatar studio `/avatar` | `/setup-required` ("ask your admin") |
+
+Checked on the real Mac app on 18 Nov 2026 with user 3: on this install, which has no enabled model source, user 3 lands on Setup required and user 1 on Hardware & Setup; with a model source turned on for the check, user 3 lands on Avatar studio with only the creator screens, and user 1 on Avatar studio with the switch to the management screens. The source used for the check, "Hugging Face (temporary check)", was turned off again (the app has no way to delete a source).
 
 ## Execution guide
 
@@ -45,6 +47,8 @@ open src/TrStudio/bin/Debug/net10.0-maccatalyst/maccatalyst-arm64/TrStudio.app
 On first start the app creates and migrates `TrStudio.db` (plus `TrStudio.vectors.db`) in the user's app data folder; jobs run inside the app. Sign in as user 1. Without the AppManager settings the app still opens and Login says the copy was built without its sign-in settings.
 
 **Phase 2 (Venice):** sign in as user 1 or 3, open Registry & providers, add provider `Venice` with address `https://api.venice.ai/api/v1` and the Venice API key (kept in the local database, protected by the Mac Keychain for that user), press Test connection, then add one registry row per Venice model and task.
+
+**Removing a key:** on Registry & providers, a configured provider shows **Remove key**; press it, then **Remove** (or **Keep**). The key's encrypted row is deleted and the provider shows as not configured at once, with no restart (REQ-FN-116, 18 Nov 2026). The one Keychain item that unlocks the stored keys stays (decision 16).
 
 ## How to test, screen by screen
 
@@ -208,8 +212,16 @@ The first line runs the unit tests (497 pass, 18 skipped on 15 Nov 2026) and the
 
 **macOS (Apple Silicon), first version:** use the command line, VS Code or Rider. The app needs full Xcode (`sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`, licence accepted). The csproj sets `ValidateXcodeVersion=false` while the Mac Catalyst workload (26.5) trails Xcode (27.2); `sudo dotnet workload update` lets it be removed. Zoom with Cmd+ / Cmd− / Cmd0 (the page is laid out again at each size and stays centred, fixed 15 Nov 2026) after clicking inside the window; the level persists and scales up on high-density displays. A kept "Remember me" sign-in is encrypted with the Keychain-held key; AppManager may end it sooner than 30 days.
 
+**Signing the Mac app (decision 15):** every Debug build is signed with the owner's free Personal Team: certificate "Apple Development: S Ravi Kumar" and the profile "Mac Catalyst Team Provisioning Profile: com.techierathore.trstudio". The signature carries the Keychain permission the app needs. The profile ends on 17 Nov 2027 and the certificate on **4 Oct 2027**, so signing ends on 4 Oct 2027. On that day a new build stops at the signing step with an expired or missing certificate, and from then (at the latest from 17 Nov 2027) the built app may refuse to open ("TrStudio quit unexpectedly" or "can't be opened"). Your library is not touched. To make a new certificate and profile, run on this Mac:
+
+```
+bash tools/mac-signing/renew-mac-profile.sh
+```
+
+Then build as usual; it prints the new end dates. If it says the Apple ID needs signing in, sign in under Xcode › Settings › Accounts and run it again. To see the app's Keychain items (names and dates only, never a value): `bash tools/mac-signing/keychain-list.sh`.
+
 **Windows (later version):** the Windows head stays in the project; on a Windows machine, `dotnet build src/TrStudio/TrStudio.csproj -f net10.0-windows10.0.19041.0`. No step of the first version needs Windows.
 
-**Checking the real Mac app with the framework's driver:** Appium's mac2 driver needs macOS Automation Mode on without a password prompt. Run once, as an administrator: `sudo automationmodetool enable-automationmode-without-authentication`. Until then `tf-verify-boot.sh start --head maccatalyst` cannot open a session ("Timed out while enabling automation mode").
+**Checking the real Mac app with the framework's driver:** Appium's mac2 driver needs macOS Automation Mode on without a password prompt (`sudo automationmodetool enable-automationmode-without-authentication`, done on this Mac by 18 Nov 2026). `tf-verify-boot.sh start --head maccatalyst --project src/TrStudio/TrStudio.csproj` starts Appium and the app; `node tests/verify/mac-real-app.mjs <step>` signs in, signs out, quits, opens, clicks (`scrollclick` scrolls a control into view first) and takes window screenshots.
 
 **Troubleshooting:** The Mac app quits the moment it starts, with a crash in `load_aot_module` → old build output; delete `src/TrStudio/bin` and `src/TrStudio/obj` and build again. `NU1101: TechieRag` or `NU1301` → `nuget.config` missing or token invalid. `requires Xcode X.Y` → `sudo dotnet workload update`. Login says the copy was built without its sign-in settings → fill in `src/TrStudio/appmanager.local.json` and rebuild. Login shows "Please sign in again" → the kept sign-in ran past 30 days or AppManager refused it; sign in again. A screen errors at start → read the log under the app data folder's `TrStudio/logs`.

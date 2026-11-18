@@ -41,6 +41,15 @@ public static class VideoModelFilter
     public static bool IsVenice(CatalogModelResponse? aModel) => aModel?.ProviderKind == ProviderKind.Venice;
 
     /// <summary>
+    /// The text a row shows in the Model box and its list: Venice rows read "Name — Cloud · Venice"
+    /// (REQ-UI-089), others their own name. The closed box shows it in full, wrapping (owner screen
+    /// check, 17 Nov 2026: a long name was cut at 1280 px).
+    /// </summary>
+    /// <param name="aModel">The row.</param>
+    public static string OptionLabel(CatalogModelResponse aModel)
+        => IsVenice(aModel) ? $"{aModel.DisplayName} — Cloud · Venice" : aModel.DisplayName;
+
+    /// <summary>
     /// Keeps the current choice when it is still allowed, otherwise falls back to the first allowed
     /// value (null when nothing is allowed).
     /// </summary>

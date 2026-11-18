@@ -48,28 +48,31 @@
         <Input Id="twin-person" @bind-Value="objPerson" Placeholder="The person's name" data-testid="input-twin-person" />
     </div>
 
-    <div style="margin-top:12px">
-        <Label>Pictures (1 to 10)</Label>
-        <div data-testid="file-twin-pictures">
-            <FileUpload Accept="image/png,image/jpeg,image/webp" Multiple="true" FilesChanged="OnPicturesSelected" />
-        </div>
-        <div class="muted-sm" style="margin-top:4px">@(objPictures.Count == 0 ? "Choose clear, front-facing pictures" : $"{objPictures.Count} chosen")</div>
+    @* The three pickers sit in one row of outline buttons, as the Avatar studio mockup draws them. *@
+    <div class="twin-picks">
+        <FileUpload Class="twin-pick" Accept="image/png,image/jpeg,image/webp" Multiple="true" FilesChanged="OnPicturesSelected"
+                    AriaLabel="Pictures (1 to 10)" data-testid="file-twin-pictures">
+            <DropzoneContent>Pictures (1–10)</DropzoneContent>
+        </FileUpload>
+        <FileUpload Class="twin-pick" Accept="video/mp4,video/quicktime,.mp4,.mov" FilesChanged="OnClipSelected"
+                    AriaLabel="Clip (up to 15 seconds, MP4 or MOV)" data-testid="file-twin-clip">
+            <DropzoneContent>Clip (up to 15 s)</DropzoneContent>
+        </FileUpload>
+        <FileUpload Class="twin-pick" Accept="audio/wav,audio/mpeg,.wav,.mp3" FilesChanged="OnVoiceSelected"
+                    AriaLabel="Voice sample (5 to 15 seconds, WAV or MP3)" data-testid="file-twin-voice">
+            <DropzoneContent>Voice sample (5–15 s)</DropzoneContent>
+        </FileUpload>
     </div>
-    <div style="margin-top:12px">
-        <Label>Reference clip (1 to 15 seconds, MP4 or MOV)</Label>
-        <div data-testid="file-twin-clip">
-            <FileUpload Accept="video/mp4,video/quicktime,.mp4,.mov" FilesChanged="OnClipSelected" />
+    <div class="muted-sm" style="margin-top:4px" data-testid="text-twin-chosen">@ChosenText</div>
+    <div class="twin-lengths">
+        <div>
+            <Label For="twin-clip-seconds" Class="muted-sm">Clip length in seconds</Label>
+            <Input Id="twin-clip-seconds" @bind-Value="objClipSeconds" data-testid="input-twin-clip-seconds" />
         </div>
-        <Label For="twin-clip-seconds" Class="muted-sm">Clip length in seconds</Label>
-        <Input Id="twin-clip-seconds" @bind-Value="objClipSeconds" data-testid="input-twin-clip-seconds" />
-    </div>
-    <div style="margin-top:12px">
-        <Label>Voice sample (5 to 15 seconds, WAV or MP3)</Label>
-        <div data-testid="file-twin-voice">
-            <FileUpload Accept="audio/wav,audio/mpeg,.wav,.mp3" FilesChanged="OnVoiceSelected" />
+        <div>
+            <Label For="twin-voice-seconds" Class="muted-sm">Voice sample length in seconds</Label>
+            <Input Id="twin-voice-seconds" @bind-Value="objVoiceSeconds" data-testid="input-twin-voice-seconds" />
         </div>
-        <Label For="twin-voice-seconds" Class="muted-sm">Voice sample length in seconds</Label>
-        <Input Id="twin-voice-seconds" @bind-Value="objVoiceSeconds" data-testid="input-twin-voice-seconds" />
     </div>
 
     <div class="flex-row" style="gap:8px;margin-top:12px;flex-wrap:wrap">
@@ -117,7 +120,7 @@
         <Label For="twin-line">Line to say</Label>
         <Input Id="twin-line" @bind-Value="objLine" Placeholder="Write what the person says" data-testid="input-twin-line" />
     </div>
-    <Button Class="w-full" style="margin-top:12px" OnClick="MakeClipAsync" Disabled="@(objBusy || !objEnabled || objSelectedId is null || string.IsNullOrWhiteSpace(objLine))" data-testid="btn-make-twin-clip">
+    <Button Variant="ButtonVariant.Outline" Class="w-full" style="margin-top:12px" OnClick="MakeClipAsync" Disabled="@(objBusy || !objEnabled || objSelectedId is null || string.IsNullOrWhiteSpace(objLine))" data-testid="btn-make-twin-clip">
         Make a clip of this line
     </Button>
     @if (objStatus is not null)
@@ -178,6 +181,23 @@
     }
 
     private void OnPicturesSelected(IReadOnlyList<FileUploadItem> aFiles) => objPictures = aFiles;
+
+    /// <summary>What the three pickers hold, in one line under them.</summary>
+    private string ChosenText
+    {
+        get
+        {
+            if (objPictures.Count == 0 && objClip is null && objVoice is null)
+            {
+                return "Choose clear, front-facing pictures, a short clip and a voice sample";
+            }
+
+            var vParts = new List<string> { objPictures.Count == 1 ? "1 picture" : $"{objPictures.Count} pictures" };
+            vParts.Add(objClip is null ? "no clip" : $"clip {objClip.Name}");
+            vParts.Add(objVoice is null ? "no voice sample" : $"voice {objVoice.Name}");
+            return string.Join(" · ", vParts);
+        }
+    }
 
     private void OnClipSelected(IReadOnlyList<FileUploadItem> aFiles) => objClip = aFiles.Count > 0 ? aFiles[0] : null;
 

@@ -141,4 +141,14 @@ public class VideoModelFilterTests
             VideoModelFilter.FailureLine("Venice: Model at capacity (HTTP 503 MODEL_AT_CAPACITY)"));
         Assert.Equal("Venice could not make this clip.", VideoModelFilter.FailureLine(null));
     }
+
+    /// <summary>The Model box and its list show the same text: Venice rows badged, others plain (REQ-UI-040, REQ-UI-089).</summary>
+    [Fact]
+    public void REQ_UI_040_OptionLabelIsTheFullNameWithVeniceBadge()
+    {
+        var vVenice = Row("Veo 3.1 Fast image to video", GenerationTaskType.ImageToVideo);
+        var vRunPod = Row("Wan 2.x (RunPod)", GenerationTaskType.ImageToVideo, ProviderKind.RunPod);
+        Assert.Equal("Veo 3.1 Fast image to video — Cloud · Venice", VideoModelFilter.OptionLabel(vVenice));
+        Assert.Equal("Wan 2.x (RunPod)", VideoModelFilter.OptionLabel(vRunPod));
+    }
 }

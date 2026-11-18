@@ -14,37 +14,37 @@ Phase 2 adds Venice as a second picture and video provider beside ComfyUI, so a 
 
 | ID | Requirement | Status | % | Remarks | Details |
 |----|-------------|--------|---|---------|---------|
-| REQ-FN-075 | Add Venice as a provider with its address and key | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-075 Venice address and key saved on Registry, key mas` | [view](#d-req-fn-075) |
-| REQ-FN-076 | The Venice key is stored encrypted, like the other provider keys | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-076 VeniceKeyIsEncryptedAndNeverReturned` | [view](#d-req-fn-076) |
-| REQ-UI-083 | Test the Venice connection | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-UI-083 Test connection shows Venice own error text, then` | [view](#d-req-ui-083) |
-| REQ-UI-084 | Add a Venice model as a registry row for one task | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-UI-084 a saved Venice model row lists with a Venice badg` | [view](#d-req-ui-084) |
-| REQ-FN-077 | Record whether a Venice model takes a reference picture or keeps a fixed character | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-FN-077 reference picture and fixed character ticks remai` | [view](#d-req-fn-077) |
-| REQ-FN-078 | Venice needs nothing in appsettings or code | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-078 TextToImageUsesDatabaseAddressAndKey` | [view](#d-req-fn-078) |
-| REQ-UI-085 | Venice picture models appear in the model list | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-UI-085 Image studio lists an enabled Venice picture row ` | [view](#d-req-ui-085) |
-| REQ-UI-086 | Generate a picture through Venice | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-UI-086 generating with a Venice model shows Venice pictu` | [view](#d-req-ui-086) |
-| REQ-UI-087 | A reference picture limits the list to models that take one | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-UI-087 ReferencePictureKeepsOnlyRowsThatTakeOne` | [view](#d-req-ui-087) |
-| REQ-FN-079 | Edit a picture through a Venice edit model | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-079 ImageToImageSendsSourceAsDataUrl` | [view](#d-req-fn-079) |
-| REQ-UI-088 | A masked edit is never offered to Venice | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-UI-088 MaskHidesEveryVeniceRow` | [view](#d-req-ui-088) |
-| REQ-FN-080 | Upscale through Venice | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-080 UpscaleTwoTimesStoresPictureTwiceAsWide` | [view](#d-req-fn-080) |
-| REQ-UI-089 | Venice text-to-video models appear in a model list | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-UI-089 Text to video lists Venice text-to-video rows bad` | [view](#d-req-ui-089) |
-| REQ-UI-090 | Make a clip through Venice with progress | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-UI-090 VideoShowsProgressUntilTheClipIsReady` | [view](#d-req-ui-090) |
-| REQ-UI-091 | Image to video offers only models that can do it | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-UI-091 Image to video lists only image-to-video rows` | [view](#d-req-ui-091) |
-| REQ-UI-092 | A chosen character offers only models that keep a fixed character | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-UI-092 ChosenCharacterListsOnlyFixedCharacterRows(aImage` | [view](#d-req-ui-092) |
-| REQ-FN-081 | Duration, resolution and aspect follow the chosen model | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-081 AllowedValuesFollowThePickedVeniceModel` | [view](#d-req-fn-081) |
-| REQ-FN-082 | Store Venice's price for each call with the generation | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-082 SucceededVeniceRunLogsPriceAndSource` | [view](#d-req-fn-082) |
-| REQ-UI-093 | Show the provider and price in the run details on Projects | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-UI-093 RunDetailsShowVeniceUsDollarPrice(aCost: "0", aEx` | [view](#d-req-ui-093) |
-| REQ-UI-094 | Show the provider and price in the asset details on Gallery | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-UI-094 DetailsShowVeniceLinesForVeniceAssets(aProvider: ` | [view](#d-req-ui-094) |
-| REQ-UI-095 | A failed or refused call shows Venice's own reason | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-UI-095 RefusalKeepsVeniceText` | [view](#d-req-ui-095) |
-| REQ-FN-085 | Venice spend counts toward the monthly cap | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-085 OverCapShowsTheOverCapAlert` | [view](#d-req-fn-085) |
-| REQ-FN-083 | The safety floors run before any Venice call | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-083 TrippedSafetyFloorMakesNoVeniceCall(aTask: TextTo` | [view](#d-req-fn-083) |
-| REQ-FN-084 | Venice's safe mode follows the owner's content policy | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-FN-084 SafeModeFollowsOwnerPolicy(aUnrestricted: True, a` | [view](#d-req-fn-084) |
-| REQ-UI-096 | The studio says when a prompt leaves the machine | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-UI-096 picking a Venice model shows the sent-to-Venice n` | [view](#d-req-ui-096) |
-| REQ-NFR-011 | ComfyUI behaves exactly as before Venice | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-NFR-011 ComfyUiRowStillResolvesToComfyUiProvider` | [view](#d-req-nfr-011) |
-| REQ-NFR-012 | One live test per task type against Venice | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-NFR-012 LiveTextToImage` | [view](#d-req-nfr-012) |
-| REQ-NFR-013 | Live tests skip clearly without a key | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-NFR-013 LiveTestsSkipWithTheKeyLineWhenNoKeyIsSet` | [view](#d-req-nfr-013) |
-| REQ-NFR-014 | Test settings come from a file beside the tests, never environment variables | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-NFR-014 TestsReadNoEnvironmentVariables` | [view](#d-req-nfr-014) |
-| REQ-UI-097 | Fill a Venice model's details from Venice's own model list | Verified | 100% | 2026-11-15 verify: PASS — test `REQ-UI-097 Fill from Venice fills task, abilities, durations` | [view](#d-req-ui-097) |
-| REQ-NFR-015 | The desktop app reads its settings from a file, never environment variables | Verified | 100% | 2026-11-14 verify: PASS — test `REQ-NFR-015 DesktopReadsSettingsFromFile` | [view](#d-req-nfr-015) |
+| REQ-FN-075 | Add Venice as a provider with its address and key | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-FN-075 Venice address and key saved on Registry, key mas` | [view](#d-req-fn-075) |
+| REQ-FN-076 | The Venice key is stored encrypted, like the other provider keys | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-FN-076 VeniceKeyIsEncryptedAndNeverReturned` | [view](#d-req-fn-076) |
+| REQ-UI-083 | Test the Venice connection | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-UI-083 Test connection shows Venice own error text, then` | [view](#d-req-ui-083) |
+| REQ-UI-084 | Add a Venice model as a registry row for one task | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-UI-084 a saved Venice model row lists with a Venice badg` | [view](#d-req-ui-084) |
+| REQ-FN-077 | Record whether a Venice model takes a reference picture or keeps a fixed character | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-FN-077 RegistrySqlRoundTripsAbilityTicks(aColumn: "Provi` | [view](#d-req-fn-077) |
+| REQ-FN-078 | Venice needs nothing in appsettings or code | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-FN-078 VeniceLivesOnlyInTheDatabase` | [view](#d-req-fn-078) |
+| REQ-UI-085 | Venice picture models appear in the model list | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-UI-085 OptionLabelBadgesVeniceRows` | [view](#d-req-ui-085) |
+| REQ-UI-086 | Generate a picture through Venice | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-UI-086 job result names the provider that made each asse` | [view](#d-req-ui-086) |
+| REQ-UI-087 | A reference picture limits the list to models that take one | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-UI-087 ReferencePictureKeepsOnlyRowsThatTakeOne` | [view](#d-req-ui-087) |
+| REQ-FN-079 | Edit a picture through a Venice edit model | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-FN-079 ImageToImageSendsSourceAsDataUrl` | [view](#d-req-fn-079) |
+| REQ-UI-088 | A masked edit is never offered to Venice | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-UI-088 MaskHidesEveryVeniceRow` | [view](#d-req-ui-088) |
+| REQ-FN-080 | Upscale through Venice | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-FN-080 UpscaleTwoTimesStoresPictureTwiceAsWide` | [view](#d-req-fn-080) |
+| REQ-UI-089 | Venice text-to-video models appear in a model list | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-UI-089 TextToVideoListsVeniceRowsBadged` | [view](#d-req-ui-089) |
+| REQ-UI-090 | Make a clip through Venice with progress | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-UI-090 VideoShowsProgressUntilTheClipIsReady` | [view](#d-req-ui-090) |
+| REQ-UI-091 | Image to video offers only models that can do it | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-UI-091 ImageToVideoListsOnlyImageToVideoRows` | [view](#d-req-ui-091) |
+| REQ-UI-092 | A chosen character offers only models that keep a fixed character | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-UI-092 ChosenCharacterListsOnlyFixedCharacterRows(aImage` | [view](#d-req-ui-092) |
+| REQ-FN-081 | Duration, resolution and aspect follow the chosen model | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-FN-081 AllowedValuesFollowThePickedVeniceModel` | [view](#d-req-fn-081) |
+| REQ-FN-082 | Store Venice's price for each call with the generation | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-FN-082 SucceededVeniceRunLogsPriceAndSource` | [view](#d-req-fn-082) |
+| REQ-UI-093 | Show the provider and price in the run details on Projects | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-UI-093 RunDetailsShowVeniceUsDollarPrice(aCost: "0", aEx` | [view](#d-req-ui-093) |
+| REQ-UI-094 | Show the provider and price in the asset details on Gallery | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-UI-094 DetailsShowVeniceLinesForVeniceAssets(aProvider: ` | [view](#d-req-ui-094) |
+| REQ-UI-095 | A failed or refused call shows Venice's own reason | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-UI-095 FailureAlertKeepsVeniceTextVerbatim` | [view](#d-req-ui-095) |
+| REQ-FN-085 | Venice spend counts toward the monthly cap | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-FN-085 OverCapShowsTheOverCapAlert` | [view](#d-req-fn-085) |
+| REQ-FN-083 | The safety floors run before any Venice call | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-FN-083 TrippedSafetyFloorMakesNoVeniceCall(aTask: TextTo` | [view](#d-req-fn-083) |
+| REQ-FN-084 | Venice's safe mode follows the owner's content policy | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-FN-084 SafeModeFollowsOwnerPolicy(aUnrestricted: True, a` | [view](#d-req-fn-084) |
+| REQ-UI-096 | The studio says when a prompt leaves the machine | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-UI-096 picking a Venice model shows the sent-to-Venice n` | [view](#d-req-ui-096) |
+| REQ-NFR-011 | ComfyUI behaves exactly as before Venice | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-NFR-011 ComfyUiRowStillResolvesToComfyUiProvider` | [view](#d-req-nfr-011) |
+| REQ-NFR-012 | One live test per task type against Venice | Verified | 100% | 2026-11-18 verify: not observable — NFR row with no perf-budget and no unit test carrying its id; Verified on 2026-11-15 stands, not re-measured | [view](#d-req-nfr-012) |
+| REQ-NFR-013 | Live tests skip clearly without a key | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-NFR-013 LiveTestsSkipWithTheKeyLineWhenNoKeyIsSet` | [view](#d-req-nfr-013) |
+| REQ-NFR-014 | Test settings come from a file beside the tests, never environment variables | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-NFR-014 TestsReadNoEnvironmentVariables` | [view](#d-req-nfr-014) |
+| REQ-UI-097 | Fill a Venice model's details from Venice's own model list | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-UI-097 FillReferenceToVideo` | [view](#d-req-ui-097) |
+| REQ-NFR-015 | The desktop app reads its settings from a file, never environment variables | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-NFR-015 DesktopReadsSettingsFromFile` | [view](#d-req-nfr-015) |
 
 **Status values:** `Not Started` · `In Progress` · `Implemented` · `Verified` · `Done (pre-existing)` · `Needs re-verify` · `PARTIAL` · `FAIL` · `Blocked` · `Owner-UAT` · `N/A`.
 

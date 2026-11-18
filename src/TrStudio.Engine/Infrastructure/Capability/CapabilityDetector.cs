@@ -64,7 +64,8 @@ public class CapabilityDetector : ICapabilityDetector
 
         ProbeDisk(vReport, vWarnings);
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        // HostPlatform.IsMac: the Mac app runs the engine as Mac Catalyst, where IsOSPlatform(OSX) is false.
+        if (TrStudio.Engine.Infrastructure.HostPlatform.IsMac)
         {
             await ProbeAppleSiliconAsync(vReport, vWarnings, aCancellationToken).ConfigureAwait(false);
         }

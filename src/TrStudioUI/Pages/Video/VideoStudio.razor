@@ -158,13 +158,21 @@
             @* Phase 2 (decision 3A): registry-driven model picker under the tier buttons (REQ-UI-089..092). *@
             <div data-testid="video-model-picker" style="margin-top:12px">
                 <label class="param-label">Model</label>
-                <NativeSelect TValue="string" Value="@objModelId" ValueChanged="@((string? aId) => OnModelChanged(aId))" Class="w-full" aria-label="Model"
-                              Placeholder="@(ListedModels.Count == 0 ? "No model for this choice" : null)" data-testid="field-video-model">
-                    @foreach (var vModel in ListedModels)
-                    {
-                        <option value="@vModel.Id">@(VideoModelFilter.IsVenice(vModel) ? $"{vModel.DisplayName} — Cloud · Venice" : vModel.DisplayName)</option>
-                    }
-                </NativeSelect>
+                @* A closed native select shows one line and cuts a long name (owner check, 17 Nov 2026, 1280 px).
+                   The chosen name is drawn in a label that wraps; the real select lies on top of it, invisible,
+                   so a click or the keyboard still opens and drives the normal list. *@
+                <div class="select-wrap" data-testid="video-model-box">
+                    <div class="select-wrap-label rounded-md border border-input bg-background text-sm" aria-hidden="true" data-testid="video-model-chosen">
+                        @(SelectedModel is not null ? VideoModelFilter.OptionLabel(SelectedModel) : (ListedModels.Count == 0 ? "No model for this choice" : ""))
+                    </div>
+                    <NativeSelect TValue="string" Value="@objModelId" ValueChanged="@((string? aId) => OnModelChanged(aId))" Class="w-full select-wrap-native" aria-label="Model"
+                                  Placeholder="@(ListedModels.Count == 0 ? "No model for this choice" : null)" data-testid="field-video-model">
+                        @foreach (var vModel in ListedModels)
+                        {
+                            <option value="@vModel.Id">@VideoModelFilter.OptionLabel(vModel)</option>
+                        }
+                    </NativeSelect>
+                </div>
                 <div class="muted-sm" style="margin-top:6px">
                     @(objCharacterId != NoCharacter
                         ? "Only models that keep a fixed character are listed."
@@ -677,13 +685,45 @@
 
     /// <summary>Records the chosen first-frame file name (upload itself is handled by the endpoint).</summary>
     /// <param name="aFiles">The files chosen in the FileUpload control.</param>
-    private void OnFirstFrameSelected(IReadOnlyList<FileUploadItem> aFiles) =>
-        objFirstFrame = aFiles.Count > 0 ? aFiles[0].Name : null;
+    private void OnFirstFrameSelected(IReadOnlyList<FileUploadItem> aFiles)
+    {
+        objFirstFrameFile = aFiles.Count > 0 ? aFiles[0] : null;
+        objFirstFrame = objFirstFrameFile?.Name;
+    }
 
     /// <summary>Records the chosen last-frame file name (optional end-conditioning).</summary>
     /// <param name="aFiles">The files chosen in the FileUpload control.</param>
-    private void OnLastFrameSelected(IReadOnlyList<FileUploadItem> aFiles) =>
-        objLastFrame = aFiles.Count > 0 ? aFiles[0].Name : null;
+    private void OnLastFrameSelected(IReadOnlyList<FileUploadItem> aFiles)
+    {
+        objLastFrameFile = aFiles.Count > 0 ? aFiles[0] : null;
+        objLastFrame = objLastFrameFile?.Name;
+    }
+
+    // REQ-FN-051/052 (owner run of 17 Nov 2026): only the frames' file names used to be sent, so the
+    // model never saw the pinned pictures. Now each chosen frame is uploaded as the creator's own
+    // picture and the job names it: sourceAssetId (the start) and endImageAssetId (the end).
+    private FileUploadItem? objFirstFrameFile;
+    private FileUploadItem? objLastFrameFile;
+
+    /// <summary>Uploads one pinned frame and returns its asset id.</summary>
+    private async Task<Guid> UploadFrameAsync(HttpClient aClient, FileUploadItem aItem)
+    {
+        await using var vStream = aItem.File.OpenReadStream(60L * 1024 * 1024, objCts.Token);
+        using var vMemory = new MemoryStream();
+        await vStream.CopyToAsync(vMemory, objCts.Token);
+        var vResponse = await aClient.PostAsJsonAsync(ApiRoutes.FrameUploads, new DigitalTwinUploadRequest
+        {
+            Kind = "picture",
+            FileName = aItem.Name,
+            Base64Content = Convert.ToBase64String(vMemory.ToArray())
+        }, objCts.Token);
+        if (!vResponse.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException($"The frame {aItem.Name} could not be uploaded.");
+        }
+
+        return (await vResponse.Content.ReadFromJsonAsync<DigitalTwinUploadResponse>(cancellationToken: objCts.Token))!.AssetId;
+    }
 
     /// <summary>
     /// Runs a generation pass: animates Progress, submits an ImageToVideo/TextToVideo job through the
@@ -758,6 +798,8 @@
         try
         {
             var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            Guid? vStartId = IsImageToVideo && objFirstFrameFile is not null ? await UploadFrameAsync(vClient, objFirstFrameFile) : null;
+            Guid? vEndId = IsImageToVideo && objLastFrameFile is not null ? await UploadFrameAsync(vClient, objLastFrameFile) : null;
             var vRequest = new JobSubmitRequest
             {
                 ModelId = aModel?.Id ?? (SelectedTier.HeyGen ? "heygen-video" : SelectedTier.Tier == GenerationTier.High ? "wan-video" : "svd-local"),
@@ -769,6 +811,8 @@
                     prompt = IsImageToVideo ? null : objPrompt,
                     firstFrame = objFirstFrame,
                     lastFrame = objLastFrame,
+                    sourceAssetId = vStartId,
+                    endImageAssetId = vEndId,
                     durationSeconds = DurationSeconds,
                     duration = ModelStatesDurations ? objDurationValue : null,
                     resolution = AllowedValues.Resolutions.Count > 0 ? objResolution : null,

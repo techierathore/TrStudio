@@ -68,13 +68,20 @@ else
             var vSlot = objSlots[vSlotIndex];
             <span class="cmp-slot">
             <span class="cmp-slottag">@vSlot.Tag</span>
-            <NativeSelect TValue="string" Value="@vSlot.AssetId" ValueChanged="@(aValue => OnSlotChangedAsync(vSlot, aValue))"
-                          Placeholder="Pick an asset" Class="cmp-slot-select" aria-label="@($"Slot {vSlot.Tag}")" data-testid="@($"field-{vSlotIndex + 1}")">
-                @foreach (var vAsset in objAssets)
-                {
-                    <option value="@vAsset.AssetId">@vAsset.OptionLabel</option>
-                }
-            </NativeSelect>
+            @* A long asset name wraps in the box instead of being cut (screen check, 18 Nov 2026): the label
+               draws the chosen name; the real select lies on top of it, invisible, and takes every click and key. *@
+            <div class="select-wrap cmp-slot-wrap" data-testid="@($"slot-{vSlotIndex + 1}-box")">
+                <div class="select-wrap-label rounded-md border border-input bg-background text-sm" aria-hidden="true" data-testid="@($"slot-{vSlotIndex + 1}-chosen")">
+                    @(objAssets.FirstOrDefault(aAsset => aAsset.AssetId == vSlot.AssetId)?.OptionLabel ?? "Pick an asset")
+                </div>
+                <NativeSelect TValue="string" Value="@vSlot.AssetId" ValueChanged="@(aValue => OnSlotChangedAsync(vSlot, aValue))"
+                              Placeholder="Pick an asset" Class="cmp-slot-select select-wrap-native" aria-label="@($"Slot {vSlot.Tag}")" data-testid="@($"field-{vSlotIndex + 1}")">
+                    @foreach (var vAsset in objAssets)
+                    {
+                        <option value="@vAsset.AssetId">@vAsset.OptionLabel</option>
+                    }
+                </NativeSelect>
+            </div>
             </span>
         }
         @if (objSlots.Count < 3)

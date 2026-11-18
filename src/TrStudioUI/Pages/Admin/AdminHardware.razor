@@ -3,6 +3,7 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject ToastService ToastService
 @inject IAuthSession AuthSession
+@implements IDisposable
 @using Microsoft.AspNetCore.Components.Sections
 
 @*
@@ -129,7 +130,7 @@
                         @if (vStep.Progress is not null)
                         {
                             <Progress Value="@vStep.Progress.Value" Class="hw-prog" IndicatorClass="hw-ind" data-testid="progress-2" />
-                            <div class="kpi-lbl" style="margin-top:4px">@vStep.Progress.Value.ToString("0") % · resolving dependencies</div>
+                            <div class="kpi-lbl" style="margin-top:4px" data-testid="@($"step-progress-{vStep.StepKey}")">@vStep.Progress.Value.ToString("0") % · @(string.IsNullOrWhiteSpace(vStep.Running) ? "starting" : vStep.Running)</div>
                         }
                     </div>
                     @if (vStep.Disabled)
@@ -349,6 +350,11 @@
                 objSteps = vStatus.Steps.Select((aStep, aIndex) => MapSetupStep(aStep, aIndex)).ToList();
                 vVolumeRow.DotLabel = (objSteps.Count + 1).ToString();
                 objSteps.Add(vVolumeRow);
+                // A step still running (started before this page opened) is followed until it ends.
+                foreach (var vRunning in objSteps.Where(aStep => aStep.Progress is not null))
+                {
+                    _ = FollowStepAsync(vRunning);
+                }
             }
         }
         catch
@@ -388,6 +394,7 @@
             ? (string.Equals(aRow.StepKey, "OnnxRuntime", StringComparison.OrdinalIgnoreCase) ? "Reinstall" : "Verify")
             : vRunning ? "Logs" : "Start";
         aRow.Progress = vRunning ? aInfo.ProgressPercent : (double?)null;
+        aRow.Running = vRunning ? aInfo.Message ?? string.Empty : string.Empty;
 
         if (!string.IsNullOrWhiteSpace(aInfo.ErrorMessage))
         {
@@ -457,6 +464,7 @@
                 }
 
                 ToastService.Success($"{aStep.Title}: step started.", "Guided setup");
+                _ = FollowStepAsync(aStep);
                 return;
             }
 
@@ -478,6 +486,80 @@
         ToastService.Error($"Couldn't reach the API — “{aStep.Title}” wasn't started.", "Guided setup");
     }
 
+    /// <summary>Stops following running steps when the page closes.</summary>
+    private readonly CancellationTokenSource objFollowCts = new();
+
+    /// <summary>
+    /// Follows a running step (owner run of 17 Nov 2026: the row stayed at "0 %" and a failure was seen
+    /// only after pressing Logs): reads it every 1.5 s, shows its progress line, and when it ends shows
+    /// "done" or its error, with a toast.
+    /// </summary>
+    /// <param name="aStep">The running step.</param>
+    private async Task FollowStepAsync(SetupStepRow aStep)
+    {
+        if (aStep.Following || string.IsNullOrWhiteSpace(aStep.StepKey))
+        {
+            return;
+        }
+
+        aStep.Following = true;
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            while (!objFollowCts.IsCancellationRequested)
+            {
+                await Task.Delay(1500, objFollowCts.Token);
+                SetupStepInfo? vInfo;
+                try
+                {
+                    vInfo = await vClient.GetFromJsonAsync<SetupStepInfo>($"{ApiRoutes.Setup}/steps/{Uri.EscapeDataString(aStep.StepKey)}", objFollowCts.Token);
+                }
+                catch (HttpRequestException)
+                {
+                    continue;
+                }
+
+                if (vInfo is null)
+                {
+                    continue;
+                }
+
+                ApplyStepState(aStep, vInfo);
+                await InvokeAsync(StateHasChanged);
+                if (string.Equals(vInfo.State, "Running", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (string.Equals(vInfo.State, "Completed", StringComparison.OrdinalIgnoreCase))
+                {
+                    ToastService.Success($"{aStep.Title}: done.", "Guided setup");
+                }
+                else if (!string.IsNullOrWhiteSpace(vInfo.ErrorMessage))
+                {
+                    ToastService.Error(vInfo.ErrorMessage!, aStep.Title);
+                }
+
+                break;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // the page closed
+        }
+        finally
+        {
+            aStep.Following = false;
+        }
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        objFollowCts.Cancel();
+        objFollowCts.Dispose();
+    }
+
     private sealed record CapabilityCard(string Label, string Value, string Detail, bool Warn, double? Progress);
 
     /// <summary>A single guided-setup stepper row; mutable so a step's returned state updates in place.</summary>
@@ -493,5 +575,11 @@
         public string ActionLabel { get; set; } = "Start";
         public bool Disabled { get; set; }
         public double? Progress { get; set; }
+
+        /// <summary>The running step's own progress message (e.g. "Downloading CPython …").</summary>
+        public string Running { get; set; } = string.Empty;
+
+        /// <summary>True while the page follows this step.</summary>
+        public bool Following { get; set; }
     }
 }

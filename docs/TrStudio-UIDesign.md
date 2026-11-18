@@ -356,7 +356,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 | Project | select | no | one of the user's projects |
 | none new (phase 2) | — | — | provider and Venice price are display only |
 
-**Notes / interactions:** **per-user only (BRD-81)** — the gallery shows only the signed-in user's own assets (server-side owner filter on `userId`); the header reads "My Library" to make ownership explicit. Any asset reusable as a new input; one-click reproduce from history. **Empty/loading/error:** empty-state; skeleton tiles.
+**Notes / interactions:** **per-user only (BRD-81)** — the gallery shows only the signed-in user's own assets (server-side owner filter on `userId`); the header reads "My Library" to make ownership explicit. Any asset reusable as a new input; one-click reproduce from history. **Empty/loading/error:** empty-state; skeleton tiles. **Tile art (corrected 18 Nov 2026):** each tile's coloured art stands for the user's own picture, so its colour is the user's data, not part of the design; the mockup marks it as sample data.
 
 **Phase 2 (Venice, BRD-93 to BRD-117):** provider and Venice price in the detail sheet.
 

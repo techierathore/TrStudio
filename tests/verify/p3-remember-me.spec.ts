@@ -36,8 +36,8 @@ async function signIn(page: Page, rememberMe: boolean) {
     await box.click();
     await expect(box).toHaveAttribute('aria-checked', 'true', { timeout: 10000 });
   }
-  await expect(page.getByTestId('signin-btn')).toBeEnabled({ timeout: 30000 });
-  await page.getByTestId('signin-btn').click();
+  await expect(page.getByTestId('sign-in')).toBeEnabled({ timeout: 30000 });
+  await page.getByTestId('sign-in').click();
   await page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 30000 });
 }
 

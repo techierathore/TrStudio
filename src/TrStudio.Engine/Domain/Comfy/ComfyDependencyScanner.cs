@@ -27,7 +27,17 @@ public class ComfyDependencyScanner
     /// </summary>
     /// <param name="aWorkflowJson">The workflow JSON to scan.</param>
     /// <returns>The report; an empty report for malformed JSON.</returns>
-    public ComfyDependencyReport Scan(string aWorkflowJson)
+    public ComfyDependencyReport Scan(string aWorkflowJson) => Scan(aWorkflowJson, null);
+
+    /// <summary>
+    /// Scans a graph against what a running ComfyUI holds (REQ-FN-047): a node type or a model file
+    /// ComfyUI lists is not missing. Without an inventory every non-built-in node and every named file
+    /// is reported missing, as before.
+    /// </summary>
+    /// <param name="aWorkflowJson">The API-format graph.</param>
+    /// <param name="aInventory">ComfyUI's <c>/object_info</c>, or null when it could not be asked.</param>
+    /// <returns>The required and missing nodes and files.</returns>
+    public ComfyDependencyReport Scan(string aWorkflowJson, ComfyInventory? aInventory)
     {
         var vReport = new ComfyDependencyReport();
         var vParsed = objParser.Parse(aWorkflowJson);
@@ -44,6 +54,12 @@ public class ComfyDependencyScanner
             if (!ComfyBuiltinNodes.IsBuiltin(vNode.ClassType) && vSeenNodes.Add(vNode.ClassType))
             {
                 vReport.RequiredCustomNodes.Add(vNode.ClassType);
+            }
+
+            if (!ComfyBuiltinNodes.IsBuiltin(vNode.ClassType) && vReport.RequiredCustomNodes.Contains(vNode.ClassType)
+                && aInventory?.HasNode(vNode.ClassType) != true
+                && !vReport.MissingCustomNodes.Any(aMissing => aMissing.Name == vNode.ClassType))
+            {
                 vReport.MissingCustomNodes.Add(new ComfyMissingDependency
                 {
                     Name = vNode.ClassType,
@@ -63,6 +79,11 @@ public class ComfyDependencyScanner
                 }
 
                 vReport.RequiredModelFiles.Add(vInput.Value!);
+                if (aInventory?.HasFile(vNode.ClassType, vInput.Name, vInput.Value!) == true)
+                {
+                    continue;
+                }
+
                 vReport.MissingModelFiles.Add(new ComfyMissingDependency
                 {
                     Name = vInput.Value!,

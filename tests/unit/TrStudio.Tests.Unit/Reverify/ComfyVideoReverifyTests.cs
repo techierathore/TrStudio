@@ -331,8 +331,8 @@ public class ComfyVideoReverifyTests
         Assert.Equal(HttpStatusCode.BadRequest, vBad.StatusCode);
     }
 
-    [Fact(DisplayName = "REQ-FN-051 ClipHonoursDurationAndAspect", Skip = "Checking a produced clip's length and aspect needs a real video model (RunPod or closed API); none is configured here.")]
-    public Task ClipHonoursDurationAndAspectAsync() => Task.CompletedTask;
+    // REQ-FN-051 ClipHonoursDurationAndAspect: measured on a real Venice clip in
+    // tests/integration/…/Venice/VenicePhase1LiveTests.cs (paid; Category=Live).
 
     // ---------------------------------------------------------------- REQ-FN-052
 
@@ -371,7 +371,10 @@ public class ComfyVideoReverifyTests
         Assert.Equal(HttpStatusCode.BadRequest, vRefused.StatusCode);
     }
 
-    [Fact(DisplayName = "REQ-FN-052 ClipStartsAndEndsOnPinnedFrames", Skip = "Whether the clip starts and ends on the pinned frames can only be seen in a clip from a real video model; none is configured here.")]
+    // REQ-FN-052 ClipStartsAndEndsOnPinnedFrames is measured on a real Venice clip in
+    // tests/integration/…/Venice/VenicePhase1LiveTests.cs (paid; Category=Live). Its one run (18 Nov 2026)
+    // started exactly on the pinned start and ended near, not on, the pinned end; owner decision 20.
+    [Fact(DisplayName = "REQ-FN-052 ClipStartsAndEndsOnPinnedFrames", Skip = "Live run 18 Nov 2026 (Seedance 2.0 Mini, $0.18): starts on the pinned start (4/255), ends near the pinned end (50/255, pass mark 40). Waiting on owner decision 20.")]
     public Task ClipStartsAndEndsOnPinnedFramesAsync() => Task.CompletedTask;
 
     // ---------------------------------------------------------------- REQ-FN-053

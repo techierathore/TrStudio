@@ -335,6 +335,33 @@ public class ProviderSettingsTests
         Assert.True(vAvatar.HeyGenConfigured);
         Assert.Equal("hg-live-key-0001", vAvatar.HeyGenApiKey);
     }
+
+    /// <summary>
+    /// REQ-FN-116 (owner, 17 Nov 2026): removing a stored key deletes its encrypted row, HeyGen is no
+    /// longer configured for the next job, and the other keys still unlock with the same unlock key.
+    /// </summary>
+    [Fact(DisplayName = "REQ-FN-116 RemovedKeyIsGoneAndOtherKeysStillUnlock")]
+    public async Task RemovedKeyIsGoneAndOtherKeysStillUnlock()
+    {
+        await using var vEngine = await DesktopEngine.StartAsync();
+        var vAvatar = vEngine.Host.Services.GetRequiredService<AvatarOptions>();
+        using var vOwner = vEngine.Client(vEngine.SignIn(UserRole.Owner, "owner-1"));
+        Assert.Equal(HttpStatusCode.OK, (await vOwner.PutAsJsonAsync("/api/v1/admin/providers/keys",
+            new ProviderKeyUpsertRequest { ProviderName = "HeyGen", ApiKey = "hg-placeholder-check", IsEnabled = true })).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await vOwner.PutAsJsonAsync("/api/v1/admin/providers/keys",
+            new ProviderKeyUpsertRequest { ProviderName = "RunPod", ApiKey = "rp-kept-key-5150", IsEnabled = true, Account = "endpoint-abc" })).StatusCode);
+        Assert.True(vAvatar.HeyGenConfigured);
+
+        var vDelete = await vOwner.DeleteAsync("/api/v1/admin/providers/keys/HeyGen");
+
+        Assert.Equal(HttpStatusCode.NoContent, vDelete.StatusCode);
+        Assert.Equal(0L, Convert.ToInt64(vEngine.Scalar("SELECT COUNT(*) FROM \"ProviderKey\" WHERE \"ProviderName\" = 'HeyGen'")));
+        Assert.False(vAvatar.HeyGenConfigured);
+        var vList = await vOwner.GetStringAsync("/api/v1/admin/providers/keys");
+        Assert.DoesNotContain("HeyGen", vList);
+        Assert.Contains("****5150", vList);
+        Assert.Equal("rp-kept-key-5150", await vEngine.Host.Services.GetRequiredService<IKeyStore>().RetrieveAsync("RunPod"));
+    }
 }
 
 /// <summary>Phase 3: REQ-FN-097 — keys are ciphertext in the database, unlocked by the operating system's key.</summary>

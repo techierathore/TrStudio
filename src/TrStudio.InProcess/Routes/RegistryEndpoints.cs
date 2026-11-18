@@ -60,10 +60,12 @@ public static class RegistryEndpoints
 
         vProviders.MapGet("keys", ListProviderKeysAsync).WithName("ListProviderKeys");
         vProviders.MapPut("keys", UpsertProviderKeyAsync).WithName("UpsertProviderKey");
-        vProviders.MapPost("keys/{aProviderName}/enable", (string aProviderName, IProviderKeyRepository aRepository, CancellationToken aCt)
-            => SetProviderKeyEnabledAsync(aProviderName, true, aRepository, aCt)).WithName("EnableProviderKey");
-        vProviders.MapPost("keys/{aProviderName}/disable", (string aProviderName, IProviderKeyRepository aRepository, CancellationToken aCt)
-            => SetProviderKeyEnabledAsync(aProviderName, false, aRepository, aCt)).WithName("DisableProviderKey");
+        vProviders.MapPost("keys/{aProviderName}/enable", (string aProviderName, IProviderKeyRepository aRepository,
+                TrStudio.Engine.Infrastructure.Security.DesktopProviderSettings aProviderSettings, CancellationToken aCt)
+            => SetProviderKeyEnabledAsync(aProviderName, true, aRepository, aProviderSettings, aCt)).WithName("EnableProviderKey");
+        vProviders.MapPost("keys/{aProviderName}/disable", (string aProviderName, IProviderKeyRepository aRepository,
+                TrStudio.Engine.Infrastructure.Security.DesktopProviderSettings aProviderSettings, CancellationToken aCt)
+            => SetProviderKeyEnabledAsync(aProviderName, false, aRepository, aProviderSettings, aCt)).WithName("DisableProviderKey");
         vProviders.MapDelete("keys/{aProviderName}", DeleteProviderKeyAsync).WithName("DeleteProviderKey");
 
         return aApp;
@@ -220,9 +222,12 @@ public static class RegistryEndpoints
         string aProviderName,
         bool aIsEnabled,
         IProviderKeyRepository aRepository,
+        TrStudio.Engine.Infrastructure.Security.DesktopProviderSettings aProviderSettings,
         CancellationToken aCancellationToken)
     {
         var vUpdated = await aRepository.SetEnabledAsync(aProviderName, aIsEnabled, aCancellationToken);
+        // A disabled key stops being used, an enabled one starts, on the next call (REQ-FN-098).
+        await aProviderSettings.RefreshAsync(aCancellationToken);
         return vUpdated
             ? Results.Ok(new { providerName = aProviderName, isEnabled = aIsEnabled })
             : Results.NotFound();
@@ -231,9 +236,12 @@ public static class RegistryEndpoints
     private static async Task<IResult> DeleteProviderKeyAsync(
         string aProviderName,
         IKeyStore aKeyStore,
+        TrStudio.Engine.Infrastructure.Security.DesktopProviderSettings aProviderSettings,
         CancellationToken aCancellationToken)
     {
         await aKeyStore.DeleteAsync(aProviderName, aCancellationToken);
+        // A removed key is not used again: the providers' settings drop it now, not at the next start (REQ-FN-116).
+        await aProviderSettings.RefreshAsync(aCancellationToken);
         return Results.NoContent();
     }
 }

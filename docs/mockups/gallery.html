@@ -135,7 +135,7 @@ tr.sel td{background:var(--sel)}
 <body>
 <div class="app">
 <aside class="side" data-testid="sidebar">
-  <div class="brand"><div class="logo">TR</div>TrStudio</div>
+  <div class="brand"><div class="logo" data-testid="shell-logo">TR</div>TrStudio</div>
   <div class="navgroup">Studios</div>
   <nav class="nav">
     <a href="avatar-studio.html" data-testid="nav-avatar-studio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Avatar Studio</a>
@@ -198,7 +198,7 @@ tr.sel td{background:var(--sel)}
   <!-- Asset grid -->
   <div class="assets">
     <div class="card asset" data-testid="card-1">
-      <div class="thumb pv"><span class="selbox on">✓</span><span class="typechip">VIDEO 16:9</span><span class="playbtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span><span class="durchip">0:24</span></div>
+      <div data-tf-sample class="thumb pv"><span class="selbox on">✓</span><span class="typechip">VIDEO 16:9</span><span class="playbtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span><span class="durchip">0:24</span></div>
       <div class="meta">
         <div class="t">Diwali avatar intro — Kavya</div>
         <span class="badge" data-testid="badge-hunyuan-avatar-seed-4821">Hunyuan-Avatar · seed 4821</span>
@@ -214,7 +214,7 @@ tr.sel td{background:var(--sel)}
       </div>
     </div>
     <div class="card asset" data-testid="card-3">
-      <div class="thumb pv"><span class="selbox on">✓</span><span class="typechip">VIDEO 9:16</span><span class="playbtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span><span class="durchip">0:15</span></div>
+      <div data-tf-sample class="thumb pv"><span class="selbox on">✓</span><span class="typechip">VIDEO 9:16</span><span class="playbtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span><span class="durchip">0:15</span></div>
       <div class="meta">
         <div class="t">Product reel teaser — saree line</div>
         <span class="badge warn" data-testid="badge-heygen-avatar-iv-closed">HeyGen Avatar IV · closed API</span>
@@ -222,7 +222,7 @@ tr.sel td{background:var(--sel)}
       </div>
     </div>
     <div class="card asset" data-testid="card-4">
-      <div class="thumb pb"><span class="selbox"></span><span class="typechip">IMAGE 4:5</span>Festival poster</div>
+      <div data-tf-sample class="thumb pb"><span class="selbox"></span><span class="typechip">IMAGE 4:5</span>Festival poster</div>
       <div class="meta">
         <div class="t">Diwali poster v3 — rangoli motif</div>
         <span class="badge" data-tf-sample data-testid="badge-flux-1-seed-9012">FLUX.1 · seed 9012</span>
@@ -238,7 +238,7 @@ tr.sel td{background:var(--sel)}
       </div>
     </div>
     <div class="card asset" data-testid="card-6">
-      <div class="thumb pv"><span class="selbox"></span><span class="typechip">VIDEO 16:9</span><span class="playbtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span><span class="durchip">0:08</span></div>
+      <div data-tf-sample class="thumb pv"><span class="selbox"></span><span class="typechip">VIDEO 16:9</span><span class="playbtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span><span class="durchip">0:08</span></div>
       <div class="meta">
         <div class="t">Lip-sync test — MuseTalk</div>
         <span class="badge" data-testid="badge-musetalk-seed-1133">MuseTalk · seed 1133</span>
@@ -246,7 +246,7 @@ tr.sel td{background:var(--sel)}
       </div>
     </div>
     <div class="card asset" data-testid="card-7">
-      <div class="thumb pc"><span class="selbox"></span><span class="typechip">IMAGE 1:1</span>Arjun · headshot</div>
+      <div data-tf-sample class="thumb pc"><span class="selbox"></span><span class="typechip">IMAGE 1:1</span>Arjun · headshot</div>
       <div class="meta">
         <div class="t">Arjun headshot — studio grey</div>
         <span class="badge ok" data-tf-sample data-testid="badge-sdxl-local-gpu-2">SDXL · local GPU</span>
@@ -254,7 +254,7 @@ tr.sel td{background:var(--sel)}
       </div>
     </div>
     <div class="card asset" data-testid="card-8">
-      <div class="thumb pb"><span class="selbox"></span><span class="typechip">IMAGE 3:2</span>Mithai spread</div>
+      <div data-tf-sample class="thumb pb"><span class="selbox"></span><span class="typechip">IMAGE 3:2</span>Mithai spread</div>
       <div class="meta">
         <div class="t">Sweet-box hero shot — Diwali</div>
         <span class="badge" data-tf-sample data-testid="badge-flux-1-seed-5570">FLUX.1 · seed 5570</span>

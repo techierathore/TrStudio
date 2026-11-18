@@ -139,10 +139,28 @@ try {
     case 'state': console.log(`STEP ${step} PASS the app shows: ${await stateOf(s)}`); break;
     case 'shot': console.log(`STEP shot PASS ${shot(a1 || 'window')}`); break;
     case 'click': {
-      const el = await control(s, [a1, a2, ...rest].filter(Boolean).join(' '));
+      const el = await control(s, [a1, a2, ...rest].filter(Boolean).join(' '), '9, 10, 12, 14, 42, 54, 75');
       if (!el) { console.log(`STEP click FAIL no control "${a1}"`); break; }
       await s.click(el); await sleep(1500);
       console.log(`STEP click PASS clicked "${[a1, a2, ...rest].filter(Boolean).join(' ')}"`);
+      break;
+    }
+    case 'scrollclick': {
+      // a control below the window's visible part: scroll the page until it is on view, then click it
+      const label = [a1, a2, ...rest].filter(Boolean).join(' ');
+      const win = await s.find('-ios predicate string', 'elementType == 4');
+      const winRect = await s.call('GET', `/element/${win}/rect`);
+      let el = await control(s, label, '9, 10, 12, 14, 42, 75');
+      for (let i = 0; el && i < 12; i++) {
+        const r = await s.call('GET', `/element/${el}/rect`);
+        if (r.y > winRect.y + 60 && r.y + r.height < winRect.y + winRect.height - 20) break;
+        await s.call('POST', '/execute/sync', { script: 'macos: scroll', args: [{ x: winRect.x + winRect.width * 0.75, y: winRect.y + winRect.height / 2, deltaX: 0, deltaY: r.y > winRect.y + 60 ? -250 : 250 }] });
+        await sleep(400);
+        el = await control(s, label, '9, 10, 12, 14, 42, 75');
+      }
+      if (!el) { console.log(`STEP scrollclick FAIL no control "${label}"`); break; }
+      await s.click(el); await sleep(1500);
+      console.log(`STEP scrollclick PASS clicked "${label}"`);
       break;
     }
     case 'type': {

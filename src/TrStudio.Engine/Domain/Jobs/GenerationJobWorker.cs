@@ -162,6 +162,10 @@ public class GenerationJobWorker
         await objJobRepository.UpdateAsync(vJob, aUserId, aCancellationToken).ConfigureAwait(false);
         await NotifyAsync(vJob, aCancellationToken).ConfigureAwait(false);
 
+        // NFR-008: the job id links submit, provider and asset; the provider hop is named on the span and in the log.
+        vActivity?.SetTag("trstudio.provider", vModel.ProviderKind.ToString());
+        vActivity?.SetTag("trstudio.model_id", vModel.Id);
+        objLogger.LogInformation("Job {JobId} sent to provider {Provider} (model {ModelId})", aJobId, vModel.ProviderKind, vModel.Id);
         await vProvider.SubmitAsync(vJob, aCancellationToken).ConfigureAwait(false);
 
         // Phase 3 (ADR-018): keep the provider's own reference (Venice's queue id) on the row so the

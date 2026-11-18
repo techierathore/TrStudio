@@ -115,6 +115,8 @@ Every key is entered on Registry & providers and kept in the local database, pro
   - *Acceptance:* When an admin saves a key on Registry & providers, then the database holds only ciphertext whose unlock key the operating system keeps for that user.
 - **BRD-142** — A saved key is used on the next call without a restart. *Screen:* Admin — Model & Provider Registry · *Mockup:* [mockup](mockups/admin-registry.html)
   - *Acceptance:* When an admin saves a HeyGen key on Registry & providers, then the next Premium avatar job uses it without restarting.
+- **BRD-179** — A stored provider key can be removed on Registry & providers (owner, 18 Nov 2026). *Screen:* Admin — Model & Provider Registry · *Mockup:* [mockup](mockups/admin-registry.html)
+  - *Acceptance:* When an admin presses Remove key beside a configured provider on Registry & providers and confirms, then its stored key is deleted and the provider shows as not configured.
 - **BRD-143** — Script and caption writing use a text-model row from the registry. *Screen:* Avatar studio · *Mockup:* [mockup](mockups/avatar-studio.html)
   - *Acceptance:* When a creator generates a script on Avatar studio, then the model, address and key come from the enabled text-chat registry row.
 - **BRD-144** — Registry & providers says where keys are kept. *Screen:* Admin — Model & Provider Registry · *Mockup:* [mockup](mockups/admin-registry.html)
@@ -211,7 +213,7 @@ Deferred on 14 Nov 2026, each with its reason. No row of the first version waits
 
 Written by the status gate after every build, verify and handoff; not by hand.
 
-**Snapshot as of 2026-11-17.** Live per-requirement status: `PROJECT-STATUS.md` and the Requirements Status table in `docs/TrStudio-P3-Checklist.md`.
+**Snapshot as of 2026-11-18.** Live per-requirement status: `PROJECT-STATUS.md` and the Requirements Status table in `docs/TrStudio-P3-Checklist.md`.
 
 | Screen | Requirements | Verified | Open | Status |
 |---|---|---|---|---|
@@ -221,13 +223,14 @@ Written by the status gate after every build, verify and handoff; not by hand.
 | Image studio | 3 | 3 | 0 | Done |
 | Video studio | 4 | 4 | 0 | Done |
 | Admin — RunPod & ops | 1 | 1 | 0 | Done |
-| Admin — Model & Provider Registry | 4 | 3 | 1 | Partial |
+| Admin — Model & Provider Registry | 4 | 4 | 0 | Done |
 | Avatar studio | 12 | 12 | 0 | Done |
 | Character library | 1 | 1 | 0 | Done |
 | Non-functional | 9 | 9 | 0 | Done |
 | Other | 0 | 0 | 0 | Not applicable |
 | RAG / AI requirements | 0 | 0 | 0 | Not applicable |
 | Admin — Content policy (NSFW) | 1 | 1 | 0 | Done |
+| Registry & providers | 1 | 1 | 0 | Done |
 
 ## 6. Where the rest lives
 

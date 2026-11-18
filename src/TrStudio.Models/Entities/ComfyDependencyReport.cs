@@ -20,5 +20,12 @@ public class ComfyDependencyReport
     public List<ComfyMissingDependency> MissingModelFiles { get; set; } = new();
 
     /// <summary>Whether any dependency is missing (a convenience flag for the UI/gate).</summary>
+    /// <summary>
+    /// REQ-FN-047: true when the report was checked against what the running ComfyUI holds
+    /// (<c>/object_info</c>); false when ComfyUI is not set up or could not be reached, and every
+    /// non-built-in node and named file is then listed as missing.
+    /// </summary>
+    public bool CheckedWithComfyUi { get; set; }
+
     public bool HasMissing => MissingCustomNodes.Count > 0 || MissingModelFiles.Count > 0;
 }

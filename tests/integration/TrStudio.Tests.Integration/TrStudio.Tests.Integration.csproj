@@ -27,6 +27,8 @@
     <ProjectReference Include="..\..\..\src\TrStudio.Models\TrStudio.Models.csproj" />
     <!-- The Venice live tests drive the real VeniceClient (REQ-NFR-012). -->
     <ProjectReference Include="..\..\..\src\TrStudio.Engine\TrStudio.Engine.csproj" />
+    <!-- REQ-RAG-005 live: Prompt studio's routes, answered in process as in the desktop app. -->
+    <ProjectReference Include="..\..\..\src\TrStudio.InProcess\TrStudio.InProcess.csproj" />
   </ItemGroup>
 
   <ItemGroup>

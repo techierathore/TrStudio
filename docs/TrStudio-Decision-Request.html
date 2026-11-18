@@ -106,28 +106,18 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <div class="layout no-toc">
   <main>
     <h1>TrStudio — decisions I need from you</h1>
-    <div class="subtitle">Rendered 2026-11-17 &middot; source <code>TrStudio-Decision-Request.md</code></div>
+    <div class="subtitle">Rendered 2026-11-18 &middot; source <code>TrStudio-Decision-Request.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
       <ol>
         <li><a href="#what-happened">What happened</a></li>
         <li><a href="#what-i-need-you-to-decide">What I need you to decide</a></li>
-        <li class="h3"><a href="#how-the-screens-reach-the-engine">1. How the screens reach the engine</a></li>
-        <li class="h3"><a href="#what-the-headless-test-host-is">2. What the headless test host is</a></li>
-        <li class="h3"><a href="#where-the-character-bible-vectors-live">3. Where the character-bible vectors live</a></li>
-        <li class="h3"><a href="#a-job-that-was-running-when-the-app-closed">4. A job that was running when the app closed</a></li>
-        <li class="h3"><a href="#how-keys-are-protected-on-the-mac-and-on-windows">5. How keys are protected on the Mac and on Windows</a></li>
-        <li class="h3"><a href="#staying-signed-in">6. Staying signed in</a></li>
-        <li class="h3"><a href="#what-happens-to-phase-1-s-checked-rows">7. What happens to phase 1&#x27;s checked rows</a></li>
-        <li class="h3"><a href="#the-api-project-and-the-old-web-head-in-the-solution">8. The API project and the old web head in the solution</a></li>
-        <li class="h3"><a href="#character-bible-search-without-an-embedding-model">9. Character-bible search without an embedding model</a></li>
-        <li class="h3"><a href="#local-picture-generation-onnx-inside-the-mac-app">10. Local picture generation (ONNX) inside the Mac app</a></li>
-        <li class="h3"><a href="#matching-the-older-screens-to-their-mockups-control-by-control">11. Matching the older screens to their mockups, control by control</a></li>
-        <li class="h3"><a href="#marking-the-mockup-parts-that-belong-to-a-later-moment-of-a-screen">12. Marking the mockup parts that belong to a later moment of a screen</a></li>
-        <li class="h3"><a href="#the-sidebar-on-a-phone-width-window">13. The sidebar on a phone-width window</a></li>
-        <li class="h3"><a href="#the-five-could-rows-that-now-have-tests">14. The five &quot;Could&quot; rows that now have tests</a></li>
-        <li class="h3"><a href="#signing-the-mac-app-so-it-can-use-the-keychain">15. Signing the Mac app so it can use the Keychain</a></li>
+        <li class="h3"><a href="#one-keychain-item-for-all-keys-or-one-per-key">16. One Keychain item for all keys, or one per key</a></li>
+        <li class="h3"><a href="#python-and-comfyui-inside-the-mac-app-req-fn-009-req-fn-010">17. Python and ComfyUI inside the Mac app (REQ-FN-009, REQ-FN-010)</a></li>
+        <li class="h3"><a href="#phase-1-rows-that-need-a-model-or-an-account-this-mac-does-not-have">18. Phase 1 rows that need a model or an account this Mac does not have</a></li>
+        <li class="h3"><a href="#two-phase-1-quality-rows-the-desktop-move-changed">19. Two phase 1 quality rows the desktop move changed</a></li>
+        <li class="h3"><a href="#how-exactly-a-clip-must-end-on-its-pinned-frame-req-fn-052">20. How exactly a clip must end on its pinned frame (REQ-FN-052)</a></li>
         <li><a href="#what-i-do-when-you-answer">What I do when you answer</a></li>
         <li><a href="#copy-this-back-to-me">Copy this back to me</a></li>
       </ol>
@@ -137,202 +127,85 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tbody>
 <tr><td>App</td><td>TrStudio</td></tr>
 <tr><td>Written</td><td>2026-11-14</td></tr>
-<tr><td>Waiting on</td><td>1 new decision (15, signing the Mac app). On 17 Nov 2026 you confirmed 12 and 13 as A and answered 14 (B for the twin, multi-shot and clip stitching; A for webhooks and the MCP server). Decision 11 you confirmed as A. You answered decisions 1 to 10 on 14 Nov 2026: A for 1 to 5, 7, 9 and 10; B for 6 ("Remember me"); 8 as written below.</td></tr>
+<tr><td>Waiting on</td><td>5 decisions, written 18 Nov 2026 night: 16 (one Keychain item or one per key), 17 (Python and ComfyUI inside the Mac app), 18 (phase 1 rows that need a model this Mac does not have), 19 (two phase 1 quality rows the desktop move changed), 20 (how exactly a clip must end on its pinned frame). Decisions 1 to 15 are answered; see the table below.</td></tr>
 </tbody>
 </table>
 <h2 id="what-happened">What happened<a class="anchor-link" href="#what-happened">#</a></h2>
-<p>You asked for TrStudio to become one desktop app (Mac first, Windows in a later version): the engine inside the app, a local SQLite database, jobs inside the app, AppManager sign-in with the application id and one key, and your keys protected by the computer's own protection. I wrote the phase 3 documents and then built the phase overnight.</p>
-<p>Ten choices came up that change what gets built and that only you can settle. None of them stopped the work: for each I took the answer I recommended and built on it. On 14 Nov 2026 you answered all ten; each answer is written under its decision and in the Architecture decisions log (ADR-021 for staying signed in, ADR-022 for the old web head).</p>
+<p>Phase 3 (one desktop app, Mac first) is built. Answered, and kept in the Architecture decisions log: 1 to 5, 7, 9 and 10 as A (14 Nov); 6 as B ("Remember me" 30 days); 8 as written (web head deleted); 11 to 13 as A; 14 as B for the twin, multi-shot and stitching, A for webhooks and the MCP server; 15 as A (signing, done 17 Nov).</p>
+<p><strong>Correction to decision 15.</strong> I wrote that the free profile lasts 7 days. Wrong: the profile ends 17 Nov 2027, and your "Apple Development" certificate, which it needs, ends <strong>4 Oct 2027</strong>. That day a new build stops at signing with an expired certificate, and the built app may not open ("TrStudio quit unexpectedly" or "can't be opened"); your library is untouched. The one step: run <code>bash tools/mac-signing/renew-mac-profile.sh</code> on this Mac, then build. It opens no window and prints the new end dates; if it asks for your Apple ID, sign in under Xcode › Settings › Accounts first. It worked on 18 Nov 2026.</p>
+<p>On the night of 17 to 18 Nov 2026 five new choices came up. None stopped the run; each says what I would do.</p>
 <h2 id="what-i-need-you-to-decide">What I need you to decide<a class="anchor-link" href="#what-i-need-you-to-decide">#</a></h2>
-<h3 id="how-the-screens-reach-the-engine"><a id="1-how-the-screens-reach-the-engine"></a>1. How the screens reach the engine<a class="anchor-link" href="#how-the-screens-reach-the-engine">#</a></h3>
-<p>The 31 screens all call the engine through one named web client with addresses like <code>/api/v1/jobs</code>. The engine now runs inside the app, and ASP.NET Core, which the old API used, does not run inside a Mac Catalyst app.</p>
+<h3 id="one-keychain-item-for-all-keys-or-one-per-key"><a id="16-one-keychain-item-for-all-keys-or-one-per-key"></a>16. One Keychain item for all keys, or one per key<a class="anchor-link" href="#one-keychain-item-for-all-keys-or-one-per-key">#</a></h3>
+<p>Under your decision 5 the app keeps <strong>one</strong> unlock key in the Keychain. Each provider key, and a kept "Remember me" sign-in, is stored encrypted with it. Removing a key deletes its encrypted row and the provider shows "not configured" at once; the one item stays, because it still unlocks the rest. Proved on the real app on 18 Nov: with the item deleted, Save keys made it again; removing the HeyGen key left it in place.</p>
 <table>
 <thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
 <tbody>
-<tr><td><strong>A — keep the calls, answer them inside the app</strong></td><td>A small library answers the same addresses in the same process, with no network socket and no web server. The screens are unchanged.</td><td>One new library that mirrors the API's routes; two copies of the route list while the API project is kept.</td></tr>
-<tr><td><strong>B — rewrite the screens to call engine services directly</strong></td><td>No route layer at all.</td><td>Every screen is edited, and every screen must be checked again by hand.</td></tr>
-</tbody>
-</table>
-<p><strong>My recommendation: A</strong> — the screens and their tests stay exactly as they are.</p>
-<p><strong>Your answer (14 Nov 2026): A.</strong> The screens keep their calls; the in-process library answers them.</p>
-<h3 id="what-the-headless-test-host-is"><a id="2-what-the-headless-test-host-is"></a>2. What the headless test host is<a class="anchor-link" href="#what-the-headless-test-host-is">#</a></h3>
-<p>The automated screen checks need the screens in a browser. The desktop app cannot be driven while the screen is locked.</p>
-<table>
-<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
-<tbody>
-<tr><td><strong>A — a new test-only project under <code>tests/</code></strong></td><td><code>tests/TrStudio.TestHost</code> serves the same screens and the same in-process engine on a temporary SQLite file. The old web head is not used.</td><td>One more small project.</td></tr>
-<tr><td><strong>B — turn the old web head into the test host</strong></td><td>Reuses <code>src/TrStudio</code>.</td><td>A shipped-looking project under <code>src/</code> that must never ship.</td></tr>
-</tbody>
-</table>
-<p><strong>My recommendation: A</strong> — it is plainly a test tool by where it lives.</p>
-<p><strong>Your answer (14 Nov 2026): A.</strong> The test host stays under <code>tests/</code>. The old web head is now deleted (decision 8).</p>
-<h3 id="where-the-character-bible-vectors-live"><a id="3-where-the-character-bible-vectors-live"></a>3. Where the character-bible vectors live<a class="anchor-link" href="#where-the-character-bible-vectors-live">#</a></h3>
-<p>TechieRag stores its vectors in SQLite tables of its own. Its reference does not say which tables, so sharing the app's own file is a risk.</p>
-<table>
-<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
-<tbody>
-<tr><td><strong>A — a second file beside the database</strong></td><td><code>TrStudio.vectors.db</code> in the same data folder. The bible notes themselves stay in <code>TrStudio.db</code>.</td><td>Two files instead of one.</td></tr>
-<tr><td><strong>B — the same file</strong></td><td>One file.</td><td>A TechieRag upgrade could clash with the app's tables.</td></tr>
-</tbody>
-</table>
-<p><strong>My recommendation: A</strong> — no chance of a clash; filed as TR-RAG-005 for TechieRag to document.</p>
-<p><strong>Your answer (14 Nov 2026): A.</strong> Vectors stay in <code>TrStudio.vectors.db</code> beside <code>TrStudio.db</code>.</p>
-<h3 id="a-job-that-was-running-when-the-app-closed"><a id="4-a-job-that-was-running-when-the-app-closed"></a>4. A job that was running when the app closed<a class="anchor-link" href="#a-job-that-was-running-when-the-app-closed">#</a></h3>
-<table>
-<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
-<tbody>
-<tr><td><strong>A — resume what can resume, fail the rest with the reason</strong></td><td>A Venice clip already queued at Venice resumes polling (its queue id is kept on the job). Any other running job is marked Failed: "TrStudio was closed while this job was running. Run it again."</td><td>A local render cut off half-way is not restarted on its own.</td></tr>
-<tr><td><strong>B — restart every running job</strong></td><td>Everything runs again.</td><td>A paid cloud call could be charged twice.</td></tr>
-</tbody>
-</table>
-<p><strong>My recommendation: A</strong> — it never charges you twice without asking.</p>
-<p><strong>Your answer (14 Nov 2026): A.</strong> Venice clips resume; other running jobs fail with the reason.</p>
-<h3 id="how-keys-are-protected-on-the-mac-and-on-windows"><a id="5-how-keys-are-protected-on-the-mac-and-on-windows"></a>5. How keys are protected on the Mac and on Windows<a class="anchor-link" href="#how-keys-are-protected-on-the-mac-and-on-windows">#</a></h3>
-<table>
-<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
-<tbody>
-<tr><td><strong>A — one random unlock key per user, held by the computer</strong></td><td>Keys are encrypted in the database; the unlock key sits in the Mac Keychain, or in a Windows data-protection blob for the signed-in Windows user.</td><td>If the Keychain item is deleted, the stored keys must be entered again.</td></tr>
-<tr><td><strong>B — every key in the Keychain itself</strong></td><td>No keys in the database at all.</td><td>Against your rule that keys are kept in the local database.</td></tr>
-</tbody>
-</table>
-<p><strong>My recommendation: A</strong> — it matches "kept in the local database, protected by the operating system".</p>
-<p><strong>Your answer (14 Nov 2026): A.</strong> One unlock key per user, in the Keychain on Mac; the Windows data-protection design stays written for the later Windows version.</p>
-<h3 id="staying-signed-in"><a id="6-staying-signed-in"></a>6. Staying signed in<a class="anchor-link" href="#staying-signed-in">#</a></h3>
-<table>
-<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
-<tbody>
-<tr><td><strong>A — sign in each time the app opens</strong></td><td>The session lives only while the app is open.</td><td>One sign-in per start.</td></tr>
-<tr><td><strong>B — remember the sign-in</strong></td><td>The AppManager refresh token is kept, protected like the keys.</td><td>More to build and check; a stolen laptop stays signed in.</td></tr>
-</tbody>
-</table>
-<p><strong>My recommendation: A</strong> — simplest and safest now; B can be a later row.</p>
-<p><strong>Your answer (14 Nov 2026): B, in this form.</strong> The sign-in screen has a "Remember me" box. Ticked, the user stays signed in for 30 days on that computer: the AppManager refresh token is kept, protected the same way as the user's keys, and on the next open the app signs in with it without asking; after 30 days, or when the server refuses or revokes the token, the user signs in again with a plain message. Not ticked, nothing is kept. Sign out always removes what was kept. The AppManager guide does not say how long a refresh token lives, so 30 days is the app's own limit and the server may end it sooner; asked in the AppManager feedback file.</p>
-<h3 id="what-happens-to-phase-1-s-checked-rows"><a id="7-what-happens-to-phase-1s-checked-rows"></a>7. What happens to phase 1's checked rows<a class="anchor-link" href="#what-happens-to-phase-1-s-checked-rows">#</a></h3>
-<p>The database, the host and the job runner under almost every feature changed, even though the screens did not.</p>
-<table>
-<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
-<tbody>
-<tr><td><strong>A — mark every row that touches stored data as "needs re-check"</strong></td><td>68 rows go back to needs re-check; 7 stay checked; 6 are replaced by phase 3 rows; 1 is set aside.</td><td>Phase 1 is open again until the re-check runs.</td></tr>
-<tr><td><strong>B — keep them checked</strong></td><td>Phase 1 looks finished.</td><td>The checks were run on PostgreSQL and a web API that are no longer used.</td></tr>
-</tbody>
-</table>
-<p><strong>My recommendation: A</strong> — a check on a database you no longer ship proves nothing about the new app.</p>
-<p><strong>Your answer (14 Nov 2026): A.</strong> The 68 rows stay at needs re-check until re-verified on the test host.</p>
-<h3 id="the-api-project-and-the-old-web-head-in-the-solution"><a id="8-the-api-project-and-the-old-web-head-in-the-solution"></a>8. The API project and the old web head in the solution<a class="anchor-link" href="#the-api-project-and-the-old-web-head-in-the-solution">#</a></h3>
-<p>You said to keep the API project and the PostgreSQL scripts, unused. The engine no longer carries Hangfire or PostgreSQL code, so the API project no longer compiles.</p>
-<table>
-<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
-<tbody>
-<tr><td><strong>A — keep the folders, take them out of the solution build</strong></td><td><code>src/TrStudioApi</code> and <code>src/TrStudio</code> stay on disk untouched and are listed as set aside.</td><td>They will not build until someone brings them back.</td></tr>
-<tr><td><strong>B — keep them compiling</strong></td><td>Both stay buildable.</td><td>The engine has to keep Hangfire and PostgreSQL code alive just for them.</td></tr>
-</tbody>
-</table>
-<p><strong>My recommendation: A</strong> — nothing is deleted, and the shipped app carries nothing it does not use.</p>
-<p><strong>Your answer (14 Nov 2026): the web head is deleted.</strong> <code>src/TrStudio</code> (the old Blazor web front end) is removed, and the desktop project takes the name <code>src/TrStudio</code>. The API project <code>src/TrStudioApi</code> and the PostgreSQL scripts stay on disk, out of the build, because the set-aside external REST API row would need them.</p>
-<h3 id="character-bible-search-without-an-embedding-model"><a id="9-character-bible-search-without-an-embedding-model"></a>9. Character-bible search without an embedding model<a class="anchor-link" href="#character-bible-search-without-an-embedding-model">#</a></h3>
-<p>Searching a character's notes by meaning needs an embedding model. TechieRag looks for one on this computer (Ollama), which a person who downloads the app will not have, so search falls back to matching words.</p>
-<table>
-<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
-<tbody>
-<tr><td><strong>A — keep word matching now, plan a built-in model later</strong></td><td>Search works on every computer by matching words; meaning-based search arrives with a later row that ships a small embedding model inside the app.</td><td>The bible row stays partly done until then.</td></tr>
-<tr><td><strong>B — ship an embedding model now</strong></td><td>Meaning-based search everywhere.</td><td>A large download, and ONNX Runtime does not yet run inside the Mac app (decision 10).</td></tr>
-</tbody>
-</table>
-<p><strong>My recommendation: A</strong> — nothing breaks today, and B depends on decision 10.</p>
-<p><strong>Your answer (14 Nov 2026): A.</strong> Word matching now; a built-in embedding model is a later row.</p>
-<h3 id="local-picture-generation-onnx-inside-the-mac-app"><a id="10-local-picture-generation-onnx-inside-the-mac-app"></a>10. Local picture generation (ONNX) inside the Mac app<a class="anchor-link" href="#local-picture-generation-onnx-inside-the-mac-app">#</a></h3>
-<p>The local ONNX picture model ran in the old API on macOS. Inside the Mac app it cannot: ONNX Runtime publishes no Mac Catalyst build, so the app links without it and a local ONNX job fails with its reason.</p>
-<table>
-<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
-<tbody>
-<tr><td><strong>A — Mac users make pictures through ComfyUI, RunPod or Venice for now</strong></td><td>Everything else works; the local ONNX picture row says it is not available on Mac. Windows keeps ONNX.</td><td>One provider is missing on Mac until B is done.</td></tr>
-<tr><td><strong>B — build and ship ONNX Runtime for Mac Catalyst</strong></td><td>Local ONNX pictures on Mac as before.</td><td>A native build and its signing; days, not hours.</td></tr>
-</tbody>
-</table>
-<p><strong>My recommendation: A now, B as a later row</strong> — it keeps tonight's app honest and shippable.</p>
-<p><strong>Your answer (14 Nov 2026): A.</strong> Pictures on Mac come from ComfyUI, RunPod or Venice; local ONNX pictures on Mac are a later row.</p>
-<h3 id="matching-the-older-screens-to-their-mockups-control-by-control"><a id="11-matching-the-older-screens-to-their-mockups-control-by-control"></a>11. Matching the older screens to their mockups, control by control<a class="anchor-link" href="#matching-the-older-screens-to-their-mockups-control-by-control">#</a></h3>
-<p>Re-checking phase 1 on the test host, the screen checker compares each screen with its mockup by the names the mockup gives its controls. Today only Login and Setup required carry those names. I added the names of the shared frame (sidebar, its links, top bar, sign out) to every screen, and fixed the faint badge text, but the 18 other screens still lack their own names, and many mockup items are sample data a fresh app does not have. The screens render, show their data and pass the sweep at both widths.</p>
-<table>
-<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
-<tbody>
-<tr><td><strong>A — a dedicated run for the remaining names</strong></td><td>The 18 screens get their mockups' control names, the design document gets each screen's route, and each screen gets a script that puts in the sample data its mockup draws. Until then, those rows are checked by the screen sweep only.</td><td>One focused run; meanwhile the mockup comparison does not grade those screens.</td></tr>
-<tr><td><strong>B — do it inside this run</strong></td><td>Everything at once.</td><td>Several hundred names and 18 data scripts in an unattended run, with a high chance of half-done screens.</td></tr>
-</tbody>
-</table>
-<p><strong>My recommendation: A</strong> — it is a job of its own and is safer done in one pass with its own checks.</p>
-<p><strong>Taken in this run (14 Nov 2026): A.</strong> Paste the block below to confirm, or ask for B.</p>
-<h3 id="marking-the-mockup-parts-that-belong-to-a-later-moment-of-a-screen"><a id="12-marking-the-mockup-parts-that-belong-to-a-later-moment-of-a-screen"></a>12. Marking the mockup parts that belong to a later moment of a screen<a class="anchor-link" href="#marking-the-mockup-parts-that-belong-to-a-later-moment-of-a-screen">#</a></h3>
-<p>Decision 11's run names each screen's controls after its mockup. Some mockups draw, on the same page, things that only appear after an action — Forgot password's "the reset link is on its way" notice is the plainest. The screen checker expects every named part on the first view, so those parts can never match until the mockup says they belong to a later moment. The checker already reads a mark for this (<code>data-tf-state="…"</code>, and <code>data-tf-sample</code> for sample rows), which Login's mockup already uses.</p>
-<table>
-<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
-<tbody>
-<tr><td><strong>A — add the mark to those parts of the older mockups</strong></td><td>Only the attribute is added; nothing the mockup draws changes. Each screen's notes say which parts got it.</td><td>A small change to the approved mockups' markup.</td></tr>
-<tr><td><strong>B — leave the mockups untouched</strong></td><td>Those parts stay unmatched and those screens stay red on the mockup check.</td><td>Several screens can never pass.</td></tr>
+<tr><td><strong>A — keep one item (as now)</strong></td><td>Removing a key removes its row only. Windows works the same way.</td><td>Nothing. The item opens nothing by itself.</td></tr>
+<tr><td><strong>B — remove the item when nothing needs it</strong></td><td>As A, and the app deletes the item when the last key is removed and no sign-in is kept.</td><td>A small change and its tests.</td></tr>
+<tr><td><strong>C — one Keychain item per key</strong></td><td>Each key lives in the Keychain; removing a key removes its item.</td><td>A rework on Mac, unlike Windows; saved keys must be entered again.</td></tr>
 </tbody>
 </table>
 <p><strong>My recommendation: A.</strong></p>
-<p><strong>Taken in this run (15 Nov 2026): A.</strong> <strong>Confirmed by you on 17 Nov 2026: A.</strong></p>
-<h3 id="the-sidebar-on-a-phone-width-window"><a id="13-the-sidebar-on-a-phone-width-window"></a>13. The sidebar on a phone-width window<a class="anchor-link" href="#the-sidebar-on-a-phone-width-window">#</a></h3>
-<p>The 18 screens with the app's sidebar have mockups drawn only for a wide window: at phone width they still draw the 248-pixel sidebar beside the page. The app, at phone width, folds the sidebar into a menu behind the button in the top bar. So every one of those screens failed the phone-width check on the sidebar's names.</p>
+<h3 id="python-and-comfyui-inside-the-mac-app-req-fn-009-req-fn-010"><a id="17-python-and-comfyui-inside-the-mac-app-req-fn-009-req-fn-010"></a>17. Python and ComfyUI inside the Mac app (REQ-FN-009, REQ-FN-010)<a class="anchor-link" href="#python-and-comfyui-inside-the-mac-app-req-fn-009-req-fn-010">#</a></h3>
+<p>Guided setup downloads its own Python, then ComfyUI, and runs them. On the real Mac app I fixed two faults on the way (the app called itself an unsupported computer, and the row never showed how the step ended). The download then worked, but macOS refused to run it: "Operation not permitted". The Mac app runs in Apple's App Sandbox, which does not let an app run a program it downloaded. The same step works outside the sandbox in 5 seconds.</p>
 <table>
 <thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
 <tbody>
-<tr><td><strong>A — the mockups show the app's phone behaviour</strong></td><td>One style rule in each of the 18 mockups hides the sidebar below 600 pixels wide; the wide drawing is unchanged.</td><td>A small change to the approved mockups.</td></tr>
-<tr><td><strong>B — the app keeps the sidebar on a phone</strong></td><td>The app always shows a fixed sidebar.</td><td>On a phone the page is left about 140 pixels wide.</td></tr>
+<tr><td><strong>A — take the app out of the sandbox</strong></td><td>Guided setup installs and runs Python and ComfyUI, as on Windows.</td><td>The library moves to ~/Library/Application Support/TrStudio (copied once); no Mac App Store; other programs could read the library.</td></tr>
+<tr><td><strong>B — keep the sandbox; ComfyUI runs on its own</strong></td><td>On Mac, setup asks for the address of a ComfyUI already running (its own installer, or a RunPod worker). The two rows are reworded for Mac.</td><td>A small change; one extra install for local ComfyUI.</td></tr>
+<tr><td><strong>C — ship Python inside the signed app</strong></td><td>The app carries a signed Python.</td><td>Days of work; ComfyUI add-ons may still be refused.</td></tr>
+</tbody>
+</table>
+<p><strong>My recommendation: B.</strong></p>
+<h3 id="phase-1-rows-that-need-a-model-or-an-account-this-mac-does-not-have"><a id="18-phase-1-rows-that-need-a-model-or-an-account-this-mac-does-not-have"></a>18. Phase 1 rows that need a model or an account this Mac does not have<a class="anchor-link" href="#phase-1-rows-that-need-a-model-or-an-account-this-mac-does-not-have">#</a></h3>
+<p>Built, with their other tests passing; one check each needs: a local ONNX model (REQ-FN-019, 020, 021); a local voice model (REQ-FN-031); a local lip-sync model and a voice model (REQ-FN-037, 038); a running ComfyUI (REQ-FN-045, 046 and installing for 047); a frame-interpolation model, and the app today only answers "queued" (REQ-FN-053); a Whisper model (REQ-RAG-002); your RunPod endpoint and key (REQ-FN-028).</p>
+<table>
+<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
+<tbody>
+<tr><td><strong>A — wait for decision 17 and a RunPod key</strong></td><td>Checked once ComfyUI runs and a RunPod key is on Registry &amp; providers.</td><td>Phase 1 stays open until then.</td></tr>
+<tr><td><strong>B — use Venice where it can</strong></td><td>Voices, captions and lip-sync move to Venice on Mac; rows reworded and rebuilt.</td><td>A build run; a few cents a row.</td></tr>
+<tr><td><strong>C — move local-only rows to a later phase</strong></td><td>REQ-FN-019, 020, 021 join "local pictures on Mac"; REQ-FN-053 waits for a model.</td><td>Those stay off on Mac until then.</td></tr>
+</tbody>
+</table>
+<p><strong>My recommendation: C for REQ-FN-019, 020, 021 and 053; A for the ComfyUI and RunPod rows.</strong></p>
+<h3 id="two-phase-1-quality-rows-the-desktop-move-changed"><a id="19-two-phase-1-quality-rows-the-desktop-move-changed"></a>19. Two phase 1 quality rows the desktop move changed<a class="anchor-link" href="#two-phase-1-quality-rows-the-desktop-move-changed">#</a></h3>
+<p>REQ-NFR-003 asks for the API on macOS and Linux and a web head; you set those aside (decision 8), and phase 3's REQ-NFR-022 checks the Mac build. REQ-NFR-010 asks for a retention setting; provenance is on every output, but nothing is ever removed.</p>
+<table>
+<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
+<tbody>
+<tr><td><strong>A — NFR-003 not applicable; retention removes old log rows only</strong></td><td>NFR-003 is replaced by REQ-NFR-022. A Content policy setting removes generation-log and audit rows older than N days; pictures and clips are never removed.</td><td>A small build and its tests.</td></tr>
+<tr><td><strong>B — retention also removes old pictures and clips</strong></td><td>As A, plus outputs older than N days.</td><td>Your work can disappear on a schedule.</td></tr>
+<tr><td><strong>C — no automatic removal</strong></td><td>NFR-010 is reworded to "provenance on every output; the log is kept".</td><td>Nothing to build.</td></tr>
 </tbody>
 </table>
 <p><strong>My recommendation: A.</strong></p>
-<p><strong>Taken in this run (15 Nov 2026): A</strong> — the rule is marked <code>tf-phone-layout</code> in each mockup. <strong>Confirmed by you on 17 Nov 2026: A.</strong></p>
-<h3 id="the-five-could-rows-that-now-have-tests"><a id="14-the-five-could-rows-that-now-have-tests"></a>14. The five "Could" rows that now have tests<a class="anchor-link" href="#the-five-could-rows-that-now-have-tests">#</a></h3>
-<p>You asked for tests for REQ-FN-041 (digital twin), REQ-FN-042 (multi-shot assembly), REQ-FN-055 (clip stitching), REQ-FN-070 (webhooks) and REQ-FN-071 (MCP server). The tests are written and run, and all five fail, because the BRD deferred these rows and none of them was ever built. The two that prove themselves fully (a twin, a stitched clip that looks right) also need a real video model.</p>
+<h3 id="how-exactly-a-clip-must-end-on-its-pinned-frame-req-fn-052"><a id="20-how-exactly-a-clip-must-end-on-its-pinned-frame-req-fn-052"></a>20. How exactly a clip must end on its pinned frame (REQ-FN-052)<a class="anchor-link" href="#how-exactly-a-clip-must-end-on-its-pinned-frame-req-fn-052">#</a></h3>
+<p>Video studio now sends the pinned first and last frames (before, only their file names went). One real clip on Venice's cheapest end-frame model (Seedance 2.0 Mini, $0.18) starts exactly on the start picture and ends on the end picture redrawn: on a 0 to 255 scale the last frame is 50 from the pinned end and 117 from the start, against my pass mark of 40.</p>
 <table>
 <thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
 <tbody>
-<tr><td><strong>A — keep them deferred</strong></td><td>The rows stay red with "not built (deferred)" and the tests wait for the feature.</td><td>Nothing now; five red rows in phase 1.</td></tr>
-<tr><td><strong>B — build them now</strong></td><td>A build run adds the five features to the in-process engine and their screens, then verifies them on the test host.</td><td>A build run of its own; the twin and the stitching still need a real video model to finish.</td></tr>
+<tr><td><strong>A — "ends near its frame" passes</strong></td><td>Pass when the last frame is clearly the end picture.</td><td>Nothing; this clip passes that.</td></tr>
+<tr><td><strong>B — one run on the stronger Seedance 2.0</strong></td><td>See whether it ends exactly on the picture.</td><td>About $0.35.</td></tr>
 </tbody>
 </table>
-<p><strong>My recommendation: A</strong>, until you want these features: the webhook and MCP rows were written for the API, which phase 3 set aside.</p>
-<p><strong>Answered by you on 17 Nov 2026:</strong> B for the digital twin, multi-shot assembly and clip stitching, built now on Venice in phase 3 (REQ-FN-041, REQ-FN-042, REQ-FN-055 moved there); A for webhooks and the MCP server, which stay deferred, their tests skipped as waiting for the feature.</p>
-<h3 id="signing-the-mac-app-so-it-can-use-the-keychain"><a id="15-signing-the-mac-app-so-it-can-use-the-keychain"></a>15. Signing the Mac app so it can use the Keychain<a class="anchor-link" href="#signing-the-mac-app-so-it-can-use-the-keychain">#</a></h3>
-<p>The Mac app keeps your provider keys and "Remember me" in the Keychain. Apple lets a Mac Catalyst app use only the newer kind of Keychain, and that needs a Keychain permission in the app's signature that a provisioning profile must allow (<a href="https://developer.apple.com/documentation/technotes/tn3137-on-mac-keychains">Apple TN3137</a>, <a href="https://developer.apple.com/documentation/technotes/tn3125-inside-code-signing-provisioning-profiles">Apple TN3125</a>). Your free Apple ID (Personal Team, "Apple Development: S Ravi Kumar") is on this Mac, but its three profiles are for iPhone apps and do not list this Mac. Signing TrStudio with the permission and no profile makes macOS refuse to open it; without the permission it opens and the Keychain refuses it. A Mac profile would have to be made in your Apple account, which you said not to do.</p>
-<table>
-<thead><tr><th>Option</th><th>What happens</th><th>What it costs</th></tr></thead>
-<tbody>
-<tr><td><strong>A — let Xcode make a free Mac profile once</strong></td><td>You open Xcode, sign in with your Apple ID, and let it register this Mac and the app id <code>com.techierathore.trstudio</code> under your Personal Team. I then sign every Debug build with it in the project settings and prove the four Keychain checks.</td><td>Two items in your Apple account. Apple's free team profiles expire after 7 days, so Xcode must renew it weekly.</td></tr>
-<tr><td><strong>B — a paid Apple Developer membership</strong></td><td>The same, with a profile that lasts a year and can also sign a copy for others.</td><td>US$99 a year.</td></tr>
-<tr><td><strong>C — keep keys out of the Keychain on Mac</strong></td><td>The app keeps its unlock key in a file only your Mac user can read, inside the app's own sandboxed folder. Works unsigned.</td><td>Weaker than the Keychain: anyone signed in as you, or any program you run outside the sandbox, can read that file.</td></tr>
-</tbody>
-</table>
-<p><strong>My recommendation: A</strong>, then B before you give the app to anyone else.</p>
+<p><strong>My recommendation: B once, then A if it also redraws the end.</strong></p>
 <h2 id="what-i-do-when-you-answer">What I do when you answer<a class="anchor-link" href="#what-i-do-when-you-answer">#</a></h2>
 <ol>
-<li>Done on 14 Nov 2026: every answer is in the Architecture decisions log and the phase 3 documents.
+<li>Each answer goes into the Architecture decisions log and the checklists.
 </li>
-<li>Decision 6B is built: five new phase 3 rows, unit tests and headless checks on the test host.
+<li>17 B and 18: a build run rewords and rebuilds the setup screen and the named rows, then a verify.
 </li>
-<li>Decision 8 is done: the old web head is deleted and the desktop project is now <code>src/TrStudio</code>.
+<li>19 A: REQ-NFR-003 marked not applicable; the retention setting built and verified.
 </li>
-<li>Decisions 9 and 10 left two later rows: a built-in embedding model, and local ONNX pictures on Mac.
+<li>20: one paid run if B, then the row re-verified.
 </li>
 </ol>
 <h2 id="copy-this-back-to-me">Copy this back to me<a class="anchor-link" href="#copy-this-back-to-me">#</a></h2>
-<pre><code>TrStudio: decision 1 — go with option A. The screens keep their calls; the in-process library answers them.</code></pre>
-<pre><code>TrStudio: decision 2 — go with option A. The test host stays under tests/.</code></pre>
-<pre><code>TrStudio: decision 3 — go with option A. Vectors stay in TrStudio.vectors.db beside TrStudio.db.</code></pre>
-<pre><code>TrStudio: decision 4 — go with option A. Resume Venice clips, fail other running jobs with the reason.</code></pre>
-<pre><code>TrStudio: decision 5 — go with option A. One unlock key per user in the Keychain or Windows data protection.</code></pre>
-<pre><code>TrStudio: decision 6 — answered B (14 Nov 2026). "Remember me" keeps the sign-in for 30 days; unticked keeps nothing; sign out removes it.</code></pre>
-<pre><code>TrStudio: decision 7 — go with option A. Rows touching stored data stay at needs re-check until re-verified.</code></pre>
-<pre><code>TrStudio: decision 8 — answered (14 Nov 2026). Web head deleted; the desktop project is src/TrStudio; the API project and PostgreSQL scripts stay on disk, out of the build.</code></pre>
-<pre><code>TrStudio: decision 9 — go with option A. Keep word matching; plan a built-in embedding model as a later row.</code></pre>
-<pre><code>TrStudio: decision 10 — go with option A. ComfyUI, RunPod or Venice for pictures on Mac; ONNX for Mac Catalyst as a later row.</code></pre>
-<pre><code>TrStudio: decision 11 — go with option A. A dedicated run adds the 18 screens' mockup control names, the design document's routes and the sample-data scripts.</code></pre>
-<pre><code>TrStudio: decision 12 — answered A (17 Nov 2026). Mark the mockup parts that belong to a later moment of a screen; nothing drawn changes.</code></pre>
-<pre><code>TrStudio: decision 13 — answered A (17 Nov 2026). The mockups hide the sidebar at phone width, as the app does.</code></pre>
-<pre><code>TrStudio: decision 14 — answered (17 Nov 2026). B for the twin, multi-shot and clip stitching (built on Venice); A for webhooks and the MCP server.</code></pre>
-<pre><code>TrStudio: decision 15 — go with option A. I let Xcode make the free Mac profile; sign the Debug build with it and prove the Keychain checks.</code></pre>
+<pre><code>TrStudio: decision 16 — go with option A. Keep one unlock item in the Keychain; removing a key removes its encrypted row.</code></pre>
+<pre><code>TrStudio: decision 17 — go with option B. Keep the App Sandbox; on Mac, guided setup connects to a ComfyUI that runs on its own.</code></pre>
+<pre><code>TrStudio: decision 18 — C for REQ-FN-019, 020, 021 and 053; A for the ComfyUI and RunPod rows.</code></pre>
+<pre><code>TrStudio: decision 19 — go with option A. NFR-003 replaced by NFR-022; build retention of old log rows only.</code></pre>
+<pre><code>TrStudio: decision 20 — go with option B, then A if the stronger model also redraws the end.</code></pre>
   </main>
 </div>
 
