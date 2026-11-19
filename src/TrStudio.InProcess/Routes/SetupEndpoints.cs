@@ -1,6 +1,7 @@
 // Ported from src/TrStudioApi/Endpoints/SetupEndpoints.cs (phase 3, ADR-015): the same routes, answered in process.
 using TrStudio.Engine.DependencyInjection;
 using TrStudio.Engine.Domain.Setup;
+using TrStudio.Engine.Infrastructure.Setup;
 using TrStudio.Models;
 using TrStudio.Models.Contracts;
 using TrStudio.Models.Repositories;
@@ -46,6 +47,10 @@ public static class SetupEndpoints
         vSetup.MapGet("", GetSetupStatusAsync).WithName("GetSetupStatus");
         vSetup.MapPost("steps/{aStepKey}/run", RunSetupStepAsync).WithName("RunSetupStep");
         vSetup.MapGet("steps/{aStepKey}", GetSetupStepAsync).WithName("GetSetupStep");
+
+        // REQ-FN-009/010 (ADR-029) — connect to a ComfyUI that already runs (the Mac way: nothing is downloaded or started).
+        vSetup.MapGet("comfyui", GetComfyUiAsync).WithName("GetComfyUiConnection");
+        vSetup.MapPost("comfyui", ConnectComfyUiAsync).WithName("ConnectComfyUi");
 
         // REQ-FN-011 — resumable model install queue (list, start, pause/resume/cancel).
         var vInstalls = aApp.MapGroup(ApiRoutes.Installs)
@@ -148,6 +153,17 @@ public static class SetupEndpoints
         var vStep = FindStep(vStatus, aStepKey);
         return vStep is null ? Results.NotFound() : Results.Ok(vStep);
     }
+
+    /// <summary>REQ-FN-009: checks the kept ComfyUI address without changing anything.</summary>
+    private static async Task<IResult> GetComfyUiAsync(ComfyUiConnector aConnector, CancellationToken aCancellationToken)
+        => Results.Ok(await aConnector.CheckSavedAsync(aCancellationToken));
+
+    /// <summary>REQ-FN-009: checks the address and, when ComfyUI answers, keeps it and uses it at once.</summary>
+    private static async Task<IResult> ConnectComfyUiAsync(
+        ComfyUiConnectRequest aRequest,
+        ComfyUiConnector aConnector,
+        CancellationToken aCancellationToken)
+        => Results.Ok(await aConnector.ConnectAsync(aRequest.Address, aCancellationToken));
 
     /// <summary>
     /// REQ-FN-011: lists all tracked model installs with live progress (queued, downloading,

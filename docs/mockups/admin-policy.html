@@ -175,6 +175,13 @@ tr.sel td{background:var(--sel)}
     <div class="row"><div class="col" style="gap:2px;flex:1"><h3 style="margin:0">Digital twins (real people, consent needed)</h3><span class="muted" style="font-size:12px">Off by default. When on, creators can make a twin of a person who has recorded consent.</span></div>
       <div class="toggle" role="switch" aria-checked="false" onclick="this.classList.toggle('on')" data-testid="switch-digital-twins"></div></div>
   </div>
+  <!-- Log retention (owner decision 19A, 19 Nov 2026) -->
+  <div class="card" data-testid="card-log-retention">
+    <div class="row" style="flex-wrap:wrap;gap:10px"><div class="col" style="gap:2px;flex:1;min-width:220px"><h3 style="margin:0">Log retention</h3><span class="muted" style="font-size:12px">Generation-log and audit rows older than this are removed at once and once a day. Pictures and clips are never removed. 0 keeps every row.</span></div>
+      <label class="row" style="gap:6px;font-size:13px">Keep log rows for <input class="input" type="number" min="0" max="3650" value="90" style="width:80px" aria-label="Keep log rows for N days" data-testid="input-log-retention-days"> days</label>
+      <button class="btn brand" type="button" onclick="/* saves: page script */" data-testid="btn-save-retention">Save</button></div>
+    <p class="muted" style="font-size:12px;margin:6px 0 0" data-testid="text-retention-result">Saved. 12 log rows older than 90 days were removed.</p>
+  </div>
   <div class="card" data-testid="card-safety-floors-always-enforced">
     <div class="row"><h3 style="margin:0">Safety floors — always enforced</h3><span class="spacer"></span><span class="badge danger" data-testid="badge-non-disableable">non-disableable</span></div>
     <p class="muted" style="font-size:12px;margin:4px 0 4px">These controls stay on in every mode, including Unrestricted. They cannot be switched off by any setting, key, or API call.</p>

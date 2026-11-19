@@ -498,8 +498,12 @@ public class SpineIdentityReverifyTests
         Assert.Equal(HttpStatusCode.Forbidden, (await vCreator.GetAsync(ApiRoutes.Capabilities)).StatusCode);
     }
 
-    /// <summary>REQ-FN-009: guided setup installing ONNX Runtime and ComfyUI for real.</summary>
-    [Fact(DisplayName = "REQ-FN-009 GuidedSetupInstallsOnnxAndComfy", Skip = "Needs a real download and install of ONNX Runtime and ComfyUI (network, pip, a managed Python); a unit test must not install software on this Mac.")]
+    /// <summary>
+    /// Guided setup installing ONNX Runtime and ComfyUI for real. Since owner decision 17B (19 Nov 2026,
+    /// ADR-029) that install is the Windows head's only (REQ-FN-102, later version); REQ-FN-009's Mac
+    /// acceptance is proved by Setup/ComfyUiConnectTests.cs.
+    /// </summary>
+    [Fact(DisplayName = "REQ-FN-102 GuidedSetupInstallsOnnxAndComfyOnWindows", Skip = "Windows head (later version): needs a real download and install of ONNX Runtime and ComfyUI (network, pip, a managed Python); a unit test must not install software on this Mac.")]
     public void GuidedSetupInstallsOnnxAndComfy()
     {
     }

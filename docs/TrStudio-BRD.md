@@ -443,8 +443,8 @@ The SaaS-ready abstraction. `TrStudioApi` is designed to also serve as an extern
 - **BRD-6** — Operator can maintain the Model & Provider Registry as the single source of truth, with a declarative params schema that auto-renders UI controls. *(F-PROVIDERS, ADM-05)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-7** — Operator can configure closed-provider adapters (HeyGen, aggregator) with encrypted API-key storage, enabled per model. *(F-PROVIDERS, ADM-07)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-8** — Operator can detect host capabilities (Apple Silicon GPU cores, unified memory, MPS/CoreML, disk) and see a readiness summary. *(F-ADMIN, ADM-01)* <!-- from: TrStudio-Requirements-v0.3.md -->
-- **BRD-9** — Operator can run guided setup that installs ONNX Runtime and provisions a managed, isolated Python env + ComfyUI without using a terminal. *(F-ADMIN, ADM-02)* <!-- from: TrStudio-Requirements-v0.3.md -->
-- **BRD-10** — System shall manage the isolated Python/ComfyUI environment so it never collides with system Python. *(F-ADMIN, ADM-03)* <!-- from: TrStudio-Requirements-v0.3.md -->
+- **BRD-9** — Operator can run guided setup that installs ONNX Runtime and provisions a managed, isolated Python env + ComfyUI without using a terminal. Changed 2026-11-19 (owner decision 17B): on Mac the app keeps Apple's App Sandbox, so setup does not download Python or ComfyUI; its ComfyUI step asks for the address of a ComfyUI that already runs (its own installer, or a RunPod worker), checks that it answers, and keeps the address. When the operator enters an address on Admin — Hardware & setup, then the step shows "Connected to ComfyUI" with its version, or names why it could not reach it. *(F-ADMIN, ADM-02)* <!-- from: TrStudio-Requirements-v0.3.md -->
+- **BRD-10** — System shall manage the isolated Python/ComfyUI environment so it never collides with system Python. Changed 2026-11-19 (owner decision 17B): on Mac the app runs no Python of its own and touches no Python on the computer; the managed environment is for Windows (later version). *(F-ADMIN, ADM-03)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-11** — Operator can one-click install/import curated open models (resumable downloads) with size/VRAM/licence shown, storing big media models on a RunPod network volume. *(F-ADMIN, ADM-06)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-57** — User can register/log in via AppManager (JWT + refresh, RSA-encrypted passwords); no local password store. *(F-IDENTITY)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-58** — System shall validate license/subscription via AppManager LicenseSvc. *(F-IDENTITY)* <!-- from: TrStudio-Requirements-v0.3.md -->
@@ -456,9 +456,9 @@ The SaaS-ready abstraction. `TrStudioApi` is designed to also serve as an extern
 
 **Phase 2 — Local image vertical + workspace foundation**
 
-- **BRD-16** — Creator can generate text-to-image with a prompt composer + dynamically rendered model params (registry schema). *(F-IMAGE, IMG-01)* <!-- from: TrStudio-Requirements-v0.3.md -->
-- **BRD-17** — Creator can do image-to-image, inpaint/outpaint and mask editing on a canvas. *(F-IMAGE, IMG-02)* <!-- from: TrStudio-Requirements-v0.3.md -->
-- **BRD-18** — Creator can apply reference-image / ControlNet conditioning (pose/depth/edges) and face/identity lock for characters. *(F-IMAGE, IMG-03)* <!-- from: TrStudio-Requirements-v0.3.md -->
+- **BRD-16** — Creator can generate text-to-image with a prompt composer + dynamically rendered model params (registry schema). Changed 2026-11-19 (owner decision 18C): the local ONNX path joins BRD-159 (local pictures on Mac, later version); on Mac pictures come from ComfyUI, RunPod or Venice. *(F-IMAGE, IMG-01)* <!-- from: TrStudio-Requirements-v0.3.md -->
+- **BRD-17** — Creator can do image-to-image, inpaint/outpaint and mask editing on a canvas. Changed 2026-11-19 (owner decision 18C): the local model path joins BRD-159 (later version). *(F-IMAGE, IMG-02)* <!-- from: TrStudio-Requirements-v0.3.md -->
+- **BRD-18** — Creator can apply reference-image / ControlNet conditioning (pose/depth/edges) and face/identity lock for characters. Changed 2026-11-19 (owner decision 18C): the local model path joins BRD-159 (later version). *(F-IMAGE, IMG-03)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-19** — Creator can upscale + face-restore to 2K/4K. *(F-IMAGE, IMG-04)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-20** — Creator can run batch/grid variations with seed control + reproducibility. *(F-IMAGE, IMG-05)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-21** — Creator can export in social-format presets (1:1, 4:5, 9:16, 16:9) with background removal. *(F-IMAGE, IMG-06)* <!-- from: TrStudio-Requirements-v0.3.md -->
@@ -509,7 +509,7 @@ The SaaS-ready abstraction. `TrStudioApi` is designed to also serve as an extern
 
 - **BRD-42** — Creator can generate image-to-video and text-to-video (open model on RunPod, or closed API) with duration/motion/aspect controls. *(F-VIDEO, VID-01)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-43** — Creator can apply first/last-frame + reference-image conditioning for consistency. *(F-VIDEO, VID-02)* <!-- from: TrStudio-Requirements-v0.3.md -->
-- **BRD-44** — Creator can apply frame interpolation (RIFE/FILM) and video upscale as post-steps. *(F-VIDEO, VID-03)* <!-- from: TrStudio-Requirements-v0.3.md -->
+- **BRD-44** — Creator can apply frame interpolation (RIFE/FILM) and video upscale as post-steps. Changed 2026-11-19 (owner decision 18C): deferred until a frame-interpolation model is available to the app; today the step only answers "queued". *(F-VIDEO, VID-03)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-45** — Creator can trim/join/reframe, add audio (from Voice studio) and export MP4 in platform formats. *(F-VIDEO, VID-04)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - ~~**BRD-46**~~ (moved 2026-11-17 to phase 3 as BRD-173 and BRD-174: joining on this Mac, extending on Venice) — Creator can extend/stitch clips for longer sequences. *(F-VIDEO, VID-05)* <!-- from: TrStudio-Requirements-v0.3.md -->
 
@@ -554,7 +554,7 @@ The SaaS-ready abstraction. `TrStudioApi` is designed to also serve as an extern
 
 - **BRD-69** — Performance: UI stays responsive during long jobs; progress is streamed; first warm local image returns in seconds. *(NFR-01)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-70** — Scalability: the orchestrator scales by adding workers and never assumes a single GPU. *(NFR-02)* <!-- from: TrStudio-Requirements-v0.3.md -->
-- **BRD-71** — Portability: `TrStudioApi`/workers run on macOS + Linux; the single **`TrStudio`** app runs as **Blazor Web *and* MAUI Blazor Hybrid desktop (Win/Mac)**, presenting creator/management surfaces by role. Changed 2026-11-14: the first version is the Mac desktop app only; Windows comes in a later version (phase 3 BRD-152, BRD-158). *(NFR-03)* <!-- from: TrStudio-Requirements-v0.3.md; amended 2026-07-05 (BRD-86/87) -->
+- **BRD-71** — Portability: `TrStudioApi`/workers run on macOS + Linux; the single **`TrStudio`** app runs as **Blazor Web *and* MAUI Blazor Hybrid desktop (Win/Mac)**, presenting creator/management surfaces by role. Changed 2026-11-14: the first version is the Mac desktop app only; Windows comes in a later version (phase 3 BRD-152, BRD-158). Changed 2026-11-19 (owner decision 19A): not applicable in the first version; the API on macOS and Linux and the web head were set aside (decision 8), and the Mac build is checked by phase 3's REQ-NFR-022. *(NFR-03)* <!-- from: TrStudio-Requirements-v0.3.md; amended 2026-07-05 (BRD-86/87) -->
 - **BRD-86** — System shall be delivered as **one unified `TrStudio` application** presenting the creator experience and the model/provider management experience in a single app, with the surface a user sees gated by their **role** (Creator → creator studios; Operator/Admin → management; Owner → both, switchable in-app). The separate `TrStudioAdmin` app is retired; its screens move into the shared `TrStudioUI` RCL under role-gated routes. `TrStudioApi` is unchanged. *(F-SHELL — supersedes the two-app split / ADR-001)* <!-- from: owner review 2026-07-05 -->
 - **BRD-87** — System shall ship `TrStudio` as a **MAUI Blazor Hybrid desktop application for Windows and macOS** (the primary local delivery) alongside the Blazor Web head, both hosting the same `TrStudioUI` RCL against `TrStudioApi`. Changed 2026-11-14: the desktop app is the only delivery and carries the engine inside it, Mac first with Windows in a later version (BRD-152, BRD-158); the old web head is deleted; the web head is no longer shipped and a test host serves the screens for headless checks only (BRD-146, BRD-150). (Fulfils the desktop-app intent of NFR-03/BRD-71/§25, previously deferred.) *(F-SHELL / NFR-03)* <!-- from: owner review 2026-07-05 -->
 - **BRD-72** — Reliability: durable jobs (Hangfire/Postgres; from phase 3 the in-app queue that picks up or fails a job left at close, BRD-136, BRD-137); worker crash → retry or graceful fail without losing the queue. *(NFR-04)* <!-- from: TrStudio-Requirements-v0.3.md -->
@@ -563,20 +563,20 @@ The SaaS-ready abstraction. `TrStudioApi` is designed to also serve as an extern
 - **BRD-75** — Cost control: per-job estimates; RunPod idle auto-stop; monthly cap + alerts across RunPod and closed APIs. *(NFR-07)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-76** — Observability: Serilog structured logging + OpenTelemetry metrics (queue, memory, latency, spend), traceable job IDs. *(NFR-08)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-77** — Extensibility: registry-driven UI; a new model = config + (for ComfyUI) a workflow import. *(NFR-09)* <!-- from: TrStudio-Requirements-v0.3.md -->
-- **BRD-78** — Compliance: provenance metadata on outputs; auditable generation log; configurable retention; DPDP-aligned (data in India). *(NFR-10)* <!-- from: TrStudio-Requirements-v0.3.md -->
+- **BRD-78** — Compliance: provenance metadata on outputs; auditable generation log; configurable retention; DPDP-aligned (data in India). Changed 2026-11-19 (owner decision 19A): retention is "Keep log rows for N days" on Admin — Content policy (0 keeps them for ever, the default); generation-log and audit rows older than N days are removed at start and once a day; pictures, clips and their provenance are never removed. When the owner sets N and saves, then log rows older than N days are gone and every picture and clip stays. *(NFR-10)* <!-- from: TrStudio-Requirements-v0.3.md -->
 
 ## 7. Development status
 
 Written by the status gate after every build, verify and handoff; not by hand.
 
-**Snapshot as of 2026-11-18.** Live per-requirement status: `PROJECT-STATUS.md` and the Requirements Status table in `docs/TrStudio-Checklist.md`.
+**Snapshot as of 2026-11-19.** Live per-requirement status: `PROJECT-STATUS.md` and the Requirements Status table in `docs/TrStudio-Checklist.md`.
 
 | Screen | Requirements | Verified | Open | Status |
 |---|---|---|---|---|
 | UI / Pages | 25 | 23 | 2 | Partial |
-| Functional requirements | 63 | 46 | 17 | Partial |
+| Functional requirements | 59 | 48 | 11 | Partial |
 | RAG / AI requirements (→ /techierag) | 4 | 3 | 1 | Partial |
-| Non-functional | 10 | 8 | 2 | Partial |
+| Non-functional | 9 | 9 | 0 | Done |
 
 ## 8. Context diagram
 

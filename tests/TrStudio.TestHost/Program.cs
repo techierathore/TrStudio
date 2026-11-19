@@ -789,7 +789,7 @@ vApp.MapPost("/test/seed/account", async (EngineHost aHost) =>
 // report and are not seeded. Setup state is the node's, not a user's, and touches no studio run, so every
 // studio still reopens its own newest run. Idempotent: it sets the same three rows each time. Called by
 // tests/verify/seed/admin-hardware.sh.
-vApp.MapPost("/test/seed/admin-hardware", async (EngineHost aHost) =>
+vApp.MapPost("/test/seed/admin-hardware", async (EngineHost aHost, HttpRequest aRequest) =>
 {
     var vSetup = aHost.Services.GetRequiredService<TrStudio.Engine.Domain.Setup.ISetupStateRepository>();
     await vSetup.UpdateAsync(TrStudio.Engine.Domain.Setup.SetupStepKeys.OnnxRuntime, TrStudio.Engine.Domain.Setup.SetupStepStates.Completed, 100,
@@ -798,8 +798,17 @@ vApp.MapPost("/test/seed/admin-hardware", async (EngineHost aHost) =>
         "Isolated venv (python 3.11) verified", null);
     await vSetup.UpdateAsync(TrStudio.Engine.Domain.Setup.SetupStepKeys.ComfyUi, TrStudio.Engine.Domain.Setup.SetupStepStates.Running, 64,
         "Provisioning ComfyUI core… installing dependencies", null);
-    return Results.Ok(new { seeded = "admin-hardware" });
+    // Since owner decision 17B (19 Nov 2026) the Mac screen also draws a connected ComfyUI card: connect the
+    // stand-in ComfyUI below (this host's own /system_stats, a short address like the mockup's), so the card shows "Connected".
+    var vConnector = aHost.Services.GetRequiredService<TrStudio.Engine.Infrastructure.Setup.ComfyUiConnector>();
+    var vSelf = aRequest.Scheme + "://" + aRequest.Host.Value;
+    var vConnected = await vConnector.ConnectAsync(vSelf);
+    return Results.Ok(new { seeded = "admin-hardware", comfyConnected = vConnected.Connected });
 });
+
+// TEST ONLY (served at the root so the seeded address stays short): a stand-in ComfyUI status answer for the Hardware seed (the real app connects a ComfyUI that
+// runs on its own; none runs on the test host).
+vApp.MapGet("/system_stats", () => Results.Json(new { system = new { comfyui_version = "0.3.44", os = "posix" }, devices = Array.Empty<object>() }));
 
 // TEST ONLY: the Model Sources mockup's three sources (docs/mockups/admin-sources.html): Hugging Face and
 // Civitai, enabled, connected, each with a stored API token (an obviously fake test value, kept encrypted

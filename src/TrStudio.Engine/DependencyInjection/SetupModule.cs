@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using TrStudio.Engine.Domain.Install;
 using TrStudio.Engine.Domain.ModelSources;
 using TrStudio.Engine.Domain.Setup;
@@ -54,6 +55,13 @@ public static class SetupModule
         aServices.AddSingleton<ISetupStepHandler, PythonEnvSetupStepHandler>();
         aServices.AddSingleton<ISetupStepHandler, ComfyUiSetupStepHandler>();
         aServices.AddSingleton<SetupService>();
+
+        // REQ-FN-009/010 (ADR-029) — on a Mac, ComfyUI is connected by its address; REQ-NFR-010 (ADR-030) — log retention.
+        aServices.AddHttpClient(ComfyUiConnector.HttpClientName);
+        aServices.TryAddSingleton<IAppSettingStore, AppSettingStore>();
+        aServices.AddSingleton<ComfyUiConnector>();
+        aServices.AddSingleton<LogRetentionService>();
+        aServices.AddSingleton<IHostedService, LocalMaintenanceService>();
         aServices.AddSingleton<ISetupService>(aProvider => aProvider.GetRequiredService<SetupService>());
         aServices.AddSingleton<ISetupStepEngine>(aProvider => aProvider.GetRequiredService<SetupService>());
 

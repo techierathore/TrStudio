@@ -480,14 +480,15 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 |--------|-------------------|---------------|--------|
 | Admin sidebar | `Sidebar` | Hardware & Setup / RunPod & Ops · Model Sources / Model Library / Registry & Providers / ComfyUI Import · Content Policy | active highlighted |
 | Readiness | 4× `Card` + `Badge` (ready/warn) | detected capabilities | detecting → `Skeleton` |
-| Guided setup | `Card` + steps + `Button`s | ONNX install, isolated Python+ComfyUI provision | running → `Progress` |
+| Guided setup | `Card` + steps + `Button`s | ONNX install, network volume (on Mac no Python or ComfyUI download step, decision 17B) | running → `Progress` |
+| ComfyUI (`card-comfyui-address`) | `Card` + `Input` + `Button` + `Badge` | address of a ComfyUI that runs on its own; Connect checks it and keeps it | Connected (version) / Not connected with the reason |
 | Disk / install hand-off | `Alert` (Warning) + link | low-disk warning; installs happen on the **Model Library** screen | — |
 
 **Fields:**
 
 | Field | Type | Required | Validation |
 |---|---|---|---|
-| none — display only | — | — | setup steps are run with buttons; no typed input |
+| ComfyUI address | text (URL) | no | must answer `/system_stats`; a silent address keeps nothing |
 
 **Notes / interactions:** isolated env never collides with system Python; big models → network volume. **Empty/loading/error:** skeletons while detecting; `Alert` on install failure.
 
@@ -652,6 +653,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 |--------|-------------------|---------------|--------|
 | Mode toggle | `Card` + `Switch` ("Unrestricted / NSFW mode") | `objNsfwEnabled` (off by default) | disabled + note when multi-user/SaaS (auto-off) |
 | Confirm gate | `AlertDialog` | "Synthetic adult (18+) personas only — confirm" | blocks until confirmed |
+| Log retention (`card-log-retention`) | `Card` + `Input` (number) + `Button` | "Keep log rows for N days" (0 = for ever); Save reports rows removed; pictures and clips never removed (decision 19A) | saved / error |
 | Always-locked floors | `Alert` (Warning) + list | CSAM · real-person/NCII · minors · public-figure · provenance · audit — "cannot be disabled" | static |
 | Scope note | `TypographyMuted` | "Applies only to characters flagged synthetic + adult; personal mode only" | — |
 
@@ -660,6 +662,7 @@ Each screen has a mockup in `docs/mockups/` styled like TrBlazeUI, and an entry 
 | Field | Type | Required | Validation |
 |---|---|---|---|
 | Unrestricted mode | switch | no | owner only; needs the confirmation dialog; locked off in multi-user mode |
+| Keep log rows for N days | number | no | whole number 0 to 3650; 0 keeps every row |
 
 **Notes / interactions:** toggling on requires explicit confirmation; the screen makes the non-disableable floors visible so the boundary is unambiguous; the toggle is hidden/disabled in multi-user/SaaS mode (FeatureSvc). **Empty/loading/error:** disabled state with an explanatory note when not in personal mode.
 

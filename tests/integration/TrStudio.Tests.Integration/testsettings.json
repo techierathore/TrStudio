@@ -10,7 +10,8 @@
       "ImageToImage": "",
       "Upscale": "",
       "TextToVideo": "",
-      "ImageToVideo": ""
+      "ImageToVideo": "",
+      "EndFrame": ""
     }
   }
 }

@@ -204,7 +204,7 @@ Deferred on 14 Nov 2026, each with its reason. No row of the first version waits
 
 - **BRD-158** — The desktop project builds and runs on Windows. *Deferred (later version):* TrStudio is Mac first; the Windows head stays in the project and its data-protection design stays in ADR-020.
   - *Acceptance:* When the desktop project is built on a Windows machine, then the Windows app is produced and opens on Login.
-- **BRD-159** — Local ONNX pictures run inside the Mac app. *Deferred (later version):* ONNX Runtime ships no Mac Catalyst build (owner decision 10A); Mac pictures come from ComfyUI, RunPod or Venice. *Screen:* Image studio · *Mockup:* [mockup](mockups/image-studio.html)
+- **BRD-159** — Local ONNX pictures run inside the Mac app. *Deferred (later version):* ONNX Runtime ships no Mac Catalyst build (owner decision 10A); Mac pictures come from ComfyUI, RunPod or Venice. On 19 Nov 2026 (owner decision 18C) phase 1's local text-to-image, image-to-image and conditioning rows (BRD-16 to BRD-18; REQ-FN-019, 020, 021) joined this item. *Screen:* Image studio · *Mockup:* [mockup](mockups/image-studio.html)
   - *Acceptance:* When a creator generates with a local ONNX model on Image studio in the Mac app, then a picture is produced.
 - **BRD-160** — Character-bible search by meaning with an embedding model built into the app. *Deferred (later version):* word matching now (owner decision 9A). *Screen:* Character library · *Mockup:* [mockup](mockups/character-library.html)
   - *Acceptance:* When a creator searches a character's bible on Character library by meaning, then notes matching the meaning come back without Ollama.
@@ -213,7 +213,7 @@ Deferred on 14 Nov 2026, each with its reason. No row of the first version waits
 
 Written by the status gate after every build, verify and handoff; not by hand.
 
-**Snapshot as of 2026-11-18.** Live per-requirement status: `PROJECT-STATUS.md` and the Requirements Status table in `docs/TrStudio-P3-Checklist.md`.
+**Snapshot as of 2026-11-19.** Live per-requirement status: `PROJECT-STATUS.md` and the Requirements Status table in `docs/TrStudio-P3-Checklist.md`.
 
 | Screen | Requirements | Verified | Open | Status |
 |---|---|---|---|---|

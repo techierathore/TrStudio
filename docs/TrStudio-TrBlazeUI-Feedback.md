@@ -8,7 +8,7 @@
 
 ## Summary
 
-15 entries: 0 blocking now, 1 open (TR-015), 14 closed (TR-001 to TR-014).
+16 entries: 0 blocking now, 2 open (TR-015, TR-016), 14 closed (TR-001 to TR-014).
 
 Nothing is blocked. On 15 Nov 2026 TrStudio moved from 1.0.9 to TrBlazeUI 2.2.5 (nuget.org, the only source this Mac's settings list), and the three open entries were checked again on it: a list inside the Add model panel now opens and can be picked (TR-014), the old icon names are accepted (TR-013), and a page with a list closes without a disposal error (TR-012). All three are closed with the proof under each entry.
 
@@ -274,4 +274,15 @@ Closed 2026-11-15: fixed by TrBlazeUI 2.2.5. Proof: on the test host, opening Ad
 - **Encountered in:** owner run of 15 Nov 2026, part B (screen check of the real Mac app at 1280 and 390)
 - **Workaround:** none taken (the framework does not work around a library gap)
 - **Suggested fix:** decide with `window.matchMedia('(max-width: 767px)')` and its `change` event, or read `document.documentElement.clientWidth` inside the observer, or check again on the next animation frame
+
+### TR-016 — A `Badge` keeps its first `Class` when the parameter changes
+
+- **Severity:** minor
+- **Blocks:** no — the badge's text updates; only its colour stays wrong, and re-creating the badge with `@key` shows the new colour
+- **Repro:** TrBlazeUI 2.2.5 `<Badge Variant="BadgeVariant.Outline" Class="@(connected ? "badge-ok" : "badge-warn")">`; flip `connected` from false to true after a click (TrStudio Admin — Hardware & setup, ComfyUI card, 19 Nov 2026)
+- **Expected:** the rendered element's class follows the new `Class` value
+- **Actual:** the text changed to "Connected" but the badge stayed orange (`badge-warn`) until the page was reloaded; seen in the headless smoke of 19 Nov 2026. Not confirmed from the library's source (no decompiler on this Mac)
+- **Encountered in:** owner run of 18 Nov 2026 (night), `*build-phase`, REQ-FN-009
+- **Workaround:** `@key="objComfyConnected"` on the badge (`src/TrStudioUI/Pages/Admin/AdminHardware.razor:155`), taken by the builder; remove it when the library changes
+- **Suggested fix:** build the class list on every render (or in `OnParametersSet`), not once in `OnInitialized`
 

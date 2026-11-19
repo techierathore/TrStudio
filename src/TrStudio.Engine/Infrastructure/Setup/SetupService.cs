@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using TrStudio.Engine.Domain.Setup;
+using TrStudio.Engine.Infrastructure;
 using TrStudio.Models.Entities;
 using TrStudio.Models.Services;
 
@@ -17,6 +18,7 @@ public class SetupService : ISetupService, ISetupStepEngine
     private readonly ISetupStateRepository objStateRepository;
     private readonly IReadOnlyDictionary<string, ISetupStepHandler> objHandlers;
     private readonly ILogger<SetupService> objLogger;
+    private readonly bool objIsMac;
     private readonly object objSync = new();
 
     private CancellationTokenSource? objCurrentCts;
@@ -30,8 +32,11 @@ public class SetupService : ISetupService, ISetupStepEngine
     /// <param name="aStateRepository">Persisted step-state repository.</param>
     /// <param name="aHandlers">The registered step handlers (one per <see cref="SetupStepKeys"/> key).</param>
     /// <param name="aLogger">Logger for step diagnostics (full exceptions are logged here).</param>
-    public SetupService(ISetupStateRepository aStateRepository, IEnumerable<ISetupStepHandler> aHandlers, ILogger<SetupService> aLogger)
+    /// <param name="aIsMac">Whether this host is a Mac (macOS or Mac Catalyst); null reads the real host. On a Mac the
+    /// Python and managed-ComfyUI steps are not offered (ADR-029, REQ-FN-010).</param>
+    public SetupService(ISetupStateRepository aStateRepository, IEnumerable<ISetupStepHandler> aHandlers, ILogger<SetupService> aLogger, bool? aIsMac = null)
     {
+        objIsMac = aIsMac ?? HostPlatform.IsMac;
         objStateRepository = aStateRepository;
         objHandlers = aHandlers.ToDictionary(aHandler => aHandler.StepKey, StringComparer.OrdinalIgnoreCase);
         objLogger = aLogger;
@@ -40,7 +45,8 @@ public class SetupService : ISetupService, ISetupStepEngine
     /// <inheritdoc />
     public async Task<SetupStatus> GetStatusAsync(CancellationToken aCancellationToken = default)
     {
-        var vSteps = await objStateRepository.ListAsync(aCancellationToken).ConfigureAwait(false);
+        var vSteps = (await objStateRepository.ListAsync(aCancellationToken).ConfigureAwait(false))
+            .Where(aStep => IsOffered(aStep.StepKey)).ToList();
         var vRunning = vSteps.FirstOrDefault(aStep => aStep.State == SetupStepStates.Running);
         var vFailed = vSteps.FirstOrDefault(aStep => aStep.State == SetupStepStates.Failed);
         return new SetupStatus
@@ -160,7 +166,7 @@ public class SetupService : ISetupService, ISetupStepEngine
     {
         try
         {
-            foreach (var vStepKey in SetupStepKeys.Ordered)
+            foreach (var vStepKey in SetupStepKeys.Ordered.Where(IsOffered))
             {
                 var vSteps = await objStateRepository.ListAsync(CancellationToken.None).ConfigureAwait(false);
                 if (IsCompleted(vSteps, vStepKey))
@@ -256,6 +262,11 @@ public class SetupService : ISetupService, ISetupStepEngine
 
     private ISetupStepHandler ResolveHandler(string aStepKey)
     {
+        if (!IsOffered(aStepKey))
+        {
+            throw new ArgumentException($"The setup step '{aStepKey}' is not offered on a Mac: ComfyUI runs on its own there, so connect it by its address.", nameof(aStepKey));
+        }
+
         if (!objHandlers.TryGetValue(aStepKey, out var vHandler))
         {
             throw new ArgumentException($"Unknown setup step '{aStepKey}'. Valid steps: {string.Join(", ", objHandlers.Keys)}.", nameof(aStepKey));
@@ -274,6 +285,9 @@ public class SetupService : ISetupService, ISetupStepEngine
             objCurrentRun = null;
         }
     }
+
+    private bool IsOffered(string aStepKey)
+        => !objIsMac || !SetupStepKeys.WindowsOnly.Contains(aStepKey, StringComparer.OrdinalIgnoreCase);
 
     private static bool IsCompleted(IReadOnlyList<SetupStepInfo> aSteps, string aStepKey)
         => aSteps.Any(aStep => aStep.StepKey == aStepKey && aStep.State == SetupStepStates.Completed);

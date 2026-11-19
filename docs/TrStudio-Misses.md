@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | App | TrStudio |
-| Count | 131 logged: 23 open, 108 fixed, 0 will not fix |
+| Count | 135 logged: 23 open, 112 fixed, 0 will not fix |
 | Source | `docs/metrics/misses.jsonl`, one row per miss record. Rewritten by `tf-misses-md.sh` on every new record. Never edit it: a wrong row is corrected by a new record. |
 | Updated | 2026-11-18 |
 
@@ -37,10 +37,14 @@
 | MISS-TrStudio-20261115-09 (REQ-FN-047) | 2026-11-15 by owner | the check was too weak | ComfyUI import: every model file a graph names is reported missing, because the dependency scan never asks ComfyUI what it holds; so a freshly imported real graph (one naming a checkpoint) never reads known-good and Save as model stays disabled. Needs a real ComfyUI to fix and prove. |
 | MISS-TrStudio-20261115-08 (REQ-FN-046) | 2026-11-15 by owner | the check was too weak | ComfyUI import: Run drew a made-up per-node progression ('Completed 5 of 5 nodes · live WebSocket preview') when the debug service could not be reached; it now says the service was not reached and shows no results |
 
-## Fixed (108)
+## Fixed (112)
 
 | Miss | Found | Closed | Whose gap | What went wrong |
 |---|---|---|---|---|
+| MISS-TrStudio-20261118-04 (REQ-UI-070) | 2026-11-18 by owner | 2026-11-18 by log-miss | the app's spec | Hardware's mockup still drew the old Python and ComfyUI download steps after decision 17B, so the render check failed; and on open the address field showed the default, not the kept address, when the kept one did not answer. Mockup and page fixed |
+| MISS-TrStudio-20261118-03 (REQ-NFR-010) | 2026-11-18 by owner | 2026-11-18 by log-miss | the check was too weak | REQ-NFR-010's browser test inserted fixed row ids, so a second run on the same host hit the unique key on the kept fresh row; ids now unique per run |
+| MISS-TrStudio-20261118-02 (REQ-FN-010) | 2026-11-18 by owner | 2026-11-18 by log-miss | the framework never said it | REQ-FN-010's browser test still checked the replaced acceptance (provision Python on Hardware) after decision 17B changed it; rewritten to the Mac acceptance |
+| MISS-TrStudio-20261118-01 (REQ-FN-009) | 2026-11-18 by owner | 2026-11-18 by log-miss | the framework never said it | Hardware's ComfyUI badge stayed orange after a successful connect: the TrBlazeUI Badge kept its first Class (TR-016); fixed with @key; about 5 minutes to find (builder's smoke) |
 | MISS-TrStudio-20261117-79 (REQ-FN-025) | 2026-11-17 by owner | 2026-11-17 by log-miss | the app's spec | Gallery mockup gave each tile's picture art a fixed colour, but the art stands for the user's own picture, so its colour is data; the mockup now marks the tile art as sample data |
 | MISS-TrStudio-20261117-78 (REQ-FN-067) | 2026-11-17 by gate | 2026-11-18 by triage-and-fix | not sorted | no sentence recorded (partial-implementation, src) |
 | MISS-TrStudio-20261117-75 (REQ-FN-040) | 2026-11-17 by gate | 2026-11-18 by triage-and-fix | not sorted | no sentence recorded (partial-implementation, src) |

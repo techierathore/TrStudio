@@ -17,6 +17,7 @@ public static class RouteMap
         aApp.MapRegistryEndpoints();
         aApp.MapVeniceEndpoints();
         aApp.MapSetupEndpoints();
+        aApp.MapRetentionEndpoints();
         aApp.MapIdentityEndpoints();
         aApp.MapDesktopSessionEndpoints();
         aApp.MapImageEndpoints();

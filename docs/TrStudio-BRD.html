@@ -106,7 +106,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <div class="layout">
   <nav class="side">
     <h1>TrStudio — Business Requirements</h1>
-    <div class="sub">Last rendered: 2026-11-18</div>
+    <div class="sub">Last rendered: 2026-11-19</div>
     <div class="group">Contents</div>
     <ol>
         <li><a href="#summary">1. Summary</a></li>
@@ -130,7 +130,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
   </nav>
   <main>
     <h1>TrStudio — Business Requirements</h1>
-    <div class="subtitle">Rendered 2026-11-18 &middot; source <code>TrStudio-BRD.md</code></div>
+    <div class="subtitle">Rendered 2026-11-19 &middot; source <code>TrStudio-BRD.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
@@ -624,9 +624,9 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </li>
 <li><strong>BRD-8</strong> — Operator can detect host capabilities (Apple Silicon GPU cores, unified memory, MPS/CoreML, disk) and see a readiness summary. <em>(F-ADMIN, ADM-01)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
-<li><strong>BRD-9</strong> — Operator can run guided setup that installs ONNX Runtime and provisions a managed, isolated Python env + ComfyUI without using a terminal. <em>(F-ADMIN, ADM-02)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
+<li><strong>BRD-9</strong> — Operator can run guided setup that installs ONNX Runtime and provisions a managed, isolated Python env + ComfyUI without using a terminal. Changed 2026-11-19 (owner decision 17B): on Mac the app keeps Apple's App Sandbox, so setup does not download Python or ComfyUI; its ComfyUI step asks for the address of a ComfyUI that already runs (its own installer, or a RunPod worker), checks that it answers, and keeps the address. When the operator enters an address on Admin — Hardware &amp; setup, then the step shows "Connected to ComfyUI" with its version, or names why it could not reach it. <em>(F-ADMIN, ADM-02)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
-<li><strong>BRD-10</strong> — System shall manage the isolated Python/ComfyUI environment so it never collides with system Python. <em>(F-ADMIN, ADM-03)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
+<li><strong>BRD-10</strong> — System shall manage the isolated Python/ComfyUI environment so it never collides with system Python. Changed 2026-11-19 (owner decision 17B): on Mac the app runs no Python of its own and touches no Python on the computer; the managed environment is for Windows (later version). <em>(F-ADMIN, ADM-03)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
 <li><strong>BRD-11</strong> — Operator can one-click install/import curated open models (resumable downloads) with size/VRAM/licence shown, storing big media models on a RunPod network volume. <em>(F-ADMIN, ADM-06)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
@@ -647,11 +647,11 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </ul>
 <p><strong>Phase 2 — Local image vertical + workspace foundation</strong></p>
 <ul>
-<li><strong>BRD-16</strong> — Creator can generate text-to-image with a prompt composer + dynamically rendered model params (registry schema). <em>(F-IMAGE, IMG-01)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
+<li><strong>BRD-16</strong> — Creator can generate text-to-image with a prompt composer + dynamically rendered model params (registry schema). Changed 2026-11-19 (owner decision 18C): the local ONNX path joins BRD-159 (local pictures on Mac, later version); on Mac pictures come from ComfyUI, RunPod or Venice. <em>(F-IMAGE, IMG-01)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
-<li><strong>BRD-17</strong> — Creator can do image-to-image, inpaint/outpaint and mask editing on a canvas. <em>(F-IMAGE, IMG-02)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
+<li><strong>BRD-17</strong> — Creator can do image-to-image, inpaint/outpaint and mask editing on a canvas. Changed 2026-11-19 (owner decision 18C): the local model path joins BRD-159 (later version). <em>(F-IMAGE, IMG-02)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
-<li><strong>BRD-18</strong> — Creator can apply reference-image / ControlNet conditioning (pose/depth/edges) and face/identity lock for characters. <em>(F-IMAGE, IMG-03)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
+<li><strong>BRD-18</strong> — Creator can apply reference-image / ControlNet conditioning (pose/depth/edges) and face/identity lock for characters. Changed 2026-11-19 (owner decision 18C): the local model path joins BRD-159 (later version). <em>(F-IMAGE, IMG-03)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
 <li><strong>BRD-19</strong> — Creator can upscale + face-restore to 2K/4K. <em>(F-IMAGE, IMG-04)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
@@ -738,7 +738,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </li>
 <li><strong>BRD-43</strong> — Creator can apply first/last-frame + reference-image conditioning for consistency. <em>(F-VIDEO, VID-02)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
-<li><strong>BRD-44</strong> — Creator can apply frame interpolation (RIFE/FILM) and video upscale as post-steps. <em>(F-VIDEO, VID-03)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
+<li><strong>BRD-44</strong> — Creator can apply frame interpolation (RIFE/FILM) and video upscale as post-steps. Changed 2026-11-19 (owner decision 18C): deferred until a frame-interpolation model is available to the app; today the step only answers "queued". <em>(F-VIDEO, VID-03)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
 <li><strong>BRD-45</strong> — Creator can trim/join/reframe, add audio (from Voice studio) and export MP4 in platform formats. <em>(F-VIDEO, VID-04)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
@@ -811,7 +811,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </li>
 <li><strong>BRD-70</strong> — Scalability: the orchestrator scales by adding workers and never assumes a single GPU. <em>(NFR-02)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
-<li><strong>BRD-71</strong> — Portability: <code>TrStudioApi</code>/workers run on macOS + Linux; the single <strong><code>TrStudio</code></strong> app runs as <strong>Blazor Web <em>and</em> MAUI Blazor Hybrid desktop (Win/Mac)</strong>, presenting creator/management surfaces by role. Changed 2026-11-14: the first version is the Mac desktop app only; Windows comes in a later version (phase 3 BRD-152, BRD-158). <em>(NFR-03)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md; amended 2026-07-05 (BRD-86/87) --&gt;
+<li><strong>BRD-71</strong> — Portability: <code>TrStudioApi</code>/workers run on macOS + Linux; the single <strong><code>TrStudio</code></strong> app runs as <strong>Blazor Web <em>and</em> MAUI Blazor Hybrid desktop (Win/Mac)</strong>, presenting creator/management surfaces by role. Changed 2026-11-14: the first version is the Mac desktop app only; Windows comes in a later version (phase 3 BRD-152, BRD-158). Changed 2026-11-19 (owner decision 19A): not applicable in the first version; the API on macOS and Linux and the web head were set aside (decision 8), and the Mac build is checked by phase 3's REQ-NFR-022. <em>(NFR-03)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md; amended 2026-07-05 (BRD-86/87) --&gt;
 </li>
 <li><strong>BRD-86</strong> — System shall be delivered as <strong>one unified <code>TrStudio</code> application</strong> presenting the creator experience and the model/provider management experience in a single app, with the surface a user sees gated by their <strong>role</strong> (Creator → creator studios; Operator/Admin → management; Owner → both, switchable in-app). The separate <code>TrStudioAdmin</code> app is retired; its screens move into the shared <code>TrStudioUI</code> RCL under role-gated routes. <code>TrStudioApi</code> is unchanged. <em>(F-SHELL — supersedes the two-app split / ADR-001)</em> &lt;!-- from: owner review 2026-07-05 --&gt;
 </li>
@@ -829,19 +829,19 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </li>
 <li><strong>BRD-77</strong> — Extensibility: registry-driven UI; a new model = config + (for ComfyUI) a workflow import. <em>(NFR-09)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
-<li><strong>BRD-78</strong> — Compliance: provenance metadata on outputs; auditable generation log; configurable retention; DPDP-aligned (data in India). <em>(NFR-10)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
+<li><strong>BRD-78</strong> — Compliance: provenance metadata on outputs; auditable generation log; configurable retention; DPDP-aligned (data in India). Changed 2026-11-19 (owner decision 19A): retention is "Keep log rows for N days" on Admin — Content policy (0 keeps them for ever, the default); generation-log and audit rows older than N days are removed at start and once a day; pictures, clips and their provenance are never removed. When the owner sets N and saves, then log rows older than N days are gone and every picture and clip stays. <em>(NFR-10)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
 </ul>
 <h2 id="development-status"><a id="7-development-status"></a>7. Development status<a class="anchor-link" href="#development-status">#</a></h2>
 <p>Written by the status gate after every build, verify and handoff; not by hand.</p>
-<p><strong>Snapshot as of 2026-11-18.</strong> Live per-requirement status: <code>PROJECT-STATUS.md</code> and the Requirements Status table in <code>docs/TrStudio-Checklist.md</code>.</p>
+<p><strong>Snapshot as of 2026-11-19.</strong> Live per-requirement status: <code>PROJECT-STATUS.md</code> and the Requirements Status table in <code>docs/TrStudio-Checklist.md</code>.</p>
 <table>
 <thead><tr><th>Screen</th><th>Requirements</th><th>Verified</th><th>Open</th><th>Status</th></tr></thead>
 <tbody>
 <tr><td>UI / Pages</td><td>25</td><td>23</td><td>2</td><td>Partial</td></tr>
-<tr><td>Functional requirements</td><td>63</td><td>46</td><td>17</td><td>Partial</td></tr>
+<tr><td>Functional requirements</td><td>59</td><td>48</td><td>11</td><td>Partial</td></tr>
 <tr><td>RAG / AI requirements (→ /techierag)</td><td>4</td><td>3</td><td>1</td><td>Partial</td></tr>
-<tr><td>Non-functional</td><td>10</td><td>8</td><td>2</td><td>Partial</td></tr>
+<tr><td>Non-functional</td><td>9</td><td>9</td><td>0</td><td>Done</td></tr>
 </tbody>
 </table>
 <h2 id="context-diagram"><a id="8-context-diagram"></a>8. Context diagram<a class="anchor-link" href="#context-diagram">#</a></h2>

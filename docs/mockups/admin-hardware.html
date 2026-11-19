@@ -180,33 +180,32 @@ tr.sel td{background:var(--sel)}
 
   <!-- Guided setup wizard -->
   <div class="card" data-testid="card-guided-setup">
-    <div class="row"><h3 style="margin:0">Guided setup</h3><span class="spacer"></span><span class="badge brand" data-testid="badge-2-of-4-complete">2 of 4 complete</span></div>
+    <div class="row"><h3 style="margin:0">Guided setup</h3><span class="spacer"></span><span class="badge brand" data-testid="badge-2-of-4-complete">1 of 2 complete</span></div>
     <p class="muted" style="margin:6px 0 4px;font-size:12.5px">Provisions an isolated environment — never collides with system Python.</p>
+    <!-- Changed 19 Nov 2026 (owner decision 17B, ADR-029): on Mac there is no Python or managed-ComfyUI
+         download step (the App Sandbox stays); ComfyUI is connected by its address in the card below. The
+         Python and ComfyUI download steps are the Windows head's (later version). -->
     <div class="step">
       <div class="stepdot done">✓</div>
       <div class="body"><div class="t">ONNX Runtime</div><div class="muted" style="font-size:12.5px">CoreML execution provider installed · v1.20.1</div></div>
       <button class="btn outline" data-act="Reinstall" onclick="/* shows Working then Done: page script */" data-testid="btn-reinstall">Reinstall</button>
     </div>
     <div class="step">
-      <div class="stepdot done">✓</div>
-      <div class="body"><div class="t">MuseTalk + base weights</div><div class="muted" style="font-size:12.5px">Lip-sync runtime verified · 1.8 GB on disk</div></div>
-      <button class="btn outline" data-act="Verify" onclick="/* shows Working then Done: page script */" data-testid="btn-verify">Verify</button>
-    </div>
-    <div class="step">
-      <div class="stepdot run">3</div>
-      <div class="body">
-        <div class="t">Isolated Python + ComfyUI</div>
-        <div class="muted" style="font-size:12.5px;margin-bottom:6px">Provisioning venv (python 3.11) and ComfyUI core… installing dependencies</div>
-        <div class="prog" data-testid="progress-2"><i style="width:64%"></i></div>
-        <div class="muted" style="font-size:11.5px;margin-top:4px">64% · resolving torch / torchvision wheels</div>
-      </div>
-      <button class="btn outline" onclick="alert('Logs: done in the built app')" data-testid="btn-logs">Logs</button>
-    </div>
-    <div class="step">
-      <div class="stepdot">4</div>
-      <div class="body"><div class="t">Network volume mount</div><div class="muted" style="font-size:12.5px">For large checkpoints (SDXL, Hunyuan-Avatar) — unlocks after step 3</div></div>
+      <div class="stepdot">2</div>
+      <div class="body"><div class="t">Network volume mount</div><div class="muted" style="font-size:12.5px">For large checkpoints (SDXL, Hunyuan-Avatar)</div></div>
       <button class="btn brand" disabled style="opacity:.5;cursor:not-allowed" onclick="alert('Start: done in the built app')" data-testid="btn-start">Start</button>
     </div>
+  </div>
+
+  <!-- ComfyUI on Mac (owner decision 17B, 19 Nov 2026): the sandboxed Mac app connects to a ComfyUI that runs on its own -->
+  <div class="card" data-testid="card-comfyui-address">
+    <div class="row"><h3 style="margin:0">ComfyUI</h3><span class="spacer"></span><span class="badge ok" data-testid="badge-comfyui-connected">Connected</span></div>
+    <p class="muted" style="margin:6px 0 8px;font-size:12.5px">On Mac, ComfyUI runs on its own (its own installer, or a RunPod worker). Enter the address it answers on.</p>
+    <div class="row" style="gap:8px;flex-wrap:wrap">
+      <input class="input" style="flex:1;min-width:200px" value="http://127.0.0.1:8188" aria-label="ComfyUI address" data-testid="input-comfyui-address">
+      <button class="btn brand" type="button" onclick="/* checks the address: page script */" data-testid="btn-connect-comfyui">Connect</button>
+    </div>
+    <p class="muted" style="font-size:12px;margin:6px 0 0" data-testid="text-comfyui-result">Connected to ComfyUI 0.3.44 at http://127.0.0.1:8188.</p>
   </div>
 
   <div class="alert warn" data-testid="alert-warn"><b>Disk space low.</b> The 24 GB Hunyuan-Avatar checkpoint exceeds local free space — attach a network volume before installing from the <a href="admin-models.html" style="color:inherit;font-weight:600" data-testid="link-model-library">Model Library</a>. <a href="admin-ops.html" style="color:inherit;font-weight:600" data-testid="link-configure-volume">Configure volume →</a></div>

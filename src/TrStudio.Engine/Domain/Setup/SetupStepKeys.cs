@@ -14,6 +14,9 @@ public static class SetupStepKeys
     /// <summary>Step 3 — provision managed ComfyUI and its pip dependencies.</summary>
     public const string ComfyUi = "ComfyUi";
 
+    /// <summary>Steps that run a program the app downloaded; not offered on a Mac (ADR-029, REQ-FN-010).</summary>
+    public static readonly string[] WindowsOnly = { PythonEnv, ComfyUi };
+
     /// <summary>All step keys in execution order.</summary>
     public static readonly string[] Ordered = { OnnxRuntime, PythonEnv, ComfyUi };
 }

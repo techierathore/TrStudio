@@ -3603,3 +3603,42 @@ aside > .shell-sidefoot {
   gap: 8px;
   margin-top: 8px;
 }
+
+/* Hardware and setup: the ComfyUI address row (REQ-FN-009); Content policy: the log retention row (REQ-NFR-010). */
+.comfy-address-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.comfy-address-input {
+    flex: 1;
+    min-width: 200px;
+}
+
+.retention-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.retention-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 220px;
+}
+
+.retention-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.retention-days-input {
+    width: 80px;
+}

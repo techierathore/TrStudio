@@ -63,6 +63,14 @@ public class VenicePhase1LiveTests(ITestOutputHelper aOutput)
                 && aEntry.Id.Contains("image-to-video", StringComparison.OrdinalIgnoreCase)
                 && aEntry.Resolutions.Contains("480p", StringComparer.OrdinalIgnoreCase))
             .ToList();
+        // Owner decision 20B (18 Nov 2026): Venice:Models:EndFrame in testsettings names one model to run
+        // (the stronger Seedance 2.0); empty keeps the cheapest candidate.
+        var vPinnedModel = TestSettings.Get("Venice:Models:EndFrame");
+        if (vPinnedModel.Length > 0)
+        {
+            vCandidates = vCandidates.Where(aEntry => string.Equals(aEntry.Id, vPinnedModel, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
         var (vModel, vParams, vQuote) = await CheapestAsync(vConnection, vCandidates, GenerationTaskType.ImageToVideo, aEntry => new VeniceJobParams
         {
             Prompt = "the red card slowly turns into the blue card",

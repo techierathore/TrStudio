@@ -146,6 +146,25 @@
         </CardContent>
     </Card>
 
+
+    @* ComfyUI on Mac (owner decision 17B, ADR-029): the sandboxed Mac app connects to a ComfyUI that runs on its own. *@
+    <Card data-testid="card-comfyui-address">
+        <CardContent Class="pt-6">
+            <div class="flex-between">
+                <h3 class="setup-step-title" style="font-size:14px">ComfyUI</h3>
+                <Badge @key="objComfyConnected" Variant="BadgeVariant.Outline" Class="@(objComfyConnected ? "badge-ok" : "badge-warn")" data-testid="badge-comfyui-connected">@(objComfyConnected ? "Connected" : "Not connected")</Badge>
+            </div>
+            <p class="kpi-lbl" style="margin:6px 0 8px">
+                On Mac, ComfyUI runs on its own (its own installer, or a RunPod worker). Enter the address it answers on.
+            </p>
+            <div class="comfy-address-row">
+                <Input @bind-Value="objComfyAddress" Placeholder="http://127.0.0.1:8188" AriaLabel="ComfyUI address" Class="comfy-address-input" data-testid="input-comfyui-address" />
+                <Button OnClick="ConnectComfyUiAsync" Disabled="@objComfyBusy" data-testid="btn-connect-comfyui">@(objComfyBusy ? "Checking…" : "Connect")</Button>
+            </div>
+            <p class="kpi-lbl" style="margin:6px 0 0" data-testid="text-comfyui-result">@objComfyResult</p>
+        </CardContent>
+    </Card>
+
     @if (objLowDisk)
     {
         <div>
@@ -172,6 +191,10 @@
     private bool objLowDisk;
     private double objFreeDiskGb;
     private double objTotalDiskGb;
+    private string objComfyAddress = "http://127.0.0.1:8188";
+    private bool objComfyConnected;
+    private bool objComfyBusy;
+    private string objComfyResult = "Checking for a kept ComfyUI address…";
 
     /// <summary>The mockup's names for the four readiness cards' status badges, in card order.</summary>
     private static readonly string[] CardBadgeTestIds = { "badge-ready", "badge-ready-2", "badge-ready-3", "badge-low" };
@@ -222,8 +245,80 @@
         var vHasSession = await AuthSession.EnsureLoadedAsync();
         await TryLoadCapabilitiesAsync(vHasSession);
         await TryLoadSetupAsync(vHasSession);
+        await TryLoadComfyUiAsync(vHasSession);
         objCapabilitiesLoading = false;
         StateHasChanged();
+    }
+
+
+    /// <summary>Loads the kept ComfyUI address and checks that it still answers (<c>GET /api/v1/admin/setup/comfyui</c>).</summary>
+    /// <param name="aHasSession">Whether a signed-in session is present.</param>
+    private async Task TryLoadComfyUiAsync(bool aHasSession)
+    {
+        if (!aHasSession)
+        {
+            objComfyResult = "Sign in as an administrator to connect ComfyUI.";
+            return;
+        }
+
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vResult = await vClient.GetFromJsonAsync<ComfyUiConnectResult>($"{ApiRoutes.Setup}/comfyui");
+            if (vResult is not null)
+            {
+                ApplyComfyResult(vResult);
+                // On open the field shows the KEPT address even when it does not answer now, so the
+                // field and the message name the same address (19 Nov 2026 verify).
+                if (!string.IsNullOrWhiteSpace(vResult.Address))
+                {
+                    objComfyAddress = vResult.Address;
+                }
+            }
+        }
+        catch
+        {
+            objComfyResult = "Couldn't reach the app to check ComfyUI.";
+        }
+    }
+
+    /// <summary>Connects to the ComfyUI at the typed address (<c>POST /api/v1/admin/setup/comfyui</c>); a failure keeps nothing.</summary>
+    private async Task ConnectComfyUiAsync()
+    {
+        objComfyBusy = true;
+        objComfyResult = "Checking the address…";
+        StateHasChanged();
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vResponse = await vClient.PostAsJsonAsync($"{ApiRoutes.Setup}/comfyui", new ComfyUiConnectRequest { Address = objComfyAddress ?? string.Empty });
+            vResponse.EnsureSuccessStatusCode();
+            var vResult = await vResponse.Content.ReadFromJsonAsync<ComfyUiConnectResult>();
+            if (vResult is not null)
+            {
+                ApplyComfyResult(vResult);
+            }
+        }
+        catch
+        {
+            objComfyConnected = false;
+            objComfyResult = "Couldn't reach the app to check ComfyUI. Try again.";
+        }
+        finally
+        {
+            objComfyBusy = false;
+        }
+    }
+
+    /// <summary>Shows a connect or check result; the address field keeps the kept address on success.</summary>
+    private void ApplyComfyResult(ComfyUiConnectResult aResult)
+    {
+        objComfyConnected = aResult.Connected;
+        objComfyResult = aResult.Message;
+        if (!string.IsNullOrWhiteSpace(aResult.Address) && (aResult.Connected || string.IsNullOrWhiteSpace(objComfyAddress)))
+        {
+            objComfyAddress = aResult.Address;
+        }
     }
 
     /// <summary>
@@ -313,9 +408,8 @@
         objSteps = new List<SetupStepRow>
         {
             new() { StepKey = "OnnxRuntime", Title = "ONNX Runtime", Detail = "State not loaded yet.", DotClass = "", DotLabel = "1", ActionLabel = "Start", Disabled = false, Progress = null },
-            new() { StepKey = "PythonEnv", Title = "Isolated Python environment", Detail = "State not loaded yet.", DotClass = "", DotLabel = "2", ActionLabel = "Start", Disabled = false, Progress = null },
-            new() { StepKey = "ComfyUi", Title = "Managed ComfyUI", Detail = "State not loaded yet.", DotClass = "", DotLabel = "3", ActionLabel = "Start", Disabled = false, Progress = null },
-            new() { StepKey = string.Empty, Title = "Network volume mount", Detail = "For large checkpoints — no backing setup step yet", DotClass = "", DotLabel = "4", ActionLabel = "Start", Disabled = true, Progress = null }
+            // The Python and managed-ComfyUI steps are Windows only (ADR-029); the live snapshot adds them there. On Mac none is offered.
+            new() { StepKey = string.Empty, Title = "Network volume mount", Detail = "For large checkpoints — no backing setup step yet", DotClass = "", DotLabel = "2", ActionLabel = "Start", Disabled = true, Progress = null }
         };
     }
 

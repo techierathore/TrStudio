@@ -101,6 +101,23 @@
     </div>
 </Card>
 
+@* ---- Log retention (owner decision 19A, ADR-030) — generation-log and audit rows only; pictures and clips stay ---- *@
+<Card Class="policy-part policy-card" data-testid="card-log-retention">
+    <div class="retention-row">
+        <div class="retention-copy">
+            <h3 class="card-h3" style="margin:0">Log retention</h3>
+            <span class="muted-sm">Generation-log and audit rows older than this are removed at once and once a day. Pictures and clips are never removed. 0 keeps every row.</span>
+        </div>
+        <div class="retention-field">
+            <span>Keep log rows for</span>
+            <Input Type="InputType.Number" @bind-Value="objRetentionDays" AriaLabel="Keep log rows for N days" Class="retention-days-input" data-testid="input-log-retention-days" />
+            <span>days</span>
+        </div>
+        <Button OnClick="SaveRetentionAsync" Disabled="@objRetentionBusy" data-testid="btn-save-retention">Save</Button>
+    </div>
+    <p class="muted-sm" style="margin:6px 0 0" data-testid="text-retention-result">@objRetentionResult</p>
+</Card>
+
 @* ---- Always-locked safety floors — non-disableable in every mode ---- *@
 <Card Class="policy-part policy-card" data-testid="card-safety-floors-always-enforced">
     <div class="flex-between">
@@ -162,6 +179,9 @@
     private bool objPersonalMode = true;
     private bool objConfirmOpen;
     private bool objTwinsEnabled;
+    private string? objRetentionDays = "0";
+    private bool objRetentionBusy;
+    private string objRetentionResult = "0 keeps every row. Nothing has been removed.";
 
     // Bumped whenever the Switch must snap back to the C# source of truth (intercepting an
     // enable request, or closing the gate) — @key re-mounts the Switch so its own optimistic
@@ -186,6 +206,9 @@
 
     /// <summary>The admin policy endpoint (not yet in <c>ApiRoutes</c>; consumed enrich-or-seed).</summary>
     private const string NsfwPolicyRoute = "/api/v1/admin/policy/nsfw";
+
+    /// <summary>The owner's log retention route (REQ-NFR-010).</summary>
+    private const string RetentionPolicyRoute = "/api/v1/admin/policy/retention";
 
     /// <summary>The owner's digital twins on/off route (off by default).</summary>
     private const string TwinsPolicyRoute = "/api/v1/admin/policy/twins";
@@ -231,6 +254,14 @@
             {
                 var vState = await vResponse.Content.ReadFromJsonAsync<JsonElement>();
                 ApplyState(vState);
+            }
+
+            var vRetention = await vClient.GetAsync(RetentionPolicyRoute);
+            if (vRetention.IsSuccessStatusCode)
+            {
+                var vKept = await vRetention.Content.ReadFromJsonAsync<LogRetentionResult>();
+                objRetentionDays = (vKept?.Days ?? 0).ToString();
+                objRetentionResult = (vKept?.Days ?? 0) == 0 ? "Log rows are kept for ever." : $"Log rows are kept for {vKept!.Days} days.";
             }
 
             var vTwins = await vClient.GetAsync(TwinsPolicyRoute);
@@ -338,6 +369,36 @@
         if (!aOpen)
         {
             objSwitchNonce++;
+        }
+    }
+
+    /// <summary>Saves "Keep log rows for N days"; the rows older than N days are removed at once and the count is shown.</summary>
+    private async Task SaveRetentionAsync()
+    {
+        if (!int.TryParse(objRetentionDays, out var vDays) || vDays < 0 || vDays > 3650)
+        {
+            objRetentionResult = "Enter a whole number of days from 0 to 3650. Nothing was saved.";
+            return;
+        }
+
+        objRetentionBusy = true;
+        try
+        {
+            var vClient = HttpClientFactory.CreateClient("TrStudioApi");
+            var vResponse = await vClient.PutAsJsonAsync(RetentionPolicyRoute, new LogRetentionRequest { Days = vDays });
+            vResponse.EnsureSuccessStatusCode();
+            var vResult = await vResponse.Content.ReadFromJsonAsync<LogRetentionResult>();
+            objRetentionResult = vResult?.Message ?? "Saved.";
+            ToastService.Success(objRetentionResult, "Content policy saved");
+        }
+        catch
+        {
+            objRetentionResult = "The setting could not be saved. Try again.";
+            ToastService.Error(objRetentionResult, "Content policy");
+        }
+        finally
+        {
+            objRetentionBusy = false;
         }
     }
 

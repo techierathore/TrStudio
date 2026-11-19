@@ -4,7 +4,7 @@
 |---|---|
 | App | TrStudio |
 | Written | 2026-11-14 |
-| Waiting on | 5 decisions, written 18 Nov 2026 night: 16 (one Keychain item or one per key), 17 (Python and ComfyUI inside the Mac app), 18 (phase 1 rows that need a model this Mac does not have), 19 (two phase 1 quality rows the desktop move changed), 20 (how exactly a clip must end on its pinned frame). Decisions 1 to 15 are answered; see the table below. |
+| Waiting on | Nothing. Decisions 16 to 20 answered by the owner on 18 Nov 2026 (night): 16A; 17B; 18 C for REQ-FN-019, 020, 021 and 053, A for the ComfyUI and RunPod rows; 19A; 20B, then A if the stronger model also redraws the end. Applied 19 Nov 2026 (Architecture decisions log, ADR-029 and ADR-030). |
 
 ## What happened
 

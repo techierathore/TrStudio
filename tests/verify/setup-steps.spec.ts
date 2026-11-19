@@ -21,22 +21,25 @@ async function openSession(page: Page, request: APIRequestContext, role: string)
   await page.waitForURL((url) => !url.pathname.startsWith('/dev/session'), { timeout: 30000 });
 }
 
-test('REQ-FN-010 provisioning Python on Hardware & setup is followed to its end on the screen', async ({ page, request }) => {
-  test.setTimeout(240000);
+// Changed 19 Nov 2026 (owner decision 17B, ADR-029): on Mac the App Sandbox stays, so Hardware & setup
+// offers no Python step and no managed ComfyUI download; ComfyUI is connected by its address instead.
+// The test host runs on this Mac, so it shows the Mac steps. (The provisioning flow above is the Windows
+// head's, a later version.)
+test('REQ-FN-010 Hardware & setup on Mac offers no Python step and connecting ComfyUI starts no program', async ({ page, request }) => {
   await openSession(page, request, 'Operator');
   await page.goto('/admin/setup');
-  const row = page.locator('.setup-step', { hasText: 'Provision isolated Python' });
-  await expect(row).toBeVisible({ timeout: 30000 });
+  await expect(page.getByTestId('card-comfyui-address')).toBeVisible({ timeout: 30000 });
   await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
+  await expect(page.locator('.setup-step', { hasText: /Python/ })).toHaveCount(0);
+  await expect(page.locator('.setup-step', { hasText: /Provision.*ComfyUI|managed ComfyUI/i })).toHaveCount(0);
 
-  await row.getByRole('button', { name: /Start|Verify/ }).click();
-
-  // No Logs click: the row itself ends on the provisioned line (or would show the error).
-  await expect(row).toContainText(/CPython [\d.]+ (already )?provisioned/, { timeout: 200000 });
-  await expect(row.locator('.setup-stepdot')).toHaveClass(/done/);
-  await expect(row.getByRole('button', { name: 'Verify' })).toBeVisible();
-  await page.screenshot({ path: 'tests/.artifacts/verify/setup-python-done.png', fullPage: true });
+  // A closed port: Connect makes one HTTP call, reports it plainly, keeps nothing and starts nothing.
+  await page.getByTestId('input-comfyui-address').fill('http://127.0.0.1:9');
+  await page.getByTestId('btn-connect-comfyui').click();
+  await expect(page.getByTestId('text-comfyui-result')).toContainText(/Nothing answered/, { timeout: 20000 });
+  await expect(page.getByTestId('badge-comfyui-connected')).toContainText('Not connected');
+  await expect(page.locator('.setup-step', { hasText: /Python/ })).toHaveCount(0);
+  await page.screenshot({ path: 'tests/.artifacts/verify/setup-mac-no-python.png', fullPage: true });
 });
 
 // REQ-NFR-006: a job that would go to a closed API is flagged on the screen before it is sent; a local

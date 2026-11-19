@@ -106,7 +106,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <div class="layout no-toc">
   <main>
     <h1>TrStudio — UI Design</h1>
-    <div class="subtitle">Rendered 2026-11-18 &middot; source <code>TrStudio-UIDesign.md</code></div>
+    <div class="subtitle">Rendered 2026-11-19 &middot; source <code>TrStudio-UIDesign.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
@@ -593,7 +593,8 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tbody>
 <tr><td>Admin sidebar</td><td><code>Sidebar</code></td><td>Hardware &amp; Setup / RunPod &amp; Ops · Model Sources / Model Library / Registry &amp; Providers / ComfyUI Import · Content Policy</td><td>active highlighted</td></tr>
 <tr><td>Readiness</td><td>4× <code>Card</code> + <code>Badge</code> (ready/warn)</td><td>detected capabilities</td><td>detecting → <code>Skeleton</code></td></tr>
-<tr><td>Guided setup</td><td><code>Card</code> + steps + <code>Button</code>s</td><td>ONNX install, isolated Python+ComfyUI provision</td><td>running → <code>Progress</code></td></tr>
+<tr><td>Guided setup</td><td><code>Card</code> + steps + <code>Button</code>s</td><td>ONNX install, network volume (on Mac no Python or ComfyUI download step, decision 17B)</td><td>running → <code>Progress</code></td></tr>
+<tr><td>ComfyUI (<code>card-comfyui-address</code>)</td><td><code>Card</code> + <code>Input</code> + <code>Button</code> + <code>Badge</code></td><td>address of a ComfyUI that runs on its own; Connect checks it and keeps it</td><td>Connected (version) / Not connected with the reason</td></tr>
 <tr><td>Disk / install hand-off</td><td><code>Alert</code> (Warning) + link</td><td>low-disk warning; installs happen on the <strong>Model Library</strong> screen</td><td>—</td></tr>
 </tbody>
 </table>
@@ -601,7 +602,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <table>
 <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Validation</th></tr></thead>
 <tbody>
-<tr><td>none — display only</td><td>—</td><td>—</td><td>setup steps are run with buttons; no typed input</td></tr>
+<tr><td>ComfyUI address</td><td>text (URL)</td><td>no</td><td>must answer <code>/system_stats</code>; a silent address keeps nothing</td></tr>
 </tbody>
 </table>
 <p><strong>Notes / interactions:</strong> isolated env never collides with system Python; big models → network volume. <strong>Empty/loading/error:</strong> skeletons while detecting; <code>Alert</code> on install failure.</p>
@@ -752,6 +753,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tbody>
 <tr><td>Mode toggle</td><td><code>Card</code> + <code>Switch</code> ("Unrestricted / NSFW mode")</td><td><code>objNsfwEnabled</code> (off by default)</td><td>disabled + note when multi-user/SaaS (auto-off)</td></tr>
 <tr><td>Confirm gate</td><td><code>AlertDialog</code></td><td>"Synthetic adult (18+) personas only — confirm"</td><td>blocks until confirmed</td></tr>
+<tr><td>Log retention (<code>card-log-retention</code>)</td><td><code>Card</code> + <code>Input</code> (number) + <code>Button</code></td><td>"Keep log rows for N days" (0 = for ever); Save reports rows removed; pictures and clips never removed (decision 19A)</td><td>saved / error</td></tr>
 <tr><td>Always-locked floors</td><td><code>Alert</code> (Warning) + list</td><td>CSAM · real-person/NCII · minors · public-figure · provenance · audit — "cannot be disabled"</td><td>static</td></tr>
 <tr><td>Scope note</td><td><code>TypographyMuted</code></td><td>"Applies only to characters flagged synthetic + adult; personal mode only"</td><td>—</td></tr>
 </tbody>
@@ -761,6 +763,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Validation</th></tr></thead>
 <tbody>
 <tr><td>Unrestricted mode</td><td>switch</td><td>no</td><td>owner only; needs the confirmation dialog; locked off in multi-user mode</td></tr>
+<tr><td>Keep log rows for N days</td><td>number</td><td>no</td><td>whole number 0 to 3650; 0 keeps every row</td></tr>
 </tbody>
 </table>
 <p><strong>Notes / interactions:</strong> toggling on requires explicit confirmation; the screen makes the non-disableable floors visible so the boundary is unambiguous; the toggle is hidden/disabled in multi-user/SaaS mode (FeatureSvc). <strong>Empty/loading/error:</strong> disabled state with an explanatory note when not in personal mode.</p>
