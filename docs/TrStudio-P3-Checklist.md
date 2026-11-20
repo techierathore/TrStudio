@@ -71,6 +71,7 @@ Phase 3 makes TrStudio one desktop app, Mac first (Windows in a later version): 
 | REQ-NFR-023 | Joining clips happens on this computer; nothing is uploaded | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-NFR-023 JoiningMakesNoNetworkCallAndTheMacAppUsesAVFound` | [view](#d-req-nfr-023) |
 | REQ-NFR-024 | The app icon and the splash use the approved logo files unchanged | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-NFR-024 IconAndSplashAreTheApprovedFiles` | [view](#d-req-nfr-024) |
 | REQ-FN-116 | A stored provider key can be removed on Registry & providers | Verified | 100% | 2026-11-18 verify: PASS — test `REQ-FN-116 RemovedKeyIsGoneAndOtherKeysStillUnlock` | [d](#d-req-fn-116) |
+| REQ-FN-117 | Local voice, lip-sync and caption models run inside the Mac app | N/A | 0% | deferred 2026-11-20 (later version, owner decision 18C): phase 1's REQ-FN-031, 037, 038 and REQ-RAG-002 wait here for a local voice, lip-sync or Whisper model in the Mac app. | [view](#d-req-fn-117) |
 
 **Status values:** `Not Started` · `In Progress` · `Implemented` · `Verified` · `Done (pre-existing)` · `Needs re-verify` · `PARTIAL` · `FAIL` · `Blocked` · `Owner-UAT` · `N/A`.
 
@@ -308,6 +309,10 @@ Phase 3 makes TrStudio one desktop app, Mac first (Windows in a later version): 
 - **REQ-FN-113** — A twin can be the subject of a sequence. *BRD:* BRD-172 · *Mockup:* mockups/avatar-studio.html
   - *Acceptance:* When a creator assembles two shots for a twin on Avatar studio, then each shot is a twin clip and the second carries the first's last frame.
   - *Check:* unit `MultiShotTests` "REQ-FN-113 TwinShotsCarryThePreviousLastFrame".
+
+<a id="d-req-fn-117"></a>
+- **REQ-FN-117** — Local voice, lip-sync and caption models run inside the Mac app. *BRD:* BRD-180 · *Mockup:* mockups/avatar-studio.html
+  - *Acceptance:* When a creator renders a script with a character and a local voice on Avatar studio in the Mac app, then one narrated, lip-synced clip with timed captions is produced.
 
 ## Page: Character library
 

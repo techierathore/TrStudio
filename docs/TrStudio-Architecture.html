@@ -106,7 +106,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <div class="layout">
   <nav class="side">
     <h1>TrStudio — Architecture</h1>
-    <div class="sub">Last rendered: 2026-11-19</div>
+    <div class="sub">Last rendered: 2026-11-20</div>
     <div class="group">Contents</div>
     <ol>
         <li><a href="#stack-decisions">1. Stack decisions</a></li>
@@ -131,7 +131,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
   </nav>
   <main>
     <h1>TrStudio — Architecture</h1>
-    <div class="subtitle">Rendered 2026-11-19 &middot; source <code>TrStudio-Architecture.md</code></div>
+    <div class="subtitle">Rendered 2026-11-20 &middot; source <code>TrStudio-Architecture.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
@@ -724,6 +724,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tr><td>2026-11-19</td><td>ADR-029: On Mac the App Sandbox stays (decision 17B). Guided setup downloads no Python or ComfyUI there; its ComfyUI step asks for a running ComfyUI's address (its own installer or a RunPod worker), checks it answers (<code>/system_stats</code>), and stores it as <code>AppSetting</code> row <code>ComfyUI:BaseUrl</code>, read by the ComfyUI provider at call time. The managed Python and ComfyUI download stays for Windows (later version, ADR-023)</td><td>macOS will not run a program a sandboxed app downloaded ("Operation not permitted"); leaving the sandbox moves the library and closes the Mac App Store (BRD-9, BRD-10)</td><td>planned</td></tr>
 <tr><td>2026-11-19</td><td>ADR-030: Retention (decision 19A). Content policy has "Keep log rows for N days" (default 0, keep for ever). At start and daily, <code>GenerationLog</code> and <code>SafetyAuditEntry</code> rows older than N days are removed; pictures, clips and provenance never are</td><td>REQ-NFR-010 asked for a retention setting; removing outputs could lose a person's work (BRD-78)</td><td>planned</td></tr>
 <tr><td>2026-11-19</td><td>Owner decisions 16 to 20 answered (18 Nov 2026, night): 16A, one Keychain unlock item stays (ADR-020 unchanged; removing a key removes its encrypted row); 17B (ADR-029); 18 C for REQ-FN-019, 020, 021 (join BRD-159, local pictures on Mac) and REQ-FN-053 (waits for a frame-interpolation model), A for the ComfyUI rows (REQ-FN-045 to 047) and the RunPod row (REQ-FN-028); 19A: REQ-NFR-003 not applicable, replaced by REQ-NFR-022, plus ADR-030; 20B, one clip on Seedance 2.0, then A if it also redraws the end: it did not (ends 10.4 of 255 from the pinned frame), so the pass mark of 40 stays and live runs use <code>Venice:Models:EndFrame</code></td><td><code>docs/OldDocs/TrStudio-Decision-Request-20261119.md</code></td><td>answered</td></tr>
+<tr><td>2026-11-20</td><td>Owner decision 18C extended (owner, 19 Nov 2026, night): REQ-FN-031, 037, 038 and REQ-RAG-002 need a local voice, lip-sync or Whisper model the Mac app does not ship; they join new later-version item BRD-180 (REQ-FN-117) and are not applicable in phase 1</td><td>the same answer as decision 18 gave the other local-only rows</td><td>planned (BRD-180)</td></tr>
 </tbody>
 </table>
 <h2 id="module-responsibilities"><a id="7-module-responsibilities"></a>7. Module responsibilities<a class="anchor-link" href="#module-responsibilities">#</a></h2>

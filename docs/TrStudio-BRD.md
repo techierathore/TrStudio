@@ -474,20 +474,20 @@ The SaaS-ready abstraction. `TrStudioApi` is designed to also serve as an extern
 
 **Phase 4 — Voice (EN + HI) + text**
 
-- **BRD-22** — Creator can synthesize speech in English and Hindi (and Hinglish) with a library of preset voices. *(F-VOICE, VOX-01)* <!-- from: TrStudio-Requirements-v0.3.md -->
+- **BRD-22** — Creator can synthesize speech in English and Hindi (and Hinglish) with a library of preset voices. Changed 2026-11-20 (owner decision 18C): the local model path joins BRD-180 (local voice, lip-sync and caption models on Mac, later version). *(F-VOICE, VOX-01)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-23** — Creator can clone a voice from a short sample, consent-gated for real people (synthetic/preset voices need no gate). *(F-VOICE, VOX-02)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-24** — System shall route per-language voice models (IndicF5/XTTS-Hindi for HI; XTTS/OmniVoice for EN) behind one "voice" control. *(F-VOICE, VOX-03)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-25** — Creator can set emotion/style and speed where the model supports them. *(F-VOICE, VOX-04)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-26** — System shall align generated audio to the avatar pipeline automatically (timing + lip-sync handoff). *(F-VOICE, VOX-05)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-53** — Creator can generate/expand a script from a brief (EN/HI) via TechieRag. *(F-TEXT, §7)* <!-- from: TrStudio-Requirements-v0.3.md -->
-- **BRD-54** — System shall produce caption/subtitle text from Whisper transcripts via TechieRag. *(F-TEXT, §7)* <!-- from: TrStudio-Requirements-v0.3.md -->
+- **BRD-54** — System shall produce caption/subtitle text from Whisper transcripts via TechieRag. Changed 2026-11-20 (owner decision 18C): the local model path joins BRD-180 (local voice, lip-sync and caption models on Mac, later version). *(F-TEXT, §7)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-56** — System shall track token-budget for text-LLM spend. *(F-TEXT, §7)* <!-- from: TrStudio-Requirements-v0.3.md -->
 
 **Phase 5 — Avatar pipeline (lead feature)**
 
 - **BRD-27** — Creator can create a Character (synthetic persona, photoreal or stylized) and lock identity (reference set + seed/embedding, optional LoRA), reusable everywhere. *(F-AVATAR, AV-01)* <!-- from: TrStudio-Requirements-v0.3.md -->
-- **BRD-28** — Creator can produce a talking avatar from a character image + script/audio with lip-sync (routed to MuseTalk/LatentSync/SadTalker/LivePortrait, a RunPod heavy model, or HeyGen per quality). *(F-AVATAR, AV-02)* <!-- from: TrStudio-Requirements-v0.3.md -->
-- **BRD-29** — Creator can run script→video end-to-end (type a script EN/HI, pick character + voice, get a narrated clip). *(F-AVATAR, AV-03)* <!-- from: TrStudio-Requirements-v0.3.md -->
+- **BRD-28** — Creator can produce a talking avatar from a character image + script/audio with lip-sync (routed to MuseTalk/LatentSync/SadTalker/LivePortrait, a RunPod heavy model, or HeyGen per quality). Changed 2026-11-20 (owner decision 18C): the local model path joins BRD-180 (local voice, lip-sync and caption models on Mac, later version). *(F-AVATAR, AV-02)* <!-- from: TrStudio-Requirements-v0.3.md -->
+- **BRD-29** — Creator can run script→video end-to-end (type a script EN/HI, pick character + voice, get a narrated clip). Changed 2026-11-20 (owner decision 18C): the local model path joins BRD-180 (local voice, lip-sync and caption models on Mac, later version). *(F-AVATAR, AV-03)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-30** — Creator can select quality/cost per job: Fast (Mac local) vs High (RunPod) vs Premium (HeyGen API) on one UI control. *(F-AVATAR, AV-04)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - **BRD-31** — Creator can generate captions/subtitles (from the script or Whisper) in EN/HI, burn-in or sidecar SRT. *(F-AVATAR, AV-05)* <!-- from: TrStudio-Requirements-v0.3.md -->
 - ~~**BRD-32**~~ (moved 2026-11-17 to phase 3 as BRD-161 to BRD-167: the digital twin is built on Venice) — Creator can optionally create a digital-twin from a short base video, consent-gated (SAFE-03), off by default. *(F-AVATAR, AV-06)* <!-- from: TrStudio-Requirements-v0.3.md -->
@@ -569,13 +569,13 @@ The SaaS-ready abstraction. `TrStudioApi` is designed to also serve as an extern
 
 Written by the status gate after every build, verify and handoff; not by hand.
 
-**Snapshot as of 2026-11-19.** Live per-requirement status: `PROJECT-STATUS.md` and the Requirements Status table in `docs/TrStudio-Checklist.md`.
+**Snapshot as of 2026-11-20.** Live per-requirement status: `PROJECT-STATUS.md` and the Requirements Status table in `docs/TrStudio-Checklist.md`.
 
 | Screen | Requirements | Verified | Open | Status |
 |---|---|---|---|---|
-| UI / Pages | 25 | 23 | 2 | Partial |
-| Functional requirements | 59 | 48 | 11 | Partial |
-| RAG / AI requirements (→ /techierag) | 4 | 3 | 1 | Partial |
+| UI / Pages | 25 | 24 | 1 | Partial |
+| Functional requirements | 56 | 49 | 7 | Partial |
+| RAG / AI requirements (→ /techierag) | 3 | 3 | 0 | Done |
 | Non-functional | 9 | 9 | 0 | Done |
 
 ## 8. Context diagram

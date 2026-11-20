@@ -34,7 +34,7 @@ rule: phases-table
 |---|---|---|---|---|
 | 1 | Studio and platform (built July 2026) | Register, Login, Forgot password, Setup required (first-run gate), Avatar studio, Character library, Image studio, Voice studio, Video studio, Prompt studio, Gallery, Projects, Comparison, Library, Account & spend, Admin — Hardware & setup, Admin — Model Sources, Admin — Model Library, Admin — Model & Provider Registry, Admin — ComfyUI import & debug, Admin — RunPod & ops, Admin — Content policy (NSFW) | BRD-1 to BRD-92 | kept-whole |
 | 2 | Venice cloud provider | — | BRD-93 to BRD-123 | planned |
-| 3 | One desktop app with the engine inside (Mac first) | no new screen | BRD-124 to BRD-178, BRD-179 to BRD-179 | building |
+| 3 | One desktop app with the engine inside (Mac first) | no new screen | BRD-124 to BRD-178, BRD-179 to BRD-180 | building |
 
 Phase 1 is larger than one phase may be (22 screens, 114 checklist rows). It was written and built before the size rule, so it is kept as one document; its size is reported, not refused.
 

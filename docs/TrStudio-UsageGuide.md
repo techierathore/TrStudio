@@ -5,7 +5,7 @@
 | App | TrStudio |
 | Kind | app |
 | Size | Large |
-| Date | 2026-11-18 |
+| Date | 2026-11-20 |
 
 How to run and test TrStudio, one desktop app with the engine inside. The first version is for Mac; Windows comes in a later version. The smoke and verify agents and the owner's acceptance testing use the same test users and the same walkthrough below. The end-user manual is the Product Guide (`*productguide TrStudio`); this is the internal run and test reference.
 
@@ -44,7 +44,7 @@ dotnet build src/TrStudio/TrStudio.csproj -f net10.0-maccatalyst
 open src/TrStudio/bin/Debug/net10.0-maccatalyst/maccatalyst-arm64/TrStudio.app
 ```
 
-On first start the app creates and migrates `TrStudio.db` (plus `TrStudio.vectors.db`) in the user's app data folder; jobs run inside the app. Sign in as user 1. Without the AppManager settings the app still opens and Login says the copy was built without its sign-in settings.
+On first start the app creates and migrates `TrStudio.db` (plus `TrStudio.vectors.db`) in the user's app data folder; jobs run inside the app. The owner's copy is installed at `/Applications/TrStudio.app` (Debug, signed, 20 Nov 2026). Sign in as user 1. Without the AppManager settings the app still opens and Login says the copy was built without its sign-in settings.
 
 **Phase 2 (Venice):** sign in as user 1 or 3, open Registry & providers, add provider `Venice` with address `https://api.venice.ai/api/v1` and the Venice API key (kept in the local database, protected by the Mac Keychain for that user), press Test connection, then add one registry row per Venice model and task.
 
@@ -53,6 +53,48 @@ On first start the app creates and migrates `TrStudio.db` (plus `TrStudio.vector
 ## How to test, screen by screen
 
 Screens degrade cleanly where a model, key or service is missing; those steps are marked "needs".
+
+### Owner's test, 20 Nov 2026 — 1. Open, sign in, Venice key
+- **Sign in as:** user 1, opening Finder › Applications › TrStudio
+- **Steps:** 1) double-click TrStudio; type user 1's email and password, leave "Remember me" unticked, click Sign in 2) Registry & Providers › Provider keys › Venice: turn on Enable Venice, address `https://api.venice.ai/api/v1`, paste your Venice key 3) click Test connection, then Save keys
+- **Expected:** you land on Hardware & Setup (no model source enabled yet); the ComfyUI card says "Not connected": skip today; Test connection shows a green Connected. Free. All seven parts: about 40 minutes, about 0.15 USD
+- **Covers:** REQ-UI-001, REQ-FN-075, REQ-UI-083
+
+### Owner's test, 20 Nov 2026 — 2. Three Venice models
+- **Sign in as:** user 1
+- **Steps:** 1) + Add model, Provider Venice, Provider model id `venice-sd35`, Fill from Venice, Save 2) the same with `wan-3-0-text-to-video`, then change Display name to `Wan 3.0 text to video`, Save 3) + Add model, Display name `Gemma 4 on Venice`, Task text-chat, Endpoint `https://api.venice.ai/api/v1`, Chat model `google-gemma-4-26b-a4b-it`, API key: the Venice key again, Save
+- **Expected:** three new rows with provider Venice (the chat row says Text LLM). Free
+- **Covers:** REQ-UI-084, REQ-UI-097, REQ-RAG-006
+
+### Owner's test, 20 Nov 2026 — 3. Prompt studio
+- **Sign in as:** user 1
+- **Steps:** 1) Switch to Creator studio › Prompt Studio 2) Model Gemma 4 on Venice, click New chat 3) type `Write one short image prompt for a Diwali poster with a rangoli.` and send
+- **Expected:** within about 10 seconds a real reply under "GEMMA 4 ON VENICE", with Copy, Save to Library and Send to Image Studio. Under 0.01 USD. The seeded GPT-4o and Llama rows answer "DEV SYNTHETIC": skip them
+- **Covers:** REQ-UI-081, REQ-UI-082
+
+### Owner's test, 20 Nov 2026 — 4. Image studio
+- **Sign in as:** user 1
+- **Steps:** 1) Image Studio, Model "Venice SD35 — Cloud · Venice" 2) Prompt `a red apple on a wooden table, soft morning light`, click Generate 3) Gallery, click the new IMAGE 1:1 card
+- **Expected:** a notice that the prompt goes to Venice. Known fault: the studio returns to "Ready" with no picture (REQ-UI-086; it stops waiting after 2 seconds). Gallery has the card "Venice SD35 · seed …" as a coloured tile; its details show the Venice price. 0.01 USD. Skip today: Upscale, edit, mask, inpaint, Remove background, Export
+- **Covers:** REQ-UI-086, REQ-UI-094
+
+### Owner's test, 20 Nov 2026 — 5. Video studio
+- **Sign in as:** user 1
+- **Steps:** 1) Video Studio › Text → Video, Model "Wan 3.0 text to video — Cloud · Venice" 2) Duration 2s, Resolution 480p, Aspect ratio 16:9, Character empty 3) type `a paper boat drifting on a calm pond, gentle ripples`, click Generate from prompt
+- **Expected:** "Venice: processing · n%" and "Venice price for this clip: $0.13" for 1 to 3 minutes; then the line "Preview — clip01 (…)" and no clip plays; Gallery shows a coloured "VIDEO 0:02" card. 0.13 USD. Skip today: Image → Video, Trim, Reframe, Add audio, Split, Upscale to 1080p, Export MP4
+- **Covers:** REQ-UI-089, REQ-UI-090, REQ-FN-081, REQ-FN-082
+
+### Owner's test, 20 Nov 2026 — 6. Character and multi-shot price
+- **Sign in as:** user 1
+- **Steps:** 1) Characters › New Character, type `Kavya, 25, warm smile, saree, studio light`, choose Photoreal, click Create character 2) Avatar Studio › Multi-shot: Who is in the video Kavya; Shot 1 `Kavya waves at the camera`; + Add a shot; Shot 2 `Kavya smiles and turns to the window`; shortest length, lowest quality 3) click Show Venice's price
+- **Expected:** a character card with a coloured tile and her initial (no picture is made); "Venice's price for 2 shots: $…". Free. Stop there: Start was not checked. Skip today: Render, Generate voice, Export MP4
+- **Covers:** REQ-UI-011, REQ-FN-112
+
+### Owner's test, 20 Nov 2026 — 7. Look only, then sign out
+- **Sign in as:** user 1
+- **Steps:** 1) open Voice Studio, Library, Projects and Account 2) Switch to Management: Content Policy, RunPod & Ops, Model Library 3) click Sign out, then TrStudio menu › Quit
+- **Expected:** each screen opens without an error. Skip today: Voice (needs a local voice model), the digital twin (needs your pictures, a clip, a voice sample and consent), anything for ComfyUI or RunPod. Free
+- **Covers:** REQ-UI-030, REQ-UI-053, REQ-UI-060, REQ-UI-106
 
 ### Register (`/register`)
 - **Sign in as:** nobody; then user 1 for the email-in-use path
@@ -198,15 +240,17 @@ The first line runs the unit tests (497 pass, 18 skipped on 15 Nov 2026) and the
 
 ## Known limitations
 
-- Studios run real jobs (seeds, routing, cost, safety, per-user storage) but show placeholder previews: a gradient tile with the real seed, a placeholder waveform or timeline clip. Upscale, Export MP4 or WAV and Remove background only show a message today.
-- Without a model, key or host the backend returns a synthetic development asset: image pixels and provisioning (REQ-FN-009 to REQ-FN-011, REQ-FN-019, REQ-FN-021), voice (REQ-FN-031, REQ-FN-033 to REQ-FN-035), lip-sync and HeyGen (REQ-FN-037, REQ-FN-038), ComfyUI live runs (REQ-FN-045 to REQ-FN-047), video (REQ-FN-051, REQ-FN-053), ffmpeg export (REQ-FN-054), RunPod cold start (REQ-FN-028), language-model paths (REQ-RAG-001, REQ-RAG-002, REQ-RAG-005).
+- What still shows a placeholder instead of a real result (checked 20 Nov 2026): Gallery, Projects and Comparison draw every picture and clip as a coloured tile; no clip or audio plays anywhere in the app; Video studio's preview is a line of text; Character library cards are a coloured tile with an initial (creating a character makes no picture); Avatar studio's Render, Voice studio and Avatar's Generate voice give made-up results; Trim, Reframe, Add audio, Split, Upscale to 1080p, Export MP4 or WAV, Remove background, picture Upscale, Gallery's Reproduce, Projects' Rename and Account's Upgrade only show a message.
+- Real results through Venice today: Prompt studio replies, pictures, 2-second and longer clips, multi-shot prices, joined clips; each is saved and priced, and shows only as a coloured tile (above).
+- Image studio shows no picture from a real Venice model: it stops waiting after 2 seconds; the picture is saved to Gallery (REQ-UI-086, found 20 Nov 2026, next `*fix-issues TrStudio REQ-UI-086`).
+- Picture edit (image to image) and Video studio's Image → Video were not checked on real Venice; the code read of 20 Nov 2026 suggests the reference picture and the prompt are not sent.
+- Needs a model or service this Mac does not have: ComfyUI runs (REQ-FN-045 to REQ-FN-047), RunPod (REQ-FN-028), HeyGen and fal.ai, local ONNX pictures, local voice, lip-sync and Whisper captions (moved to a later version 20 Nov 2026: REQ-FN-031, REQ-FN-037, REQ-FN-038, REQ-RAG-002, joining REQ-FN-117).
 - Premium tier gating (REQ-FN-014) needs a Premium licence on user 4.
 - Data residency and retention (REQ-NFR-010) are deployment settings.
 - Not built (could-haves): webhooks and the MCP server; their tests wait for the feature. The digital twin, multi-shot assembly and making a clip longer are built on Venice (17 Nov 2026); clips are joined in the Mac app with Apple's AVFoundation. The digital twin is off until the owner turns it on in Content policy, and needs the recorded consent of the person shown.
 - Every studio needs at least one enabled model source and one ready registry model; the development seed provides `stub-echo` and `onnx-sdxl-local`.
-- Libraries (15 Nov 2026): TrBlazeUI 2.2.5 and TechieRag 1.1.5 from nuget.org. TrBlazeUI has no open entry (TR-012 to TR-014 closed); TechieRag TR-RAG-002 to TR-RAG-006 are open and none blocks.
+- Libraries: TrBlazeUI 2.2.5 and TechieRag 1.1.5 from nuget.org. TrBlazeUI TR-015 and TR-016 are open and block nothing; TechieRag TR-RAG-002 to TR-RAG-006 are open and none blocks; TechieFlow TF-011 blocks the mockup check of four Video studio rows.
 - Each screen's sample data for the checks comes from `tests/verify/seed/<screen>.sh`, run against the test host (decision 11); a fresh app shows its own, mostly empty, data instead.
-- ComfyUI import: "Save as model" now sends what the save needs and says when it fails (15 Nov 2026); Run still shows made-up per-node results when the debug service cannot be reached.
 
 ## Platform notes
 

@@ -10,7 +10,8 @@
 
 16 entries: 0 blocking now, 2 open (TR-015, TR-016), 14 closed (TR-001 to TR-014).
 
-Nothing is blocked. On 15 Nov 2026 TrStudio moved from 1.0.9 to TrBlazeUI 2.2.5 (nuget.org, the only source this Mac's settings list), and the three open entries were checked again on it: a list inside the Add model panel now opens and can be picked (TR-014), the old icon names are accepted (TR-013), and a page with a list closes without a disposal error (TR-012). All three are closed with the proof under each entry.
+Nothing is blocked. TR-016 was read on the real Mac app on 20 Nov 2026 as TrBlazeUI asked: with the `@key` workaround the badge turns from orange "Not connected" to green "Connected" without a reload; the class name itself cannot be read on Mac Catalyst (see the entry).
+
 
 ## Entries
 
@@ -285,4 +286,5 @@ Closed 2026-11-15: fixed by TrBlazeUI 2.2.5. Proof: on the test host, opening Ad
 - **Encountered in:** owner run of 18 Nov 2026 (night), `*build-phase`, REQ-FN-009
 - **Workaround:** `@key="objComfyConnected"` on the badge (`src/TrStudioUI/Pages/Admin/AdminHardware.razor:155`), taken by the builder; remove it when the library changes
 - **Suggested fix:** build the class list on every render (or in `OnParametersSet`), not once in `OnInitialized`
+- **Read on the Mac (TrStudio, 20 Nov 2026), as asked:** real Mac app, Debug, signed, still with the `@key` workaround; user 1, Hardware & setup. Before Connect: "Not connected", orange; after Connect (a stand-in ComfyUI answer on 127.0.0.1:8188): "Connected", green, no reload (`tests/.artifacts/verify/mac/comfy-before.png`, `comfy-after.png`). The class name cannot be read on Mac Catalyst: its web view gives no DOM class list to accessibility and the app has no script console, so the colour stands in for the class. The flip without `@key` needs a code change (`*fix-issues`).
 

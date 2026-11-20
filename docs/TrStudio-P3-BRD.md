@@ -206,6 +206,8 @@ Deferred on 14 Nov 2026, each with its reason. No row of the first version waits
   - *Acceptance:* When the desktop project is built on a Windows machine, then the Windows app is produced and opens on Login.
 - **BRD-159** — Local ONNX pictures run inside the Mac app. *Deferred (later version):* ONNX Runtime ships no Mac Catalyst build (owner decision 10A); Mac pictures come from ComfyUI, RunPod or Venice. On 19 Nov 2026 (owner decision 18C) phase 1's local text-to-image, image-to-image and conditioning rows (BRD-16 to BRD-18; REQ-FN-019, 020, 021) joined this item. *Screen:* Image studio · *Mockup:* [mockup](mockups/image-studio.html)
   - *Acceptance:* When a creator generates with a local ONNX model on Image studio in the Mac app, then a picture is produced.
+- **BRD-180** — Local voice, lip-sync and caption models run inside the Mac app. *Deferred (later version):* added 20 Nov 2026 (owner decision 18C, the same answer as for the other local-only rows): phase 1's speech in English and Hindi with preset voices, talking avatar with lip-sync, script to narrated clip and Whisper captions (BRD-22, BRD-28, BRD-29, BRD-54; REQ-FN-031, 037, 038 and REQ-RAG-002) need a local voice, lip-sync or Whisper model the Mac app does not ship. *Screen:* Avatar studio · *Mockup:* [mockup](mockups/avatar-studio.html)
+  - *Acceptance:* When a creator renders a script with a character and a local voice on Avatar studio in the Mac app, then one narrated, lip-synced clip with timed captions is produced.
 - **BRD-160** — Character-bible search by meaning with an embedding model built into the app. *Deferred (later version):* word matching now (owner decision 9A). *Screen:* Character library · *Mockup:* [mockup](mockups/character-library.html)
   - *Acceptance:* When a creator searches a character's bible on Character library by meaning, then notes matching the meaning come back without Ollama.
 
@@ -213,7 +215,7 @@ Deferred on 14 Nov 2026, each with its reason. No row of the first version waits
 
 Written by the status gate after every build, verify and handoff; not by hand.
 
-**Snapshot as of 2026-11-19.** Live per-requirement status: `PROJECT-STATUS.md` and the Requirements Status table in `docs/TrStudio-P3-Checklist.md`.
+**Snapshot as of 2026-11-20.** Live per-requirement status: `PROJECT-STATUS.md` and the Requirements Status table in `docs/TrStudio-P3-Checklist.md`.
 
 | Screen | Requirements | Verified | Open | Status |
 |---|---|---|---|---|

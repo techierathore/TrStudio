@@ -106,7 +106,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <div class="layout no-toc">
   <main>
     <h1>TrStudio — Developer Guide, phase 3</h1>
-    <div class="subtitle">Rendered 2026-11-15 &middot; source <code>TrStudio-P3-DevGuide.md</code></div>
+    <div class="subtitle">Rendered 2026-11-20 &middot; source <code>TrStudio-P3-DevGuide.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
@@ -117,8 +117,11 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
         <li class="h3"><a href="#login-login">Login (/login)</a></li>
         <li class="h3"><a href="#register-register">Register (/register)</a></li>
         <li class="h3"><a href="#setup-required-setup-required">Setup required (/setup-required)</a></li>
+        <li class="h3"><a href="#admin-hardware-setup-comfyui-address-admin-setup-hardware">Admin — Hardware &amp;amp; setup, ComfyUI address (/admin/setup/hardware)</a></li>
         <li class="h3"><a href="#admin-model-provider-registry-admin-registry">Admin — Model &amp;amp; Provider Registry (/admin/registry)</a></li>
         <li class="h3"><a href="#admin-runpod-ops-admin-ops">Admin — RunPod &amp;amp; ops (/admin/ops)</a></li>
+        <li class="h3"><a href="#admin-content-policy-log-retention-and-digital-twins-admin-policy">Admin — Content policy, log retention and digital twins (/admin/policy)</a></li>
+        <li class="h3"><a href="#avatar-studio-digital-twin-and-multi-shot-avatar">Avatar studio — digital twin and multi-shot (/avatar)</a></li>
         <li class="h3"><a href="#app-frame-and-sign-out-mainlayout-appsidebar">App frame and sign out (MainLayout, AppSidebar)</a></li>
         <li><a href="#cross-cutting-flows">Cross-cutting flows</a></li>
         <li class="h3"><a href="#start-up-and-the-local-store">Start-up and the local store</a></li>
@@ -128,6 +131,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
         <li class="h3"><a href="#sign-out">Sign out</a></li>
         <li class="h3"><a href="#in-app-job-runner-and-recovery">In-app job runner and recovery</a></li>
         <li class="h3"><a href="#key-protection">Key protection</a></li>
+        <li class="h3"><a href="#joining-and-extending-clips-mac-avfoundation-req-fn-055-req-fn-114">Joining and extending clips (Mac AVFoundation, REQ-FN-055, REQ-FN-114)</a></li>
         <li class="h3"><a href="#zoom-in-the-mac-app-req-fn-104">Zoom in the Mac app (REQ-FN-104)</a></li>
         <li class="h3"><a href="#job-result-and-the-provider-of-each-picture-req-ui-086">Job result and the provider of each picture (REQ-UI-086)</a></li>
         <li class="h3"><a href="#venice-s-own-reason-on-a-refused-call-req-ui-095">Venice&#x27;s own reason on a refused call (REQ-UI-095)</a></li>
@@ -143,8 +147,8 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tr><td>Kind</td><td>app</td></tr>
 <tr><td>Size</td><td>Medium</td></tr>
 <tr><td>Phase</td><td>3 of 3</td></tr>
-<tr><td>Verified on</td><td>2026-11-15</td></tr>
-<tr><td>Date</td><td>2026-11-15</td></tr>
+<tr><td>Verified on</td><td>2026-11-20</td></tr>
+<tr><td>Date</td><td>2026-11-20</td></tr>
 </tbody>
 </table>
 <h2 id="architecture-cheat-sheet">Architecture cheat-sheet<a class="anchor-link" href="#architecture-cheat-sheet">#</a></h2>
@@ -179,65 +183,66 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <thead><tr><th>Role</th><th>Test user</th><th>Menu items and the screen each opens</th></tr></thead>
 <tbody>
 <tr><td>Anyone (signed out)</td><td>none</td><td>Login (<code>/login</code>), Register (<code>/register</code>), Setup required (<code>/setup-required</code>)</td></tr>
-<tr><td>Owner</td><td>test host <code>POST /test/session?role=Owner</code> (<code>tests/TrStudio.TestHost/Program.cs:72</code>)</td><td>Creator surface, then sidebar footer switch → Registry &amp; providers (<code>/admin/registry</code>), RunPod &amp; ops (<code>/admin/ops</code>); Sign out in the sidebar footer</td></tr>
-<tr><td>Operator</td><td>test host <code>POST /test/session?role=Operator</code></td><td>Lands on RunPod &amp; ops (<code>/admin/ops</code>); Registry &amp; providers (<code>/admin/registry</code>)</td></tr>
-<tr><td>Creator</td><td>test host <code>POST /test/session?role=Creator</code></td><td>Studios only; <code>/admin/*</code> routes answer 403 (<code>InProcessEngineHandler.cs:81</code>)</td></tr>
+<tr><td>Owner</td><td>test host <code>POST /test/session?role=Owner</code> (<code>tests/TrStudio.TestHost/Program.cs:84</code>)</td><td>Creator surface, then sidebar footer switch → Hardware &amp; Setup (<code>/admin/setup/hardware</code>), RunPod &amp; Ops (<code>/admin/ops</code>), Registry &amp; Providers (<code>/admin/registry</code>), Content Policy (<code>/admin/policy</code>) (<code>src/TrStudioUI/Navigation/TrStudioNavSets.cs:56</code>); Sign out in the sidebar footer</td></tr>
+<tr><td>Operator</td><td>test host <code>POST /test/session?role=Operator</code></td><td>Lands on RunPod &amp; Ops (<code>/admin/ops</code>); the same management menu</td></tr>
+<tr><td>Creator</td><td>test host <code>POST /test/session?role=Creator</code></td><td>Studios only, Avatar studio (<code>/avatar</code>) first; <code>/admin/*</code> routes answer 403 (<code>InProcessEngineHandler.cs:81</code>)</td></tr>
 </tbody>
 </table>
 <h2 id="screen-by-screen-code-map">Screen-by-screen code map<a class="anchor-link" href="#screen-by-screen-code-map">#</a></h2>
 <h3 id="login-login">Login (<code>/login</code>)<a class="anchor-link" href="#login-login">#</a></h3>
 <p><img src="screenshots/TrStudio/anyone-login.png" alt="Login" style="max-width:100%"> · <a href="screenshots/TrStudio/anyone-login-mobile.png">390 wide</a> · <a href="screenshots/TrStudio/anyone-login-sign-in-again.png">sign in again notice</a></p>
-<p>Renders (test host, headless) at 1280 and 390 wide, light and dark. The "Remember me" box is <code>Login.razor:109</code>; the plain notices are the missing-settings (<code>:28</code>), unreachable (<code>:40</code>) and kept-sign-in-ended (<code>:52</code>) alerts.</p>
+<p>Renders (test host, headless, 15 Nov) at 1280 and 390 wide, light and dark. The "Remember me" box is <code>Login.razor:112</code>; the plain notices are the missing-settings (<code>:34</code>), unreachable (<code>:46</code>) and kept-sign-in-ended (<code>:58</code>) alerts. Since 16 Nov a sign-in the computer could not keep (an unsigned Mac build refused by the Keychain) still signs in and says why in a toast (<code>:274</code>).</p>
 <p><strong>Call chain:</strong> <code>Login.razor:HandleSignInAsync</code> → <code>POST /api/v1/auth/login</code> (<code>IdentityEndpoints.LoginAsync</code>) → <code>AppManagerClient.LoginAsync</code> + <code>SetupGateService.EvaluateAsync</code> → <code>ModelSourceRepository.ListAsync</code>, <code>RegistryRepository.ListAsync</code> → <code>ModelSource</code>, <code>RegistryModel</code></p>
 <table>
 <thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
 <tbody>
-<tr><td><code>src/TrStudioUI/Pages/Auth/Login.razor:168</code></td><td><code>OnInitializedAsync</code></td><td><code>vSettings.Configured</code></td><td>true in a build with <code>appmanager.local.json</code>; false shows the missing-settings notice</td></tr>
-<tr><td><code>src/TrStudioUI/Pages/Auth/Login.razor:255</code></td><td><code>HandleSignInAsync</code></td><td><code>vRequest.RememberMe</code></td><td>the box's state</td></tr>
-<tr><td><code>src/TrStudio.InProcess/Routes/IdentityEndpoints.cs:62</code></td><td><code>LoginAsync</code></td><td><code>aSignIn.IsConfigured</code></td><td>true</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Auth/Login.razor:170</code></td><td><code>OnInitializedAsync</code></td><td><code>vSettings.Configured</code></td><td>true in a build with <code>appmanager.local.json</code>; false shows the missing-settings notice</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Auth/Login.razor:256</code></td><td><code>HandleSignInAsync</code></td><td><code>vRequest.RememberMe</code></td><td>the box's state</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/IdentityEndpoints.cs:63</code></td><td><code>LoginAsync</code></td><td><code>aSignIn.IsConfigured</code></td><td>true</td></tr>
 <tr><td><code>src/TrStudio.Engine/Infrastructure/Identity/AppManagerClient.cs:59</code></td><td><code>LoginAsync</code></td><td><code>vEnvelope.Data</code></td><td>AppManager's token pair; never print it</td></tr>
 <tr><td><code>src/TrStudio.InProcess/Routes/IdentityEndpoints.cs:75</code></td><td><code>LoginAsync</code></td><td><code>vSession.Role</code></td><td>Owner, Operator or Creator</td></tr>
 <tr><td><code>src/TrStudio.Engine/Domain/SetupGate/SetupGateService.cs:42</code></td><td><code>EvaluateAsync</code></td><td><code>vIsComplete</code></td><td>true once a source is enabled and a model is ready</td></tr>
-<tr><td><code>src/TrStudioUI/Pages/Auth/Login.razor:267</code></td><td><code>HandleSignInAsync</code></td><td><code>ResolveLanding(vSession)</code></td><td>the gate's landing, else <code>/admin/ops</code> or <code>/avatar</code></td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Auth/Login.razor:268</code></td><td><code>HandleSignInAsync</code></td><td><code>ResolveLanding(vSession)</code></td><td>the gate's landing, else <code>/admin/ops</code> or <code>/avatar</code></td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Auth/Login.razor:269</code></td><td><code>HandleSignInAsync</code></td><td><code>vSession.NotKeptReason</code></td><td>null; the Keychain's refusal when "Remember me" could not be kept</td></tr>
 </tbody>
 </table>
-<p><strong>Calculations on this screen:</strong> <code>IsEmailValid</code> (<code>Login.razor:228</code>) checks for an <code>@</code> and a later dot; <code>ResolveLanding</code> (<code>:296</code>).</p>
+<p><strong>Calculations on this screen:</strong> <code>IsEmailValid</code> (<code>Login.razor:229</code>) checks for an <code>@</code> and a later dot; <code>ResolveLanding</code> (<code>:305</code>).</p>
 <h4 id="kept-sign-in-resume-after-the-first-live-render">Kept sign-in resume after the first live render<a class="anchor-link" href="#kept-sign-in-resume-after-the-first-live-render">#</a></h4>
 <table>
 <thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
 <tbody>
-<tr><td><code>src/TrStudioUI/Pages/Auth/Login.razor:187</code></td><td><code>OnAfterRenderAsync</code></td><td><code>aFirstRender</code></td><td>true; a pre-render pass returns without calling resume</td></tr>
-<tr><td><code>src/TrStudioUI/Pages/Auth/Login.razor:195</code></td><td><code>OnAfterRenderAsync</code></td><td><code>vResume.StatusCode</code></td><td>204 nothing kept, 200 resumed, 401 ended, 503 unreachable</td></tr>
-<tr><td><code>src/TrStudio.InProcess/Routes/IdentityEndpoints.cs:194</code></td><td><code>ResumeAsync</code></td><td><code>vKept.KeptUntil</code></td><td>30 days after the ticked sign-in</td></tr>
-<tr><td><code>src/TrStudio.InProcess/Routes/IdentityEndpoints.cs:208</code></td><td><code>ResumeAsync</code></td><td><code>vRenewed</code></td><td>a renewed session; refused goes to <code>:230</code> and forgets the file</td></tr>
-<tr><td><code>src/TrStudioUI/Pages/Auth/Login.razor:211</code></td><td><code>OnAfterRenderAsync</code></td><td><code>objKeptEnded</code></td><td>the plain "Please sign in again" words</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Auth/Login.razor:188</code></td><td><code>OnAfterRenderAsync</code></td><td><code>aFirstRender</code></td><td>true; a pre-render pass returns without calling resume</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Auth/Login.razor:197</code></td><td><code>OnAfterRenderAsync</code></td><td><code>vResume.StatusCode</code></td><td>204 nothing kept, 200 resumed, 401 ended, 503 unreachable</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/IdentityEndpoints.cs:209</code></td><td><code>ResumeAsync</code></td><td><code>vKept.KeptUntil</code></td><td>30 days after the ticked sign-in</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/IdentityEndpoints.cs:223</code></td><td><code>ResumeAsync</code></td><td><code>vRenewed</code></td><td>a renewed session; refused goes to <code>:245</code> and forgets the file</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Auth/Login.razor:212</code></td><td><code>OnAfterRenderAsync</code></td><td><code>objKeptEnded</code></td><td>the plain "Please sign in again" words</td></tr>
 </tbody>
 </table>
 <h3 id="register-register">Register (<code>/register</code>)<a class="anchor-link" href="#register-register">#</a></h3>
 <p><img src="screenshots/TrStudio/anyone-register.png" alt="Register" style="max-width:100%"> · <a href="screenshots/TrStudio/anyone-register-mobile.png">390 wide</a></p>
-<p>Renders (test host, headless) at 1280 and 390 wide, light and dark. Some of its mockup's control names are missing (owner decision 11, a dedicated run). Register has no "Remember me" box: a new account keeps nothing.</p>
+<p>Renders (test host, headless, 15 Nov) at 1280 and 390 wide, light and dark. Some of its mockup's control names are missing (owner decision 11, a dedicated run). Register has no "Remember me" box: a new account keeps nothing.</p>
 <p><strong>Call chain:</strong> <code>Register.razor:HandleCreateAsync</code> → <code>POST /api/v1/auth/register</code> (<code>IdentityEndpoints.RegisterAsync</code>) → <code>AppManagerClient.RegisterAsync</code> + <code>SetupGateService.EvaluateAsync</code> → <code>ModelSourceRepository.ListAsync</code>, <code>RegistryRepository.ListAsync</code> → <code>ModelSource</code>, <code>RegistryModel</code></p>
 <table>
 <thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
 <tbody>
-<tr><td><code>src/TrStudioUI/Pages/Auth/Register.razor:179</code></td><td><code>HandleCreateAsync</code></td><td><code>vRequest.AccountType</code></td><td><code>Creator</code>, or <code>AdminOperator</code> when the admin box is ticked</td></tr>
-<tr><td><code>src/TrStudio.InProcess/Routes/IdentityEndpoints.cs:117</code></td><td><code>RegisterAsync</code></td><td><code>aSignIn.IsConfigured</code></td><td>true; false answers 503 <code>SIGN_IN_NOT_CONFIGURED</code></td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Auth/Register.razor:182</code></td><td><code>HandleCreateAsync</code></td><td><code>vRequest.AccountType</code></td><td><code>Creator</code>, or <code>AdminOperator</code> when the admin box is ticked</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/IdentityEndpoints.cs:132</code></td><td><code>RegisterAsync</code></td><td><code>aSignIn.IsConfigured</code></td><td>true; false answers 503 <code>SIGN_IN_NOT_CONFIGURED</code></td></tr>
 <tr><td><code>src/TrStudio.Engine/Infrastructure/Identity/AppManagerClient.cs:84</code></td><td><code>RegisterAsync</code></td><td><code>vEnvelope.Data</code></td><td>the new account's session</td></tr>
 <tr><td><code>src/TrStudio.InProcess/Hosting/LocalSessionStore.cs:37</code></td><td><code>SignIn</code></td><td><code>objSessions.Count</code></td><td>one more than before</td></tr>
-<tr><td><code>src/TrStudioUI/Pages/Auth/Register.razor:224</code></td><td><code>ReadErrorAsync</code></td><td><code>vProblem.Title</code></td><td><code>EMAIL_EXISTS</code> for a used email</td></tr>
-<tr><td><code>src/TrStudioUI/Pages/Auth/Register.razor:192</code></td><td><code>HandleCreateAsync</code></td><td><code>ResolveLanding(vSession)</code></td><td>the gate's landing, else <code>/admin/setup/hardware</code> or <code>/avatar</code></td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Auth/Register.razor:227</code></td><td><code>ReadErrorAsync</code></td><td><code>vProblem.Title</code></td><td><code>EMAIL_EXISTS</code> for a used email</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Auth/Register.razor:195</code></td><td><code>HandleCreateAsync</code></td><td><code>ResolveLanding(vSession)</code></td><td>the gate's landing, else <code>/admin/setup/hardware</code> or <code>/avatar</code></td></tr>
 </tbody>
 </table>
-<p><strong>Calculations on this screen:</strong> <code>IsPasswordValid</code> (<code>Register.razor:151</code>): at least 12 characters with a digit and a symbol.</p>
+<p><strong>Calculations on this screen:</strong> <code>IsPasswordValid</code> (<code>Register.razor:154</code>): at least 12 characters with a digit and a symbol.</p>
 <h3 id="setup-required-setup-required">Setup required (<code>/setup-required</code>)<a class="anchor-link" href="#setup-required-setup-required">#</a></h3>
 <p><img src="screenshots/TrStudio/anyone-setup-required.png" alt="Setup required" style="max-width:100%"> · <a href="screenshots/TrStudio/anyone-setup-required-mobile.png">390 wide</a></p>
-<p>Renders (test host, headless) at 1280 and 390 wide, light and dark. Phase 3 adds the "Your data on this computer" card: the data folder, or why the local store is not ready.</p>
+<p>Renders (test host, headless, 15 Nov) at 1280 and 390 wide, light and dark. Phase 3 adds the "Your data on this computer" card: the data folder, or why the local store is not ready.</p>
 <p><strong>Call chain:</strong> <code>SetupRequired.razor:OnInitializedAsync</code> → <code>GET /api/v1/local-store</code> (<code>DesktopSessionEndpoints</code>) → <code>EngineHost.StartupProblem</code> → <code>SqliteDatabaseMigrator.MigrateDatabase</code>; <code>CheckAgainAsync</code> → <code>GET /api/v1/setup-gate</code> (<code>IdentityEndpoints.GetSetupGateAsync</code>) → <code>SetupGateService.EvaluateAsync</code> → <code>ModelSource</code>, <code>RegistryModel</code></p>
 <table>
 <thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
 <tbody>
-<tr><td><code>src/TrStudio.InProcess/EngineHost.cs:176</code></td><td><code>StartAsync</code></td><td><code>AppliedScripts</code></td><td>new script names on a first start, empty after</td></tr>
-<tr><td><code>src/TrStudio.InProcess/EngineHost.cs:180</code></td><td><code>StartAsync</code></td><td><code>StartupProblem</code></td><td>null when the store is ready; the folder and reason when not</td></tr>
+<tr><td><code>src/TrStudio.InProcess/EngineHost.cs:182</code></td><td><code>StartAsync</code></td><td><code>AppliedScripts</code></td><td>new script names on a first start, empty after</td></tr>
+<tr><td><code>src/TrStudio.InProcess/EngineHost.cs:186</code></td><td><code>StartAsync</code></td><td><code>StartupProblem</code></td><td>null when the store is ready; the folder and reason when not</td></tr>
 <tr><td><code>src/TrStudio.InProcess/InProcessEngineHandler.cs:45</code></td><td><code>AnswerAsync</code></td><td><code>vProblem</code></td><td>null; otherwise every route answers 503 <code>LOCAL_STORE_UNAVAILABLE</code></td></tr>
 <tr><td><code>src/TrStudio.InProcess/Routes/DesktopSessionEndpoints.cs:65</code></td><td><code>MapDesktopSessionEndpoints</code></td><td><code>dataFolder</code></td><td>the user's app data folder plus <code>TrStudio</code></td></tr>
 <tr><td><code>src/TrStudioUI/Pages/Auth/SetupRequired.razor:113</code></td><td><code>OnInitializedAsync</code></td><td><code>objDataFolder</code></td><td>the same folder; <code>objStoreProblem</code> (<code>:118</code>) null</td></tr>
@@ -246,57 +251,118 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </tbody>
 </table>
 <p><strong>Calculations on this screen:</strong> none.</p>
-<h3 id="admin-model-provider-registry-admin-registry"><a id="admin--model--provider-registry-adminregistry"></a>Admin — Model &amp; Provider Registry (<code>/admin/registry</code>)<a class="anchor-link" href="#admin-model-provider-registry-admin-registry">#</a></h3>
-<p><img src="screenshots/TrStudio/owner-admin-registry.png" alt="Registry and providers" style="max-width:100%"> · <a href="screenshots/TrStudio/owner-admin-registry-mobile.png">390 wide</a></p>
-<p>Renders (test host, headless) at 1280 and 390 wide, light and dark, signed in as Owner. Some mockup control names are missing (decision 11). Phase 3 adds the keys note (<code>AdminRegistry.razor:90</code>) and always lists RunPod, HeyGen and ClosedApi (<code>:525</code>).</p>
-<p><strong>Call chain:</strong> <code>AdminRegistry.razor:SaveKeysAsync</code> → <code>PUT /api/v1/admin/providers/keys</code> (<code>RegistryEndpoints.UpsertProviderKeyAsync</code>) → <code>AesGcmKeyStore.StoreAsync</code>, <code>DesktopProviderSettings.RefreshAsync</code> → <code>ProviderKeyRepository.UpsertAsync</code> → <code>ProviderKey</code></p>
+<h3 id="admin-hardware-setup-comfyui-address-admin-setup-hardware"><a id="admin--hardware--setup-comfyui-address-adminsetuphardware"></a>Admin — Hardware &amp; setup, ComfyUI address (<code>/admin/setup/hardware</code>)<a class="anchor-link" href="#admin-hardware-setup-comfyui-address-admin-setup-hardware">#</a></h3>
+<p><img src="screenshots/TrStudio/operator-hardware.png" alt="Hardware and setup" style="max-width:100%"></p>
+<p>The screenshot is from 15 Nov, before the ComfyUI card (owner decision 17B, ADR-029) was added; the card is not runtime-checked on 20 Nov (the app was not booted). The card is <code>AdminHardware.razor:151</code>: on Mac, ComfyUI runs on its own and the Operator types the address it answers on (default <code>http://127.0.0.1:8188</code>, <code>:194</code>). The page checks a kept address on load (<code>TryLoadComfyUiAsync</code>, <code>:256</code>).</p>
+<p><strong>Call chain:</strong> <code>AdminHardware.razor:ConnectComfyUiAsync</code> → <code>POST /api/v1/admin/setup/comfyui</code> (<code>SetupEndpoints.ConnectComfyUiAsync</code>) → <code>ComfyUiConnector.ConnectAsync</code> → <code>GET {address}/system_stats</code>, then <code>AppSettingStore.SetAsync</code> → <code>AppSetting</code> (<code>ComfyUI:BaseUrl</code>)</p>
 <table>
 <thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
 <tbody>
-<tr><td><code>src/TrStudioUI/Pages/Admin/AdminRegistry.razor:503</code></td><td><code>TryLoadRegistryAsync</code></td><td><code>vKeys.StatusCode</code></td><td>200 for Owner or Operator</td></tr>
-<tr><td><code>src/TrStudioUI/Pages/Admin/AdminRegistry.razor:537</code></td><td><code>TryLoadRegistryAsync</code></td><td><code>objKeyNote</code></td><td>"Keys stay on this computer … (the macOS Keychain)."</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Admin/AdminHardware.razor:294</code></td><td><code>ConnectComfyUiAsync</code></td><td><code>objComfyAddress</code></td><td>the typed address</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/SetupEndpoints.cs:166</code></td><td><code>ConnectComfyUiAsync</code></td><td><code>aRequest.Address</code></td><td>the same address; admin roles only</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Setup/ComfyUiConnector.cs:105</code></td><td><code>CheckAsync</code></td><td><code>vResponse.StatusCode</code></td><td>200 within 5 seconds; nothing there gives "Nothing answered at …"</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Setup/ComfyUiConnector.cs:123</code></td><td><code>CheckAsync</code></td><td><code>Connected</code></td><td>true only when the body has a <code>system</code> object</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Setup/ComfyUiConnector.cs:49</code></td><td><code>ConnectAsync</code></td><td><code>vResult.Address</code></td><td>kept only when connected; a failure keeps nothing</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/AppSettingStore.cs:49</code></td><td><code>SetAsync</code></td><td><code>aKey</code></td><td><code>ComfyUI:BaseUrl</code> (<code>:26</code>)</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Admin/AdminHardware.razor:316</code></td><td><code>ApplyComfyResult</code></td><td><code>objComfyConnected</code></td><td>the "Connected" badge (<code>:155</code>)</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/LocalMaintenanceService.cs:34</code></td><td><code>StartAsync</code></td><td>the kept address</td><td>loaded into <code>ComfyUiOptions.BaseUrl</code> on every start</td></tr>
+</tbody>
+</table>
+<p><strong>Calculations on this screen:</strong> none. The Python and managed-ComfyUI steps are offered on Windows only (<code>AdminHardware.razor:411</code>).</p>
+<h3 id="admin-model-provider-registry-admin-registry"><a id="admin--model--provider-registry-adminregistry"></a>Admin — Model &amp; Provider Registry (<code>/admin/registry</code>)<a class="anchor-link" href="#admin-model-provider-registry-admin-registry">#</a></h3>
+<p><img src="screenshots/TrStudio/owner-admin-registry.png" alt="Registry and providers" style="max-width:100%"> · <a href="screenshots/TrStudio/owner-admin-registry-mobile.png">390 wide</a></p>
+<p>Renders (test host, headless, 15 Nov) at 1280 and 390 wide, light and dark, as Owner. Some mockup control names are missing (decision 11). It adds the keys note (<code>AdminRegistry.razor:111</code>) and always lists RunPod, HeyGen and ClosedApi (<code>:591</code>). Remove key (<code>:139</code>, confirm <code>:131</code>) came on 17 Nov; not runtime-checked.</p>
+<p><strong>Call chain:</strong> <code>AdminRegistry.razor:SaveKeysAsync</code> → <code>PUT /api/v1/admin/providers/keys</code> (<code>RegistryEndpoints.UpsertProviderKeyAsync</code>) → <code>AesGcmKeyStore.StoreAsync</code>, <code>DesktopProviderSettings.RefreshAsync</code> → <code>ProviderKeyRepository.UpsertAsync</code> → <code>ProviderKey</code>. Remove key: <code>RemoveKeyAsync</code> → <code>DELETE /api/v1/admin/providers/keys/{name}</code> (<code>RegistryEndpoints.DeleteProviderKeyAsync</code>) → <code>AesGcmKeyStore.DeleteAsync</code> → <code>ProviderKeyRepository.DeleteAsync</code></p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Admin/AdminRegistry.razor:564</code></td><td><code>TryLoadRegistryAsync</code></td><td><code>vKeys.StatusCode</code></td><td>200 for Owner or Operator</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Admin/AdminRegistry.razor:613</code></td><td><code>TryLoadRegistryAsync</code></td><td><code>objKeyNote</code></td><td>"Keys stay on this computer … (the macOS Keychain)."</td></tr>
 <tr><td><code>src/TrStudio.InProcess/Routes/DesktopProviderEndpoints.cs:24</code></td><td><code>MapDesktopProviderEndpoints</code></td><td><code>aProtector.Description</code></td><td><code>the macOS Keychain</code> on Mac; the test host's in-memory key on the test host</td></tr>
-<tr><td><code>src/TrStudioUI/Pages/Admin/AdminRegistry.razor:789</code></td><td><code>SaveKeysAsync</code></td><td><code>vKey.ProviderName</code></td><td>the row being saved; check <code>vKey.Value</code> is non-empty, never print it</td></tr>
-<tr><td><code>src/TrStudio.InProcess/Routes/RegistryEndpoints.cs:182</code></td><td><code>UpsertProviderKeyAsync</code></td><td><code>aRequest.ProviderName</code></td><td>the same name</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Admin/AdminRegistry.razor:954</code></td><td><code>SaveKeysAsync</code></td><td><code>vKey.ProviderName</code></td><td>the row being saved; check <code>vKey.Value</code> is non-empty, never print it</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/RegistryEndpoints.cs:187</code></td><td><code>UpsertProviderKeyAsync</code></td><td><code>aRequest.ProviderName</code></td><td>the same name; a Keychain refusal answers 503 in plain words (<code>:193</code>)</td></tr>
 <tr><td><code>src/TrStudio.Engine/Infrastructure/Security/AesGcmKeyStore.cs:146</code></td><td><code>DeriveKey</code></td><td><code>objKeyProtector</code></td><td>not null, so no configuration key is read</td></tr>
 <tr><td><code>src/TrStudio.Engine/Infrastructure/Data/ProviderKeyRepository.cs:39</code></td><td><code>UpsertAsync</code></td><td><code>aIsEnabled</code></td><td>the row's switch</td></tr>
 <tr><td><code>src/TrStudio.Engine/Infrastructure/Security/DesktopProviderSettings.cs:84</code></td><td><code>RefreshAsync</code></td><td><code>objRunPod.ApiKey.Length</code></td><td>above zero after a RunPod key is saved</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Admin/AdminRegistry.razor:1027</code></td><td><code>RemoveKeyAsync</code></td><td><code>aKey.ProviderName</code></td><td>the confirmed row</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/RegistryEndpoints.cs:242</code></td><td><code>DeleteProviderKeyAsync</code></td><td><code>aProviderName</code></td><td>the same; <code>RefreshAsync</code> (<code>:244</code>) drops it at once; answers 204</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/ProviderKeyRepository.cs:100</code></td><td><code>DeleteAsync</code></td><td><code>aProviderName</code></td><td>its <code>ProviderKey</code> row is gone</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Admin/AdminRegistry.razor:1040</code></td><td><code>RemoveKeyAsync</code></td><td><code>KnownOrder(aKey.ProviderName)</code></td><td>a known provider stays listed, empty; any other leaves the list</td></tr>
 </tbody>
 </table>
 <p><strong>Calculations on this screen:</strong> <code>AesGcmKeyStore.Mask</code> (<code>AesGcmKeyStore.cs:97</code>) shows the last four characters only.</p>
 <h3 id="admin-runpod-ops-admin-ops"><a id="admin--runpod--ops-adminops"></a>Admin — RunPod &amp; ops (<code>/admin/ops</code>)<a class="anchor-link" href="#admin-runpod-ops-admin-ops">#</a></h3>
 <p><img src="screenshots/TrStudio/owner-admin-ops.png" alt="RunPod and ops" style="max-width:100%"> · <a href="screenshots/TrStudio/owner-admin-ops-mobile.png">390 wide</a></p>
-<p>Renders (test host, headless) at 1280 and 390 wide, light and dark, signed in as Owner. Some mockup control names are missing (decision 11). Phase 3 reads queue depth from the local database instead of Hangfire.</p>
+<p>Renders (test host, headless, 15 Nov) at 1280 and 390 wide, light and dark, signed in as Owner. Some mockup control names are missing (decision 11). Phase 3 reads queue depth from the local database instead of Hangfire.</p>
 <p><strong>Call chain:</strong> <code>AdminOps.razor:LoadAsync</code> → <code>GET /api/v1/admin/ops</code> (<code>Phase9Endpoints.GetOpsDashboardAsync</code>) → <code>OpsDashboardService.GetDashboardAsync</code> → <code>LocalJobQueueMonitor.GetSnapshot</code> → <code>JobQueueStore.CountQueuedAndRunning</code> → <code>GenerationJob</code></p>
 <table>
 <thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
 <tbody>
-<tr><td><code>src/TrStudioUI/Pages/Admin/AdminOps.razor:324</code></td><td><code>LoadAsync</code></td><td><code>vOps.StatusCode</code></td><td>200 for Owner or Operator; 403 for Creator</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Admin/AdminOps.razor:353</code></td><td><code>LoadAsync</code></td><td><code>vOps.StatusCode</code></td><td>200 for Owner or Operator; 403 for Creator</td></tr>
 <tr><td><code>src/TrStudio.InProcess/InProcessEngineHandler.cs:78</code></td><td><code>AnswerAsync</code></td><td><code>vResult.Succeeded</code></td><td>true for the admin policy</td></tr>
 <tr><td><code>src/TrStudio.Engine/Domain/Ops/OpsDashboardService.cs:44</code></td><td><code>GetDashboardAsync</code></td><td><code>vSnapshot.Servers.Count</code></td><td>1 once the runner started, else 0</td></tr>
 <tr><td><code>src/TrStudio.Engine/Infrastructure/Ops/LocalJobQueueMonitor.cs:37</code></td><td><code>GetSnapshot</code></td><td><code>vQueued</code>, <code>vRunning</code></td><td>the <code>GenerationJob</code> counts</td></tr>
-<tr><td><code>src/TrStudio.Engine/Infrastructure/Jobs/JobQueueStore.cs:108</code></td><td><code>CountQueuedAndRunning</code></td><td><code>vCounts</code></td><td>Queued plus Pending, and Running</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Jobs/JobQueueStore.cs:131</code></td><td><code>CountQueuedAndRunning</code></td><td><code>vCounts</code></td><td>Queued plus Pending, and Running</td></tr>
 <tr><td><code>src/TrStudio.Engine/Domain/Ops/OpsDashboardService.cs:66</code></td><td><code>GetDashboardAsync</code></td><td><code>TotalEnqueued</code></td><td>the same queued count</td></tr>
-<tr><td><code>src/TrStudioUI/Pages/Admin/AdminOps.razor:326</code></td><td><code>LoadAsync</code></td><td><code>objOps.Queue.TotalEnqueued</code></td><td>the number in the "Queue depth" badge (<code>:199</code>)</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Admin/AdminOps.razor:355</code></td><td><code>LoadAsync</code></td><td><code>objOps.Queue.TotalEnqueued</code></td><td>the number in the "Queue depth" badge (<code>:215</code>)</td></tr>
 </tbody>
 </table>
 <p><strong>Calculations on this screen:</strong> <code>TotalEnqueued</code> and <code>TotalProcessing</code> (<code>OpsDashboardService.cs:66</code>) sum the per-queue counts; healthy means a heartbeat within 60 seconds (<code>:60</code>).</p>
+<h3 id="admin-content-policy-log-retention-and-digital-twins-admin-policy"><a id="admin--content-policy-log-retention-and-digital-twins-adminpolicy"></a>Admin — Content policy, log retention and digital twins (<code>/admin/policy</code>)<a class="anchor-link" href="#admin-content-policy-log-retention-and-digital-twins-admin-policy">#</a></h3>
+<p><img src="screenshots/TrStudio/operator-policy.png" alt="Content policy" style="max-width:100%"></p>
+<p>The screenshot is from 15 Nov, before the two new cards; they are not runtime-checked on 20 Nov (the app was not booted). "Keep log rows for N days" is <code>AdminPolicy.razor:113</code> (owner decision 19A, ADR-030): 0 keeps every row; saving removes the generation-log and audit rows older than N days at once, never pictures or clips. The digital twins switch is <code>:97</code>, off by default.</p>
+<p><strong>Call chain:</strong> <code>AdminPolicy.razor:SaveRetentionAsync</code> → <code>PUT /api/v1/admin/policy/retention</code> (<code>RetentionEndpoints.SetAsync</code>) → <code>LogRetentionService.SaveAsync</code> → <code>AppSettingStore.SetAsync</code> + <code>DELETE</code> on <code>GenerationLog</code>, <code>SafetyAuditEntry</code>. Twins: <code>OnTwinsToggledAsync</code> → <code>PUT /api/v1/admin/policy/twins</code> (<code>TwinEndpoints.SetPolicyAsync</code>) → <code>DigitalTwinService.SetEnabledAsync</code> → <code>SafetyPolicyRepository.SetTwinsEnabledAsync</code> → <code>SafetyPolicy.TwinsEnabled</code></p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Admin/AdminPolicy.razor:378</code></td><td><code>SaveRetentionAsync</code></td><td><code>vDays</code></td><td>0 to 3650; anything else saves nothing</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/RetentionEndpoints.cs:36</code></td><td><code>SetAsync</code></td><td><code>aRequest.Days</code></td><td>the same; admin roles only</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/LogRetentionService.cs:53</code></td><td><code>SaveAsync</code></td><td><code>aDays</code></td><td>kept under <code>Retention:LogDays</code></td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/LogRetentionService.cs:78</code></td><td><code>PurgeAsync</code></td><td><code>vResult.LogRowsRemoved</code></td><td>the rows older than N days; 0 when N is 0</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Admin/AdminPolicy.razor:391</code></td><td><code>SaveRetentionAsync</code></td><td><code>objRetentionResult</code></td><td>"Saved. n log rows older than N days were removed."</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/LocalMaintenanceService.cs:42</code></td><td><code>StartAsync</code></td><td><code>objTimer</code></td><td>the same purge on start and once a day</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Admin/AdminPolicy.razor:414</code></td><td><code>OnTwinsToggledAsync</code></td><td><code>aRequested</code></td><td>the switch's new state; a failure puts it back</td></tr>
+<tr><td><code>src/TrStudio.Engine/Infrastructure/Data/SafetyPolicyRepository.cs:69</code></td><td><code>SetTwinsEnabledAsync</code></td><td><code>aEnabled</code></td><td>the same, in the <code>default</code> policy row</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Admin/AdminPolicy.razor:271</code></td><td><code>TryLoadPolicyAsync</code></td><td><code>objTwinsEnabled</code></td><td>the stored state on reload</td></tr>
+</tbody>
+</table>
+<p><strong>Calculations on this screen:</strong> none.</p>
+<h3 id="avatar-studio-digital-twin-and-multi-shot-avatar"><a id="avatar-studio--digital-twin-and-multi-shot-avatar"></a>Avatar studio — digital twin and multi-shot (<code>/avatar</code>)<a class="anchor-link" href="#avatar-studio-digital-twin-and-multi-shot-avatar">#</a></h3>
+<p><img src="screenshots/TrStudio/owner-avatar-studio.png" alt="Avatar studio" style="max-width:100%"> · <a href="screenshots/TrStudio/owner-avatar-studio-mobile.png">390 wide</a></p>
+<p>The screenshots (14 Nov) predate both panels; not runtime-checked. <code>AvatarStudio.razor:330</code> places <code>DigitalTwinPanel</code> and <code>:331</code> <code>MultiShotPanel</code>. A twin is made from 1 to 10 pictures, one clip and one voice sample, needs the owner's switch on Content policy and recorded face and voice consent, both checked again on every clip. Multi-shot runs 2 to 6 shots for a character or a twin, each starting on the last frame of the one before, then joins them on this computer (see Joining and extending clips).</p>
+<p><strong>Call chain:</strong> <code>DigitalTwinPanel.razor:CreateTwinAsync</code> → <code>POST /api/v1/avatar/digital-twin</code> (<code>TwinEndpoints.CreateAsync</code>) → <code>DigitalTwinService.CreateAsync</code> → <code>DigitalTwinRepository.InsertAsync</code> → <code>DigitalTwin</code>; clip: <code>MakeClipAsync</code> → <code>DigitalTwinService.QueueClipAsync</code> → Venice speech, then a <code>venice-wan3-r2v</code> job; multi-shot: <code>MultiShotPanel.razor:StartAsync</code> → <code>POST /api/v1/avatar/sequences</code> → <code>ClipSequenceService.StartAsync</code> → <code>ClipSequenceRepository.InsertAsync</code> → <code>ClipSequenceRunner.RunAsync</code></p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Avatar/DigitalTwinPanel.razor:280</code></td><td><code>CreateTwinAsync</code></td><td><code>vRequest.PictureAssetIds.Count</code></td><td>1 to 10, each uploaded first</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Twin/DigitalTwinService.cs:284</code></td><td><code>EnsureAllowedAsync</code></td><td><code>GetTwinsEnabledAsync</code> result</td><td>true, else refused "turned off"</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Twin/DigitalTwinService.cs:289</code></td><td><code>EnsureAllowedAsync</code></td><td><code>vFace</code>, <code>vVoice</code></td><td>both true, else <code>ConsentMissing</code></td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Twin/DigitalTwinService.cs:173</code></td><td><code>CreateAsync</code></td><td><code>vTwin.VeniceVoiceId</code></td><td>the voice Venice made from the sample (<code>:157</code>)</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Twin/DigitalTwinService.cs:271</code></td><td><code>QueueClipAsync</code></td><td><code>vParams</code></td><td>pictures, the twin's clip and the spoken line as references</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/TwinEndpoints.cs:132</code></td><td><code>RunAsync</code></td><td><code>vRefusal.Reason</code></td><td>the plain refusal shown on the panel</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Sequence/ClipSequenceService.cs:133</code></td><td><code>StartAsync</code></td><td><code>vSequence.Shots.Count</code></td><td>2 to 6, then queued to the runner</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Sequence/ClipSequenceRunner.cs:173</code></td><td><code>RunAsync</code></td><td><code>vShot.JobId</code></td><td>one job per shot, in order</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Sequence/ClipSequenceRunner.cs:192</code></td><td><code>RunAsync</code></td><td><code>vFrameAssetId</code></td><td>the last frame, the next shot's start picture</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Sequence/ClipSequenceRunner.cs:211</code></td><td><code>RunAsync</code></td><td><code>vJoined</code></td><td>the joined video's asset id</td></tr>
+</tbody>
+</table>
+<p><strong>Calculations on this screen:</strong> Venice's price per shot before Start (<code>MultiShotPanel.razor:265</code>, <code>ClipSequenceService.QuoteAsync</code>).</p>
 <h3 id="app-frame-and-sign-out-mainlayout-appsidebar">App frame and sign out (<code>MainLayout</code>, <code>AppSidebar</code>)<a class="anchor-link" href="#app-frame-and-sign-out-mainlayout-appsidebar">#</a></h3>
 <p><img src="screenshots/TrStudio/owner-admin-ops.png" alt="App frame" style="max-width:100%"> · <a href="screenshots/TrStudio/owner-admin-ops-mobile.png">390 wide</a></p>
-<p>Renders (test host, headless) around every signed-in screen, at 1280 and 390 wide, light and dark. Sign out is in the sidebar footer (<code>AppSidebar.razor:66</code>) and on the user chip (<code>MainLayout.razor:45</code>).</p>
+<p>Renders (test host, headless, 15 Nov) around every signed-in screen, at 1280 and 390 wide, light and dark. Sign out is in the sidebar footer (<code>AppSidebar.razor:63</code>) and on the user chip (<code>MainLayout.razor:47</code>).</p>
 <p><strong>Call chain:</strong> <code>AppSidebar.razor:SignOutAsync</code> → <code>POST /api/v1/auth/logout</code> (<code>DesktopSessionEndpoints</code>) → <code>RememberedSignInStore.Forget</code>, <code>LocalSessionStore.SignOut</code> → <code>remembered-sign-in.bin</code> removed</p>
 <table>
 <thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
 <tbody>
-<tr><td><code>src/TrStudioUI/Layout/MainLayout.razor:106</code></td><td><code>OnAfterRenderAsync</code></td><td><code>vState.UserId</code></td><td>the AppManager user id; null redirects to <code>/login</code> (<code>:149</code>)</td></tr>
-<tr><td><code>src/TrStudioUI/Layout/AppSidebar.razor:119</code></td><td><code>SignOutAsync</code></td><td>the logout response</td><td>204</td></tr>
+<tr><td><code>src/TrStudioUI/Layout/MainLayout.razor:110</code></td><td><code>OnAfterRenderAsync</code></td><td><code>vState.UserId</code></td><td>the AppManager user id; null redirects to <code>/login</code> (<code>:152</code>)</td></tr>
+<tr><td><code>src/TrStudioUI/Layout/AppSidebar.razor:116</code></td><td><code>SignOutAsync</code></td><td>the logout response</td><td>204</td></tr>
 <tr><td><code>src/TrStudio.InProcess/Routes/DesktopSessionEndpoints.cs:52</code></td><td><code>MapDesktopSessionEndpoints</code></td><td><code>aRemembered.HasKept</code></td><td>false after this line</td></tr>
 <tr><td><code>src/TrStudio.InProcess/Hosting/LocalSessionStore.cs:43</code></td><td><code>SignOut</code></td><td>return value</td><td>true</td></tr>
 <tr><td><code>src/TrStudio/Auth/MauiAuthSession.cs:58</code></td><td><code>ClearAsync</code></td><td><code>objState</code></td><td>null after <code>:60</code></td></tr>
 <tr><td><code>src/TrStudio.InProcess/InProcessEngineHandler.cs:67</code></td><td><code>AnswerAsync</code></td><td><code>vUser.Identity.IsAuthenticated</code></td><td>false on the next protected call, which answers 401</td></tr>
 </tbody>
 </table>
-<p><strong>Calculations on this screen:</strong> the user chip initial (<code>MainLayout.razor:115</code>) is the email's first letter.</p>
+<p><strong>Calculations on this screen:</strong> the user chip initial (<code>MainLayout.razor:118</code>) is the email's first letter.</p>
 <h2 id="cross-cutting-flows">Cross-cutting flows<a class="anchor-link" href="#cross-cutting-flows">#</a></h2>
 <p>Only the flows phase 3 changed are here. For the rest (the role-gated shell, the creator studios, provider routing) see <a href="devguides/TrStudio-DevGuide.html">docs/devguides/TrStudio-DevGuide.md</a>.</p>
 <h3 id="start-up-and-the-local-store">Start-up and the local store<a class="anchor-link" href="#start-up-and-the-local-store">#</a></h3>
@@ -306,13 +372,14 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tbody>
 <tr><td><code>src/TrStudio/MauiProgram.cs:48</code></td><td><code>CreateMauiApp</code></td><td><code>vDataFolder</code></td><td>app data folder plus <code>TrStudio</code></td></tr>
 <tr><td><code>src/TrStudio.InProcess/EngineHost.cs:77</code></td><td><code>Create</code></td><td><code>vDatabasePath</code></td><td>the data folder plus <code>TrStudio.db</code></td></tr>
-<tr><td><code>src/TrStudio.InProcess/EngineHost.cs:159</code></td><td><code>Create</code></td><td><code>vRoutes</code></td><td>every route mapped by <code>RouteMap.MapAll</code></td></tr>
-<tr><td><code>src/TrStudio.InProcess/EngineHost.cs:176</code></td><td><code>StartAsync</code></td><td><code>AppliedScripts</code></td><td>new scripts only</td></tr>
-<tr><td><code>src/TrStudio.InProcess/EngineHost.cs:185</code></td><td><code>StartAsync</code></td><td>provider settings</td><td>loaded from <code>ProviderKey</code></td></tr>
+<tr><td><code>src/TrStudio.InProcess/EngineHost.cs:164</code></td><td><code>Create</code></td><td><code>vRoutes</code></td><td>every route mapped by <code>RouteMap.MapAll</code></td></tr>
+<tr><td><code>src/TrStudio.InProcess/EngineHost.cs:182</code></td><td><code>StartAsync</code></td><td><code>AppliedScripts</code></td><td>new scripts only</td></tr>
+<tr><td><code>src/TrStudio.InProcess/EngineHost.cs:191</code></td><td><code>StartAsync</code></td><td>provider settings</td><td>loaded from <code>ProviderKey</code></td></tr>
+<tr><td><code>src/TrStudio.InProcess/EngineHost.cs:200</code></td><td><code>StartAsync</code></td><td><code>vHosted</code></td><td>includes <code>LocalMaintenanceService</code> (kept ComfyUI address, log purge)</td></tr>
 </tbody>
 </table>
 <h3 id="in-process-route-handler">In-process route handler<a class="anchor-link" href="#in-process-route-handler">#</a></h3>
-<p><strong>Call chain:</strong> named <code>TrStudioApi</code> client (<code>MauiProgram.cs:67</code>) → <code>MauiAuthTokenHandler.SendAsync</code> → <code>InProcessEngineHandler.AnswerAsync</code> → <code>RouteTable.Find</code> → <code>RouteInvoker.InvokeAsync</code></p>
+<p><strong>Call chain:</strong> named <code>TrStudioApi</code> client (<code>MauiProgram.cs:71</code>) → <code>MauiAuthTokenHandler.SendAsync</code> → <code>InProcessEngineHandler.AnswerAsync</code> → <code>RouteTable.Find</code> → <code>RouteInvoker.InvokeAsync</code></p>
 <table>
 <thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
 <tbody>
@@ -330,7 +397,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <tbody>
 <tr><td><code>src/TrStudio/Engine/AppManagerBuildSettings.cs:27</code></td><td><code>Load</code></td><td><code>IsConfigured</code> of the result</td><td>true when <code>appmanager.local.json</code> was embedded</td></tr>
 <tr><td><code>src/TrStudio.InProcess/EngineHostOptions.cs:18</code></td><td><code>IsConfigured</code></td><td><code>ApplicationId</code></td><td>above zero, with an address and a key</td></tr>
-<tr><td><code>src/TrStudio.InProcess/EngineHost.cs:96</code></td><td><code>Create</code></td><td><code>vApplicationId</code></td><td>the build's id</td></tr>
+<tr><td><code>src/TrStudio.InProcess/EngineHost.cs:101</code></td><td><code>Create</code></td><td><code>vApplicationId</code></td><td>the build's id</td></tr>
 <tr><td><code>src/TrStudio.Engine/DependencyInjection/IdentityModule.cs:49</code></td><td><code>AddIdentityModule</code></td><td>header names</td><td><code>X-Api-Key</code> present; never print its value</td></tr>
 <tr><td><code>src/TrStudio.Engine/Infrastructure/Identity/AppManagerClient.cs:57</code></td><td><code>LoginAsync</code></td><td><code>vBody</code> keys</td><td><code>email</code>, <code>encryptedPassword</code>, <code>applicationId</code></td></tr>
 </tbody>
@@ -340,14 +407,15 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <table>
 <thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
 <tbody>
-<tr><td><code>src/TrStudio.InProcess/Routes/IdentityEndpoints.cs:79</code></td><td><code>LoginAsync</code></td><td><code>aRequest.RememberMe</code></td><td>true keeps, false forgets (<code>:85</code>)</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/IdentityEndpoints.cs:81</code></td><td><code>LoginAsync</code></td><td><code>aRequest.RememberMe</code></td><td>true keeps, false forgets (<code>:97</code>)</td></tr>
 <tr><td><code>src/TrStudio.InProcess/Hosting/RememberedSignInStore.cs:53</code></td><td><code>Remember</code></td><td><code>KeptUntil</code></td><td>now plus 30 days</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/IdentityEndpoints.cs:91</code></td><td><code>LoginAsync</code></td><td><code>vNotKept</code></td><td>null; the protector's refusal when the Keychain will not keep it, returned as <code>NotKeptReason</code> (<code>:101</code>)</td></tr>
 <tr><td><code>src/TrStudio.InProcess/Hosting/RememberedSignInStore.cs:118</code></td><td><code>Write</code></td><td>file bytes</td><td>AES-GCM ciphertext, not readable text</td></tr>
-<tr><td><code>src/TrStudio.InProcess/Routes/IdentityEndpoints.cs:200</code></td><td><code>ResumeAsync</code></td><td><code>HasEnded(vKept)</code></td><td>false within 30 days</td></tr>
-<tr><td><code>src/TrStudio.InProcess/Routes/IdentityEndpoints.cs:210</code></td><td><code>ResumeAsync</code></td><td><code>vRenewed.RefreshToken</code></td><td>replaced in the file, end date kept</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/IdentityEndpoints.cs:215</code></td><td><code>ResumeAsync</code></td><td><code>HasEnded(vKept)</code></td><td>false within 30 days</td></tr>
+<tr><td><code>src/TrStudio.InProcess/Routes/IdentityEndpoints.cs:225</code></td><td><code>ResumeAsync</code></td><td><code>vRenewed.RefreshToken</code></td><td>replaced in the file, end date kept</td></tr>
 </tbody>
 </table>
-<p>On the test host, <code>/test/sign-in-mode?mode=fake</code> sends AppManager calls to <code>FakeAppManager.AnswerAsync</code> (<code>tests/TrStudio.TestHost/FakeAppManager.cs:36</code>).</p>
+<p>On the test host, <code>/test/sign-in-mode?mode=fake</code> sends AppManager calls to <code>FakeAppManager.AnswerAsync</code> (<code>tests/TrStudio.TestHost/FakeAppManager.cs:42</code>).</p>
 <h3 id="sign-out">Sign out<a class="anchor-link" href="#sign-out">#</a></h3>
 <p>See the app frame entry: <code>DesktopSessionEndpoints.cs:49</code> ends the session and always removes the kept sign-in; <code>MauiAuthSession.ClearAsync</code> (<code>MauiAuthSession.cs:51</code>) does the same in the app.</p>
 <h3 id="in-app-job-runner-and-recovery">In-app job runner and recovery<a class="anchor-link" href="#in-app-job-runner-and-recovery">#</a></h3>
@@ -355,7 +423,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <table>
 <thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
 <tbody>
-<tr><td><code>src/TrStudio.InProcess/EngineHost.cs:207</code></td><td><code>StartWorkersAsync</code></td><td><code>vRecovered</code></td><td>queued, resumed and failed counts</td></tr>
+<tr><td><code>src/TrStudio.InProcess/EngineHost.cs:213</code></td><td><code>StartWorkersAsync</code></td><td><code>vRecovered</code></td><td>queued, resumed and failed counts</td></tr>
 <tr><td><code>src/TrStudio.Engine/Infrastructure/Jobs/InAppJobRunner.cs:110</code></td><td><code>RecoverAsync</code></td><td><code>vTicket.State</code></td><td>Queued rows run again</td></tr>
 <tr><td><code>src/TrStudio.Engine/Infrastructure/Jobs/InAppJobRunner.cs:117</code></td><td><code>RecoverAsync</code></td><td><code>vTicket.ProviderRef</code></td><td>set for a resumable Venice clip</td></tr>
 <tr><td><code>src/TrStudio.Engine/Infrastructure/Jobs/InAppJobRunner.cs:124</code></td><td><code>RecoverAsync</code></td><td><code>vTicket.JobId</code></td><td>a Running row that cannot resume, failed as closed mid-job</td></tr>
@@ -374,12 +442,30 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </tbody>
 </table>
 <p>The test host uses <code>TestKeyProtector</code> (<code>tests/TrStudio.TestHost/TestKeyProtector.cs:19</code>), an in-memory key.</p>
+<h3 id="joining-and-extending-clips-mac-avfoundation-req-fn-055-req-fn-114">Joining and extending clips (Mac AVFoundation, REQ-FN-055, REQ-FN-114)<a class="anchor-link" href="#joining-and-extending-clips-mac-avfoundation-req-fn-055-req-fn-114">#</a></h3>
+<p>Join and extend are on Video studio's <code>ClipJoinPanel</code> (<code>VideoStudio.razor:361</code>), not Avatar studio; multi-shot uses the same joiner. The engine registers ffmpeg by default (<code>VideoModule.cs:38</code>); the Mac app replaces it with <code>AvFoundationClipJoiner</code> (<code>MauiProgram.cs:61</code>), built into macOS and allowed in the sandbox, so nothing is downloaded.</p>
+<p><strong>Call chain:</strong> <code>ClipJoinPanel.razor:JoinAsync</code> → <code>POST /api/v1/video/stitch</code> (<code>VideoEndpoints.StitchAsync</code>) → <code>ClipStitchService.StitchAsync</code> → <code>IClipJoiner.JoinAsync</code> (<code>AvFoundationClipJoiner</code>) → a new <code>GeneratedAsset</code>; extend: <code>ExtendAsync</code> → <code>POST /api/v1/video/extend</code> → <code>ClipStitchService.ExtendAsync</code> → one Venice <code>venice-wan3-r2v</code> job</p>
+<table>
+<thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
+<tbody>
+<tr><td><code>src/TrStudioUI/Pages/Video/ClipJoinPanel.razor:136</code></td><td><code>JoinAsync</code></td><td><code>objPicked</code></td><td>two or more of the user's clips, in order</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Video/ClipStitchService.cs:147</code></td><td><code>StitchAsync</code></td><td><code>vJoin.Ok</code></td><td>true; <code>objJoiner.Name</code> is <code>AVFoundation</code> on Mac</td></tr>
+<tr><td><code>src/TrStudio/Platforms/MacCatalyst/AvFoundationClipJoiner.cs:86</code></td><td><code>JoinCore</code></td><td><code>vFirstSize</code></td><td>the first clip's size; others are fitted with black bars</td></tr>
+<tr><td><code>src/TrStudio/Platforms/MacCatalyst/AvFoundationClipJoiner.cs:153</code></td><td><code>JoinCore</code></td><td><code>vSession.Status</code></td><td><code>Completed</code>, else the export's own reason</td></tr>
+<tr><td><code>src/TrStudio/Platforms/MacCatalyst/AvFoundationClipJoiner.cs:36</code></td><td><code>LastFrameAsync</code></td><td><code>vSeconds</code></td><td>0.1 s before the end; the next shot's start picture</td></tr>
+<tr><td><code>src/TrStudioUI/Pages/Video/ClipJoinPanel.razor:175</code></td><td><code>ExtendAsync</code></td><td><code>vSeconds</code></td><td>1 to 30 seconds to add</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Video/ClipStitchService.cs:226</code></td><td><code>ExtendAsync</code></td><td><code>vLength</code></td><td>at most 15 seconds, read by the joiner</td></tr>
+<tr><td><code>src/TrStudio.Engine/Domain/Video/ClipStitchService.cs:259</code></td><td><code>ExtendAsync</code></td><td><code>vParams</code></td><td>prompt "Extend @Video1 by N seconds", the clip as reference, 480p</td></tr>
+</tbody>
+</table>
 <h3 id="zoom-in-the-mac-app-req-fn-104">Zoom in the Mac app (REQ-FN-104)<a class="anchor-link" href="#zoom-in-the-mac-app-req-fn-104">#</a></h3>
 <p><strong>Call chain:</strong> <code>MainPage</code> <code>BlazorWebViewInitialized</code> → <code>BlazorZoom.Attach</code> → <code>WKUserScript</code> at document start + <code>BlazorZoom.Apply</code> → CSS <code>zoom</code> and <code>--tr-zoom</code> on <code>&lt;html&gt;</code></p>
 <table>
 <thead><tr><th>File and line</th><th>Function</th><th>Watch</th><th>Expected value</th></tr></thead>
 <tbody>
-<tr><td><code>src/TrStudio/BlazorZoom.cs:64</code></td><td><code>Attach</code></td><td>the user script text</td><td>the saved level (<code>tf.zoom</code>, default 1.6 on a 4K panel)</td></tr>
+<tr><td><code>src/TrStudio/MainPage.xaml.cs:24</code></td><td><code>MainPage</code></td><td><code>BlazorZoom.FirstLevel</code></td><td>screen point width over 2400, 1.0 to 3.0 (1.6 on a native 4K panel)</td></tr>
+<tr><td><code>src/TrStudio/BlazorZoom.cs:64</code></td><td><code>Attach</code></td><td>the user script text</td><td>the saved level (<code>tf.zoom</code>), else <code>FirstLevel</code></td></tr>
+<tr><td><code>src/TrStudio/BlazorZoom.cs:70</code></td><td><code>Attach</code></td><td><code>blnMenuSet</code></td><td>true once; from macOS 26 the View menu's Zoom In, Zoom Out and Actual Size are added here</td></tr>
 <tr><td><code>src/TrStudio/BlazorZoom.cs:122</code></td><td><code>Apply</code></td><td><code>Level</code></td><td>0.5 to 3.0 in 0.1 steps</td></tr>
 <tr><td><code>src/TrStudio/BlazorZoom.cs:131</code></td><td><code>Apply</code></td><td><code>PageZoom</code></td><td>always 1: <code>WKWebView.PageZoom</code> magnifies without laying the page out again, which put the Login card right of centre</td></tr>
 <tr><td><code>src/TrStudio/BlazorZoom.cs:140</code></td><td><code>ApplyScript</code></td><td><code>--tr-zoom</code></td><td>equal to <code>zoom</code>; <code>.auth-shell</code> divides <code>100vh</code> by it</td></tr>
@@ -390,12 +476,12 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <h3 id="venice-s-own-reason-on-a-refused-call-req-ui-095"><a id="venices-own-reason-on-a-refused-call-req-ui-095"></a>Venice's own reason on a refused call (REQ-UI-095)<a class="anchor-link" href="#venice-s-own-reason-on-a-refused-call-req-ui-095">#</a></h3>
 <p><code>VeniceApiException.FromResponse</code> keeps Venice's <code>details</code> on a 400 word for word (<code>src/TrStudio.Engine/Domain/Venice/VeniceApiException.cs:98</code>) and reads a rate-limit reset given in seconds, as a Unix time in seconds, or in milliseconds (<code>:152</code>), never below zero.</p>
 <h3 id="sample-data-for-the-screen-checks-decision-11">Sample data for the screen checks (decision 11)<a class="anchor-link" href="#sample-data-for-the-screen-checks-decision-11">#</a></h3>
-<p>Each screen's mockup data is put into the test host by <code>tests/verify/seed/&lt;mockup name&gt;.sh</code>, which calls a TEST ONLY <code>POST /test/seed/&lt;mockup name&gt;</code> in <code>tests/TrStudio.TestHost/Program.cs</code> (18 endpoints from line 120) for the stand-in AppManager's user 4242. <code>tf-verify-list.sh</code> finds each script and <code>tf-verify-screens.sh</code> runs it before the screen. Never shipped.</p>
+<p>Each screen's mockup data is put into the test host by <code>tests/verify/seed/&lt;mockup name&gt;.sh</code>, which calls a TEST ONLY <code>POST /test/seed/&lt;mockup name&gt;</code> in <code>tests/TrStudio.TestHost/Program.cs</code> (18 endpoints from line 139) for the stand-in AppManager's user 4242. <code>tf-verify-list.sh</code> finds each script and <code>tf-verify-screens.sh</code> runs it before the screen. Never shipped.</p>
 <h3 id="configuration-logging-errors">Configuration, logging, errors<a class="anchor-link" href="#configuration-logging-errors">#</a></h3>
 <ul>
-<li>Configuration: <code>DesktopSettings.Load</code> (<code>src/TrStudio/MauiProgram.cs:44</code>); engine settings in memory (<code>EngineHost.cs:78</code>). No environment variables.
+<li>Configuration: <code>DesktopSettings.Load</code> (<code>src/TrStudio/MauiProgram.cs:44</code>); engine settings in memory (<code>EngineHost.cs:116</code>); the ComfyUI address and log retention days in the <code>AppSetting</code> table (<code>AppSettingStore.cs:26</code>, <code>:29</code>). No environment variables.
 </li>
-<li>Logging: daily files under the data folder's <code>logs</code> (<code>MauiProgram.cs:110</code>); no key is logged.
+<li>Logging: daily files under the data folder's <code>logs</code> (<code>MauiProgram.cs:114</code>), seven kept; no key is logged.
 </li>
 <li>Errors: 503 <code>LOCAL_STORE_UNAVAILABLE</code> (<code>InProcessEngineHandler.cs:47</code>), 400 <code>INVALID_REQUEST</code> (<code>:114</code>), 500 <code>ENGINE_ERROR</code> (<code>:123</code>).
 </li>
@@ -408,7 +494,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </li>
 <li>AppManager does not document a refresh token's lifetime, so 30 days is the app's own limit (<code>docs/TrStudio-AppManager-Feedback.md</code>, AM-001).
 </li>
-<li>ComfyUI import: Run falls back to made-up per-node results when the debug route cannot be reached (<code>src/TrStudioUI/Pages/Admin/AdminComfy.razor</code>).
+<li>The ComfyUI address card, Remove key, log retention, the digital twins switch, the twin and multi-shot panels and the AVFoundation joiner were read in code on 20 Nov 2026 but not seen running: the screenshots linked for them predate those parts.
 </li>
 <li>Libraries: TrBlazeUI 2.2.5 and TechieRag 1.1.5 from nuget.org (15 Nov 2026); open TechieRag entries TR-RAG-002 to TR-RAG-006, none blocking.
 </li>

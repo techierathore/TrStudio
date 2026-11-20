@@ -8,9 +8,10 @@
 
 ## Summary
 
-8 entries: 0 blocking now, 1 open (TF-008, minor), 7 fixed upstream and in TrStudio's `.tfcore`, not yet re-checked here by TrStudio (TF-001 to TF-007). Checked on the app by TechieFlow on 16 Nov 2026: TF-003, TF-004, TF-005 and TF-007 in full, TF-001 by its no-password branch, TF-006 for the admin screens; TF-002 waits for the `span` to come off, TF-006's creator screens for the test users' roles.
+11 entries: 1 blocking now, 1 open (TF-011), 7 fixed upstream and not yet re-checked (TF-001 to TF-007), 3 closed (TF-008, TF-009, TF-010, re-checked 20 Nov 2026).
 
-Nothing is blocked by the framework. On 16 Nov 2026 the Mac app was driven with the fixed checker: the four signed-out screens and the seven admin screens were reached by its own clicks at 1280 and 390. Two steps are TrStudio's: the `span` around `sign-in` (TF-002), and test users whose role gives them the creator surface (TF-006).
+TF-011 blocks the mockup check of four Video studio rows (REQ-UI-040, REQ-FN-051, 052, 054): the check counts the mockup's empty slider track as a missing badge.
+
 
 ## Entries
 
@@ -115,7 +116,9 @@ Nothing is blocked by the framework. On 16 Nov 2026 the Mac app was driven with 
 
 ### TF-008 — The status facts script prints a phase line the status guard then refuses
 
-- **Status:** open
+> ✅ **Closed 2026-11-20** — re-checked here: 20 Nov 2026: tf-status-facts.sh printed a current_phase value of 116 characters; written to the status file with the Write tool as printed and the status guard accepted it
+
+- **Status:** closed 2026-11-20, fixed upstream and re-checked here
 - **Severity:** minor
 - **Blocks:** no — shortening the phase name in `current_phase` lets the write through
 - **Repro:** a phase whose name is long ("One desktop app with the engine inside (Mac first)"); run `bash .tfcore/utils/tf-status-facts.sh TrStudio "amend-docs"`, copy its `current_phase` line into PROJECT-STATUS.md with the Write tool
@@ -127,7 +130,9 @@ Nothing is blocked by the framework. On 16 Nov 2026 the Mac app was driven with 
 
 ### TF-009 — The Mac boot warns "no provisioning profile" for a project that names one
 
-- **Status:** open
+> ✅ **Closed 2026-11-20** — re-checked here: 20 Nov 2026 on this Mac with the updated framework: tf-maccatalyst-check.sh src/TrStudio/TrStudio.csproj printed OK with no provisioning-profile warning
+
+- **Status:** closed 2026-11-20, fixed upstream and re-checked here
 - **Severity:** minor
 - **Blocks:** no — the app is signed with its profile, opens, and Appium drives it; the warning is only wrong text
 - **Repro:** `src/TrStudio/TrStudio.csproj` sets, for maccatalyst Debug, `<CodesignProvision>Mac Catalyst Team Provisioning Profile: com.techierathore.trstudio</CodesignProvision>` and `<CodesignEntitlements>Platforms\MacCatalyst\Entitlements.Debug.plist</CodesignEntitlements>` (with keychain-access-groups); run `bash .tfcore/utils/tf-verify-boot.sh start --head maccatalyst --project src/TrStudio/TrStudio.csproj`
@@ -139,7 +144,9 @@ Nothing is blocked by the framework. On 16 Nov 2026 the Mac app was driven with 
 
 ### TF-010 — The "select cuts its text" check measures a native select that is invisible under a label that wraps
 
-- **Status:** open
+> ✅ **Closed 2026-11-20** — re-checked here: 20 Nov 2026: tf-verify-screens.sh on Video studio and Comparison (seeded, signed in) printed visual OK at 1280 and 390, light and dark; REQ-UI-052 and REQ-FN-065 Verified
+
+- **Status:** closed 2026-11-20, fixed upstream and re-checked here
 - **Severity:** minor
 - **Blocks:** yes — REQ-UI-040 (Video studio) and REQ-UI-052 (Comparison) cannot pass the visual check, although no text is cut on the screen
 - **Repro:** Video studio's Model box and Comparison's Slot A / Slot B now draw the chosen name in a `div.select-wrap-label` that wraps, with the real `<select class="select-wrap-native">` laid exactly over it at `opacity: 0` (so a click or the keyboard still opens the native list). Seed `tests/verify/seed/video-studio.sh` and `compare.sh`; run `tf-verify-screens.sh --list … --base http://localhost:5099`
@@ -148,3 +155,15 @@ Nothing is blocked by the framework. On 16 Nov 2026 the Mac app was driven with 
 - **Encountered in:** owner run of 17 Nov 2026 (night), `*triage-and-fix`, fixing the owner's own screen check of 17 Nov
 - **Workaround:** none honest in the app: a native select's closed box never wraps, and at 390 px no layout gives a 350 px name room
 - **Suggested fix:** in `tf-dropdowns.mjs` `SELECTS`, skip a select whose computed opacity is 0 or visibility hidden; optionally grade the element drawn under it (`elementFromPoint` at the select's centre with the select hidden) for clipping
+
+### TF-011 — The mockup check counts an empty slider track as a missing badge
+
+- **Status:** open
+- **Severity:** minor
+- **Blocks:** yes — REQ-UI-040, REQ-FN-051, 052 and 054 (Video studio) cannot pass the mockup check, although the app draws both sliders
+- **Repro:** `docs/mockups/video-studio.html` draws Duration and Motion strength as `<div class="slider"><i></i><b></b></div>` (no text); the app draws a native range input. Seed `tests/verify/seed/video-studio.sh`, then `tf-mockup-parity.sh --base http://localhost:5099 --screen video-studio=/video …`
+- **Expected:** an element with no text and no badge class is not graded as a badge; a slider is matched to the app's range input
+- **Actual:** `missing on card-controls > div[0] > div[1] @1280: the mockup draws a badge/pill here (""); it could not be located in the app` (and `div[1] > div[1]`), in light and dark; `tests/.artifacts/verify/parity.json`, 20 Nov 2026
+- **Encountered in:** owner run of 19 Nov 2026 (night), `*handoff-phase`, re-verifying the TF-010 rows
+- **Workaround:** none honest in the app: changing the real slider to match a drawing would make it worse
+- **Suggested fix:** in the parity badge pass, skip a candidate whose text is empty; treat `.slider` (or an element whose children are only empty `i`/`b`) as a range control and match it to `input[type=range]`

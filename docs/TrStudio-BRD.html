@@ -106,7 +106,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <div class="layout">
   <nav class="side">
     <h1>TrStudio — Business Requirements</h1>
-    <div class="sub">Last rendered: 2026-11-19</div>
+    <div class="sub">Last rendered: 2026-11-20</div>
     <div class="group">Contents</div>
     <ol>
         <li><a href="#summary">1. Summary</a></li>
@@ -130,7 +130,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
   </nav>
   <main>
     <h1>TrStudio — Business Requirements</h1>
-    <div class="subtitle">Rendered 2026-11-19 &middot; source <code>TrStudio-BRD.md</code></div>
+    <div class="subtitle">Rendered 2026-11-20 &middot; source <code>TrStudio-BRD.md</code></div>
 
     <div class="toc-inline">
       <div>Contents</div>
@@ -677,7 +677,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </ul>
 <p><strong>Phase 4 — Voice (EN + HI) + text</strong></p>
 <ul>
-<li><strong>BRD-22</strong> — Creator can synthesize speech in English and Hindi (and Hinglish) with a library of preset voices. <em>(F-VOICE, VOX-01)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
+<li><strong>BRD-22</strong> — Creator can synthesize speech in English and Hindi (and Hinglish) with a library of preset voices. Changed 2026-11-20 (owner decision 18C): the local model path joins BRD-180 (local voice, lip-sync and caption models on Mac, later version). <em>(F-VOICE, VOX-01)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
 <li><strong>BRD-23</strong> — Creator can clone a voice from a short sample, consent-gated for real people (synthetic/preset voices need no gate). <em>(F-VOICE, VOX-02)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
@@ -689,7 +689,7 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </li>
 <li><strong>BRD-53</strong> — Creator can generate/expand a script from a brief (EN/HI) via TechieRag. <em>(F-TEXT, §7)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
-<li><strong>BRD-54</strong> — System shall produce caption/subtitle text from Whisper transcripts via TechieRag. <em>(F-TEXT, §7)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
+<li><strong>BRD-54</strong> — System shall produce caption/subtitle text from Whisper transcripts via TechieRag. Changed 2026-11-20 (owner decision 18C): the local model path joins BRD-180 (local voice, lip-sync and caption models on Mac, later version). <em>(F-TEXT, §7)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
 <li><strong>BRD-56</strong> — System shall track token-budget for text-LLM spend. <em>(F-TEXT, §7)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
@@ -698,9 +698,9 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 <ul>
 <li><strong>BRD-27</strong> — Creator can create a Character (synthetic persona, photoreal or stylized) and lock identity (reference set + seed/embedding, optional LoRA), reusable everywhere. <em>(F-AVATAR, AV-01)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
-<li><strong>BRD-28</strong> — Creator can produce a talking avatar from a character image + script/audio with lip-sync (routed to MuseTalk/LatentSync/SadTalker/LivePortrait, a RunPod heavy model, or HeyGen per quality). <em>(F-AVATAR, AV-02)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
+<li><strong>BRD-28</strong> — Creator can produce a talking avatar from a character image + script/audio with lip-sync (routed to MuseTalk/LatentSync/SadTalker/LivePortrait, a RunPod heavy model, or HeyGen per quality). Changed 2026-11-20 (owner decision 18C): the local model path joins BRD-180 (local voice, lip-sync and caption models on Mac, later version). <em>(F-AVATAR, AV-02)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
-<li><strong>BRD-29</strong> — Creator can run script→video end-to-end (type a script EN/HI, pick character + voice, get a narrated clip). <em>(F-AVATAR, AV-03)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
+<li><strong>BRD-29</strong> — Creator can run script→video end-to-end (type a script EN/HI, pick character + voice, get a narrated clip). Changed 2026-11-20 (owner decision 18C): the local model path joins BRD-180 (local voice, lip-sync and caption models on Mac, later version). <em>(F-AVATAR, AV-03)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
 <li><strong>BRD-30</strong> — Creator can select quality/cost per job: Fast (Mac local) vs High (RunPod) vs Premium (HeyGen API) on one UI control. <em>(F-AVATAR, AV-04)</em> &lt;!-- from: TrStudio-Requirements-v0.3.md --&gt;
 </li>
@@ -834,13 +834,13 @@ h2:hover .anchor-link,h3:hover .anchor-link,h4:hover .anchor-link{opacity:1}
 </ul>
 <h2 id="development-status"><a id="7-development-status"></a>7. Development status<a class="anchor-link" href="#development-status">#</a></h2>
 <p>Written by the status gate after every build, verify and handoff; not by hand.</p>
-<p><strong>Snapshot as of 2026-11-19.</strong> Live per-requirement status: <code>PROJECT-STATUS.md</code> and the Requirements Status table in <code>docs/TrStudio-Checklist.md</code>.</p>
+<p><strong>Snapshot as of 2026-11-20.</strong> Live per-requirement status: <code>PROJECT-STATUS.md</code> and the Requirements Status table in <code>docs/TrStudio-Checklist.md</code>.</p>
 <table>
 <thead><tr><th>Screen</th><th>Requirements</th><th>Verified</th><th>Open</th><th>Status</th></tr></thead>
 <tbody>
-<tr><td>UI / Pages</td><td>25</td><td>23</td><td>2</td><td>Partial</td></tr>
-<tr><td>Functional requirements</td><td>59</td><td>48</td><td>11</td><td>Partial</td></tr>
-<tr><td>RAG / AI requirements (→ /techierag)</td><td>4</td><td>3</td><td>1</td><td>Partial</td></tr>
+<tr><td>UI / Pages</td><td>25</td><td>24</td><td>1</td><td>Partial</td></tr>
+<tr><td>Functional requirements</td><td>56</td><td>49</td><td>7</td><td>Partial</td></tr>
+<tr><td>RAG / AI requirements (→ /techierag)</td><td>3</td><td>3</td><td>0</td><td>Done</td></tr>
 <tr><td>Non-functional</td><td>9</td><td>9</td><td>0</td><td>Done</td></tr>
 </tbody>
 </table>

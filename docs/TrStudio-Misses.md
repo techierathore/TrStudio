@@ -3,16 +3,17 @@
 | | |
 |---|---|
 | App | TrStudio |
-| Count | 135 logged: 23 open, 112 fixed, 0 will not fix |
+| Count | 136 logged: 24 open, 112 fixed, 0 will not fix |
 | Source | `docs/metrics/misses.jsonl`, one row per miss record. Rewritten by `tf-misses-md.sh` on every new record. Never edit it: a wrong row is corrected by a new record. |
-| Updated | 2026-11-18 |
+| Updated | 2026-11-19 |
 
 **Whose gap** answers the four questions of the miss protocol: **the app's spec** did not say it, so the checklist line is fixed; **the framework never said it**, so one requirement line and a check are added; **the check was too weak** (a review, or a script that did not fire), so the check is fixed; **said and ignored**, so the rule becomes a hook or is deleted. **not sorted** means the record predates the sort or nobody has answered yet; `bash .tfcore/utils/tf-emit.sh --amend <miss> sort <spec|unsaid|weak-check|ignored>` completes it.
 
-## Open (23)
+## Open (24)
 
 | Miss | Found | Whose gap | What went wrong |
 |---|---|---|---|
+| MISS-TrStudio-20261119-01 (REQ-UI-086) | 2026-11-19 by owner | the check was too weak | Image studio ends on Ready with no picture when a real Venice model takes more than 2 seconds; the picture is saved but not shown |
 | MISS-TrStudio-20261117-77 (REQ-FN-065) | 2026-11-17 by gate | not sorted | no sentence recorded (partial-implementation, src) |
 | MISS-TrStudio-20261117-76 (REQ-FN-054) | 2026-11-17 by gate | not sorted | no sentence recorded (partial-implementation, src) |
 | MISS-TrStudio-20261117-57 (REQ-UI-052) | 2026-11-17 by gate | not sorted | no sentence recorded (partial-implementation, src) |
